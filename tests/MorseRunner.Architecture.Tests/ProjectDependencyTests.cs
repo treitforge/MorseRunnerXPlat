@@ -89,7 +89,9 @@ public sealed class ProjectDependencyTests
                 .Descendants("ProjectReference")
                 .Select(element => element.Attribute("Include")?.Value)
                 .Where(path => !string.IsNullOrWhiteSpace(path))
-                .Select(path => Path.GetFileNameWithoutExtension(path!));
+                .Select(
+                    path => Path.GetFileNameWithoutExtension(
+                        path!.Replace('\\', Path.DirectorySeparatorChar)));
 
             foreach (string reference in references)
             {

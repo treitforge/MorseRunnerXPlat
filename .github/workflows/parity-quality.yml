@@ -33,6 +33,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Synchronize Python tooling
+        run: uv sync --locked
+
       - name: Enforce test-first parity scaffold
         id: parity
         shell: pwsh
