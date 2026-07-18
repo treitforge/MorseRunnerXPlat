@@ -21,8 +21,9 @@ verification.
   provider could identify the legacy process and title but could not capture
   its VCL window, so structural UI comparison uses the form resources.
 - Live Windows launch and interaction with the Avalonia executable.
-- Avalonia headless tests, TUI renderer and key-router tests, cross-UX workflow
-  tests, engine/DSP tests, and in-process versus gRPC scenario tests.
+- Avalonia headless tests, TUI renderer and key-router tests, Windows ConPTY
+  and xterm captures, cross-UX workflow tests, engine/DSP tests, and in-process
+  versus gRPC scenario tests.
 
 The existing 20/20 parity report proves fixture and structural adapter
 coverage. It must not be interpreted as live behavioral or visual proof for
@@ -47,10 +48,10 @@ the partial rows below.
 | Activity and band conditions | Activity, QSK, QSB, QRM, QRN, flutter, LIDs | Seeded active-station audio, pileup activity, QSK receive-during-send, and deterministic QSB/QRM/QRN/flutter/LID behavior | Same settings through Ctrl+1 through Ctrl+6 | Implemented for the live station path. Legacy audio golden expansion remains part of the broader DSP release gate. |
 | Live callers and corrections | Station collection, best partial-call confidence, repeats, reply timing, correction, ghosting, and completion | Session-owned active station collection with block-timed state and CW replies | Same engine behavior and active pileup count | Implemented. The pinned live-station vector and seeded engine traces cover `NR?`, corrected number, partial calls, completion, and caller events. |
 | Station truth and NIL | Completed station supplies true callsign and exchange for log verification | True callsign and contest exchange populate immutable QSO records; unmatched logs are `NIL` and do not score | Same result through the shared client | Implemented with corrected and NIL engine workflows. |
-| Monitor level | Persistent self-monitor level | Applied as engine output gain | Fixed default | Partial. |
+| Monitor level | Persistent self-monitor level, defaulting to `0 dB` | Applied as engine output gain with the legacy default | Fixed legacy `0 dB` default | Partial because the TUI does not yet expose an adjustment. Physical startup is prebuffered and the automated probe reports zero underruns and drops. |
 | Audio recording and playback | Optional WAV and playback command | Bounded WAV recording beside physical output; completed file opens from File menu | Not exposed | Partial. |
 | Help, first-time setup, readme, community link | Help menu | Working dialogs and packaged readme | Built-in keyboard help | Implemented, except TUI does not open the long packaged readme. |
-| Responsive/scaled layout | Fixed VCL form | Scroll-safe desktop layout, compiled bindings, accessible names | 80-column and wide-terminal render coverage | Implemented on Windows. Linux and macOS visual review remains. |
+| Responsive/scaled layout | Fixed VCL form | Scroll-safe desktop layout, compiled bindings, accessible names | Fixed viewport, adaptive compact layout, colored panels, incremental row repaint, and resize handling | Implemented on Windows. ConPTY captures at 120 by 34 and 100 by 28 prove typing and resizing without scrolling or line accumulation. Linux and macOS visual review remains. |
 | Hosted operation | Not applicable | In-process default | Local or authenticated loopback gRPC | XPlat extension implemented. Cross-client transport tests pass. |
 
 ## Release-blocking functional gaps

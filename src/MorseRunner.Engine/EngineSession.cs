@@ -35,6 +35,7 @@ internal sealed class EngineSession : IAsyncDisposable
     private readonly bool _automaticTiming;
     private readonly TimeSpan _blockPeriod;
     private readonly Task _worker;
+    private PeriodicTimer? _automaticTimer;
     private SessionSnapshot _snapshot;
     private SessionState _state = SessionState.Created;
     private long _revision;
@@ -272,6 +273,7 @@ internal sealed class EngineSession : IAsyncDisposable
 
         _commands.Writer.TryComplete();
         _lifetime.Cancel();
+        StopAutomaticTimer();
         try
         {
             await _worker;
@@ -320,6 +322,7 @@ internal sealed class EngineSession : IAsyncDisposable
         }
         finally
         {
+            StopAutomaticTimer();
             CompleteSubscribers();
         }
     }
@@ -333,7 +336,10 @@ internal sealed class EngineSession : IAsyncDisposable
 
         if (_automaticTiming && _state == SessionState.Running)
         {
-            await Task.Delay(_blockPeriod, _lifetime.Token);
+            PeriodicTimer timer = _automaticTimer
+                ?? throw new InvalidOperationException(
+                    "Automatic timing is running without a block timer.");
+            await timer.WaitForNextTickAsync(_lifetime.Token);
             if (_commands.Reader.TryRead(out pending))
             {
                 return await ProcessWorkItemAsync(pending);
@@ -432,6 +438,7 @@ internal sealed class EngineSession : IAsyncDisposable
         }
 
         _state = SessionState.Running;
+        StartAutomaticTimer();
         _toneRenderer.LoadMessage("CQ TEST");
         _revision++;
         PublishEvent(SessionEventKind.Started, null);
@@ -446,6 +453,7 @@ internal sealed class EngineSession : IAsyncDisposable
         }
 
         _state = SessionState.Paused;
+        StopAutomaticTimer();
         _revision++;
         PublishEvent(SessionEventKind.Paused, null);
         return AcceptedResult();
@@ -459,6 +467,7 @@ internal sealed class EngineSession : IAsyncDisposable
         }
 
         _state = SessionState.Running;
+        StartAutomaticTimer();
         _revision++;
         PublishEvent(SessionEventKind.Resumed, null);
         return AcceptedResult();
@@ -472,6 +481,7 @@ internal sealed class EngineSession : IAsyncDisposable
         }
 
         _state = SessionState.Stopping;
+        StopAutomaticTimer();
         _revision++;
         PublishEvent(SessionEventKind.Stopping, null);
         await _audioSink.CompleteAsync(_lifetime.Token);
@@ -566,6 +576,7 @@ internal sealed class EngineSession : IAsyncDisposable
                 && _simulationBlock >= _settings.DurationBlocks)
             {
                 _state = SessionState.Completed;
+                StopAutomaticTimer();
                 PublishEvent(SessionEventKind.Completed, null);
                 await _audioSink.CompleteAsync(_lifetime.Token);
                 break;
@@ -1119,11 +1130,29 @@ internal sealed class EngineSession : IAsyncDisposable
 
     private void ApplyClose(TaskCompletionSource<bool> completion)
     {
+        StopAutomaticTimer();
         _state = SessionState.Closed;
         _revision++;
         PublishEvent(SessionEventKind.Closed, null);
         PublishSnapshot();
         completion.TrySetResult(true);
+    }
+
+    private void StartAutomaticTimer()
+    {
+        if (!_automaticTiming)
+        {
+            return;
+        }
+
+        StopAutomaticTimer();
+        _automaticTimer = new PeriodicTimer(_blockPeriod);
+    }
+
+    private void StopAutomaticTimer()
+    {
+        _automaticTimer?.Dispose();
+        _automaticTimer = null;
     }
 
     private void Reject(

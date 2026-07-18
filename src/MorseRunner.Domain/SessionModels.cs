@@ -46,7 +46,7 @@ public sealed record SessionSettings(
 
     public bool Lids { get; init; }
 
-    public double MonitorLevelDb { get; init; } = -15d;
+    public double MonitorLevelDb { get; init; }
 
     public static SessionSettings CreateDefault(int seed)
     {

@@ -49,13 +49,6 @@ static async Task<int> RunAudioProbeAsync()
             handle.SessionId,
             clientId),
         CancellationToken.None);
-    await client.ExecuteAsync(
-        new AdvanceSimulationCommand(
-            RequestId.New(),
-            handle.SessionId,
-            clientId,
-            BlockCount: 4),
-        CancellationToken.None);
 
     await Task.Delay(TimeSpan.FromMilliseconds(750));
 

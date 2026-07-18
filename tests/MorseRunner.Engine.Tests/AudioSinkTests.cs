@@ -8,6 +8,14 @@ namespace MorseRunner.Engine.Tests;
 public sealed class AudioSinkTests
 {
     [Fact]
+    public void DefaultMonitorLevelMatchesLegacyFullVolume()
+    {
+        SessionSettings settings = SessionSettings.CreateDefault(seed: 12_345);
+
+        Assert.Equal(0d, settings.MonitorLevelDb);
+    }
+
+    [Fact]
     public async Task WavSinkWritesDeterministicPcm16HeaderAndSamples()
     {
         string path = System.IO.Path.Combine(

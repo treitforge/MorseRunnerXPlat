@@ -1198,10 +1198,15 @@ tests do not depend on the selected native library.
 
 The physical sink uses a preallocated single-producer, single-consumer queue of
 four 512-sample blocks. The native callback performs only bounded queue reads,
-sample copies, zero fill, and lock-free metric updates. Callback staleness or
-failure marks the output unhealthy. The session pauses at the next block
-boundary, publishes `AudioDeviceFailed`, and accepts `RecoverAudioCommand` for
-device reselection before resume.
+sample copies, zero fill, and lock-free metric updates. Playback begins only
+after two blocks are queued (or one block when the configured queue capacity is
+one). Automatic sessions use a periodic block timer rather than chaining
+relative delays, so render work does not accumulate timing drift and exhaust
+the prebuffer. Callback staleness or failure marks the output unhealthy. The
+session pauses at the next block boundary, publishes `AudioDeviceFailed`, and
+accepts `RecoverAudioCommand` for device reselection before resume. The default
+monitor level is the legacy `0 dB`; lower levels remain explicit session
+settings.
 
 ### 14.5 Device failure
 
@@ -2073,9 +2078,17 @@ Recorded Phase 5 implementation:
 - Physical sessions advance in real time on the engine session loop. Avalonia
   consumes bounded live updates through `IMorseRunnerClient`.
 - The operator status row exposes both the selected caller state and the active
-  pileup count. The terminal status line exposes the same count. A live Windows
-  launch verified a three-caller pileup with readable layout and keyboard focus
-  retained in the callsign field.
+  pileup count. The terminal status line exposes the same count and physical
+  audio health.
+- The TUI renders a fixed-size cell canvas in the alternate screen with no
+  trailing terminal newline. ANSI-capable terminals receive cyan panel borders,
+  highlighted entry fields, colored state, and keycaps. After the first frame,
+  only changed rows are written, and snapshot-driven refreshes are limited to
+  ten per second while key input repaints immediately. A Windows ConPTY and
+  xterm capture verified typing and resize behavior at 120 by 34 and 100 by 28
+  without scrolling, line accumulation, or overlapping status content.
+- A live Windows Avalonia launch verified a three-caller pileup with readable
+  layout and keyboard focus retained in the callsign field.
 - Settings persist atomically. Optional recording uses a bounded WAV writer
   beside physical playback, and completed recordings can be opened from the
   File menu.

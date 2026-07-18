@@ -94,11 +94,28 @@ public sealed class TuiInteractionTests
         Assert.Contains("K1ABC", compact, StringComparison.Ordinal);
         Assert.Contains("SCORE 1", wide, StringComparison.Ordinal);
         Assert.Contains("CALLER NEED EXCHANGE", wide, StringComparison.Ordinal);
+        Assert.False(compact.EndsWith(Environment.NewLine, StringComparison.Ordinal));
+        Assert.False(wide.EndsWith(Environment.NewLine, StringComparison.Ordinal));
+        Assert.Equal(24, compact.Split(Environment.NewLine).Length);
+        Assert.Equal(40, wide.Split(Environment.NewLine).Length);
         Assert.All(
             compact.Split(Environment.NewLine),
             line => Assert.True(line.Length <= 80));
         Assert.All(
             wide.Split(Environment.NewLine),
             line => Assert.True(line.Length <= 140));
+    }
+
+    [Fact]
+    public void RendererAddsAnsiStylingOnlyWhenRequested()
+    {
+        var state = new TuiState();
+
+        string plain = TuiRenderer.Render(state, 100, 28);
+        string styled = TuiRenderer.Render(state, 100, 28, useColor: true);
+
+        Assert.DoesNotContain("\u001b[", plain, StringComparison.Ordinal);
+        Assert.Contains("\u001b[", styled, StringComparison.Ordinal);
+        Assert.False(styled.EndsWith(Environment.NewLine, StringComparison.Ordinal));
     }
 }

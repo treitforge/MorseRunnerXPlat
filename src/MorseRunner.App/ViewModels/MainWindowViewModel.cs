@@ -106,7 +106,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private int _bandwidthHz = 500;
     private int _ritOffsetHz;
     private int _activity = 5;
-    private double _monitorLevel = -15d;
+    private double _monitorLevel;
     private bool _qsk;
     private bool _qsb;
     private bool _qrm;

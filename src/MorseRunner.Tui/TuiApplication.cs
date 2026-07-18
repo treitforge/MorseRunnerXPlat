@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Threading.Channels;
@@ -8,6 +9,8 @@ namespace MorseRunner.Tui;
 
 public sealed class TuiApplication : IDisposable
 {
+    private static readonly TimeSpan SnapshotRenderInterval =
+        TimeSpan.FromMilliseconds(100);
     private static readonly ClientId TuiClientId = new("tui");
     private readonly IMorseRunnerClient _client;
     private readonly Channel<SessionSnapshot> _snapshots =
@@ -21,6 +24,10 @@ public sealed class TuiApplication : IDisposable
     private readonly CancellationTokenSource _lifetime = new();
     private SessionId? _sessionId;
     private Task? _subscriptionTask;
+    private string[]? _lastFrameLines;
+    private int _lastFrameWidth;
+    private int _lastFrameHeight;
+    private long _lastRenderTimestamp;
     private bool _quit;
     private volatile bool _dirty = true;
 
@@ -65,7 +72,12 @@ public sealed class TuiApplication : IDisposable
                     _dirty = true;
                 }
 
-                if (_dirty)
+                if (WindowSizeChanged(ansi))
+                {
+                    _dirty = true;
+                }
+
+                if (_dirty && RenderIntervalElapsed())
                 {
                     Draw(ansi);
                     _dirty = false;
@@ -75,7 +87,8 @@ public sealed class TuiApplication : IDisposable
                 {
                     ConsoleKeyInfo key = Console.ReadKey(intercept: true);
                     await HandleAsync(TuiKeyRouter.Map(key), linked.Token);
-                    _dirty = true;
+                    Draw(ansi);
+                    _dirty = false;
                     continue;
                 }
 
@@ -308,6 +321,7 @@ public sealed class TuiApplication : IDisposable
             Qrn = State.Qrn,
             Flutter = State.Flutter,
             Lids = State.Lids,
+            MonitorLevelDb = 0d,
         };
         SessionHandle handle = await _client.CreateSessionAsync(
             settings,
@@ -584,30 +598,95 @@ public sealed class TuiApplication : IDisposable
 
     private void Draw(bool ansi)
     {
-        int width;
-        int height;
-        try
-        {
-            width = Console.WindowWidth;
-            height = Console.WindowHeight;
-        }
-        catch (IOException)
-        {
-            width = 100;
-            height = 28;
-        }
-
-        string frame = TuiRenderer.Render(State, width, height);
+        (int width, int height) = GetViewportSize(ansi);
+        string frame = TuiRenderer.Render(
+            State,
+            width,
+            height,
+            useColor: ansi);
         if (ansi)
         {
-            Console.Write("\u001b[H");
-            Console.Write(frame);
-            Console.Write("\u001b[J");
+            WriteAnsiFrame(frame, width, height);
         }
         else
         {
             Console.Clear();
             Console.Write(frame);
+            _lastFrameWidth = width;
+            _lastFrameHeight = height;
+        }
+
+        _lastRenderTimestamp = Stopwatch.GetTimestamp();
+    }
+
+    private void WriteAnsiFrame(string frame, int width, int height)
+    {
+        string[] lines = frame.Split(Environment.NewLine);
+        bool fullRepaint = _lastFrameLines is null
+            || _lastFrameWidth != width
+            || _lastFrameHeight != height
+            || _lastFrameLines.Length != lines.Length;
+        var output = new StringBuilder(frame.Length + 128);
+        output.Append("\u001b[?2026h");
+        if (fullRepaint)
+        {
+            output.Append("\u001b[2J\u001b[H");
+            output.Append(frame);
+            output.Append("\u001b[0m\u001b[J");
+        }
+        else
+        {
+            for (int row = 0; row < lines.Length; row++)
+            {
+                if (String.Equals(
+                    _lastFrameLines![row],
+                    lines[row],
+                    StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                output.Append("\u001b[");
+                output.Append(row + 1);
+                output.Append(";1H");
+                output.Append(lines[row]);
+                output.Append("\u001b[0m\u001b[K");
+            }
+        }
+
+        output.Append("\u001b[?2026l");
+        Console.Write(output);
+        _lastFrameLines = lines;
+        _lastFrameWidth = width;
+        _lastFrameHeight = height;
+    }
+
+    private bool WindowSizeChanged(bool ansi)
+    {
+        (int width, int height) = GetViewportSize(ansi);
+        return width != _lastFrameWidth || height != _lastFrameHeight;
+    }
+
+    private bool RenderIntervalElapsed() =>
+        _lastRenderTimestamp == 0
+        || Stopwatch.GetElapsedTime(_lastRenderTimestamp)
+            >= SnapshotRenderInterval;
+
+    private static (int Width, int Height) GetViewportSize(bool ansi)
+    {
+        try
+        {
+            int width = Console.WindowWidth;
+            if (ansi && width > 1)
+            {
+                width--;
+            }
+
+            return (Math.Max(1, width), Math.Max(1, Console.WindowHeight));
+        }
+        catch (IOException)
+        {
+            return (100, 28);
         }
     }
 
