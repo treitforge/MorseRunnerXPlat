@@ -537,6 +537,91 @@ begin
   end;
 end;
 
+procedure ObserveCwtScoring(const Values: TStrings);
+const
+  Calls: array[0..4] of string = (
+    'K1ABC',
+    'K2XYZ',
+    'K1ABC',
+    'K2XYZ/P',
+    'K2XYZ/P'
+  );
+var
+  CallIndex: Integer;
+  PreviousIndex: Integer;
+  Qso: TQso;
+  ContestValue: TCWOPS;
+  WorkedCalls: TStringList;
+  Multipliers: TMultList;
+  VerifiedPoints: Integer;
+  IsDuplicate: Boolean;
+  ErrorText: string;
+begin
+  gDXCCList := TDXCC.Create;
+  ContestValue := TCWOPS.Create;
+  WorkedCalls := TStringList.Create;
+  Multipliers := TMultList.Create;
+  VerifiedPoints := 0;
+  try
+    ErrorText := '';
+    Values.Add(
+      'call[AB]='
+      + BoolToStr(ContestValue.CheckEnteredCallLength('AB', ErrorText), True)
+      + '|'
+      + ErrorText);
+    ErrorText := '';
+    Values.Add(
+      'call[K1ABC]='
+      + BoolToStr(
+          ContestValue.CheckEnteredCallLength('K1ABC', ErrorText),
+          True)
+      + '|'
+      + ErrorText);
+    Values.Add('member[123]=' + BoolToStr(IsNum('123'), True));
+    Values.Add('member[OR]=' + BoolToStr(IsNum('OR'), True));
+    Values.Add('member[]=' + BoolToStr(IsNum(''), True));
+
+    for CallIndex := Low(Calls) to High(Calls) do
+    begin
+      FillChar(Qso, SizeOf(Qso), 0);
+      Qso.Call := Calls[CallIndex];
+      Qso.Pfx := ExtractPrefix(Qso.Call);
+      Qso.MultStr := ContestValue.ExtractMultiplier(@Qso);
+      IsDuplicate := False;
+      for PreviousIndex := 0 to WorkedCalls.Count - 1 do
+        if WorkedCalls[PreviousIndex] = Qso.Call then
+          IsDuplicate := True;
+      Qso.Dupe := IsDuplicate;
+
+      if not Qso.Dupe then
+      begin
+        Inc(VerifiedPoints, Qso.Points);
+        Multipliers.ApplyMults(Qso.MultStr);
+      end;
+
+      Values.Add(Format(
+        'qso[%d]=%s|%s|%d|%s|%d|%d|%d',
+        [
+          CallIndex,
+          Qso.Call,
+          Qso.MultStr,
+          Qso.Points,
+          BoolToStr(Qso.Dupe, True),
+          VerifiedPoints,
+          Multipliers.Count,
+          VerifiedPoints * Multipliers.Count
+        ]));
+      WorkedCalls.Add(Qso.Call);
+    end;
+  finally
+    Multipliers.Free;
+    WorkedCalls.Free;
+    ContestValue.Free;
+    gDXCCList.Free;
+    gDXCCList := nil;
+  end;
+end;
+
 procedure ObserveAudioAdapter(const Values: TStrings);
 var
   FilePath: string;
@@ -702,6 +787,8 @@ begin
       ObserveLogging(Values)
     else if Scenario = 'contest.cq-wpx-scoring' then
       ObserveCqWpxScoring(Values)
+    else if Scenario = 'contest.cwt-scoring' then
+      ObserveCwtScoring(Values)
     else if Scenario = 'audio.legacy-adapters' then
       ObserveAudioAdapter(Values)
     else if Scenario = 'contest.legacy-implementations' then

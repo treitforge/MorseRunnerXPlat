@@ -1970,8 +1970,14 @@ Recorded Phase 4 implementation:
 - CQ WPX is the first live session-loop scoring slice. Its received-entry
   validation, one-point QSOs, unique-prefix multipliers, duplicate logging, and
   verified score progression match a pinned legacy oracle vector.
-- The remaining contest scoring and exchange rules are still release-blocking
-  work and must not be inferred from structural adapter coverage.
+- CWT is the second live session-loop scoring slice. It validates the operator
+  name and member-number or QTH fields, awards one point, uses each full worked
+  callsign as a multiplier, and excludes exact-call duplicates from verified
+  points and multipliers. The score progression matches a pinned legacy oracle
+  vector.
+- The remaining ten contest scoring and exchange rule sets are still
+  release-blocking work and must not be inferred from structural adapter
+  coverage.
 - All five run modes are available through the shared session model.
 - Contest, simulation, data, configuration, logging, and result acceptance
   cases pass unchanged against the pinned legacy oracle and XPlat.

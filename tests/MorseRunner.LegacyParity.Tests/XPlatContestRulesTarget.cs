@@ -16,6 +16,8 @@ public sealed class XPlatContestRulesTarget : IParityTarget
             "contest.legacy-implementations" => Observe(),
             "contest.cq-wpx-scoring" =>
                 await ObserveCqWpxScoringAsync(cancellationToken),
+            "contest.cwt-scoring" =>
+                await ObserveCwtScoringAsync(cancellationToken),
             _ => [],
         };
         bool matches = values.SequenceEqual(
@@ -112,6 +114,75 @@ public sealed class XPlatContestRulesTarget : IParityTarget
                 .Count();
             values.Add(
                 $"qso[{index}]={qso.Call}|{qso.Prefix}|{qso.Multiplier}"
+                + $"|{qso.Points}|{qso.IsDuplicate}|{verifiedPoints}"
+                + $"|{multiplierCount}|{engine.GetSnapshot(handle.SessionId).Score}");
+        }
+
+        return [.. values];
+    }
+
+    private static async Task<string[]> ObserveCwtScoringAsync(
+        CancellationToken cancellationToken)
+    {
+        var values = new List<string>();
+        ContestValidation invalid = CwtContestRules.ValidateReceivedQso(
+            "AB",
+            "DAVID",
+            "123");
+        ContestValidation valid = CwtContestRules.ValidateReceivedQso(
+            "K1ABC",
+            "DAVID",
+            "123");
+        values.Add($"call[AB]={invalid.IsValid}|{invalid.Error}");
+        values.Add($"call[K1ABC]={valid.IsValid}|{valid.Error}");
+        values.Add($"member[123]={CwtContestRules.IsMemberExchange("123")}");
+        values.Add($"member[OR]={CwtContestRules.IsMemberExchange("OR")}");
+        values.Add($"member[]={CwtContestRules.IsMemberExchange(string.Empty)}");
+
+        await using var engine =
+            new MorseRunnerEngine(_ => new NullAudioSink());
+        SessionSettings settings = SessionSettings.CreateDefault(12_345) with
+        {
+            ContestId = new("scCwt"),
+        };
+        SessionHandle handle = await engine.CreateSessionAsync(
+            settings,
+            cancellationToken);
+        ClientId client = new("cwt-parity");
+        await engine.ExecuteAsync(
+            new StartSessionCommand(
+                RequestId.New(),
+                handle.SessionId,
+                client),
+            cancellationToken);
+
+        string[] calls =
+            ["K1ABC", "K2XYZ", "K1ABC", "K2XYZ/P", "K2XYZ/P"];
+        for (int index = 0; index < calls.Length; index++)
+        {
+            await engine.ExecuteAsync(
+                new LogQsoCommand(
+                    RequestId.New(),
+                    handle.SessionId,
+                    client,
+                    calls[index],
+                    "599",
+                    "DAVID",
+                    "123"),
+                cancellationToken);
+            IReadOnlyList<Qso> qsos =
+                engine.GetCompletedQsos(handle.SessionId);
+            Qso qso = qsos[^1];
+            int verifiedPoints = qsos
+                .Where(value => !value.IsDuplicate)
+                .Sum(value => value.Points);
+            int multiplierCount = qsos
+                .Where(value => !value.IsDuplicate)
+                .Select(value => value.Multiplier)
+                .Distinct(StringComparer.Ordinal)
+                .Count();
+            values.Add(
+                $"qso[{index}]={qso.Call}|{qso.Multiplier}"
                 + $"|{qso.Points}|{qso.IsDuplicate}|{verifiedPoints}"
                 + $"|{multiplierCount}|{engine.GetSnapshot(handle.SessionId).Score}");
         }

@@ -25,6 +25,7 @@ $scenarios = @(
     'simulation.live-operator-session'
     'logging.scoring-rate-and-results'
     'contest.cq-wpx-scoring'
+    'contest.cwt-scoring'
     'audio.legacy-adapters'
     'contest.legacy-implementations'
 )

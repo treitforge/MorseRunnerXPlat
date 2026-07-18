@@ -1,0 +1,22 @@
+{
+  "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "parityId": "contest.cwt-scoring",
+  "oracle": "tests/parity/legacy-oracle/LegacyOracle.lpr",
+  "toolchain": {
+    "lazarus": "4.6",
+    "fpc": "3.2.2",
+    "target": "x86_64-win64"
+  },
+  "values": [
+    "call[AB]=False|Invalid callsign",
+    "call[K1ABC]=True|",
+    "member[123]=True",
+    "member[OR]=False",
+    "member[]=False",
+    "qso[0]=K1ABC|K1ABC|1|False|1|1|1",
+    "qso[1]=K2XYZ|K2XYZ|1|False|2|2|4",
+    "qso[2]=K1ABC|K1ABC|1|True|2|2|4",
+    "qso[3]=K2XYZ/P|K2XYZ/P|1|False|3|3|9",
+    "qso[4]=K2XYZ/P|K2XYZ/P|1|True|3|3|9"
+  ]
+}

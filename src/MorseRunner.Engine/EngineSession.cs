@@ -752,9 +752,14 @@ internal sealed class EngineSession : IAsyncDisposable
         }
 
         bool isCqWpx = _settings.ContestId == new ContestId("scWpx");
-        string normalizedCall = CqWpxContestRules.NormalizeCall(command.Call);
+        bool isCwt = _settings.ContestId == new ContestId("scCwt");
+        string normalizedCall = isCwt
+            ? CwtContestRules.NormalizeCall(command.Call)
+            : CqWpxContestRules.NormalizeCall(command.Call);
         bool duplicate = false;
         string prefix = string.Empty;
+        string multiplier = string.Empty;
+        int points = 1;
         if (isCqWpx)
         {
             ContestValidation validation =
@@ -771,10 +776,36 @@ internal sealed class EngineSession : IAsyncDisposable
 
             duplicate = !_workedCalls.Add(normalizedCall);
             prefix = CallsignParser.ExtractPrefix(normalizedCall);
+            multiplier = prefix;
             if (!duplicate)
             {
                 _verifiedPoints += CqWpxContestRules.PointsPerQso;
                 _verifiedMultipliers.Add(prefix);
+                _score = _verifiedPoints * _verifiedMultipliers.Count;
+            }
+        }
+        else if (isCwt)
+        {
+            ContestValidation validation =
+                CwtContestRules.ValidateReceivedQso(
+                    command.Call,
+                    command.Exchange1,
+                    command.Exchange2);
+            if (!validation.IsValid)
+            {
+                return RejectedResult(
+                    DomainErrorCodes.InvalidSetting,
+                    validation.Error);
+            }
+
+            duplicate = !_workedCalls.Add(normalizedCall);
+            prefix = CallsignParser.ExtractPrefix(normalizedCall);
+            multiplier = normalizedCall;
+            points = CwtContestRules.PointsPerQso;
+            if (!duplicate)
+            {
+                _verifiedPoints += points;
+                _verifiedMultipliers.Add(multiplier);
                 _score = _verifiedPoints * _verifiedMultipliers.Count;
             }
         }
@@ -813,8 +844,8 @@ internal sealed class EngineSession : IAsyncDisposable
             Exchange2 = command.Exchange2,
             TrueExchange2 = command.Exchange2,
             Prefix = prefix,
-            Multiplier = prefix,
-            Points = CqWpxContestRules.PointsPerQso,
+            Multiplier = multiplier,
+            Points = points,
             IsDuplicate = duplicate,
             ExchangeError = duplicate
                 ? LogError.Duplicate
