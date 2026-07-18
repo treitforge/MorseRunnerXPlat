@@ -93,6 +93,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private string _elapsed = "00:00.000";
     private string _lastCaller = "Waiting";
     private string _callerState = "Idle";
+    private int _activeCallerCount;
     private string _lastSent = "None";
     private string _callEntry = string.Empty;
     private string _rstEntry = "5NN";
@@ -276,6 +277,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     {
         get => _callerState;
         private set => SetField(ref _callerState, value);
+    }
+
+    public int ActiveCallerCount
+    {
+        get => _activeCallerCount;
+        private set => SetField(ref _activeCallerCount, value);
     }
 
     public string LastSent
@@ -883,6 +890,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             CultureInfo.InvariantCulture);
         LastCaller = snapshot.LastCaller ?? "Waiting";
         CallerState = FormatOperatorState(snapshot.ActiveOperatorState);
+        ActiveCallerCount = snapshot.ActiveStations?.Count ?? 0;
         LastSent = snapshot.LastOperatorMessage ?? "None";
         QsoCount = snapshot.QsoCount;
         Score = snapshot.Score;

@@ -253,6 +253,29 @@ message SessionSnapshotMessage {
   ControlLeaseSummaryMessage control_lease = 24;
   OperatorStateMessage active_operator_state = 25;
   int32 qso_rate_per_hour = 26;
+  repeated ActiveStationMessage active_stations = 27;
+}
+
+message ActiveStationMessage {
+  string callsign = 1;
+  StationStateMessage station_state = 2;
+  OperatorStateMessage operator_state = 3;
+  int32 patience = 4;
+  int32 repeat_count = 5;
+  int32 words_per_minute = 6;
+  int32 pitch_offset_hz = 7;
+  string true_rst = 8;
+  string true_exchange_1 = 9;
+  string true_exchange_2 = 10;
+  string last_reply = 11;
+}
+
+enum StationStateMessage {
+  STATION_STATE_MESSAGE_UNSPECIFIED = 0;
+  STATION_STATE_MESSAGE_LISTENING = 1;
+  STATION_STATE_MESSAGE_COPYING = 2;
+  STATION_STATE_MESSAGE_PREPARING_TO_SEND = 3;
+  STATION_STATE_MESSAGE_SENDING = 4;
 }
 
 enum OperatorStateMessage {
@@ -288,6 +311,10 @@ enum SessionEventKindMessage {
   SESSION_EVENT_KIND_MESSAGE_CONTROL_EXPIRED = 17;
   SESSION_EVENT_KIND_MESSAGE_CONTROL_TAKEN_OVER = 18;
   SESSION_EVENT_KIND_MESSAGE_RESYNC_REQUIRED = 19;
+  SESSION_EVENT_KIND_MESSAGE_STATION_REPLY_STARTED = 20;
+  SESSION_EVENT_KIND_MESSAGE_STATION_REPLY_COMPLETED = 21;
+  SESSION_EVENT_KIND_MESSAGE_CALLER_LEFT = 22;
+  SESSION_EVENT_KIND_MESSAGE_QSO_LOGGED = 23;
 }
 
 message SessionEventMessage {
@@ -409,6 +436,24 @@ message QsoMessage {
   int32 number = 10;
   string prefix = 11;
   QsoLogErrorMessage exchange_error = 12;
+  string true_call = 13;
+  string raw_callsign = 14;
+  int32 true_rst = 15;
+  int32 true_number = 16;
+  string precedence = 17;
+  string true_precedence = 18;
+  int32 check = 19;
+  int32 true_check = 20;
+  string section = 21;
+  string true_section = 22;
+  string true_exchange_1 = 23;
+  string true_exchange_2 = 24;
+  string true_wpm = 25;
+  QsoLogErrorMessage exchange_1_error = 26;
+  QsoLogErrorMessage exchange_1_secondary_error = 27;
+  QsoLogErrorMessage exchange_2_error = 28;
+  QsoLogErrorMessage exchange_2_secondary_error = 29;
+  uint32 column_error_flags = 30;
 }
 
 message ListCompletedQsosResponse {

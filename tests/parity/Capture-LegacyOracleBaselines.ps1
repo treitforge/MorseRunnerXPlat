@@ -23,6 +23,7 @@ $scenarios = @(
     'simulation.state-models'
     'simulation.runtime-routines'
     'simulation.live-operator-session'
+    'simulation.live-station-session'
     'logging.scoring-rate-and-results'
     'contest.cq-wpx-scoring'
     'contest.cwt-scoring'

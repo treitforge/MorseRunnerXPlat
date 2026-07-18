@@ -28,6 +28,32 @@ public enum OperatorRunMode
     Hst = 4,
 }
 
+public enum StationState
+{
+    Listening = 0,
+    Copying = 1,
+    PreparingToSend = 2,
+    Sending = 3,
+}
+
+public enum StationReply
+{
+    None = 0,
+    MyCall = 1,
+    NumberQuestion = 2,
+    Again = 3,
+    DeMyCall = 4,
+    DeMyCallTwice = 5,
+    MyCallTwice = 6,
+    DeMyCallAndNumber = 7,
+    DeMyCallTwiceAndNumber = 8,
+    MyCallAndNumber = 9,
+    MyCallTwiceAndNumber = 10,
+    Number = 11,
+    RogerNumber = 12,
+    RogerNumberTwice = 13,
+}
+
 [Flags]
 public enum StationMessage
 {
@@ -42,3 +68,16 @@ public enum StationMessage
     Nil = 1 << 7,
     Garbage = 1 << 8,
 }
+
+public sealed record ActiveStationSnapshot(
+    string Callsign,
+    StationState StationState,
+    OperatorState OperatorState,
+    int Patience,
+    int RepeatCount,
+    int WordsPerMinute,
+    int PitchOffsetHz,
+    string TrueRst,
+    string TrueExchange1,
+    string TrueExchange2,
+    string? LastReply);

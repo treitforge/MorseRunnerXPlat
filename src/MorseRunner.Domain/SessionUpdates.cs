@@ -17,6 +17,10 @@ public enum SessionEventKind
     AudioDeviceRecovered,
     ControlExpired,
     ResyncRequired,
+    StationReplyStarted,
+    StationReplyCompleted,
+    CallerLeft,
+    QsoLogged,
 }
 
 public sealed record SessionEvent(

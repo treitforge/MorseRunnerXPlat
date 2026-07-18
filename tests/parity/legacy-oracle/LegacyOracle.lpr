@@ -22,6 +22,7 @@ uses
   SerNRGen,
   Station,
   DxOper,
+  DxStn,
   Contest,
   Log,
   CqWpx,
@@ -415,6 +416,110 @@ begin
       ContestValue.Free;
     end;
   finally
+    gDXCCList.Free;
+    gDXCCList := nil;
+  end;
+end;
+
+procedure ObserveLiveStationSession(const Values: TStrings);
+var
+  ContestValue: TContest;
+  StationValue: TDxStation;
+begin
+  RandSeed := 24680;
+  Ini.RunMode := rmSingle;
+  Ini.Lids := False;
+  Ini.Call := 'W7SST';
+  Ini.Wpm := 30;
+  Ini.BufSize := 512;
+  gDXCCList := TDXCC.Create;
+  MakeKeyer;
+  try
+    ContestValue := TCqWpx.Create;
+    Tst := ContestValue;
+    Tst.LoadCallHistory(Ini.Call);
+    StationValue := TDxStation.CreateStation;
+    try
+      Values.Add(Format(
+        'created=%s|station=%d|operator=%d|patience=%d|repeat=%d|nr=%d|rst=%d',
+        [
+          StationValue.MyCall,
+          Ord(StationValue.State),
+          Ord(StationValue.Oper.State),
+          StationValue.Oper.Patience,
+          StationValue.Oper.RepeatCnt,
+          StationValue.NR,
+          StationValue.RST
+        ]));
+
+      Tst.Me.HisCall := StationValue.MyCall;
+      StationValue.ProcessEvent(evMeStarted);
+      Tst.Me.Msg := [msgHisCall];
+      StationValue.ProcessEvent(evMeFinished);
+      Values.Add(Format(
+        'after-call=%d|operator=%d|patience=%d',
+        [
+          Ord(StationValue.State),
+          Ord(StationValue.Oper.State),
+          StationValue.Oper.Patience
+        ]));
+
+      StationValue.ProcessEvent(evTimeout);
+      Values.Add(Format(
+        'number-reply=%d|operator=%d|messages=%s|text=%s',
+        [
+          Ord(StationValue.State),
+          Ord(StationValue.Oper.State),
+          ToStr(StationValue.Msg),
+          StationValue.MsgText
+        ]));
+
+      StationValue.Envelope := nil;
+      StationValue.Tick;
+      Values.Add(Format(
+        'after-number-sent=%d|operator=%d',
+        [Ord(StationValue.State), Ord(StationValue.Oper.State)]));
+
+      StationValue.ProcessEvent(evMeStarted);
+      Tst.Me.Msg := [msgNR];
+      StationValue.ProcessEvent(evMeFinished);
+      Values.Add(Format(
+        'after-exchange=%d|operator=%d|patience=%d',
+        [
+          Ord(StationValue.State),
+          Ord(StationValue.Oper.State),
+          StationValue.Oper.Patience
+        ]));
+
+      StationValue.ProcessEvent(evTimeout);
+      Values.Add(Format(
+        'end-reply=%d|operator=%d|messages=%s|text=%s',
+        [
+          Ord(StationValue.State),
+          Ord(StationValue.Oper.State),
+          ToStr(StationValue.Msg),
+          StationValue.MsgText
+        ]));
+
+      StationValue.Envelope := nil;
+      StationValue.Tick;
+      StationValue.ProcessEvent(evMeStarted);
+      Tst.Me.Msg := [msgTU];
+      StationValue.ProcessEvent(evMeFinished);
+      Values.Add(Format(
+        'after-tu=%d|operator=%d|patience=%d',
+        [
+          Ord(StationValue.State),
+          Ord(StationValue.Oper.State),
+          StationValue.Oper.Patience
+        ]));
+    finally
+      StationValue.Free;
+      Tst := nil;
+      ContestValue.Free;
+    end;
+  finally
+    DestroyKeyer;
     gDXCCList.Free;
     gDXCCList := nil;
   end;
@@ -1191,6 +1296,8 @@ begin
       ObserveSimulationRuntime(Values)
     else if Scenario = 'simulation.live-operator-session' then
       ObserveLiveOperatorSession(Values)
+    else if Scenario = 'simulation.live-station-session' then
+      ObserveLiveStationSession(Values)
     else if Scenario = 'logging.scoring-rate-and-results' then
       ObserveLogging(Values)
     else if Scenario = 'contest.cq-wpx-scoring' then

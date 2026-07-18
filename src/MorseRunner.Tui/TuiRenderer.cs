@@ -123,6 +123,7 @@ public static class TuiRenderer
             output,
             Fit(
                 $" {state.Status}  |  CALLER {CallerState(snapshot?.ActiveOperatorState)}"
+                + $"  |  PILEUP {snapshot?.ActiveStations?.Count ?? 0}"
                 + $"  |  RIT {snapshot?.RitOffsetHz ?? 0} Hz"
                 + $"  BW {snapshot?.CurrentBandwidthHz ?? 500} Hz"
                 + $"  WPM {snapshot?.CurrentWordsPerMinute ?? 30}",

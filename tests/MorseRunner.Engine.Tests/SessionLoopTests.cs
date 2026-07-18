@@ -47,7 +47,11 @@ public sealed class SessionLoopTests
         Assert.Equal(SessionState.Running, snapshot.State);
         Assert.Equal(16, snapshot.SimulationBlock);
         Assert.Equal(16 * CompatibilityProfile.BlockSize, snapshot.RenderedSamples);
-        Assert.Equal("DX204", snapshot.LastCaller);
+        Assert.Equal("M0MCV", snapshot.LastCaller);
+        Assert.Equal(2, snapshot.ActiveStations?.Count);
+        Assert.Contains(
+            snapshot.ActiveStations!,
+            station => station.Callsign == "M0MCV");
         Assert.Equal(16, sinks[handle.SessionId].BlocksWritten);
         Assert.Equal(
             TimeSpan.FromSeconds(
