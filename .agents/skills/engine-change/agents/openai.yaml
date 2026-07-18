@@ -1,0 +1,4 @@
+interface:
+  display_name: "MorseRunner Engine Change"
+  short_description: "Implement simulation and contest engine changes"
+  default_prompt: "Apply the engine-change workflow to this MorseRunnerXPlat task."

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MorseRunner.Client\MorseRunner.Client.csproj" />
+    <ProjectReference Include="..\MorseRunner.Domain\MorseRunner.Domain.csproj" />
+    <ProjectReference Include="..\MorseRunner.Infrastructure\MorseRunner.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "pre-tool": [
+      {
+        "script": ".github/hooks/scripts/pre-tool-policy.ps1",
+        "tools": ["edit", "create"],
+        "description": "Checks edited files for basic secret and architecture policy violations."
+      }
+    ],
+    "post-tool": [
+      {
+        "script": ".github/hooks/scripts/post-build-check.ps1",
+        "tools": ["powershell"],
+        "description": "Runs lightweight repository checks after relevant build commands."
+      }
+    ]
+  }
+}

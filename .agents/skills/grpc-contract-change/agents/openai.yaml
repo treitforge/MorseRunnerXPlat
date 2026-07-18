@@ -1,0 +1,4 @@
+interface:
+  display_name: "gRPC Contract Change"
+  short_description: "Evolve optional engine service contracts safely"
+  default_prompt: "Apply the grpc-contract-change workflow to this MorseRunnerXPlat task."

@@ -1,0 +1,43 @@
+{
+  "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "parityId": "audio-dsp.legacy-processing",
+  "oracle": "tests/parity/legacy-oracle/LegacyOracle.lpr",
+  "toolchain": {
+    "lazarus": "4.6",
+    "fpc": "3.2.2",
+    "target": "x86_64-win64"
+  },
+  "values": [
+    "morse=-.-. --.-  - . ... -~",
+    "envelope-length=26624",
+    "true-envelope-length=26163",
+    "envelope[0]=0.000001122",
+    "envelope[32]=0.019463515",
+    "envelope[64]=0.319153339",
+    "envelope[96]=0.851711273",
+    "envelope[128]=0.997168958",
+    "envelope[160]=1.000000000",
+    "envelope[192]=1.000000000",
+    "envelope[224]=1.000000000",
+    "downmix[0]=1.000000000,0.000000000",
+    "downmix[1]=1.414213538,-1.414213538",
+    "downmix[2]=-0.000000131,-3.000000000",
+    "downmix[3]=-2.828427315,-2.828426838",
+    "downmix[4]=-5.000000000,0.000000437",
+    "downmix[5]=-4.242640018,4.242640972",
+    "downmix[6]=0.000000918,7.000000000",
+    "downmix[7]=5.656855106,5.656853199",
+    "quick-average[0]=0.062500000",
+    "quick-average[1]=0.250000000",
+    "quick-average[2]=0.625000000",
+    "quick-average[3]=1.250000000",
+    "quick-average[4]=2.062500000",
+    "quick-average[5]=3.000000000",
+    "quick-average[6]=4.000000000",
+    "quick-average[7]=5.000000000",
+    "quick-average[8]=6.000000000",
+    "quick-average[9]=7.000000000",
+    "quick-average[10]=8.000000000",
+    "quick-average[11]=9.000000000"
+  ]
+}

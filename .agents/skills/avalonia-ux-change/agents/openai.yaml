@@ -1,0 +1,4 @@
+interface:
+  display_name: "Avalonia UX Change"
+  short_description: "Build keyboard-first Avalonia user experiences"
+  default_prompt: "Apply the avalonia-ux-change workflow to this MorseRunnerXPlat task."

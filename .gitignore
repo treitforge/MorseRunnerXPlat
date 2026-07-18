@@ -12,6 +12,8 @@
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
+!tools/release/
+!tools/release/**
 x64/
 x86/
 [Ww][Ii][Nn]32/
@@ -38,6 +40,13 @@ ScaffoldingReadMe.txt
 
 # dotenv environment variables file
 .env
+
+# Repository-local Python tooling managed by uv
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
 
 # Others
 ~$*

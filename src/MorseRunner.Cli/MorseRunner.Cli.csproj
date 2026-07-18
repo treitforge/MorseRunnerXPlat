@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MorseRunner.Client\MorseRunner.Client.csproj" />
+    <ProjectReference Include="..\MorseRunner.Domain\MorseRunner.Domain.csproj" />
+    <ProjectReference Include="..\MorseRunner.Grpc\MorseRunner.Grpc.csproj" />
+    <ProjectReference Include="..\MorseRunner.Infrastructure\MorseRunner.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

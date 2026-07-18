@@ -1,0 +1,36 @@
+<Window
+    x:Class="MorseRunner.App.Views.HelpWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Width="660"
+    Height="540"
+    MinWidth="520"
+    MinHeight="420"
+    WindowStartupLocation="CenterOwner"
+    Background="#07111B">
+  <Grid Margin="28" RowDefinitions="Auto,*,Auto" RowSpacing="18">
+    <TextBlock
+        x:Name="Heading"
+        FontSize="25"
+        FontWeight="SemiBold"
+        Foreground="#7CE7CB" />
+    <ScrollViewer Grid.Row="1">
+      <TextBlock
+          x:Name="Body"
+          AutomationProperties.Name="Help content"
+          FontFamily="Consolas"
+          FontSize="15"
+          Foreground="#DCE7EF"
+          LineHeight="23"
+          TextWrapping="Wrap" />
+    </ScrollViewer>
+    <Button
+        x:Name="CloseButton"
+        Grid.Row="2"
+        HorizontalAlignment="Right"
+        AutomationProperties.Name="Close help"
+        Click="CloseClick"
+        Content="Close"
+        IsDefault="True" />
+  </Grid>
+</Window>

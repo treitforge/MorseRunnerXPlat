@@ -1,0 +1,8 @@
+<Project>
+  <Target Name="RequireCentralPackageVersions"
+          BeforeTargets="CollectPackageReferences"
+          Condition="'@(PackageReference)' != ''">
+    <Error Condition="'%(PackageReference.Version)' != ''"
+           Text="Package versions must be declared in Directory.Packages.props, not in project files." />
+  </Target>
+</Project>

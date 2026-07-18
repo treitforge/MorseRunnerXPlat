@@ -1,0 +1,16 @@
+{
+  "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "parityId": "simulation.live-operator-session",
+  "oracle": "tests/parity/legacy-oracle/LegacyOracle.lpr",
+  "toolchain": {
+    "lazarus": "4.6",
+    "fpc": "3.2.2",
+    "target": "x86_64-win64"
+  },
+  "values": [
+    "joined=1",
+    "after-call=2",
+    "after-exchange=5",
+    "after-tu=6"
+  ]
+}
