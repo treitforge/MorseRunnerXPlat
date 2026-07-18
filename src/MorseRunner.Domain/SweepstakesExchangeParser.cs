@@ -1,7 +1,5 @@
 using System.Text.RegularExpressions;
-using MorseRunner.Domain;
-
-namespace MorseRunner.Infrastructure;
+namespace MorseRunner.Domain;
 
 public sealed record SweepstakesExchange(
     int SerialNumber,

@@ -252,6 +252,7 @@ message SessionSnapshotMessage {
   string last_logged_call = 23;
   ControlLeaseSummaryMessage control_lease = 24;
   OperatorStateMessage active_operator_state = 25;
+  int32 qso_rate_per_hour = 26;
 }
 
 enum OperatorStateMessage {
@@ -425,6 +426,7 @@ message SessionResultMessage {
   int32 score = 4;
   int64 elapsed_ticks = 5;
   SessionStateMessage state = 6;
+  int32 qso_rate_per_hour = 7;
 }
 
 enum ResultExportFormat {

@@ -54,8 +54,31 @@ public sealed class XPlatLoggingTarget : IParityTarget
         values.Add($"column-1={qso.HasColumnError(1)}");
         values.Add($"column-5={qso.HasColumnError(5)}");
         values.Add($"column-31={qso.HasColumnError(31)}");
+        values.Add($"rate[0]={QsoRateCalculator.Calculate([], TimeSpan.Zero)}");
+        int oneMinuteRate = QsoRateCalculator.Calculate(
+            CreateQsos(10, 30, 59),
+            TimeSpan.FromSeconds(60));
+        int tenMinuteRate = QsoRateCalculator.Calculate(
+            CreateQsos(100, 300, 301, 599),
+            TimeSpan.FromSeconds(600));
+        int emptyRate = QsoRateCalculator.Calculate(
+            [],
+            TimeSpan.FromSeconds(600));
+        values.Add($"rate[60]={oneMinuteRate}");
+        values.Add($"rate[600]={tenMinuteRate}");
+        values.Add($"rate[600-empty]={emptyRate}");
         return [.. values];
     }
+
+    private static Qso[] CreateQsos(params int[] seconds) =>
+        seconds
+            .Select(
+                value => new Qso
+                {
+                    Timestamp = DateTimeOffset.UnixEpoch
+                        + TimeSpan.FromSeconds(value),
+                })
+            .ToArray();
 
     private static string[] ObserveQsoContract()
     {

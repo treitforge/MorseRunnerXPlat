@@ -26,6 +26,7 @@ $scenarios = @(
     'logging.scoring-rate-and-results'
     'contest.cq-wpx-scoring'
     'contest.cwt-scoring'
+    'contest.remaining-scoring'
     'audio.legacy-adapters'
     'contest.legacy-implementations'
 )

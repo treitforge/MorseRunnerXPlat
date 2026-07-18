@@ -425,6 +425,29 @@ var
   Index: Integer;
   Multipliers: TMultList;
   Qso: TQso;
+
+  function RateAt(
+    const ElapsedSeconds: Single;
+    const QsoSeconds: array of Single): Integer;
+  var
+    Count: Integer;
+    DurationDays: Single;
+    QsoIndex: Integer;
+    TimeDays: Single;
+  begin
+    if ElapsedSeconds = 0 then
+      Exit(0);
+    TimeDays := ElapsedSeconds / 86400;
+    DurationDays := Min(5 / 1440, TimeDays);
+    Count := 0;
+    for QsoIndex := High(QsoSeconds) downto Low(QsoSeconds) do
+      if (QsoSeconds[QsoIndex] / 86400) >
+          (TimeDays - DurationDays) then
+        Inc(Count)
+      else
+        Break;
+    Result := Round(Count / DurationDays / 24);
+  end;
 begin
   Values.Add('score[-1]=' + FormatScore(-1));
   Values.Add('score[0]=' + FormatScore(0));
@@ -452,6 +475,11 @@ begin
   Values.Add('column-1=' + BoolToStr(Qso.TestColumnErrorFlag(1), True));
   Values.Add('column-5=' + BoolToStr(Qso.TestColumnErrorFlag(5), True));
   Values.Add('column-31=' + BoolToStr(Qso.TestColumnErrorFlag(31), True));
+  Values.Add('rate[0]=' + IntToStr(RateAt(0, [])));
+  Values.Add('rate[60]=' + IntToStr(RateAt(60, [10, 30, 59])));
+  Values.Add(
+    'rate[600]=' + IntToStr(RateAt(600, [100, 300, 301, 599])));
+  Values.Add('rate[600-empty]=' + IntToStr(RateAt(600, [])));
 end;
 
 procedure ObserveCqWpxScoring(const Values: TStrings);
@@ -617,6 +645,386 @@ begin
     Multipliers.Free;
     WorkedCalls.Free;
     ContestValue.Free;
+    gDXCCList.Free;
+    gDXCCList := nil;
+  end;
+end;
+
+procedure AddExchangeValidation(
+  const Values: TStrings;
+  const Name: string;
+  const ContestId: TSimContest;
+  const ContestValue: TContest;
+  const ValidExchange: string);
+var
+  ErrorText: string;
+  Tokens: TStringList;
+begin
+  Ini.SimContest := ContestId;
+  ActiveContest := @ContestDefinitions[ContestId];
+  Tst := ContestValue;
+  Tokens := TStringList.Create;
+  try
+    ContestValue.OnSetMyCall('W7SST', ErrorText);
+    ErrorText := '';
+    Values.Add(
+      Name + '.valid='
+      + BoolToStr(
+          ContestValue.ValidateMyExchange(
+            ValidExchange,
+            Tokens,
+            ErrorText),
+          True)
+      + '|'
+      + ErrorText);
+    ErrorText := '';
+    Values.Add(
+      Name + '.invalid='
+      + BoolToStr(
+          ContestValue.ValidateMyExchange('', Tokens, ErrorText),
+          True)
+      + '|'
+      + ErrorText);
+  finally
+    Tokens.Free;
+  end;
+end;
+
+procedure AddScoredQso(
+  const Values: TStrings;
+  const Name: string;
+  const Index: Integer;
+  const ContestValue: TContest;
+  const WorkedCalls: TStringList;
+  const Multipliers: TMultList;
+  var VerifiedPoints: Integer;
+  const Call: string;
+  const Exchange1: string;
+  const Exchange2: string;
+  const TrueExchange2: string = '';
+  const Section: string = '');
+var
+  PreviousIndex: Integer;
+  Qso: TQso;
+  IsDuplicate: Boolean;
+begin
+  FillChar(Qso, SizeOf(Qso), 0);
+  Qso.Call := Call;
+  Qso.Rst := 599;
+  Qso.Exch1 := Exchange1;
+  Qso.Exch2 := Exchange2;
+  Qso.TrueExch2 := TrueExchange2;
+  Qso.Nr := StrToIntDef(Exchange2, 0);
+  Qso.Sect := Section;
+  Qso.Pfx := ExtractPrefix(Call);
+  Qso.MultStr := ContestValue.ExtractMultiplier(@Qso);
+  IsDuplicate := False;
+  for PreviousIndex := 0 to WorkedCalls.Count - 1 do
+    if WorkedCalls[PreviousIndex] = Qso.Call then
+      IsDuplicate := True;
+  Qso.Dupe := IsDuplicate;
+
+  if not Qso.Dupe then
+  begin
+    Inc(VerifiedPoints, Qso.Points);
+    Multipliers.ApplyMults(Qso.MultStr);
+  end;
+
+  Values.Add(Format(
+    '%s.qso[%d]=%s|%s|%d|%s|%d|%d|%d',
+    [
+      Name,
+      Index,
+      Qso.Call,
+      Qso.MultStr,
+      Qso.Points,
+      BoolToStr(Qso.Dupe, True),
+      VerifiedPoints,
+      Multipliers.Count,
+      VerifiedPoints * Multipliers.Count
+    ]));
+  WorkedCalls.Add(Qso.Call);
+end;
+
+function LegacyCallToScore(const CallValue: string): Integer;
+var
+  Encoded: string;
+  Index: Integer;
+begin
+  Encoded := Keyer.Encode(CallValue);
+  Result := -1;
+  for Index := 1 to Length(Encoded) do
+    case Encoded[Index] of
+      '.': Inc(Result, 2);
+      '-': Inc(Result, 4);
+      ' ': Inc(Result, 2);
+    end;
+end;
+
+procedure ObserveRemainingContestScoring(const Values: TStrings);
+var
+  ContestValue: TContest;
+  ErrorText: string;
+  HstScore: Integer;
+  Index: Integer;
+  Multipliers: TMultList;
+  ScoreValue: Integer;
+  WorkedCalls: TStringList;
+begin
+  gDXCCList := TDXCC.Create;
+  WorkedCalls := TStringList.Create;
+  Multipliers := TMultList.Create;
+  try
+    ContestValue := TArrlFieldDay.Create;
+    try
+      AddExchangeValidation(
+        Values, 'field-day', scFieldDay, ContestValue, '3A OR');
+      ScoreValue := 0;
+      AddScoredQso(
+        Values, 'field-day', 0, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'K1ABC', '3A', 'OR');
+      AddScoredQso(
+        Values, 'field-day', 1, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'K2XYZ', '1D', 'EMA');
+      AddScoredQso(
+        Values, 'field-day', 2, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'K1ABC', '3A', 'OR');
+    finally
+      Tst := nil;
+      ContestValue.Free;
+    end;
+
+    WorkedCalls.Clear;
+    Multipliers.Clear;
+    ContestValue := TNcjNaQp.Create;
+    try
+      AddExchangeValidation(
+        Values, 'naqp', scNaQp, ContestValue, 'ALEX ON');
+      ScoreValue := 0;
+      AddScoredQso(
+        Values, 'naqp', 0, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'W1ABC', 'ALEX', 'MA');
+      AddScoredQso(
+        Values, 'naqp', 1, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'VE3ABC', 'PAT', 'ON');
+      AddScoredQso(
+        Values, 'naqp', 2, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'DL1ABC', 'HANS', 'DX');
+      AddScoredQso(
+        Values, 'naqp', 3, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'W1ABC', 'ALEX', 'MA');
+    finally
+      Tst := nil;
+      ContestValue.Free;
+    end;
+
+    ContestValue := TCqWpx.Create;
+    try
+      AddExchangeValidation(
+        Values, 'hst', scHst, ContestValue, '5NN 123');
+      MakeKeyer;
+      try
+        WorkedCalls.Clear;
+        HstScore := 0;
+        for Index := 0 to 3 do
+        begin
+          case Index of
+            0: ErrorText := 'E';
+            1: ErrorText := 'T';
+            2, 3: ErrorText := 'K1ABC';
+          end;
+          ScoreValue := LegacyCallToScore(ErrorText);
+          if WorkedCalls.IndexOf(ErrorText) < 0 then
+            Inc(HstScore, ScoreValue);
+          Values.Add(Format(
+            'hst.qso[%d]=%s|%d|%s|%d',
+            [
+              Index,
+              ErrorText,
+              ScoreValue,
+              BoolToStr(WorkedCalls.IndexOf(ErrorText) >= 0, True),
+              HstScore
+            ]));
+          WorkedCalls.Add(ErrorText);
+        end;
+      finally
+        DestroyKeyer;
+      end;
+    finally
+      Tst := nil;
+      ContestValue.Free;
+    end;
+
+    WorkedCalls.Clear;
+    Multipliers.Clear;
+    ContestValue := TCqWw.Create;
+    try
+      AddExchangeValidation(
+        Values, 'cqww', scCQWW, ContestValue, '5NN 3');
+      ContestValue.LoadCallHistory('W7SST');
+      ScoreValue := 0;
+      AddScoredQso(
+        Values, 'cqww', 0, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'W1ABC', '599', '3');
+      AddScoredQso(
+        Values, 'cqww', 1, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'VE3ABC', '599', '4');
+      AddScoredQso(
+        Values, 'cqww', 2, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'DL1ABC', '599', '14');
+      AddScoredQso(
+        Values, 'cqww', 3, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'K1ABC/MM', '599', '5');
+      AddScoredQso(
+        Values, 'cqww', 4, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'DL1ABC', '599', '14');
+    finally
+      Tst := nil;
+      ContestValue.Free;
+    end;
+
+    WorkedCalls.Clear;
+    Multipliers.Clear;
+    ContestValue := TArrlDx.Create;
+    try
+      AddExchangeValidation(
+        Values, 'arrl-dx', scArrlDx, ContestValue, '5NN ON');
+      ContestValue.OnSetMyCall('W7SST', ErrorText);
+      ScoreValue := 0;
+      AddScoredQso(
+        Values, 'arrl-dx', 0, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'DL1ABC', '599', 'KW');
+      AddScoredQso(
+        Values, 'arrl-dx', 1, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'F6ABC', '599', '100');
+      AddScoredQso(
+        Values, 'arrl-dx', 2, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'DL1ABC', '599', 'KW');
+    finally
+      Tst := nil;
+      ContestValue.Free;
+    end;
+
+    WorkedCalls.Clear;
+    Multipliers.Clear;
+    ContestValue := TCWSST.Create;
+    try
+      AddExchangeValidation(
+        Values, 'sst', scSst, ContestValue, 'BRUCE MA');
+      ScoreValue := 0;
+      AddScoredQso(
+        Values, 'sst', 0, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'W1ABC', 'BRUCE', 'MA', 'MA');
+      AddScoredQso(
+        Values, 'sst', 1, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'VE3ABC', 'PAT', 'ON', 'ON');
+      AddScoredQso(
+        Values, 'sst', 2, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'DL1ABC', 'HANS', 'DX', 'DX');
+      AddScoredQso(
+        Values, 'sst', 3, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'W1ABC', 'BRUCE', 'MA', 'MA');
+    finally
+      Tst := nil;
+      ContestValue.Free;
+    end;
+
+    WorkedCalls.Clear;
+    Multipliers.Clear;
+    ContestValue := TALLJA.Create;
+    try
+      AddExchangeValidation(
+        Values, 'all-ja', scAllJa, ContestValue, '5NN 10H');
+      ScoreValue := 0;
+      AddScoredQso(
+        Values, 'all-ja', 0, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'JA1ABC', '599', '10H');
+      AddScoredQso(
+        Values, 'all-ja', 1, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'JA2XYZ', '599', '101M');
+      AddScoredQso(
+        Values, 'all-ja', 2, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'JA1ABC', '599', '10H');
+    finally
+      Tst := nil;
+      ContestValue.Free;
+    end;
+
+    WorkedCalls.Clear;
+    Multipliers.Clear;
+    ContestValue := TACAG.Create;
+    try
+      AddExchangeValidation(
+        Values, 'acag', scAcag, ContestValue, '5NN 1002H');
+      ScoreValue := 0;
+      AddScoredQso(
+        Values, 'acag', 0, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'JA1ABC', '599', '1002H');
+      AddScoredQso(
+        Values, 'acag', 1, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'JA2XYZ', '599', '01001M');
+      AddScoredQso(
+        Values, 'acag', 2, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'JA1ABC', '599', '1002H');
+    finally
+      Tst := nil;
+      ContestValue.Free;
+    end;
+
+    WorkedCalls.Clear;
+    Multipliers.Clear;
+    ContestValue := TIaruHf.Create;
+    try
+      AddExchangeValidation(
+        Values, 'iaru-hf', scIaruHf, ContestValue, '5NN 6');
+      ContestValue.OnSetMyCall('W7SST', ErrorText);
+      ContestValue.Me.Exch2 := '6';
+      ScoreValue := 0;
+      AddScoredQso(
+        Values, 'iaru-hf', 0, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'W1ABC', '599', '6');
+      AddScoredQso(
+        Values, 'iaru-hf', 1, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'VE3ABC', '599', '9');
+      AddScoredQso(
+        Values, 'iaru-hf', 2, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'DL1ABC', '599', '28');
+      AddScoredQso(
+        Values, 'iaru-hf', 3, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'W1AW', '599', 'ARRL');
+      AddScoredQso(
+        Values, 'iaru-hf', 4, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'DL1ABC', '599', '28');
+    finally
+      Tst := nil;
+      ContestValue.Free;
+    end;
+
+    WorkedCalls.Clear;
+    Multipliers.Clear;
+    ContestValue := TSweepstakes.Create;
+    try
+      AddExchangeValidation(
+        Values, 'arrl-ss', scArrlSS, ContestValue, 'A 72 OR');
+      ScoreValue := 0;
+      AddScoredQso(
+        Values, 'arrl-ss', 0, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'K1ABC', '123 A', '72 OR', '', 'OR');
+      AddScoredQso(
+        Values, 'arrl-ss', 1, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'K2XYZ', '124 B', '80 ID', '', 'ID');
+      AddScoredQso(
+        Values, 'arrl-ss', 2, ContestValue, WorkedCalls,
+        Multipliers, ScoreValue, 'K1ABC', '125 A', '72 OR', '', 'OR');
+    finally
+      Tst := nil;
+      ContestValue.Free;
+    end;
+  finally
+    Tst := nil;
+    ActiveContest := @ContestDefinitions[scWpx];
+    Multipliers.Free;
+    WorkedCalls.Free;
     gDXCCList.Free;
     gDXCCList := nil;
   end;
@@ -789,6 +1197,8 @@ begin
       ObserveCqWpxScoring(Values)
     else if Scenario = 'contest.cwt-scoring' then
       ObserveCwtScoring(Values)
+    else if Scenario = 'contest.remaining-scoring' then
+      ObserveRemainingContestScoring(Values)
     else if Scenario = 'audio.legacy-adapters' then
       ObserveAudioAdapter(Values)
     else if Scenario = 'contest.legacy-implementations' then

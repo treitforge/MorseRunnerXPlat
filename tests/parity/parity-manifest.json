@@ -442,7 +442,7 @@
       ],
       "assertions": {
         "fixtureComparison": "exact",
-        "observedValueCount": 13
+        "observedValueCount": 17
       },
       "platforms": [
         "windows",

@@ -324,6 +324,7 @@ public static class TransportMapper
             RitOffsetHz = value.RitOffsetHz,
             LastLoggedCall = value.LastLoggedCall ?? String.Empty,
             ActiveOperatorState = ToTransport(value.ActiveOperatorState),
+            QsoRatePerHour = value.QsoRatePerHour,
         };
         if (lease is not null)
         {
@@ -364,7 +365,8 @@ public static class TransportMapper
             value.CurrentBandwidthHz,
             value.RitOffsetHz,
             EmptyToNull(value.LastLoggedCall),
-            ToDomain(value.ActiveOperatorState));
+            ToDomain(value.ActiveOperatorState),
+            value.QsoRatePerHour);
 
     private static Contract.OperatorStateMessage ToTransport(
         Domain.OperatorState? value) =>
@@ -536,6 +538,7 @@ public static class TransportMapper
             Score = value.Score,
             ElapsedTicks = value.ElapsedSimulationTime.Ticks,
             State = ToTransport(value.State),
+            QsoRatePerHour = value.QsoRatePerHour,
         };
 
     public static Domain.SessionResult ToDomain(
@@ -546,7 +549,8 @@ public static class TransportMapper
             value.QsoCount,
             value.Score,
             TimeSpan.FromTicks(value.ElapsedTicks),
-            ToDomain(value.State));
+            ToDomain(value.State),
+            value.QsoRatePerHour);
 
     public static Domain.SessionId ParseSessionId(string value) =>
         new(ParseGuid(value, "session_id"));

@@ -103,7 +103,8 @@ public sealed record SessionSnapshot(
     int CurrentBandwidthHz = 500,
     int RitOffsetHz = 0,
     string? LastLoggedCall = null,
-    OperatorState? ActiveOperatorState = null);
+    OperatorState? ActiveOperatorState = null,
+    int QsoRatePerHour = 0);
 
 public sealed record AudioOutputDevice(
     string Name,
@@ -129,4 +130,5 @@ public sealed record SessionResult(
     int QsoCount,
     int Score,
     TimeSpan ElapsedSimulationTime,
-    SessionState State);
+    SessionState State,
+    int QsoRatePerHour = 0);

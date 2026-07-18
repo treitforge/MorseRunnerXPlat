@@ -20,6 +20,10 @@
     "column-0=True",
     "column-1=False",
     "column-5=True",
-    "column-31=True"
+    "column-31=True",
+    "rate[0]=0",
+    "rate[60]=180",
+    "rate[600]=24",
+    "rate[600-empty]=0"
   ]
 }

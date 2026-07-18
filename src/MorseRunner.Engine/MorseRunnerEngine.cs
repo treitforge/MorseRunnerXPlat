@@ -129,14 +129,21 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
     public SessionResult GetResult(SessionId sessionId)
     {
         ThrowIfDisposed();
-        SessionSnapshot snapshot = GetSession(sessionId).Snapshot;
+        EngineSession session = GetSession(sessionId);
+        SessionSnapshot snapshot = session.Snapshot;
+        IReadOnlyList<Qso> qsos = session.CompletedQsos;
         return new(
             snapshot.SessionId,
             snapshot.ContestId,
-            snapshot.QsoCount,
-            snapshot.Score,
+            qsos.Count,
+            ContestResultCalculator.CalculateScore(
+                snapshot.ContestId,
+                qsos),
             snapshot.ElapsedSimulationTime,
-            snapshot.State);
+            snapshot.State,
+            QsoRateCalculator.Calculate(
+                qsos,
+                snapshot.ElapsedSimulationTime));
     }
 
     public async Task CloseSessionAsync(

@@ -8,9 +8,9 @@ radio-control, pause, resume, stop, recording, and help workflows operate
 end to end.
 
 Full 1:1 legacy compatibility is not yet achieved. Release remains blocked by
-the partial and missing rows below, most importantly contest-specific scoring
-and exchanges beyond the completed CQ WPX slice, realistic station state
-machines, advanced legacy settings, and cross-platform visual verification.
+the partial and missing rows below, most importantly realistic station state
+machines and their true-exchange verification, advanced legacy settings, and
+cross-platform visual verification.
 
 ## Evidence used
 
@@ -42,7 +42,7 @@ the partial rows below.
 | Entry formatting | Uppercase and legacy A/E/N/O/T substitutions | Text filters and focus selection | Field-aware filters and replacement | Implemented for the inventoried transformations. |
 | RIT, bandwidth, and speed | Arrow and page keys with modifiers | Live semantic radio commands and snapshot values | Same commands and values | Implemented. |
 | Pause, resume, stop, restart | Stop and run lifecycle | Pause/resume extensions plus Stop and clean restart | Same | Implemented. |
-| Live QSO log and score | Main log, score, and result views | Bound log with time, call, RST, exchange, result, and duplicate status | Responsive terminal log with the same outcome | CQ WPX one-point QSOs, unique-prefix multipliers, verified score, and `DUP` behavior are legacy-golden and cross-UX tested. Other contests remain simplified. |
+| Live QSO log and score | Main log, score, rate, and result views | Bound log with time, call, RST, exchange, result, and duplicate status | Responsive terminal log with the same outcome | All 12 contest point, multiplier, total, corrected-retry, and `DUP` paths are engine-owned and legacy-golden. The rolling rate is available through snapshots and results. Dedicated result views remain follow-up UX work. |
 | Settings persistence | Legacy INI | Atomic versioned settings store with legacy-compatible keys | Session setup is not yet persisted | Partial. |
 | Activity and band conditions | Activity, QSK, QSB, QRM, QRN, flutter, LIDs | Passed through session settings; deterministic QSB/QRM/QRN/flutter DSP and activity/LIDs behavior | Same settings through Ctrl+1 through Ctrl+6 | Partial. QSK is carried but its complete legacy keying semantics still need an acceptance vector. |
 | Monitor level | Persistent self-monitor level | Applied as engine output gain | Fixed default | Partial. |
@@ -55,22 +55,21 @@ the partial rows below.
 
 | Area | Current gap | Required proof |
 |---|---|---|
-| Contest scoring and multipliers | CQ WPX scoring and duplicate behavior are integrated. The other 11 contests still use a simplified point result. | Identical legacy/XPlat golden QSO sequences and final score for all 12 contests. |
-| Exchange validation and correction | CQ WPX applies callsign, RST, and serial presence validation plus duplicate detection. True-exchange correction, NIL handling, and the other contest-specific transitions are not integrated. | Dual-run acceptance vectors for valid, invalid, corrected, duplicate, and NIL QSOs. |
+| Station-derived exchange verification | Contest-specific entry validation, corrected retry, and duplicate feedback are integrated for all 12 contests. True-exchange correction and NIL classification still require the completed live station truth model. | Seeded dual-run vectors for corrected and NIL QSOs produced by live simulated stations. |
 | Station simulation | The live loop emits simplified seeded callers and does not yet integrate the full operator and station-collection state machines. | Seeded event, reply timing, station-state, and audio vectors against legacy. |
 | Callsign and reference data | Packaged data and parsers exist, but live calls are not yet sourced and annotated through the complete legacy workflow. | Callsign, DXCC, prefix, and contest-file scenario vectors. |
 | Advanced settings | Min/max RX speed, serial-number range, HST operator configuration, and callsign-info presentation are not exposed end to end. | Persisted setting, engine behavior, Avalonia, and TUI workflow tests. |
-| Rate and result experience | Full rate calculations, detailed result breakdown, export, high-score browsing, and submission are incomplete. | Legacy comparison plus offline/error behavior for external services. |
+| Result experience | The legacy five-minute QSO rate and result totals are engine-owned and transported in-process and over gRPC. Detailed views, export polish, high-score browsing, and submission remain incomplete. | Cross-UX result views plus offline/error behavior for external services. |
 | Audio device UX | Device enumeration and recovery exist below the UX, but device selection and recovery dialogs are incomplete. | Physical-device interaction test on each supported OS. |
 | TUI persistence and recording | The TUI exposes session setup and conditions but does not persist them or control WAV recording. | Restart and recording workflows through the TUI. |
 | Visual platforms | Windows live Avalonia interaction is verified. Linux and macOS captures are not yet recorded. | CI or release-machine screenshots and keyboard/focus checks on all three platforms. |
 
 ## Next acceptance slices
 
-1. Extend the CQ WPX live slice with true-exchange correction and NIL vectors,
-   then port the remaining 11 contests in increasing rule complexity.
-2. Replace placeholder caller generation with the existing seeded operator and
+1. Replace placeholder caller generation with the existing seeded operator and
    station state machines, then capture reply and event timing.
+2. Add station-derived true-exchange correction and NIL vectors once live
+   station truth is authoritative.
 3. Complete advanced settings once their engine semantics are acceptance-tested.
 4. Add audio-device recovery UX and TUI persistence/recording.
 5. Record Linux and macOS visual evidence and close every remaining row before

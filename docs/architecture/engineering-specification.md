@@ -1036,23 +1036,60 @@ New built-in contests register through a catalog. Runtime plug-in loading is
 out of scope. The registration mechanism must be testable without reflection
 when practical.
 
-### 13.5 CQ WPX scoring
+### 13.5 Live contest scoring
 
-CQ WPX is the first contest whose live logging rules are integrated into the
-authoritative session loop. The session:
+All 12 catalog contests use one live rule evaluator in the authoritative
+session loop. The evaluator accepts one normalized contact input and returns
+validation, parsed exchange values, points, and the multiplier string. It does
+not own mutable score or log state.
 
-- Removes question marks and normalizes the entered callsign to uppercase.
-- Rejects calls shorter than three characters.
-- Requires a three-character RST and a non-empty received serial number.
-- Awards one point for each verified, non-duplicate QSO.
-- Extracts the legacy WPX prefix from the complete entered callsign.
-- Counts each distinct WPX prefix once.
-- Calculates the verified score as QSO points multiplied by unique prefixes.
-- Logs a repeated callsign as `DUP` without changing points, multipliers, or
-  score.
+The implemented legacy score policies are:
+
+- CQ WPX: one point and each distinct WPX prefix.
+- CWT: one point and each distinct full callsign.
+- ARRL Field Day: two points and the constant multiplier `1`.
+- NAQP: one point and state or province multipliers for North American and
+  Hawaii contacts. The legacy empty DX multiplier remains observable.
+- HST: the additive legacy Morse-element value of each distinct callsign.
+- CQ WW: zone and DXCC entity multipliers with same-entity, same-continent,
+  North American, different-continent, Alaska, Hawaii, and maritime-mobile
+  point rules.
+- ARRL DX: three points and either DXCC entity or state/province multipliers
+  based on the home station.
+- K1USN SST: one point and state, province, or resolved DXCC entity.
+- JARL ALL JA and ACAG: one point and the received prefecture or
+  city/gun/ku code without its power suffix.
+- IARU HF: one, three, or five points based on zone, society, and continent,
+  with the received zone or society as multiplier.
+- ARRL Sweepstakes: two points and the parsed ARRL/RAC section.
+
+Exact-call duplicates are logged with `IsDuplicate`,
+`LogError.Duplicate`, and `DUP`, but do not change verified points,
+multipliers, or score. A rejected exchange does not mutate the QSO log or
+score, so a corrected command with a new request ID can be retried safely.
+
+DXCC geography is resolved once through an immutable engine lookup over the
+canonical packaged `DXCC.LIST` data. Sweepstakes parsing is a pure Domain
+operation. There is no contest-service interface layered over the catalog or
+rule evaluator.
 
 The worked-call set, verified point total, multiplier set, QSO log, and score
 are mutable session state. Only the session loop may change them.
+
+### 13.6 Rate calculation
+
+The displayed QSO rate matches legacy `ShowRate` behavior:
+
+- Before simulation time advances, the rate is zero.
+- Up to five elapsed minutes, all completed QSOs strictly after time zero are
+  counted.
+- After five minutes, only QSOs strictly newer than the five-minute cutoff are
+  counted.
+- The hourly result is rounded to the nearest integer using midpoint-to-even
+  rounding.
+
+The same rate is included in immutable snapshots and completed results, and is
+mapped additively through the external Protobuf contract.
 
 ## 14. Audio and DSP
 
@@ -1927,9 +1964,12 @@ Recorded Phase 3 implementation:
 
 - The infrastructure project embeds all 13 canonical legacy data files with
   exact casing and verified SHA-256 hashes.
-- Pure callsign and WPX-prefix parsing is owned by Domain. DXCC,
-  Sweepstakes-exchange, and legacy INI parsing remain in Infrastructure. All
-  are implemented with pinned Pascal observations as acceptance fixtures.
+- Pure callsign, WPX-prefix, and Sweepstakes-exchange parsing is owned by
+  Domain. General DXCC and legacy INI parsing remain in Infrastructure. The
+  engine links the same canonical packaged DXCC data into a private immutable
+  scoring lookup rather than referencing Infrastructure or duplicating a
+  service boundary. All are implemented with pinned Pascal observations as
+  acceptance fixtures.
 - The exact Free Pascal MT19937 numeric behavior, legacy distribution helpers,
   serial-number selection, QSB processing, and operator state transitions are
   deterministic for a fixed seed.
@@ -1967,17 +2007,16 @@ Exit criteria:
 Recorded Phase 4 implementation:
 
 - All 12 legacy contest definitions have catalog and structural rule adapters.
-- CQ WPX is the first live session-loop scoring slice. Its received-entry
-  validation, one-point QSOs, unique-prefix multipliers, duplicate logging, and
-  verified score progression match a pinned legacy oracle vector.
-- CWT is the second live session-loop scoring slice. It validates the operator
-  name and member-number or QTH fields, awards one point, uses each full worked
-  callsign as a multiplier, and excludes exact-call duplicates from verified
-  points and multipliers. The score progression matches a pinned legacy oracle
-  vector.
-- The remaining ten contest scoring and exchange rule sets are still
-  release-blocking work and must not be inferred from structural adapter
-  coverage.
+- CQ WPX, CWT, and the remaining ten contests have live session-loop
+  validation, points, multipliers, totals, corrected-retry behavior, and
+  duplicate feedback. Supplemental pinned-oracle vectors cover 74 contest
+  scoring, validation, multiplier, and duplicate observations plus four
+  rolling-rate observations. Direct engine workflow tests exercise invalid,
+  corrected, and duplicate attempts for every contest.
+- Station-derived true-exchange correction and NIL classification consume the
+  same QSO error model, but remain coupled to completion of the station and
+  operator state machines in Phase 3. They are not implemented as UI or
+  contest-rule policy.
 - All five run modes are available through the shared session model.
 - Contest, simulation, data, configuration, logging, and result acceptance
   cases pass unchanged against the pinned legacy oracle and XPlat.

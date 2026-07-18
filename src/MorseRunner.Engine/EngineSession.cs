@@ -751,82 +751,40 @@ internal sealed class EngineSession : IAsyncDisposable
             return InvalidState("log a QSO");
         }
 
-        bool isCqWpx = _settings.ContestId == new ContestId("scWpx");
-        bool isCwt = _settings.ContestId == new ContestId("scCwt");
-        string normalizedCall = isCwt
-            ? CwtContestRules.NormalizeCall(command.Call)
-            : CqWpxContestRules.NormalizeCall(command.Call);
-        bool duplicate = false;
-        string prefix = string.Empty;
-        string multiplier = string.Empty;
-        int points = 1;
-        if (isCqWpx)
+        ContestQsoEvaluation evaluation = ContestQsoRules.EvaluateReceived(
+            _settings.ContestId,
+            _settings.StationCall,
+            command);
+        if (!evaluation.Validation.IsValid)
         {
-            ContestValidation validation =
-                CqWpxContestRules.ValidateReceivedQso(
-                    command.Call,
-                    command.Rst,
-                    command.Exchange1);
-            if (!validation.IsValid)
-            {
-                return RejectedResult(
-                    DomainErrorCodes.InvalidSetting,
-                    validation.Error);
-            }
+            return RejectedResult(
+                DomainErrorCodes.InvalidSetting,
+                evaluation.Validation.Error);
+        }
 
-            duplicate = !_workedCalls.Add(normalizedCall);
-            prefix = CallsignParser.ExtractPrefix(normalizedCall);
-            multiplier = prefix;
-            if (!duplicate)
+        bool duplicate = !_workedCalls.Add(evaluation.Call);
+        if (!duplicate)
+        {
+            _verifiedPoints += evaluation.Points;
+            if (evaluation.UsesAdditiveScore)
             {
-                _verifiedPoints += CqWpxContestRules.PointsPerQso;
-                _verifiedMultipliers.Add(prefix);
+                _score = _verifiedPoints;
+            }
+            else
+            {
+                foreach (string multiplier in
+                         evaluation.Multiplier.Split(';'))
+                {
+                    _verifiedMultipliers.Add(multiplier);
+                }
+
                 _score = _verifiedPoints * _verifiedMultipliers.Count;
             }
-        }
-        else if (isCwt)
-        {
-            ContestValidation validation =
-                CwtContestRules.ValidateReceivedQso(
-                    command.Call,
-                    command.Exchange1,
-                    command.Exchange2);
-            if (!validation.IsValid)
-            {
-                return RejectedResult(
-                    DomainErrorCodes.InvalidSetting,
-                    validation.Error);
-            }
-
-            duplicate = !_workedCalls.Add(normalizedCall);
-            prefix = CallsignParser.ExtractPrefix(normalizedCall);
-            multiplier = normalizedCall;
-            points = CwtContestRules.PointsPerQso;
-            if (!duplicate)
-            {
-                _verifiedPoints += points;
-                _verifiedMultipliers.Add(multiplier);
-                _score = _verifiedPoints * _verifiedMultipliers.Count;
-            }
-        }
-        else
-        {
-            if (normalizedCall.Length < 3)
-            {
-                return RejectedResult(
-                    DomainErrorCodes.InvalidSetting,
-                    "A callsign must contain at least three characters.");
-            }
-
-            _score++;
         }
 
         _qsoCount++;
-        _lastLoggedCall = normalizedCall;
+        _lastLoggedCall = evaluation.Call;
         _lastCaller = _lastLoggedCall;
-        int rst = CqWpxContestRules.ParseRst(command.Rst);
-        int serialNumber =
-            CqWpxContestRules.ParseSerialNumber(command.Exchange1);
         Qso qso = new()
         {
             Timestamp = DateTimeOffset.UnixEpoch
@@ -835,17 +793,23 @@ internal sealed class EngineSession : IAsyncDisposable
             Call = _lastLoggedCall,
             TrueCall = _lastLoggedCall,
             RawCallsign = command.Call,
-            Rst = rst,
-            TrueRst = rst,
-            Number = serialNumber,
-            TrueNumber = serialNumber,
+            Rst = evaluation.Rst,
+            TrueRst = evaluation.Rst,
+            Number = evaluation.Number,
+            TrueNumber = evaluation.Number,
+            Precedence = evaluation.Precedence,
+            TruePrecedence = evaluation.Precedence,
+            Check = evaluation.Check,
+            TrueCheck = evaluation.Check,
+            Section = evaluation.Section,
+            TrueSection = evaluation.Section,
             Exchange1 = command.Exchange1,
             TrueExchange1 = command.Exchange1,
             Exchange2 = command.Exchange2,
             TrueExchange2 = command.Exchange2,
-            Prefix = prefix,
-            Multiplier = multiplier,
-            Points = points,
+            Prefix = evaluation.Prefix,
+            Multiplier = evaluation.Multiplier,
+            Points = evaluation.Points,
             IsDuplicate = duplicate,
             ExchangeError = duplicate
                 ? LogError.Duplicate
@@ -990,6 +954,8 @@ internal sealed class EngineSession : IAsyncDisposable
                 UnderrunCount: 0,
                 DroppedBlockCount: 0,
                 IsHealthy: true);
+        TimeSpan elapsed = TimeSpan.FromSeconds(
+            (double)_renderedSamples / CompatibilityProfile.SampleRate);
         return new(
             _engineEpoch,
             _sessionId,
@@ -997,8 +963,7 @@ internal sealed class EngineSession : IAsyncDisposable
             _revision,
             _simulationBlock,
             _renderedSamples,
-            TimeSpan.FromSeconds(
-                (double)_renderedSamples / CompatibilityProfile.SampleRate),
+            elapsed,
             _settings.Seed,
             _settings.ContestId,
             _settings.RunModeId,
@@ -1015,7 +980,8 @@ internal sealed class EngineSession : IAsyncDisposable
             _currentBandwidthHz,
             _ritOffsetHz,
             _lastLoggedCall,
-            _activeOperator?.State);
+            _activeOperator?.State,
+            QsoRateCalculator.Calculate(_completedQsos, elapsed));
     }
 
     private void FailPendingCommands(Exception exception)

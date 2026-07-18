@@ -6,13 +6,13 @@
     "outcome": "pass",
     "source": "tests/parity/legacy-oracle/LegacyOracle.lpr",
     "fixture": "tests/parity/fixtures/legacy/logging-scoring-rate-and-results.json",
-    "observedValueCount": 13,
+    "observedValueCount": 17,
     "toolchain": "Lazarus 4.6, FPC 3.2.2, x86_64-win64"
   },
   "xplat": {
-    "outcome": "fail",
-    "failureCode": "unsupported-capability",
-    "firstDivergence": "The XPlat logging.scoring-rate-and-results capability does not exist."
+    "outcome": "pass",
+    "source": "tests/MorseRunner.LegacyParity.Tests/XPlatLoggingTarget.cs",
+    "observedValueCount": 17
   },
-  "classification": "legacy-green-xplat-red"
+  "classification": "both-green"
 }
