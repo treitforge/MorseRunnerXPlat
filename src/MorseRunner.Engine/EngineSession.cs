@@ -45,6 +45,11 @@ internal sealed class EngineSession : IAsyncDisposable
     private int _ritOffsetHz;
     private int _qsoCount;
     private int _score;
+    private int _verifiedPoints;
+    private readonly HashSet<string> _workedCalls =
+        new(StringComparer.Ordinal);
+    private readonly SortedSet<string> _verifiedMultipliers =
+        new(StringComparer.Ordinal);
     private Qso[] _completedQsos = [];
     private string? _lastLoggedCall;
     private float _qrmPhase;
@@ -697,22 +702,51 @@ internal sealed class EngineSession : IAsyncDisposable
             return InvalidState("log a QSO");
         }
 
-        if (command.Call.Length < 3)
+        bool isCqWpx = _settings.ContestId == new ContestId("scWpx");
+        string normalizedCall = CqWpxContestRules.NormalizeCall(command.Call);
+        bool duplicate = false;
+        string prefix = string.Empty;
+        if (isCqWpx)
         {
-            return RejectedResult(
-                DomainErrorCodes.InvalidSetting,
-                "A callsign must contain at least three characters.");
+            ContestValidation validation =
+                CqWpxContestRules.ValidateReceivedQso(
+                    command.Call,
+                    command.Rst,
+                    command.Exchange1);
+            if (!validation.IsValid)
+            {
+                return RejectedResult(
+                    DomainErrorCodes.InvalidSetting,
+                    validation.Error);
+            }
+
+            duplicate = !_workedCalls.Add(normalizedCall);
+            prefix = CallsignParser.ExtractPrefix(normalizedCall);
+            if (!duplicate)
+            {
+                _verifiedPoints += CqWpxContestRules.PointsPerQso;
+                _verifiedMultipliers.Add(prefix);
+                _score = _verifiedPoints * _verifiedMultipliers.Count;
+            }
+        }
+        else
+        {
+            if (normalizedCall.Length < 3)
+            {
+                return RejectedResult(
+                    DomainErrorCodes.InvalidSetting,
+                    "A callsign must contain at least three characters.");
+            }
+
+            _score++;
         }
 
         _qsoCount++;
-        _score++;
-        _lastLoggedCall = command.Call.ToUpperInvariant();
+        _lastLoggedCall = normalizedCall;
         _lastCaller = _lastLoggedCall;
-        int rst = Int32.TryParse(
-            command.Rst.Replace("N", "9", StringComparison.OrdinalIgnoreCase),
-            out int parsedRst)
-            ? parsedRst
-            : 599;
+        int rst = CqWpxContestRules.ParseRst(command.Rst);
+        int serialNumber =
+            CqWpxContestRules.ParseSerialNumber(command.Exchange1);
         Qso qso = new()
         {
             Timestamp = DateTimeOffset.UnixEpoch
@@ -723,11 +757,20 @@ internal sealed class EngineSession : IAsyncDisposable
             RawCallsign = command.Call,
             Rst = rst,
             TrueRst = rst,
+            Number = serialNumber,
+            TrueNumber = serialNumber,
             Exchange1 = command.Exchange1,
             TrueExchange1 = command.Exchange1,
             Exchange2 = command.Exchange2,
             TrueExchange2 = command.Exchange2,
-            Points = 1,
+            Prefix = prefix,
+            Multiplier = prefix,
+            Points = CqWpxContestRules.PointsPerQso,
+            IsDuplicate = duplicate,
+            ExchangeError = duplicate
+                ? LogError.Duplicate
+                : LogError.None,
+            ErrorText = duplicate ? "DUP" : "   ",
         };
         Qso[] current = _completedQsos;
         Qso[] next = new Qso[current.Length + 1];

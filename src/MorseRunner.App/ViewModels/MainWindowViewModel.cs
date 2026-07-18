@@ -30,7 +30,13 @@ public sealed record QsoLogEntryViewModel(
     string Rst,
     string Exchange,
     int Points,
-    bool IsDuplicate);
+    bool IsDuplicate)
+{
+    public string Result =>
+        IsDuplicate
+            ? "DUP"
+            : Points.ToString(CultureInfo.InvariantCulture);
+}
 
 public sealed class ScoreSummaryEventArgs(
     int Score,
@@ -754,7 +760,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         if (result.Accepted)
         {
             ClearEntryFields();
-            await RefreshQsoLogAsync();
+            Qso? loggedQso = await RefreshQsoLogAsync();
+            if (loggedQso?.IsDuplicate == true)
+            {
+                Status = $"Logged {loggedCall} as a duplicate.";
+            }
         }
 
         await RefreshAsync();
@@ -914,11 +924,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         }
     }
 
-    private async Task RefreshQsoLogAsync()
+    private async Task<Qso?> RefreshQsoLogAsync()
     {
         if (_sessionId is not SessionId sessionId)
         {
-            return;
+            return null;
         }
 
         IReadOnlyList<Qso> qsos = await _client.ListCompletedQsosAsync(
@@ -945,6 +955,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                             qso.IsDuplicate));
                 }
             });
+        return qsos.Count == 0 ? null : qsos[qsos.Count - 1];
     }
 
     private async Task CloseCurrentSessionAsync()

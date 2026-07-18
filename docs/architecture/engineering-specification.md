@@ -1035,6 +1035,24 @@ New built-in contests register through a catalog. Runtime plug-in loading is
 out of scope. The registration mechanism must be testable without reflection
 when practical.
 
+### 13.5 CQ WPX scoring
+
+CQ WPX is the first contest whose live logging rules are integrated into the
+authoritative session loop. The session:
+
+- Removes question marks and normalizes the entered callsign to uppercase.
+- Rejects calls shorter than three characters.
+- Requires a three-character RST and a non-empty received serial number.
+- Awards one point for each verified, non-duplicate QSO.
+- Extracts the legacy WPX prefix from the complete entered callsign.
+- Counts each distinct WPX prefix once.
+- Calculates the verified score as QSO points multiplied by unique prefixes.
+- Logs a repeated callsign as `DUP` without changing points, multipliers, or
+  score.
+
+The worked-call set, verified point total, multiplier set, QSO log, and score
+are mutable session state. Only the session loop may change them.
+
 ## 14. Audio and DSP
 
 ### 14.1 Compatibility render format
@@ -1877,8 +1895,10 @@ Recorded Phase 2 implementation:
   evidence.
 - The deterministic 600 Hz keyed tone renderer preserves state across blocks
   and has a retained SHA-256 reference vector.
-- The Release renderer gate measures zero steady-state managed allocation,
-  p99 below 11.6 ms, and maximum below 23.2 ms for 512-sample blocks.
+- The Release renderer gate measures zero steady-state managed allocation and
+  p99 below 11.6 ms for 512-sample blocks. Single-sample maximum latency is
+  measured only on controlled reference hardware because shared CI scheduler
+  pauses are not renderer execution time.
 - The MiniAudioEx physical probe enumerates devices, opens the Windows default
   device, consumes a four-block queue with zero dropped blocks, reports
   callback health and underruns, and tears down the native context
@@ -1906,8 +1926,9 @@ Recorded Phase 3 implementation:
 
 - The infrastructure project embeds all 13 canonical legacy data files with
   exact casing and verified SHA-256 hashes.
-- Callsign, DXCC, Sweepstakes exchange, and legacy INI parsing are implemented
-  with the pinned Pascal observations as acceptance fixtures.
+- Pure callsign and WPX-prefix parsing is owned by Domain. DXCC,
+  Sweepstakes-exchange, and legacy INI parsing remain in Infrastructure. All
+  are implemented with pinned Pascal observations as acceptance fixtures.
 - The exact Free Pascal MT19937 numeric behavior, legacy distribution helpers,
   serial-number selection, QSB processing, and operator state transitions are
   deterministic for a fixed seed.
@@ -1935,15 +1956,19 @@ Exit criteria:
 
 Recorded Phase 4 implementation:
 
-- All 12 legacy contest definitions have explicit rule adapters for exchange
-  parsing, validation, multipliers, and scoring.
+- All 12 legacy contest definitions have catalog and structural rule adapters.
+- CQ WPX is the first live session-loop scoring slice. Its received-entry
+  validation, one-point QSOs, unique-prefix multipliers, duplicate logging, and
+  verified score progression match a pinned legacy oracle vector.
+- The remaining contest scoring and exchange rules are still release-blocking
+  work and must not be inferred from structural adapter coverage.
 - All five run modes are available through the shared session model.
 - Contest, simulation, data, configuration, logging, and result acceptance
   cases pass unchanged against the pinned legacy oracle and XPlat.
 - The complete manifest reports 20/20 both-green, 1,501/1,501 mapped surfaces,
   and zero functional gaps.
 
-The 20 fixture-level capabilities and 1,501 surface mappings are structural
+The fixture-level capabilities and 1,501 surface mappings are structural
 coverage evidence. They do not supersede end-to-end workflow evidence. The
 behavioral and UX audit in `docs/ux/legacy-compatibility-matrix.md` is the
 release-status source for legacy workflows that require live engine, audio, or

@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using MorseRunner.Domain;
 
 namespace MorseRunner.Infrastructure;
 

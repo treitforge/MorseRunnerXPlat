@@ -6,6 +6,35 @@ namespace MorseRunner.LegacyParity.Tests;
 public sealed class LegacyOracleParityTests
 {
     [Fact]
+    public async Task CqWpxScoringVectorIsBothGreen()
+    {
+        const string parityId = "contest.cq-wpx-scoring";
+        const string fixturePath =
+            "tests/parity/fixtures/legacy/contest-cq-wpx-scoring.json";
+        OracleFixture fixture = LoadFixture(fixturePath);
+        ParityScenario scenario = new(
+            parityId,
+            "contest-rules",
+            fixture.Values);
+        LegacyOracleTarget legacyTarget = new(fixturePath);
+        XPlatContestRulesTarget xplatTarget = new();
+
+        ParityObservation legacy = await legacyTarget.ExecuteAsync(
+            scenario,
+            TestContext.Current.CancellationToken);
+        ParityObservation xplat = await xplatTarget.ExecuteAsync(
+            scenario,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(ParityTargetOutcome.Passed, legacy.Outcome);
+        Assert.Equal(fixture.Values, xplat.Values);
+        Assert.Equal(ParityTargetOutcome.Passed, xplat.Outcome);
+        Assert.Equal(
+            ParityAssessment.BothGreen,
+            ParityAssessmentClassifier.Classify(legacy, xplat));
+    }
+
+    [Fact]
     public async Task ContestRuleVectorsAreBothGreen()
     {
         const string parityId = "contest.legacy-implementations";

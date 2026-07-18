@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace MorseRunner.Infrastructure;
+namespace MorseRunner.Domain;
 
 public static partial class CallsignParser
 {

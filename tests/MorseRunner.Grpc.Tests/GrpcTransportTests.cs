@@ -207,17 +207,22 @@ public sealed class GrpcTransportTests
                     id,
                     3),
                 TestContext.Current.CancellationToken)).Accepted);
-        Assert.True(
-            (await client.ExecuteAsync(
-                new MorseRunner.Domain.LogQsoCommand(
-                    RequestId.New(),
-                    sessionId,
-                    id,
-                    "K1ABC",
-                    "5NN",
-                    "001",
-                    String.Empty),
-                TestContext.Current.CancellationToken)).Accepted);
+        string[] calls = ["K1ABC", "K2XYZ", "K1ABC"];
+        for (int index = 0; index < calls.Length; index++)
+        {
+            Assert.True(
+                (await client.ExecuteAsync(
+                    new MorseRunner.Domain.LogQsoCommand(
+                        RequestId.New(),
+                        sessionId,
+                        id,
+                        calls[index],
+                        "5NN",
+                        (index + 1).ToString(
+                            System.Globalization.CultureInfo.InvariantCulture),
+                        String.Empty),
+                    TestContext.Current.CancellationToken)).Accepted);
+        }
     }
 
     private static void AssertEquivalent(

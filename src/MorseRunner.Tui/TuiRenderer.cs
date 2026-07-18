@@ -99,7 +99,7 @@ public static class TuiRenderer
         Line(output, new string('-', width));
 
         int logRows = Math.Max(2, height - 15);
-        Line(output, Fit(" TIME      CALL         RST  EXCHANGE                 PTS", width));
+        Line(output, Fit(" TIME      CALL         RST  EXCHANGE              RESULT", width));
         IReadOnlyList<Qso> qsos = state.Qsos;
         int start = Math.Max(0, qsos.Count - logRows);
         for (int index = start; index < qsos.Count; index++)
@@ -109,7 +109,7 @@ public static class TuiRenderer
                 output,
                 Fit(
                     $" {qso.Timestamp:HH:mm:ss}  {qso.Call,-12} {qso.Rst,-4}"
-                    + $" {JoinExchange(qso),-24} {qso.Points,3}",
+                    + $" {JoinExchange(qso),-21} {QsoResult(qso),6}",
                     width));
         }
 
@@ -193,6 +193,11 @@ public static class TuiRenderer
             ' ',
             new[] { qso.Exchange1, qso.Exchange2 }
                 .Where(value => !String.IsNullOrWhiteSpace(value)));
+
+    private static string QsoResult(Qso qso) =>
+        qso.IsDuplicate
+            ? "DUP"
+            : qso.Points.ToString(CultureInfo.InvariantCulture);
 
     private static string Center(string value, int width, char fill)
     {

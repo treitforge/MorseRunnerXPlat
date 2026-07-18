@@ -421,6 +421,89 @@ begin
   Values.Add('column-31=' + BoolToStr(Qso.TestColumnErrorFlag(31), True));
 end;
 
+procedure ObserveCqWpxScoring(const Values: TStrings);
+const
+  Calls: array[0..4] of string = (
+    'K1ABC',
+    'K2XYZ',
+    'K1ABC',
+    'DL2XYZ',
+    'F6/W7SST'
+  );
+var
+  CallIndex: Integer;
+  PreviousIndex: Integer;
+  Qso: TQso;
+  ContestValue: TCqWpx;
+  WorkedCalls: TStringList;
+  Multipliers: TMultList;
+  VerifiedPoints: Integer;
+  IsDuplicate: Boolean;
+  ErrorText: string;
+begin
+  gDXCCList := TDXCC.Create;
+  ContestValue := TCqWpx.Create;
+  WorkedCalls := TStringList.Create;
+  Multipliers := TMultList.Create;
+  VerifiedPoints := 0;
+  try
+    ErrorText := '';
+    Values.Add(
+      'call[AB]='
+      + BoolToStr(ContestValue.CheckEnteredCallLength('AB', ErrorText), True)
+      + '|'
+      + ErrorText);
+    ErrorText := '';
+    Values.Add(
+      'call[K1ABC]='
+      + BoolToStr(
+          ContestValue.CheckEnteredCallLength('K1ABC', ErrorText),
+          True)
+      + '|'
+      + ErrorText);
+
+    for CallIndex := Low(Calls) to High(Calls) do
+    begin
+      FillChar(Qso, SizeOf(Qso), 0);
+      Qso.Call := Calls[CallIndex];
+      Qso.Pfx := ExtractPrefix(Qso.Call);
+      Qso.MultStr := ContestValue.ExtractMultiplier(@Qso);
+      IsDuplicate := False;
+      for PreviousIndex := 0 to WorkedCalls.Count - 1 do
+        if WorkedCalls[PreviousIndex] = Qso.Call then
+          IsDuplicate := True;
+      Qso.Dupe := IsDuplicate;
+
+      if not Qso.Dupe then
+      begin
+        Inc(VerifiedPoints, Qso.Points);
+        Multipliers.ApplyMults(Qso.MultStr);
+      end;
+
+      Values.Add(Format(
+        'qso[%d]=%s|%s|%s|%d|%s|%d|%d|%d',
+        [
+          CallIndex,
+          Qso.Call,
+          Qso.Pfx,
+          Qso.MultStr,
+          Qso.Points,
+          BoolToStr(Qso.Dupe, True),
+          VerifiedPoints,
+          Multipliers.Count,
+          VerifiedPoints * Multipliers.Count
+        ]));
+      WorkedCalls.Add(Qso.Call);
+    end;
+  finally
+    Multipliers.Free;
+    WorkedCalls.Free;
+    ContestValue.Free;
+    gDXCCList.Free;
+    gDXCCList := nil;
+  end;
+end;
+
 procedure ObserveAudioAdapter(const Values: TStrings);
 var
   FilePath: string;
@@ -582,6 +665,8 @@ begin
       ObserveSimulationRuntime(Values)
     else if Scenario = 'logging.scoring-rate-and-results' then
       ObserveLogging(Values)
+    else if Scenario = 'contest.cq-wpx-scoring' then
+      ObserveCqWpxScoring(Values)
     else if Scenario = 'audio.legacy-adapters' then
       ObserveAudioAdapter(Values)
     else if Scenario = 'contest.legacy-implementations' then

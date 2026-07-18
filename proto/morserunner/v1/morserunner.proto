@@ -361,6 +361,27 @@ message TakeControlResponse { ControlLeaseMessage lease = 1; }
 
 message ListCompletedQsosRequest { string session_id = 1; }
 
+enum QsoLogErrorMessage {
+  QSO_LOG_ERROR_MESSAGE_UNSPECIFIED = 0;
+  QSO_LOG_ERROR_MESSAGE_NONE = 1;
+  QSO_LOG_ERROR_MESSAGE_NIL = 2;
+  QSO_LOG_ERROR_MESSAGE_DUPLICATE = 3;
+  QSO_LOG_ERROR_MESSAGE_CALL = 4;
+  QSO_LOG_ERROR_MESSAGE_RST = 5;
+  QSO_LOG_ERROR_MESSAGE_NAME = 6;
+  QSO_LOG_ERROR_MESSAGE_CLASS = 7;
+  QSO_LOG_ERROR_MESSAGE_NUMBER = 8;
+  QSO_LOG_ERROR_MESSAGE_SECTION = 9;
+  QSO_LOG_ERROR_MESSAGE_QTH = 10;
+  QSO_LOG_ERROR_MESSAGE_ZONE = 11;
+  QSO_LOG_ERROR_MESSAGE_SOCIETY = 12;
+  QSO_LOG_ERROR_MESSAGE_STATE = 13;
+  QSO_LOG_ERROR_MESSAGE_POWER = 14;
+  QSO_LOG_ERROR_MESSAGE_ERROR = 15;
+  QSO_LOG_ERROR_MESSAGE_PRECEDENCE = 16;
+  QSO_LOG_ERROR_MESSAGE_CHECK = 17;
+}
+
 message QsoMessage {
   google.protobuf.Timestamp timestamp = 1;
   string call = 2;
@@ -371,6 +392,9 @@ message QsoMessage {
   string multiplier = 7;
   bool is_duplicate = 8;
   string error_text = 9;
+  int32 number = 10;
+  string prefix = 11;
+  QsoLogErrorMessage exchange_error = 12;
 }
 
 message ListCompletedQsosResponse {

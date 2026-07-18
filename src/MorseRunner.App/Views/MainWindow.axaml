@@ -345,7 +345,7 @@
                       <TextBlock Grid.Column="1" FontWeight="SemiBold" Foreground="#F4F8FB" Text="{Binding Call}" />
                       <TextBlock Grid.Column="2" Foreground="#DCE7EF" Text="{Binding Rst}" />
                       <TextBlock Grid.Column="3" Foreground="#DCE7EF" Text="{Binding Exchange}" />
-                      <TextBlock Grid.Column="4" HorizontalAlignment="Right" Foreground="#7CE7CB" Text="{Binding Points}" />
+                      <TextBlock Grid.Column="4" HorizontalAlignment="Right" Foreground="#7CE7CB" Text="{Binding Result}" />
                     </Grid>
                   </DataTemplate>
                 </ListBox.ItemTemplate>

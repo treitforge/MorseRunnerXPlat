@@ -69,4 +69,47 @@ public sealed class CrossUxWorkflowTests
             tui.State.Contest.Id);
         Assert.Equal(4, TuiState.RunModes.Count);
     }
+
+    [Fact]
+    public async Task CqWpxScoringAndDuplicatesMatchAcrossBothUxSurfaces()
+    {
+        await using var avalonia = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+        await avalonia.StartCommand.ExecuteAsync(null);
+        await using InProcessMorseRunnerClient tuiClient =
+            InProcessMorseRunnerClient.CreateDefault();
+        using var tui = new TuiApplication(tuiClient, isHosted: false);
+        await tui.HandleAsync(
+            new(TuiActionKind.StartPileup),
+            CancellationToken.None);
+
+        string[] calls = ["K1ABC", "K2XYZ", "K1ABC"];
+        for (int index = 0; index < calls.Length; index++)
+        {
+            avalonia.CallEntry = calls[index];
+            avalonia.Exchange1Entry = (index + 1).ToString(
+                System.Globalization.CultureInfo.InvariantCulture);
+            await avalonia.CompleteQsoCommand.ExecuteAsync(null);
+
+            tui.State.Call = calls[index];
+            tui.State.Exchange1 = (index + 1).ToString(
+                System.Globalization.CultureInfo.InvariantCulture);
+            await tui.HandleAsync(
+                new(TuiActionKind.LogQso),
+                CancellationToken.None);
+        }
+
+        Assert.NotNull(tui.State.Snapshot);
+        Assert.Equal(4, avalonia.Score);
+        Assert.Equal(avalonia.Score, tui.State.Snapshot.Score);
+        Assert.Equal(3, avalonia.QsoCount);
+        Assert.Equal(3, tui.State.Qsos.Count);
+        Assert.True(avalonia.QsoLog[0].IsDuplicate);
+        Assert.True(tui.State.Qsos[^1].IsDuplicate);
+        Assert.Equal("DUP", avalonia.QsoLog[0].Result);
+        Assert.Contains(
+            "duplicate",
+            tui.State.Status,
+            StringComparison.OrdinalIgnoreCase);
+    }
 }

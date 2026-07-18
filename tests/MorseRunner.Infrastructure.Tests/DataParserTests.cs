@@ -1,3 +1,5 @@
+using MorseRunner.Domain;
+
 namespace MorseRunner.Infrastructure.Tests;
 
 public sealed class DataParserTests

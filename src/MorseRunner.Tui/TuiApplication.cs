@@ -415,6 +415,11 @@ public sealed class TuiApplication : IDisposable
             State.Qsos = await _client.ListCompletedQsosAsync(
                 sessionId,
                 cancellationToken);
+            if (State.Qsos[^1].IsDuplicate)
+            {
+                State.Status = $"Logged {call} as a duplicate.";
+            }
+
             State.ClearEntry();
         }
 

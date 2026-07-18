@@ -1,3 +1,4 @@
+using MorseRunner.Audio;
 using MorseRunner.Domain;
 using MorseRunner.Engine;
 
@@ -5,23 +6,26 @@ namespace MorseRunner.LegacyParity.Tests;
 
 public sealed class XPlatContestRulesTarget : IParityTarget
 {
-    public Task<ParityObservation> ExecuteAsync(
+    public async Task<ParityObservation> ExecuteAsync(
         ParityScenario scenario,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        string[] values = scenario.Id == "contest.legacy-implementations"
-            ? Observe()
-            : [];
+        string[] values = scenario.Id switch
+        {
+            "contest.legacy-implementations" => Observe(),
+            "contest.cq-wpx-scoring" =>
+                await ObserveCqWpxScoringAsync(cancellationToken),
+            _ => [],
+        };
         bool matches = values.SequenceEqual(
             scenario.ExpectedValues,
             StringComparer.Ordinal);
-        return Task.FromResult(
-            new ParityObservation(
-                matches ? ParityTargetOutcome.Passed : ParityTargetOutcome.Failed,
-                values,
-                matches ? null : DomainErrorCodes.UnsupportedCapability,
-                "MorseRunner.Engine"));
+        return new ParityObservation(
+            matches ? ParityTargetOutcome.Passed : ParityTargetOutcome.Failed,
+            values,
+            matches ? null : DomainErrorCodes.UnsupportedCapability,
+            "MorseRunner.Engine");
     }
 
     private static string[] Observe()
@@ -48,6 +52,68 @@ public sealed class XPlatContestRulesTarget : IParityTarget
             values.Add(
                 $"contest[{index}].my-exchange={exchange.IsValid}|{exchange.Error}");
             values.Add($"contest[{index}].farnsworth={rules.AllowsFarnsworth}");
+        }
+
+        return [.. values];
+    }
+
+    private static async Task<string[]> ObserveCqWpxScoringAsync(
+        CancellationToken cancellationToken)
+    {
+        var values = new List<string>();
+        ContestValidation invalid = CqWpxContestRules.ValidateReceivedQso(
+            "AB",
+            "599",
+            "1");
+        ContestValidation valid = CqWpxContestRules.ValidateReceivedQso(
+            "K1ABC",
+            "599",
+            "1");
+        values.Add($"call[AB]={invalid.IsValid}|{invalid.Error}");
+        values.Add($"call[K1ABC]={valid.IsValid}|{valid.Error}");
+
+        await using var engine =
+            new MorseRunnerEngine(_ => new NullAudioSink());
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(12_345),
+            cancellationToken);
+        ClientId client = new("cq-wpx-parity");
+        await engine.ExecuteAsync(
+            new StartSessionCommand(
+                RequestId.New(),
+                handle.SessionId,
+                client),
+            cancellationToken);
+
+        string[] calls = ["K1ABC", "K2XYZ", "K1ABC", "DL2XYZ", "F6/W7SST"];
+        for (int index = 0; index < calls.Length; index++)
+        {
+            await engine.ExecuteAsync(
+                new LogQsoCommand(
+                    RequestId.New(),
+                    handle.SessionId,
+                    client,
+                    calls[index],
+                    "599",
+                    (index + 1).ToString(
+                        System.Globalization.CultureInfo.InvariantCulture),
+                    string.Empty),
+                cancellationToken);
+            IReadOnlyList<Qso> qsos =
+                engine.GetCompletedQsos(handle.SessionId);
+            Qso qso = qsos[^1];
+            int verifiedPoints = qsos
+                .Where(value => !value.IsDuplicate)
+                .Sum(value => value.Points);
+            int multiplierCount = qsos
+                .Where(value => !value.IsDuplicate)
+                .Select(value => value.Multiplier)
+                .Distinct(StringComparer.Ordinal)
+                .Count();
+            values.Add(
+                $"qso[{index}]={qso.Call}|{qso.Prefix}|{qso.Multiplier}"
+                + $"|{qso.Points}|{qso.IsDuplicate}|{verifiedPoints}"
+                + $"|{multiplierCount}|{engine.GetSnapshot(handle.SessionId).Score}");
         }
 
         return [.. values];

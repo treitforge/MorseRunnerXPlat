@@ -448,6 +448,9 @@ public static class TransportMapper
             Multiplier = value.Multiplier,
             IsDuplicate = value.IsDuplicate,
             ErrorText = value.ErrorText,
+            Number = value.Number,
+            Prefix = value.Prefix,
+            ExchangeError = ToTransport(value.ExchangeError),
         };
 
     public static Domain.Qso ToDomain(Contract.QsoMessage value) =>
@@ -459,13 +462,17 @@ public static class TransportMapper
             RawCallsign = value.Call,
             Rst = value.Rst,
             TrueRst = value.Rst,
+            Number = value.Number,
+            TrueNumber = value.Number,
             Exchange1 = value.Exchange1,
             TrueExchange1 = value.Exchange1,
             Exchange2 = value.Exchange2,
             TrueExchange2 = value.Exchange2,
+            Prefix = value.Prefix,
             Points = value.Points,
             Multiplier = value.Multiplier,
             IsDuplicate = value.IsDuplicate,
+            ExchangeError = ToDomain(value.ExchangeError),
             ErrorText = value.ErrorText,
         };
 
@@ -645,6 +652,57 @@ public static class TransportMapper
                 Domain.SessionEventKind.ControlExpired,
             Contract.SessionEventKindMessage.ResyncRequired =>
                 Domain.SessionEventKind.ResyncRequired,
+            _ => throw new ArgumentOutOfRangeException(nameof(value)),
+        };
+
+    private static Contract.QsoLogErrorMessage ToTransport(
+        Domain.LogError value) =>
+        value switch
+        {
+            Domain.LogError.None => Contract.QsoLogErrorMessage.None,
+            Domain.LogError.Nil => Contract.QsoLogErrorMessage.Nil,
+            Domain.LogError.Duplicate => Contract.QsoLogErrorMessage.Duplicate,
+            Domain.LogError.Call => Contract.QsoLogErrorMessage.Call,
+            Domain.LogError.Rst => Contract.QsoLogErrorMessage.Rst,
+            Domain.LogError.Name => Contract.QsoLogErrorMessage.Name,
+            Domain.LogError.Class => Contract.QsoLogErrorMessage.Class,
+            Domain.LogError.Number => Contract.QsoLogErrorMessage.Number,
+            Domain.LogError.Section => Contract.QsoLogErrorMessage.Section,
+            Domain.LogError.Qth => Contract.QsoLogErrorMessage.Qth,
+            Domain.LogError.Zone => Contract.QsoLogErrorMessage.Zone,
+            Domain.LogError.Society => Contract.QsoLogErrorMessage.Society,
+            Domain.LogError.State => Contract.QsoLogErrorMessage.State,
+            Domain.LogError.Power => Contract.QsoLogErrorMessage.Power,
+            Domain.LogError.Error => Contract.QsoLogErrorMessage.Error,
+            Domain.LogError.Precedence =>
+                Contract.QsoLogErrorMessage.Precedence,
+            Domain.LogError.Check => Contract.QsoLogErrorMessage.Check,
+            _ => throw new ArgumentOutOfRangeException(nameof(value)),
+        };
+
+    private static Domain.LogError ToDomain(
+        Contract.QsoLogErrorMessage value) =>
+        value switch
+        {
+            Contract.QsoLogErrorMessage.None => Domain.LogError.None,
+            Contract.QsoLogErrorMessage.Nil => Domain.LogError.Nil,
+            Contract.QsoLogErrorMessage.Duplicate => Domain.LogError.Duplicate,
+            Contract.QsoLogErrorMessage.Call => Domain.LogError.Call,
+            Contract.QsoLogErrorMessage.Rst => Domain.LogError.Rst,
+            Contract.QsoLogErrorMessage.Name => Domain.LogError.Name,
+            Contract.QsoLogErrorMessage.Class => Domain.LogError.Class,
+            Contract.QsoLogErrorMessage.Number => Domain.LogError.Number,
+            Contract.QsoLogErrorMessage.Section => Domain.LogError.Section,
+            Contract.QsoLogErrorMessage.Qth => Domain.LogError.Qth,
+            Contract.QsoLogErrorMessage.Zone => Domain.LogError.Zone,
+            Contract.QsoLogErrorMessage.Society => Domain.LogError.Society,
+            Contract.QsoLogErrorMessage.State => Domain.LogError.State,
+            Contract.QsoLogErrorMessage.Power => Domain.LogError.Power,
+            Contract.QsoLogErrorMessage.Error => Domain.LogError.Error,
+            Contract.QsoLogErrorMessage.Precedence =>
+                Domain.LogError.Precedence,
+            Contract.QsoLogErrorMessage.Check => Domain.LogError.Check,
+            Contract.QsoLogErrorMessage.Unspecified => Domain.LogError.None,
             _ => throw new ArgumentOutOfRangeException(nameof(value)),
         };
 
