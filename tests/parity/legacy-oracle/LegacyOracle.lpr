@@ -387,6 +387,39 @@ begin
   end;
 end;
 
+procedure ObserveLiveOperatorSession(const Values: TStrings);
+var
+  ContestValue: TContest;
+  Operator: TDxOperator;
+begin
+  RandSeed := 24680;
+  Ini.RunMode := rmSingle;
+  Ini.Lids := False;
+  gDXCCList := TDXCC.Create;
+  try
+    ContestValue := TCqWpx.Create;
+    Tst := ContestValue;
+    Operator := TDxOperator.Create('K1ABC', osNeedQso);
+    try
+      Values.Add('joined=' + IntToStr(Ord(Operator.State)));
+      Tst.Me.HisCall := Operator.Call;
+      Operator.MsgReceived([msgHisCall]);
+      Values.Add('after-call=' + IntToStr(Ord(Operator.State)));
+      Operator.MsgReceived([msgNR]);
+      Values.Add('after-exchange=' + IntToStr(Ord(Operator.State)));
+      Operator.MsgReceived([msgTU]);
+      Values.Add('after-tu=' + IntToStr(Ord(Operator.State)));
+    finally
+      Operator.Free;
+      Tst := nil;
+      ContestValue.Free;
+    end;
+  finally
+    gDXCCList.Free;
+    gDXCCList := nil;
+  end;
+end;
+
 procedure ObserveLogging(const Values: TStrings);
 var
   Index: Integer;
@@ -663,6 +696,8 @@ begin
       ObserveSimulationStates(Values)
     else if Scenario = 'simulation.runtime-routines' then
       ObserveSimulationRuntime(Values)
+    else if Scenario = 'simulation.live-operator-session' then
+      ObserveLiveOperatorSession(Values)
     else if Scenario = 'logging.scoring-rate-and-results' then
       ObserveLogging(Values)
     else if Scenario = 'contest.cq-wpx-scoring' then

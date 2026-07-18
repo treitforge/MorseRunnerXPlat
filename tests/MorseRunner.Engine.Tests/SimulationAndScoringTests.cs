@@ -26,6 +26,38 @@ public sealed class SimulationAndScoringTests
     }
 
     [Fact]
+    public void OperatorNormalAndCallCorrectionFlowsMatchLegacyStates()
+    {
+        var normal = new SimulatedOperator(
+            "K1ABC",
+            OperatorState.NeedQso,
+            new LegacyRandom(24_680),
+            OperatorRunMode.SingleCall);
+
+        normal.Receive(StationMessage.HisCall, "K1ABC");
+        Assert.Equal(OperatorState.NeedNumber, normal.State);
+        normal.Receive(StationMessage.Number);
+        Assert.Equal(OperatorState.NeedEnd, normal.State);
+        normal.Receive(StationMessage.ThankYou);
+        Assert.Equal(OperatorState.Done, normal.State);
+
+        var correction = new SimulatedOperator(
+            "K1ABC",
+            OperatorState.NeedQso,
+            new LegacyRandom(24_680),
+            OperatorRunMode.SingleCall);
+
+        correction.Receive(StationMessage.HisCall, "K1AB");
+        Assert.Equal(OperatorState.NeedCallAndNumber, correction.State);
+        correction.Receive(StationMessage.Number);
+        Assert.Equal(OperatorState.NeedCall, correction.State);
+        correction.Receive(StationMessage.HisCall, "K1ABC");
+        Assert.Equal(OperatorState.NeedEnd, correction.State);
+        correction.Receive(StationMessage.ThankYou);
+        Assert.Equal(OperatorState.Done, correction.State);
+    }
+
+    [Fact]
     public void QsoColumnErrorsUseAllThirtyTwoBits()
     {
         Qso value = new Qso()

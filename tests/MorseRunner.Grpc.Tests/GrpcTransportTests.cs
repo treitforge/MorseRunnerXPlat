@@ -240,6 +240,7 @@ public sealed class GrpcTransportTests
         Assert.Equal(expected.ContestId, actual.ContestId);
         Assert.Equal(expected.RunModeId, actual.RunModeId);
         Assert.Equal(expected.LastCaller, actual.LastCaller);
+        Assert.Equal(expected.ActiveOperatorState, actual.ActiveOperatorState);
         Assert.Equal(expected.LastOperatorMessage, actual.LastOperatorMessage);
         Assert.Equal(expected.QsoCount, actual.QsoCount);
         Assert.Equal(expected.Score, actual.Score);

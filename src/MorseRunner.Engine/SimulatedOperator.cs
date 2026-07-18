@@ -73,7 +73,7 @@ public sealed class SimulatedOperator
         return RoundLegacy(_effects.GaussianLimited(blocks, blocks / 2f));
     }
 
-    public void Receive(StationMessage messages)
+    public void Receive(StationMessage messages, string? copiedCall = null)
     {
         if ((messages & StationMessage.Cq) != 0)
         {
@@ -120,6 +120,23 @@ public sealed class SimulatedOperator
             return;
         }
 
+        if ((messages & StationMessage.HisCall) != 0)
+        {
+            ReceiveCall(copiedCall ?? string.Empty);
+        }
+
+        if ((messages & StationMessage.Before) != 0)
+        {
+            if (State is OperatorState.NeedPreviousEnd or OperatorState.NeedQso)
+            {
+                SetState(OperatorState.NeedQso);
+            }
+            else if (State is OperatorState.NeedNumber or OperatorState.NeedEnd)
+            {
+                State = OperatorState.Failed;
+            }
+        }
+
         if ((messages & StationMessage.Number) != 0)
         {
             if (State == OperatorState.NeedQso)
@@ -152,6 +169,24 @@ public sealed class SimulatedOperator
             {
                 State = OperatorState.Done;
             }
+        }
+
+        if ((messages & StationMessage.Question) != 0
+            && State is OperatorState.NeedNumber
+                or OperatorState.NeedCall
+                or OperatorState.NeedCallAndNumber
+                or OperatorState.NeedEnd)
+        {
+            AddPatience();
+        }
+
+        if ((messages & StationMessage.Garbage) != 0
+            && State is OperatorState.NeedQso
+                or OperatorState.NeedNumber
+                or OperatorState.NeedCall
+                or OperatorState.NeedCallAndNumber)
+        {
+            AddPatience();
         }
 
         if (State != OperatorState.NeedPreviousEnd)
@@ -209,6 +244,70 @@ public sealed class SimulatedOperator
             _ => 0,
         };
         return SetMatch(result, callConfidence == 0 && result == CallMatch.Almost ? 10 : callConfidence);
+    }
+
+    private void ReceiveCall(string copiedCall)
+    {
+        CallMatch match = MatchCall(copiedCall);
+        switch (match)
+        {
+            case CallMatch.Yes:
+                if (State is OperatorState.NeedPreviousEnd or OperatorState.NeedQso)
+                {
+                    SetState(OperatorState.NeedNumber);
+                }
+                else if (State == OperatorState.NeedCallAndNumber)
+                {
+                    SetState(OperatorState.NeedNumber);
+                }
+                else if (State is OperatorState.NeedNumber or OperatorState.NeedEnd)
+                {
+                    AddPatience();
+                }
+                else if (State == OperatorState.NeedCall)
+                {
+                    SetState(OperatorState.NeedEnd);
+                }
+
+                break;
+            case CallMatch.Almost:
+                if (State is OperatorState.NeedPreviousEnd or OperatorState.NeedQso)
+                {
+                    SetState(OperatorState.NeedCallAndNumber);
+                }
+                else if (State is OperatorState.NeedCallAndNumber
+                    or OperatorState.NeedCall)
+                {
+                    AddPatience();
+                }
+                else if (State == OperatorState.NeedNumber)
+                {
+                    SetState(OperatorState.NeedCallAndNumber);
+                }
+                else if (State == OperatorState.NeedEnd)
+                {
+                    SetState(OperatorState.NeedCall);
+                }
+
+                break;
+            case CallMatch.No:
+                if (State is OperatorState.NeedQso
+                    or OperatorState.NeedNumber
+                    or OperatorState.NeedCall
+                    or OperatorState.NeedCallAndNumber)
+                {
+                    State = OperatorState.NeedPreviousEnd;
+                }
+                else if (State == OperatorState.NeedEnd)
+                {
+                    State = OperatorState.Done;
+                }
+
+                break;
+            default:
+                throw new InvalidOperationException(
+                    $"Unknown call match '{match}'.");
+        }
     }
 
     private CallMatch SetMatch(CallMatch match, int confidence)

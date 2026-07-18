@@ -906,7 +906,8 @@ Snapshots describe current state and may be coalesced.
 - Identity, state, revision, and simulation block.
 - Elapsed and remaining simulation time.
 - Contest and run-mode identity.
-- Operator and active QSO context.
+- Operator and active QSO context, including the current simulated operator
+  state when a caller is active.
 - Active station summaries.
 - Current score, multipliers, QSO count, and rate.
 - Runtime controls.
@@ -1932,6 +1933,15 @@ Recorded Phase 3 implementation:
 - The exact Free Pascal MT19937 numeric behavior, legacy distribution helpers,
   serial-number selection, QSB processing, and operator state transitions are
   deterministic for a fixed seed.
+- The session loop owns the active simulated operator directly. A caller joins
+  in `NeedQso`, and semantic callsign, exchange, and thank-you commands drive
+  the pinned legacy `NeedNumber`, `NeedEnd`, and `Done` sequence at command
+  block boundaries. Partial calls also retain the legacy call-correction
+  states. No additional station-service abstraction sits between the session
+  and the operator state machine.
+- The active operator state is an additive immutable snapshot field. The
+  in-process client, gRPC mapping, Avalonia status area, and TUI consume the
+  same semantic value.
 - Immutable QSO records, score and multiplier behavior, radio controls,
   versioned settings, one-way INI import, atomic persistence, and
   platform-specific application paths are implemented.

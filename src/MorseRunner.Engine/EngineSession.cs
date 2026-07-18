@@ -14,7 +14,7 @@ internal sealed class EngineSession : IAsyncDisposable
     private readonly SessionId _sessionId;
     private readonly SessionSettings _settings;
     private readonly IAudioSink _audioSink;
-    private readonly SeededRandomSource _random;
+    private readonly LegacyRandom _random;
     private readonly Channel<WorkItem> _commands;
     private readonly Dictionary<RequestId, RequestRecord> _requests = [];
     private readonly List<Subscriber> _subscribers = [];
@@ -39,6 +39,7 @@ internal sealed class EngineSession : IAsyncDisposable
     private long _renderedSamples;
     private long _eventSequence;
     private string? _lastCaller;
+    private SimulatedOperator? _activeOperator;
     private string? _lastOperatorMessage;
     private int _currentWordsPerMinute;
     private int _currentBandwidthHz;
@@ -534,6 +535,11 @@ internal sealed class EngineSession : IAsyncDisposable
                 {
                     _lastCaller += "?";
                 }
+                _activeOperator = new(
+                    _lastCaller.TrimEnd('?'),
+                    OperatorState.NeedQso,
+                    _random,
+                    ToOperatorRunMode(_settings.RunModeId));
                 PublishEvent(SessionEventKind.CallerJoined, _lastCaller);
             }
 
@@ -652,8 +658,51 @@ internal sealed class EngineSession : IAsyncDisposable
         };
         _toneRenderer.LoadMessage(message);
         _lastOperatorMessage = message;
+        ApplyIntentToActiveOperator(command);
         _revision++;
         return AcceptedResult();
+    }
+
+    private void ApplyIntentToActiveOperator(SendOperatorIntentCommand command)
+    {
+        if (_activeOperator is null)
+        {
+            return;
+        }
+
+        StationMessage stationMessage = command.Intent switch
+        {
+            OperatorIntent.Cq => StationMessage.Cq,
+            OperatorIntent.Exchange => StationMessage.Number,
+            OperatorIntent.ThankYou => StationMessage.ThankYou,
+            OperatorIntent.MyCall => StationMessage.MyCall,
+            OperatorIntent.HisCall => StationMessage.HisCall,
+            OperatorIntent.Before => StationMessage.Before,
+            OperatorIntent.Question => StationMessage.Question,
+            OperatorIntent.Nil => StationMessage.Nil,
+            OperatorIntent.NumberQuestion => StationMessage.Question,
+            OperatorIntent.Abort => StationMessage.None,
+            _ => throw new InvalidOperationException(
+                $"Unknown operator intent '{command.Intent}'."),
+        };
+        if (stationMessage != StationMessage.None)
+        {
+            _activeOperator.Receive(stationMessage, command.Call);
+        }
+    }
+
+    private static OperatorRunMode ToOperatorRunMode(RunModeId runModeId)
+    {
+        return runModeId.Value switch
+        {
+            "rmStop" => OperatorRunMode.Stop,
+            "rmPileup" => OperatorRunMode.Pileup,
+            "rmSingle" => OperatorRunMode.SingleCall,
+            "rmWpx" => OperatorRunMode.Wpx,
+            "rmHst" => OperatorRunMode.Hst,
+            _ => throw new InvalidOperationException(
+                $"Unknown run mode '{runModeId.Value}'."),
+        };
     }
 
     private CommandResult ApplyRadioControl(
@@ -934,7 +983,8 @@ internal sealed class EngineSession : IAsyncDisposable
             _currentWordsPerMinute,
             _currentBandwidthHz,
             _ritOffsetHz,
-            _lastLoggedCall);
+            _lastLoggedCall,
+            _activeOperator?.State);
     }
 
     private void FailPendingCommands(Exception exception)

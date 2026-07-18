@@ -35,6 +35,35 @@ public sealed class LegacyOracleParityTests
     }
 
     [Fact]
+    public async Task LiveOperatorSessionVectorIsBothGreen()
+    {
+        const string parityId = "simulation.live-operator-session";
+        const string fixturePath =
+            "tests/parity/fixtures/legacy/simulation-live-operator-session.json";
+        OracleFixture fixture = LoadFixture(fixturePath);
+        ParityScenario scenario = new(
+            parityId,
+            "simulation",
+            fixture.Values);
+        LegacyOracleTarget legacyTarget = new(fixturePath);
+        XPlatSimulationTarget xplatTarget = new();
+
+        ParityObservation legacy = await legacyTarget.ExecuteAsync(
+            scenario,
+            TestContext.Current.CancellationToken);
+        ParityObservation xplat = await xplatTarget.ExecuteAsync(
+            scenario,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(ParityTargetOutcome.Passed, legacy.Outcome);
+        Assert.Equal(fixture.Values, xplat.Values);
+        Assert.Equal(ParityTargetOutcome.Passed, xplat.Outcome);
+        Assert.Equal(
+            ParityAssessment.BothGreen,
+            ParityAssessmentClassifier.Classify(legacy, xplat));
+    }
+
+    [Fact]
     public async Task ContestRuleVectorsAreBothGreen()
     {
         const string parityId = "contest.legacy-implementations";

@@ -122,7 +122,8 @@ public static class TuiRenderer
         Line(
             output,
             Fit(
-                $" {state.Status}  |  RIT {snapshot?.RitOffsetHz ?? 0} Hz"
+                $" {state.Status}  |  CALLER {CallerState(snapshot?.ActiveOperatorState)}"
+                + $"  |  RIT {snapshot?.RitOffsetHz ?? 0} Hz"
                 + $"  BW {snapshot?.CurrentBandwidthHz ?? 500} Hz"
                 + $"  WPM {snapshot?.CurrentWordsPerMinute ?? 30}",
                 width));
@@ -134,6 +135,21 @@ public static class TuiRenderer
                 width));
         return output.ToString();
     }
+
+    private static string CallerState(OperatorState? state) =>
+        state switch
+        {
+            null => "IDLE",
+            OperatorState.NeedPreviousEnd => "WAITING",
+            OperatorState.NeedQso => "CALLING",
+            OperatorState.NeedNumber => "NEED EXCHANGE",
+            OperatorState.NeedCall => "CORRECT CALL",
+            OperatorState.NeedCallAndNumber => "CORRECT CALL+EXCHANGE",
+            OperatorState.NeedEnd => "NEED TU",
+            OperatorState.Done => "COMPLETE",
+            OperatorState.Failed => "GONE",
+            _ => throw new ArgumentOutOfRangeException(nameof(state), state, null),
+        };
 
     private static string RenderHelp(int width, int height)
     {

@@ -22,6 +22,7 @@ $scenarios = @(
     'data.legacy-parsers'
     'simulation.state-models'
     'simulation.runtime-routines'
+    'simulation.live-operator-session'
     'logging.scoring-rate-and-results'
     'contest.cq-wpx-scoring'
     'audio.legacy-adapters'

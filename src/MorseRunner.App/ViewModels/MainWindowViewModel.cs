@@ -92,6 +92,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private long _simulationBlock;
     private string _elapsed = "00:00.000";
     private string _lastCaller = "Waiting";
+    private string _callerState = "Idle";
     private string _lastSent = "None";
     private string _callEntry = string.Empty;
     private string _rstEntry = "5NN";
@@ -269,6 +270,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     {
         get => _lastCaller;
         private set => SetField(ref _lastCaller, value);
+    }
+
+    public string CallerState
+    {
+        get => _callerState;
+        private set => SetField(ref _callerState, value);
     }
 
     public string LastSent
@@ -875,6 +882,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             @"mm\:ss\.fff",
             CultureInfo.InvariantCulture);
         LastCaller = snapshot.LastCaller ?? "Waiting";
+        CallerState = FormatOperatorState(snapshot.ActiveOperatorState);
         LastSent = snapshot.LastOperatorMessage ?? "None";
         QsoCount = snapshot.QsoCount;
         Score = snapshot.Score;
@@ -888,6 +896,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         OnPropertyChanged(nameof(CanPlayRecording));
         PlayRecordingCommand.RaiseCanExecuteChanged();
     }
+
+    private static string FormatOperatorState(OperatorState? state) =>
+        state switch
+        {
+            null => "Idle",
+            OperatorState.NeedPreviousEnd => "Waiting for prior QSO",
+            OperatorState.NeedQso => "Calling",
+            OperatorState.NeedNumber => "Waiting for exchange",
+            OperatorState.NeedCall => "Needs call correction",
+            OperatorState.NeedCallAndNumber => "Needs call and exchange",
+            OperatorState.NeedEnd => "Waiting for TU",
+            OperatorState.Done => "Complete",
+            OperatorState.Failed => "Gone",
+            _ => throw new ArgumentOutOfRangeException(nameof(state), state, null),
+        };
 
     private void QueueSnapshot(SessionSnapshot snapshot)
     {

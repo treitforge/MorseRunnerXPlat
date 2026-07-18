@@ -72,7 +72,8 @@ public sealed class TuiInteractionTests
                 "K1ABC",
                 1,
                 1,
-                null),
+                null,
+                ActiveOperatorState: OperatorState.NeedNumber),
             Call = "K1ABC",
             Qsos =
             [
@@ -92,6 +93,7 @@ public sealed class TuiInteractionTests
 
         Assert.Contains("K1ABC", compact, StringComparison.Ordinal);
         Assert.Contains("SCORE 1", wide, StringComparison.Ordinal);
+        Assert.Contains("CALLER NEED EXCHANGE", wide, StringComparison.Ordinal);
         Assert.All(
             compact.Split(Environment.NewLine),
             line => Assert.True(line.Length <= 80));

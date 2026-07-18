@@ -251,6 +251,19 @@ message SessionSnapshotMessage {
   int32 rit_offset_hz = 22;
   string last_logged_call = 23;
   ControlLeaseSummaryMessage control_lease = 24;
+  OperatorStateMessage active_operator_state = 25;
+}
+
+enum OperatorStateMessage {
+  OPERATOR_STATE_MESSAGE_UNSPECIFIED = 0;
+  OPERATOR_STATE_MESSAGE_NEED_PREVIOUS_END = 1;
+  OPERATOR_STATE_MESSAGE_NEED_QSO = 2;
+  OPERATOR_STATE_MESSAGE_NEED_NUMBER = 3;
+  OPERATOR_STATE_MESSAGE_NEED_CALL = 4;
+  OPERATOR_STATE_MESSAGE_NEED_CALL_AND_NUMBER = 5;
+  OPERATOR_STATE_MESSAGE_NEED_END = 6;
+  OPERATOR_STATE_MESSAGE_DONE = 7;
+  OPERATOR_STATE_MESSAGE_FAILED = 8;
 }
 
 enum SessionEventKindMessage {

@@ -23,6 +23,10 @@ public sealed class MainWindowViewModelTests
         Assert.Equal(4, viewModel.SimulationBlock);
         Assert.Equal("00:00.185", viewModel.Elapsed);
 
+        await viewModel.AdvanceCommand.ExecuteAsync(null);
+
+        Assert.Equal("Calling", viewModel.CallerState);
+
         await viewModel.PauseCommand.ExecuteAsync(null);
         Assert.True(viewModel.ResumeCommand.CanExecute(null));
 

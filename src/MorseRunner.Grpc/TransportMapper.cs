@@ -323,6 +323,7 @@ public static class TransportMapper
             CurrentBandwidthHz = value.CurrentBandwidthHz,
             RitOffsetHz = value.RitOffsetHz,
             LastLoggedCall = value.LastLoggedCall ?? String.Empty,
+            ActiveOperatorState = ToTransport(value.ActiveOperatorState),
         };
         if (lease is not null)
         {
@@ -362,7 +363,56 @@ public static class TransportMapper
             value.CurrentWordsPerMinute,
             value.CurrentBandwidthHz,
             value.RitOffsetHz,
-            EmptyToNull(value.LastLoggedCall));
+            EmptyToNull(value.LastLoggedCall),
+            ToDomain(value.ActiveOperatorState));
+
+    private static Contract.OperatorStateMessage ToTransport(
+        Domain.OperatorState? value) =>
+        value switch
+        {
+            null => Contract.OperatorStateMessage.Unspecified,
+            Domain.OperatorState.NeedPreviousEnd =>
+                Contract.OperatorStateMessage.NeedPreviousEnd,
+            Domain.OperatorState.NeedQso =>
+                Contract.OperatorStateMessage.NeedQso,
+            Domain.OperatorState.NeedNumber =>
+                Contract.OperatorStateMessage.NeedNumber,
+            Domain.OperatorState.NeedCall =>
+                Contract.OperatorStateMessage.NeedCall,
+            Domain.OperatorState.NeedCallAndNumber =>
+                Contract.OperatorStateMessage.NeedCallAndNumber,
+            Domain.OperatorState.NeedEnd =>
+                Contract.OperatorStateMessage.NeedEnd,
+            Domain.OperatorState.Done =>
+                Contract.OperatorStateMessage.Done,
+            Domain.OperatorState.Failed =>
+                Contract.OperatorStateMessage.Failed,
+            _ => throw new ArgumentOutOfRangeException(nameof(value), value, null),
+        };
+
+    private static Domain.OperatorState? ToDomain(
+        Contract.OperatorStateMessage value) =>
+        value switch
+        {
+            Contract.OperatorStateMessage.Unspecified => null,
+            Contract.OperatorStateMessage.NeedPreviousEnd =>
+                Domain.OperatorState.NeedPreviousEnd,
+            Contract.OperatorStateMessage.NeedQso =>
+                Domain.OperatorState.NeedQso,
+            Contract.OperatorStateMessage.NeedNumber =>
+                Domain.OperatorState.NeedNumber,
+            Contract.OperatorStateMessage.NeedCall =>
+                Domain.OperatorState.NeedCall,
+            Contract.OperatorStateMessage.NeedCallAndNumber =>
+                Domain.OperatorState.NeedCallAndNumber,
+            Contract.OperatorStateMessage.NeedEnd =>
+                Domain.OperatorState.NeedEnd,
+            Contract.OperatorStateMessage.Done =>
+                Domain.OperatorState.Done,
+            Contract.OperatorStateMessage.Failed =>
+                Domain.OperatorState.Failed,
+            _ => throw new ArgumentOutOfRangeException(nameof(value), value, null),
+        };
 
     public static Contract.SessionEventMessage ToTransport(
         Domain.SessionEvent value) =>

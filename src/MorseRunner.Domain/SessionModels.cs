@@ -102,7 +102,8 @@ public sealed record SessionSnapshot(
     int CurrentWordsPerMinute = 30,
     int CurrentBandwidthHz = 500,
     int RitOffsetHz = 0,
-    string? LastLoggedCall = null);
+    string? LastLoggedCall = null,
+    OperatorState? ActiveOperatorState = null);
 
 public sealed record AudioOutputDevice(
     string Name,
