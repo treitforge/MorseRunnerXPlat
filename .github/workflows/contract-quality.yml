@@ -62,4 +62,4 @@ jobs:
 
       - name: Check contract compatibility
         if: steps.prior-contract.outputs.exists == 'true'
-        run: buf breaking --against '.git#branch=main'
+        run: buf breaking --against 'https://github.com/${{ github.repository }}.git#branch=main'
