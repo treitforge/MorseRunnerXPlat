@@ -4,8 +4,8 @@ public sealed class MorseToneRenderer
 {
     private readonly MorseKeyer _keyer;
     private readonly int _sampleRate;
-    private readonly float _carrierFrequency;
     private readonly float _gain;
+    private float _carrierFrequency;
     private float[] _envelope = [];
     private int _envelopePosition;
     private double _phase;
@@ -34,6 +34,23 @@ public sealed class MorseToneRenderer
     }
 
     public bool HasPendingAudio => _envelopePosition < _envelope.Length;
+
+    public int WordsPerMinute => _keyer.SendingWordsPerMinute;
+
+    public float CarrierFrequency
+    {
+        get => _carrierFrequency;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value);
+            _carrierFrequency = value;
+        }
+    }
+
+    public void SetWordsPerMinute(int wordsPerMinute)
+    {
+        _keyer.SetWordsPerMinute(wordsPerMinute);
+    }
 
     public void LoadMessage(string text)
     {

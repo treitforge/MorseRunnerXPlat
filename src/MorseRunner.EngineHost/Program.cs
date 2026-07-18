@@ -42,7 +42,11 @@ namespace MorseRunner.EngineHost
             await using var client = new InProcessMorseRunnerClient(
                 usePhysicalAudio
                     ? new MorseRunnerEngine(
-                        _ => new PhysicalAudioSink(new()))
+                        _ => new PhysicalAudioSink(new()),
+                        new MorseRunnerEngineOptions
+                        {
+                            AutomaticTiming = true,
+                        })
                     : new MorseRunnerEngine(_ => new NullAudioSink()));
             var options = new GrpcServerOptions
             {

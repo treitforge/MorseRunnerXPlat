@@ -1,21 +1,22 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
-using MorseRunner.App.ViewModels;
 
 namespace MorseRunner.App.Views;
 
-public sealed partial class ScoreWindow : Window
+public sealed partial class HelpWindow : Window
 {
-    public ScoreWindow()
-        : this(new ScoreWindowViewModel(0, 0, "CQ WPX", "00:00.000"))
+    public HelpWindow()
+        : this("Help", string.Empty)
     {
     }
 
-    public ScoreWindow(ScoreWindowViewModel viewModel)
+    public HelpWindow(string title, string content)
     {
         InitializeComponent();
-        DataContext = viewModel;
+        Title = title;
+        this.FindControl<TextBlock>("Heading")!.Text = title;
+        this.FindControl<TextBlock>("Body")!.Text = content;
         Opened += (_, _) =>
             this.FindControl<Button>("CloseButton")?.Focus();
     }

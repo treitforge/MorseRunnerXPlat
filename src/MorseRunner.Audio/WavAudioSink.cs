@@ -114,6 +114,13 @@ public sealed class WavAudioSink(string path) : IAudioSink
         stream.Position = 0;
         await stream.WriteAsync(header, cancellationToken);
         await stream.FlushAsync(cancellationToken);
+        await stream.DisposeAsync();
+        _stream = null;
+        if (_conversionBuffer is not null)
+        {
+            ArrayPool<byte>.Shared.Return(_conversionBuffer);
+            _conversionBuffer = null;
+        }
     }
 
     public async ValueTask DisposeAsync()

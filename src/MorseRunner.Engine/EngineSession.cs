@@ -25,9 +25,12 @@ internal sealed class EngineSession : IAsyncDisposable
         new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly float[] _renderBuffer =
         new float[CompatibilityProfile.BlockSize];
-    private readonly MorseToneRenderer _toneRenderer = new(
-        CompatibilityProfile.SampleRate,
-        CompatibilityProfile.BlockSize);
+    private readonly MorseToneRenderer _toneRenderer;
+    private readonly LegacyRandom _effectRandom;
+    private readonly QsbProcessor? _qsbProcessor;
+    private readonly float _monitorGain;
+    private readonly bool _automaticTiming;
+    private readonly TimeSpan _blockPeriod;
     private readonly Task _worker;
     private SessionSnapshot _snapshot;
     private SessionState _state = SessionState.Created;
@@ -44,21 +47,38 @@ internal sealed class EngineSession : IAsyncDisposable
     private int _score;
     private Qso[] _completedQsos = [];
     private string? _lastLoggedCall;
+    private float _qrmPhase;
+    private float _flutterPhase;
     private int _disposed;
 
     public EngineSession(
         Guid engineEpoch,
         SessionId sessionId,
         SessionSettings settings,
-        IAudioSink audioSink)
+        IAudioSink audioSink,
+        MorseRunnerEngineOptions options)
     {
         _engineEpoch = engineEpoch;
         _sessionId = sessionId;
         _settings = settings;
         _audioSink = audioSink;
+        _automaticTiming = options.AutomaticTiming;
+        _blockPeriod = options.BlockPeriod;
         _random = new(settings.Seed);
+        _effectRandom = new(unchecked(settings.Seed ^ 0x51B5_4A32));
+        _qsbProcessor = settings.Qsb
+            ? new QsbProcessor(
+                new LegacyRandomEffects(
+                    new LegacyRandom(unchecked(settings.Seed ^ 0x71C3_90EF))))
+            : null;
+        _monitorGain = MathF.Pow(10F, (float)settings.MonitorLevelDb / 20F);
         _currentWordsPerMinute = settings.WordsPerMinute;
         _currentBandwidthHz = settings.BandwidthHz;
+        _toneRenderer = new(
+            CompatibilityProfile.SampleRate,
+            CompatibilityProfile.BlockSize,
+            settings.WordsPerMinute,
+            settings.PitchHz);
         _commands = Channel.CreateBounded<WorkItem>(
             new BoundedChannelOptions(CommandCapacity)
             {
@@ -269,18 +289,8 @@ internal sealed class EngineSession : IAsyncDisposable
             _initialized.SetResult(
                 new(_sessionId, _engineEpoch, _state, _revision));
 
-            await foreach (WorkItem workItem in _commands.Reader.ReadAllAsync(
-                               _lifetime.Token))
+            while (await ProcessNextWorkItemOrBlockAsync())
             {
-                switch (workItem)
-                {
-                    case CommandWorkItem command:
-                        await ApplyCommandAsync(command.Record);
-                        break;
-                    case CloseWorkItem close:
-                        ApplyClose(close.Completion);
-                        return;
-                }
             }
         }
         catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
@@ -300,6 +310,53 @@ internal sealed class EngineSession : IAsyncDisposable
         finally
         {
             CompleteSubscribers();
+        }
+    }
+
+    private async Task<bool> ProcessNextWorkItemOrBlockAsync()
+    {
+        if (_commands.Reader.TryRead(out WorkItem? pending))
+        {
+            return await ProcessWorkItemAsync(pending);
+        }
+
+        if (_automaticTiming && _state == SessionState.Running)
+        {
+            await Task.Delay(_blockPeriod, _lifetime.Token);
+            if (_commands.Reader.TryRead(out pending))
+            {
+                return await ProcessWorkItemAsync(pending);
+            }
+
+            await RenderBlocksAsync(1);
+            PublishSnapshot();
+            return true;
+        }
+
+        try
+        {
+            WorkItem workItem = await _commands.Reader.ReadAsync(_lifetime.Token);
+            return await ProcessWorkItemAsync(workItem);
+        }
+        catch (ChannelClosedException)
+        {
+            return false;
+        }
+    }
+
+    private async Task<bool> ProcessWorkItemAsync(WorkItem workItem)
+    {
+        switch (workItem)
+        {
+            case CommandWorkItem command:
+                await ApplyCommandAsync(command.Record);
+                return true;
+            case CloseWorkItem close:
+                ApplyClose(close.Completion);
+                return false;
+            default:
+                throw new InvalidOperationException(
+                    $"Unknown work item '{workItem.GetType().Name}'.");
         }
     }
 
@@ -429,7 +486,19 @@ internal sealed class EngineSession : IAsyncDisposable
         }
 
         long appliedRevision = ++_revision;
-        for (int index = 0; index < command.BlockCount; index++)
+        await RenderBlocksAsync(command.BlockCount);
+
+        return new(
+            Accepted: true,
+            ErrorCode: null,
+            Message: null,
+            AppliedRevision: appliedRevision,
+            AppliedBlock: _simulationBlock);
+    }
+
+    private async Task RenderBlocksAsync(int blockCount)
+    {
+        for (int index = 0; index < blockCount; index++)
         {
             if (_audioSink is IAudioSinkMetricsSource metricsSource
                 && !metricsSource.GetMetrics().IsHealthy)
@@ -443,6 +512,7 @@ internal sealed class EngineSession : IAsyncDisposable
             }
 
             _toneRenderer.Render(_renderBuffer);
+            ApplyAudioEffects();
             await _audioSink.WriteAsync(
                 _renderBuffer,
                 _simulationBlock,
@@ -451,9 +521,14 @@ internal sealed class EngineSession : IAsyncDisposable
             _renderedSamples += CompatibilityProfile.BlockSize;
             _revision++;
 
-            if (_simulationBlock % 8 == 0)
+            int callerInterval = Math.Max(2, 13 - _settings.Activity);
+            if (_simulationBlock % callerInterval == 0)
             {
                 _lastCaller = $"DX{_random.Next(1000):000}";
+                if (_settings.Lids && _random.Next(4) == 0)
+                {
+                    _lastCaller += "?";
+                }
                 PublishEvent(SessionEventKind.CallerJoined, _lastCaller);
             }
 
@@ -466,13 +541,49 @@ internal sealed class EngineSession : IAsyncDisposable
                 break;
             }
         }
+    }
 
-        return new(
-            Accepted: true,
-            ErrorCode: null,
-            Message: null,
-            AppliedRevision: appliedRevision,
-            AppliedBlock: _simulationBlock);
+    private void ApplyAudioEffects()
+    {
+        _qsbProcessor?.Apply(_renderBuffer);
+        float qrmIncrement =
+            2F * MathF.PI * (_settings.PitchHz + 170F)
+            / CompatibilityProfile.SampleRate;
+        float flutterIncrement =
+            2F * MathF.PI * 11F / CompatibilityProfile.SampleRate;
+        for (int index = 0; index < _renderBuffer.Length; index++)
+        {
+            float sample = _renderBuffer[index];
+            if (_settings.Qrm)
+            {
+                sample += 0.06F * MathF.Sin(_qrmPhase);
+                _qrmPhase += qrmIncrement;
+                if (_qrmPhase >= 2F * MathF.PI)
+                {
+                    _qrmPhase -= 2F * MathF.PI;
+                }
+            }
+
+            if (_settings.Qrn)
+            {
+                sample += (_effectRandom.NextSingle() * 2F - 1F) * 0.035F;
+            }
+
+            if (_settings.Flutter)
+            {
+                sample *= 0.86F + (0.14F * MathF.Sin(_flutterPhase));
+                _flutterPhase += flutterIncrement;
+                if (_flutterPhase >= 2F * MathF.PI)
+                {
+                    _flutterPhase -= 2F * MathF.PI;
+                }
+            }
+
+            _renderBuffer[index] = Math.Clamp(
+                sample * _monitorGain,
+                -1F,
+                1F);
+        }
     }
 
     private async Task<CommandResult> ApplyAudioRecoveryAsync(
@@ -567,6 +678,7 @@ internal sealed class EngineSession : IAsyncDisposable
                     _currentWordsPerMinute + command.Delta,
                     10,
                     100);
+                _toneRenderer.SetWordsPerMinute(_currentWordsPerMinute);
                 break;
             default:
                 return RejectedResult(

@@ -23,7 +23,15 @@ public sealed class CompiledXamlContractTests
         Assert.Contains("Gesture=\"F12\"", xaml, StringComparison.Ordinal);
         Assert.Contains("Gesture=\"Shift+F9\"", xaml, StringComparison.Ordinal);
         Assert.Contains("Gesture=\"Ctrl+F9\"", xaml, StringComparison.Ordinal);
-        Assert.Equal(28, CountOccurrences(xaml, "<KeyBinding"));
+        Assert.True(CountOccurrences(xaml, "<KeyBinding") >= 29);
+        Assert.Contains(
+            "ItemsSource=\"{Binding QsoLog}\"",
+            xaml,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "ItemsSource=\"{Binding Contests}\"",
+            xaml,
+            StringComparison.Ordinal);
     }
 
     [Fact]

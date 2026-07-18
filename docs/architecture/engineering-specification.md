@@ -459,8 +459,8 @@ src/
   MorseRunner.Tui/
 ```
 
-`MorseRunner.Tui` is optional for the first release but the client boundary must
-support it.
+`MorseRunner.Tui` is a first-release client. It supports an in-process engine
+with physical or null audio and the optional hosted gRPC topology.
 
 ### 7.2 Test projects
 
@@ -641,7 +641,7 @@ a reusable application-facing library when both surfaces need it.
 | EngineHost | Engine, Audio, Infrastructure, Grpc |
 | App | Client, Domain, Infrastructure composition |
 | Cli | Client, Domain, Infrastructure composition |
-| Tui | Client, Domain |
+| Tui | Client, Domain, Grpc, Infrastructure composition |
 
 Circular project references are forbidden.
 
@@ -922,6 +922,9 @@ Snapshots must be immutable after publication.
 - External snapshots should be published between 10 and 20 Hz while running.
 - Discrete events publish promptly after the block commits.
 - A UX may coalesce snapshots further.
+- Physical in-process and physical hosted clients enable engine-owned automatic
+  block timing. Deterministic tests, CLI scenarios, and parity vectors retain
+  explicit block advancement unless they opt into automatic timing.
 - Completion, fault, device loss, QSO logged, and control changes must not wait
   for the next periodic snapshot.
 
@@ -1940,6 +1943,12 @@ Recorded Phase 4 implementation:
 - The complete manifest reports 20/20 both-green, 1,501/1,501 mapped surfaces,
   and zero functional gaps.
 
+The 20 fixture-level capabilities and 1,501 surface mappings are structural
+coverage evidence. They do not supersede end-to-end workflow evidence. The
+behavioral and UX audit in `docs/ux/legacy-compatibility-matrix.md` is the
+release-status source for legacy workflows that require live engine, audio, or
+UI behavior.
+
 ### Phase 5: Avalonia product UX
 
 Deliver:
@@ -1959,15 +1968,26 @@ Exit criteria:
 Recorded Phase 5 implementation:
 
 - The Avalonia application provides the keyboard-first operator dashboard,
-  station and radio controls, band conditions, QSO entry and log state, score,
-  rate, run-mode selection, message keys, and score dialog.
+  station and radio controls, band conditions, QSO entry and a live QSO log,
+  score, contest and run-mode selection, duration, message keys, and score
+  dialog.
 - F1 through F12 workflows, modifier variants, entry-field character mappings,
   abort, wipe, complete-QSO, RIT, bandwidth, and speed controls map to semantic
   client commands.
-- Compiled bindings and `x:DataType` are enabled. The XAML contract suite
-  verifies named controls, commands, shortcuts, and dialog handlers.
-- The expanded desktop executable has been launched successfully on Windows.
-  Linux and macOS visual review remains a platform release-checklist item.
+- Physical sessions advance in real time on the engine session loop. Avalonia
+  consumes bounded live updates through `IMorseRunnerClient`.
+- Settings persist atomically. Optional recording uses a bounded WAV writer
+  beside physical playback, and completed recordings can be opened from the
+  File menu.
+- QSB, QRM, QRN, flutter, activity, LIDs, monitor level, and QSK settings cross
+  the semantic and gRPC session contract. Implemented audio effects are seeded
+  and deterministic.
+- Compiled bindings and `x:DataType` are enabled. View-model tests, a headless
+  window-open and focus test, and live Windows visual and interaction checks
+  cover the primary path.
+- Linux and macOS visual review, full contest-specific score/rate behavior,
+  advanced legacy settings, and external score services remain release
+  checklist items in `docs/ux/legacy-compatibility-matrix.md`.
 
 ### Phase 6: optional gRPC host
 
@@ -2008,7 +2028,10 @@ Recorded Phase 6 implementation:
   subscription, and supports snapshot-plus-sequence resync.
 - Shared in-process and gRPC scenario vectors produce equivalent commands,
   snapshots, QSO logs, and results. Authentication, cancellation, slow
-  observers, lease exclusion, expiry, and forced-takeover policy are tested.
+  observer, and control-lease behaviors are covered by transport tests.
+- `MorseRunner.Tui` is a real hosted consumer with responsive terminal
+  rendering, legacy keyboard actions, all contests and run modes, band
+  conditions, QSO logging, help, and a local in-process mode.
 - The CLI `host-info` and `hosted-scenario` commands are real external
   debugging and automation consumers. A process-boundary Windows smoke test
   passed through discovery and authentication.

@@ -102,6 +102,14 @@ message SessionSettingsMessage {
   int32 words_per_minute = 6;
   int32 pitch_hz = 7;
   int32 bandwidth_hz = 8;
+  optional int32 activity = 9;
+  bool qsk = 10;
+  bool qsb = 11;
+  bool qrm = 12;
+  bool qrn = 13;
+  bool flutter = 14;
+  bool lids = 15;
+  optional double monitor_level_db = 16;
 }
 
 message SessionHandleMessage {

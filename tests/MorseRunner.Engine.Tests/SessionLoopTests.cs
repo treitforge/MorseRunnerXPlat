@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using MorseRunner.Audio;
 using MorseRunner.Domain;
 using MorseRunner.Engine;
@@ -61,6 +64,84 @@ public sealed class SessionLoopTests
 
         Assert.NotNull(first);
         Assert.Equal(first, second);
+    }
+
+    [Fact]
+    public async Task AutomaticTimingAdvancesInsideTheSessionLoop()
+    {
+        await using MorseRunnerEngine engine = new(
+            _ => new NullAudioSink(),
+            new MorseRunnerEngineOptions
+            {
+                AutomaticTiming = true,
+                BlockPeriod = TimeSpan.FromMilliseconds(1),
+            });
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 91),
+            TestContext.Current.CancellationToken);
+        Assert.True(
+            (await engine.ExecuteAsync(
+                new StartSessionCommand(
+                    RequestId.New(),
+                    handle.SessionId,
+                    TestClient),
+                TestContext.Current.CancellationToken)).Accepted);
+
+        SessionSnapshot? observed = null;
+        await foreach (SessionUpdate update in engine.SubscribeAsync(
+                           new(handle.SessionId, AfterSequence: 0),
+                           TestContext.Current.CancellationToken))
+        {
+            if (update.Snapshot is { SimulationBlock: >= 3 } snapshot)
+            {
+                observed = snapshot;
+                break;
+            }
+        }
+
+        Assert.NotNull(observed);
+        Assert.True(observed.SimulationBlock >= 3);
+        Assert.Equal(SessionState.Running, observed.State);
+    }
+
+    [Fact]
+    public async Task AutomaticTimingUsesTheCompatibilityBlockPeriod()
+    {
+        await using MorseRunnerEngine engine = new(
+            _ => new NullAudioSink(),
+            new MorseRunnerEngineOptions
+            {
+                AutomaticTiming = true,
+            });
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 73),
+            TestContext.Current.CancellationToken);
+        var stopwatch = Stopwatch.StartNew();
+        await engine.ExecuteAsync(
+            new StartSessionCommand(
+                RequestId.New(),
+                handle.SessionId,
+                TestClient),
+            TestContext.Current.CancellationToken);
+
+        SessionSnapshot? observed = null;
+        await foreach (SessionUpdate update in engine.SubscribeAsync(
+                           new(handle.SessionId),
+                           TestContext.Current.CancellationToken))
+        {
+            if (update.Snapshot is { SimulationBlock: >= 8 } snapshot)
+            {
+                observed = snapshot;
+                break;
+            }
+        }
+
+        stopwatch.Stop();
+        Assert.NotNull(observed);
+        Assert.InRange(
+            stopwatch.Elapsed,
+            TimeSpan.FromMilliseconds(280),
+            TimeSpan.FromSeconds(3));
     }
 
     [Fact]
@@ -199,6 +280,40 @@ public sealed class SessionLoopTests
         Assert.True(engine.GetSnapshot(handle.SessionId).AudioOutputHealthy);
     }
 
+    [Fact]
+    public async Task BandConditionsAreDeterministicAndChangeRenderedAudio()
+    {
+        SessionSettings cleanSettings =
+            SessionSettings.CreateDefault(seed: 12345) with
+            {
+                MonitorLevelDb = 0,
+            };
+        SessionSettings conditionSettings = cleanSettings with
+        {
+            Qsb = true,
+            Qrm = true,
+            Qrn = true,
+            Flutter = true,
+        };
+
+        byte[] clean = await RenderHashAsync(cleanSettings);
+        byte[] first = await RenderHashAsync(conditionSettings);
+        byte[] second = await RenderHashAsync(conditionSettings);
+
+        Assert.NotEqual(clean, first);
+        Assert.Equal(first, second);
+    }
+
+    [Fact]
+    public async Task ActivityControlsCallerArrivalCadence()
+    {
+        string? lowActivity = await CallerAfterFiveBlocksAsync(activity: 1);
+        string? highActivity = await CallerAfterFiveBlocksAsync(activity: 9);
+
+        Assert.Null(lowActivity);
+        Assert.NotNull(highActivity);
+    }
+
     private static async Task<string?> RunSeededScenarioAsync(int seed)
     {
         await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
@@ -220,6 +335,93 @@ public sealed class SessionLoopTests
             TestContext.Current.CancellationToken);
 
         return engine.GetSnapshot(handle.SessionId).LastCaller;
+    }
+
+    private static async Task<byte[]> RenderHashAsync(SessionSettings settings)
+    {
+        var sink = new HashingAudioSink();
+        await using MorseRunnerEngine engine = new(_ => sink);
+        SessionHandle handle = await engine.CreateSessionAsync(
+            settings,
+            TestContext.Current.CancellationToken);
+        await engine.ExecuteAsync(
+            new StartSessionCommand(
+                RequestId.New(),
+                handle.SessionId,
+                TestClient),
+            TestContext.Current.CancellationToken);
+        await engine.ExecuteAsync(
+            new AdvanceSimulationCommand(
+                RequestId.New(),
+                handle.SessionId,
+                TestClient,
+                BlockCount: 6),
+            TestContext.Current.CancellationToken);
+        return sink.GetHash();
+    }
+
+    private static async Task<string?> CallerAfterFiveBlocksAsync(int activity)
+    {
+        await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 15) with
+            {
+                Activity = activity,
+            },
+            TestContext.Current.CancellationToken);
+        await engine.ExecuteAsync(
+            new StartSessionCommand(
+                RequestId.New(),
+                handle.SessionId,
+                TestClient),
+            TestContext.Current.CancellationToken);
+        await engine.ExecuteAsync(
+            new AdvanceSimulationCommand(
+                RequestId.New(),
+                handle.SessionId,
+                TestClient,
+                BlockCount: 5),
+            TestContext.Current.CancellationToken);
+        return engine.GetSnapshot(handle.SessionId).LastCaller;
+    }
+
+    private sealed class HashingAudioSink : IAudioSink
+    {
+        private readonly IncrementalHash _hash =
+            IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+
+        public ValueTask InitializeAsync(
+            SessionId sessionId,
+            AudioStreamFormat format,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask WriteAsync(
+            ReadOnlyMemory<float> samples,
+            long simulationBlock,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            _hash.AppendData(MemoryMarshal.AsBytes(samples.Span));
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask CompleteAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.CompletedTask;
+        }
+
+        public byte[] GetHash() => _hash.GetHashAndReset();
+
+        public ValueTask DisposeAsync()
+        {
+            _hash.Dispose();
+            return ValueTask.CompletedTask;
+        }
     }
 
     private sealed class RecoverableTestSink :

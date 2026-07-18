@@ -57,6 +57,13 @@ public sealed class ProjectDependencyTests
                 "MorseRunner.Grpc",
                 "MorseRunner.Infrastructure",
             },
+            ["MorseRunner.Tui"] = new HashSet<string>(StringComparer.Ordinal)
+            {
+                "MorseRunner.Client",
+                "MorseRunner.Domain",
+                "MorseRunner.Grpc",
+                "MorseRunner.Infrastructure",
+            },
             ["MorseRunner.App"] = new HashSet<string>(StringComparer.Ordinal)
             {
                 "MorseRunner.Client",

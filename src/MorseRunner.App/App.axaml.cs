@@ -4,6 +4,7 @@ using Avalonia.Markup.Xaml;
 using MorseRunner.App.ViewModels;
 using MorseRunner.App.Views;
 using MorseRunner.Client;
+using MorseRunner.Infrastructure;
 
 namespace MorseRunner.App;
 
@@ -19,10 +20,19 @@ public sealed class App : Application
         if (ApplicationLifetime
             is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            var paths = new ApplicationPaths();
+            paths.EnsureWritableDirectories();
+            var recording = new RecordingPreference(paths);
+            var settings = new SettingsStore(
+                Path.Combine(paths.Settings, "settings.json"));
             InProcessMorseRunnerClient client =
-                InProcessMorseRunnerClient.CreateWithPhysicalAudio();
+                InProcessMorseRunnerClient.CreateWithPhysicalAudio(
+                    recordingPathProvider: recording.CreatePath);
             desktop.MainWindow = new MainWindow(
-                new MainWindowViewModel(client));
+                new MainWindowViewModel(
+                    client,
+                    recordingPreference: recording,
+                    settingsStore: settings));
         }
 
         base.OnFrameworkInitializationCompleted();

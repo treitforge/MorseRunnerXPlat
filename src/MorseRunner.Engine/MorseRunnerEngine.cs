@@ -7,19 +7,29 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
 {
     private readonly ConcurrentDictionary<SessionId, EngineSession> _sessions = new();
     private readonly Func<SessionId, IAudioSink> _audioSinkFactory;
+    private readonly MorseRunnerEngineOptions _options;
     private readonly EngineId _engineId = EngineId.New();
     private readonly Guid _engineEpoch = Guid.NewGuid();
     private int _disposed;
 
     public MorseRunnerEngine()
-        : this(_ => new UnconfiguredAudioSink())
+        : this(_ => new UnconfiguredAudioSink(), null)
     {
     }
 
-    public MorseRunnerEngine(Func<SessionId, IAudioSink> audioSinkFactory)
+    public MorseRunnerEngine(
+        Func<SessionId, IAudioSink> audioSinkFactory,
+        MorseRunnerEngineOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(audioSinkFactory);
         _audioSinkFactory = audioSinkFactory;
+        _options = options ?? new();
+        if (_options.BlockPeriod <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(options),
+                "The engine block period must be positive.");
+        }
     }
 
     public EngineInfo GetEngineInfo()
@@ -55,7 +65,8 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
             _engineEpoch,
             sessionId,
             settings,
-            sink);
+            sink,
+            _options);
         if (!_sessions.TryAdd(sessionId, session))
         {
             await sink.DisposeAsync();
@@ -165,6 +176,20 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
             throw new ArgumentOutOfRangeException(
                 nameof(settings),
                 "Duration blocks cannot be negative.");
+        }
+
+        if (settings.Activity is < 1 or > 9)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(settings),
+                "Activity must be between 1 and 9.");
+        }
+
+        if (settings.MonitorLevelDb is < -60d or > 0d)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(settings),
+                "Monitor level must be between -60 dB and 0 dB.");
         }
 
         ContestCatalog.Get(settings.ContestId);

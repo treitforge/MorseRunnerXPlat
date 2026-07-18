@@ -31,6 +31,7 @@ $projects = [ordered]@{
     'app' = 'src\MorseRunner.App\MorseRunner.App.csproj'
     'cli' = 'src\MorseRunner.Cli\MorseRunner.Cli.csproj'
     'engine-host' = 'src\MorseRunner.EngineHost\MorseRunner.EngineHost.csproj'
+    'tui' = 'src\MorseRunner.Tui\MorseRunner.Tui.csproj'
 }
 
 New-Item -ItemType Directory -Force -Path $resolvedOutputRoot | Out-Null

@@ -14,19 +14,22 @@ and then converge to a 100 percent XPlat pass rate with zero functional gaps.
 
 ## Project status
 
-The complete initial implementation is present through the packaging and
-release-hardening phase. The pinned legacy inventory contains 1,501 surfaces,
-all mapped exactly once. All 20 shared acceptance capabilities pass both the
-legacy oracle and XPlat with zero functional gaps, skips, waivers, quarantines,
-expected failures, or unimplemented entries.
+The initial cross-platform architecture, deterministic session service, audio
+adapters, Avalonia operator workflow, TUI, CLI, and optional gRPC host are
+implemented. The pinned legacy inventory contains 1,501 structurally mapped
+surfaces and the fixture-level acceptance capabilities are green.
 
-The normal Avalonia path remains in process. The optional loopback gRPC host is
-available for independently deployed clients, and the CLI provides concrete
-`host-info` and `hosted-scenario` consumers.
+That structural result is not yet proof of full behavioral parity. The
+end-to-end UX audit found remaining work in contest-specific scoring and
+exchange behavior, realistic station simulation, several advanced settings,
+score submission, and cross-platform visual verification. These are
+release-blocking gaps, tracked in the
+[legacy compatibility matrix](docs/ux/legacy-compatibility-matrix.md).
 
 ## Engineering guidance
 
 - [Engineering specification](docs/architecture/engineering-specification.md)
+- [Legacy UX compatibility matrix](docs/ux/legacy-compatibility-matrix.md)
 - [Generated parity report](tests/parity/PARITY_REPORT.md)
 - [Agent instructions](AGENTS.md)
 
@@ -64,12 +67,21 @@ Launch the desktop application:
 dotnet run --project src\MorseRunner.App
 ```
 
+Launch the local terminal application:
+
+```powershell
+dotnet run --project src\MorseRunner.Tui
+dotnet run --project src\MorseRunner.Tui -- --no-audio
+dotnet run --project src\MorseRunner.Tui -- --snapshot
+```
+
 Launch the optional local engine host and inspect it from another terminal:
 
 ```powershell
 dotnet run --project src\MorseRunner.EngineHost
 dotnet run --project src\MorseRunner.Cli -- host-info
 dotnet run --project src\MorseRunner.Cli -- hosted-scenario
+dotnet run --project src\MorseRunner.Tui -- --hosted
 ```
 
 Set `MORSE_RUNNER_DATA_ROOT` to isolate settings, results, discovery, and

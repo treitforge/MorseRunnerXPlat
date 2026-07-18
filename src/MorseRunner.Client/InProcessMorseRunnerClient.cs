@@ -20,12 +20,38 @@ public sealed class InProcessMorseRunnerClient(
 
     public static InProcessMorseRunnerClient CreateWithPhysicalAudio(
         string? deviceName = null,
-        int queueDepth = 4)
+        int queueDepth = 4,
+        Func<string?>? recordingPathProvider = null)
     {
         var options = new PhysicalAudioSinkOptions(deviceName, queueDepth);
         return new(
             new MorseRunnerEngine(
-                _ => new PhysicalAudioSink(options)));
+                _ =>
+                {
+                    var physical = new PhysicalAudioSink(options);
+                    string? recordingPath =
+                        recordingPathProvider?.Invoke();
+                    return String.IsNullOrWhiteSpace(recordingPath)
+                        ? physical
+                        : new CompositeAudioSink(
+                            physical,
+                            new BufferedWavAudioSink(recordingPath));
+                },
+                new MorseRunnerEngineOptions
+                {
+                    AutomaticTiming = true,
+                }));
+    }
+
+    public static InProcessMorseRunnerClient CreateWithAutomaticNullAudio()
+    {
+        return new(
+            new MorseRunnerEngine(
+                _ => new NullAudioSink(),
+                new MorseRunnerEngineOptions
+                {
+                    AutomaticTiming = true,
+                }));
     }
 
     public Task<EngineInfo> GetEngineInfoAsync(

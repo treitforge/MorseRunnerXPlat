@@ -64,6 +64,14 @@ public static class TransportMapper
             WordsPerMinute = value.WordsPerMinute,
             PitchHz = value.PitchHz,
             BandwidthHz = value.BandwidthHz,
+            Activity = value.Activity,
+            Qsk = value.Qsk,
+            Qsb = value.Qsb,
+            Qrm = value.Qrm,
+            Qrn = value.Qrn,
+            Flutter = value.Flutter,
+            Lids = value.Lids,
+            MonitorLevelDb = value.MonitorLevelDb,
         };
 
     public static Domain.SessionSettings ToDomain(
@@ -78,6 +86,16 @@ public static class TransportMapper
             WordsPerMinute = value.WordsPerMinute,
             PitchHz = value.PitchHz,
             BandwidthHz = value.BandwidthHz,
+            Activity = value.HasActivity ? value.Activity : 5,
+            Qsk = value.Qsk,
+            Qsb = value.Qsb,
+            Qrm = value.Qrm,
+            Qrn = value.Qrn,
+            Flutter = value.Flutter,
+            Lids = value.Lids,
+            MonitorLevelDb = value.HasMonitorLevelDb
+                ? value.MonitorLevelDb
+                : -15d,
         };
 
     public static Contract.SessionHandleMessage ToTransport(

@@ -9,7 +9,8 @@
     Height="820"
     MinWidth="980"
     MinHeight="700"
-    Background="#07111B">
+    Background="#07111B"
+    KeyDown="WindowKeyDown">
 
   <Window.KeyBindings>
     <KeyBinding Gesture="F1" Command="{Binding SendCqCommand}" />
@@ -29,6 +30,7 @@
     <KeyBinding Gesture="F12" Command="{Binding SendNumberQuestionCommand}" />
     <KeyBinding Gesture="Insert" Command="{Binding SendCallAndExchangeCommand}" />
     <KeyBinding Gesture="Enter" Command="{Binding CompleteQsoCommand}" />
+    <KeyBinding Gesture="Ctrl+W" Command="{Binding WipeCommand}" />
     <KeyBinding Gesture="Alt+W" Command="{Binding WipeCommand}" />
     <KeyBinding Gesture="Escape" Command="{Binding AbortCommand}" />
     <KeyBinding Gesture="Up" Command="{Binding RitUpCommand}" />
@@ -84,11 +86,17 @@
   <DockPanel>
     <Menu DockPanel.Dock="Top" Background="#0B1824">
       <MenuItem Header="_File">
-        <MenuItem Header="Audio Recording Enabled" ToggleType="CheckBox" />
-        <MenuItem Header="Play Recorded Audio" />
+        <MenuItem
+            Header="Audio Recording Enabled"
+            ToggleType="CheckBox"
+            IsChecked="{Binding AudioRecordingEnabled}" />
+        <MenuItem
+            Header="Play Recorded Audio"
+            Command="{Binding PlayRecordingCommand}" />
         <Separator />
         <MenuItem Header="View Score Table" Command="{Binding ShowScoreCommand}" />
-        <MenuItem Header="Exit" />
+        <Separator />
+        <MenuItem Header="Exit" Click="ExitClick" />
       </MenuItem>
       <MenuItem Header="_Run">
         <MenuItem Header="Pile-Up" HotKey="F9" Command="{Binding StartCommand}" />
@@ -109,11 +117,7 @@
         <MenuItem Header="NR?" HotKey="F12" Command="{Binding SendNumberQuestionCommand}" />
       </MenuItem>
       <MenuItem Header="_Settings">
-        <MenuItem Header="Call" />
-        <MenuItem Header="CW Speed" />
-        <MenuItem Header="CW Pitch" />
-        <MenuItem Header="CW Bandwidth" />
-        <MenuItem Header="Duration" />
+        <MenuItem Header="Focus station setup" Click="FocusSetupClick" />
         <Separator />
         <MenuItem Header="QSK" ToggleType="CheckBox" IsChecked="{Binding Qsk}" />
         <MenuItem Header="QSB" ToggleType="CheckBox" IsChecked="{Binding Qsb}" />
@@ -123,10 +127,12 @@
         <MenuItem Header="LIDs" ToggleType="CheckBox" IsChecked="{Binding Lids}" />
       </MenuItem>
       <MenuItem Header="_Help">
-        <MenuItem Header="First Time Setup" />
-        <MenuItem Header="Readme" />
-        <MenuItem Header="Community Edition Home Page" />
-        <MenuItem Header="About MorseRunnerXPlat" />
+        <MenuItem Header="First Time Setup" Click="FirstTimeSetupClick" />
+        <MenuItem Header="Keyboard reference" Click="KeyboardHelpClick" />
+        <MenuItem Header="Readme" Click="ReadmeClick" />
+        <MenuItem Header="Community Edition Home Page" Click="CommunityPageClick" />
+        <Separator />
+        <MenuItem Header="About MorseRunnerXPlat" Click="AboutClick" />
       </MenuItem>
     </Menu>
 
@@ -153,34 +159,60 @@
       </Grid>
 
       <Grid Grid.Row="1" ColumnDefinitions="250,*,260" ColumnSpacing="14">
-        <Grid RowDefinitions="Auto,*" RowSpacing="14">
+        <ScrollViewer
+            HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="Auto">
+          <StackPanel Spacing="14">
           <Border Classes="card">
-            <StackPanel Spacing="11">
+            <StackPanel Spacing="11" IsEnabled="{Binding IsSetupEnabled}">
               <TextBlock Classes="eyebrow" Text="STATION" />
+              <TextBlock Foreground="#91A6B8" Text="Contest" />
+              <ComboBox
+                  x:Name="ContestSelector"
+                  AutomationProperties.Name="Contest"
+                  ItemsSource="{Binding Contests}"
+                  SelectedItem="{Binding SelectedContest}" />
+              <TextBlock Foreground="#91A6B8" Text="Run mode" />
+              <ComboBox
+                  AutomationProperties.Name="Run mode"
+                  ItemsSource="{Binding RunModes}"
+                  SelectedItem="{Binding SelectedRunMode}" />
+              <TextBlock Foreground="#91A6B8" Text="Duration" />
+              <ComboBox
+                  AutomationProperties.Name="Session duration"
+                  ItemsSource="{Binding Durations}"
+                  SelectedItem="{Binding SelectedDuration}" />
               <TextBlock Foreground="#91A6B8" Text="Call" />
               <TextBox
+                  x:Name="StationCallBox"
                   AutomationProperties.Name="Station callsign"
                   Text="{Binding StationCall}" />
-              <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                <StackPanel>
-                  <TextBlock Foreground="#91A6B8" Text="CW Speed" />
+              <Grid ColumnDefinitions="*,110" ColumnSpacing="10">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Foreground="#91A6B8"
+                    Text="CW Speed" />
                   <NumericUpDown
+                      Grid.Column="1"
                       AutomationProperties.Name="CW speed words per minute"
                       Minimum="10"
                       Maximum="100"
                       Value="{Binding WordsPerMinute}" />
-                </StackPanel>
-                <StackPanel Grid.Column="1">
-                  <TextBlock Foreground="#91A6B8" Text="Pitch Hz" />
+              </Grid>
+              <Grid ColumnDefinitions="*,110" ColumnSpacing="10">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Foreground="#91A6B8"
+                    Text="Pitch Hz" />
                   <NumericUpDown
+                      Grid.Column="1"
                       AutomationProperties.Name="CW pitch"
                       Minimum="300"
                       Maximum="900"
                       Increment="50"
                       Value="{Binding PitchHz}" />
-                </StackPanel>
               </Grid>
-              <TextBlock Foreground="#91A6B8" Text="RX Bandwidth" />
+              <TextBlock Foreground="#91A6B8" Text="CW Bandwidth" />
               <Slider
                   AutomationProperties.Name="Receiver bandwidth"
                   Minimum="100"
@@ -200,8 +232,8 @@
             </StackPanel>
           </Border>
 
-          <Border Grid.Row="1" Classes="card">
-            <StackPanel Spacing="9">
+          <Border Classes="card">
+            <StackPanel Spacing="9" IsEnabled="{Binding IsSetupEnabled}">
               <TextBlock Classes="eyebrow" Text="BAND CONDITIONS" />
               <CheckBox Content="QSB" IsChecked="{Binding Qsb}" />
               <CheckBox Content="QRM" IsChecked="{Binding Qrm}" />
@@ -217,7 +249,8 @@
                   Value="{Binding Activity}" />
             </StackPanel>
           </Border>
-        </Grid>
+          </StackPanel>
+        </ScrollViewer>
 
         <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="14">
           <Border Classes="card">
@@ -227,8 +260,8 @@
                 <TextBlock Classes="metric" Margin="0,5,0,0" Text="{Binding ContestName}" />
               </StackPanel>
               <StackPanel Grid.Column="1">
-                <TextBlock Classes="eyebrow" Text="MODE" />
-                <TextBlock Classes="metric" Margin="0,5,0,0" Text="{Binding RunMode}" />
+                <TextBlock Classes="eyebrow" Text="SESSION" />
+                <TextBlock Classes="metric" Margin="0,5,0,0" Text="{Binding SessionStateLabel}" />
               </StackPanel>
               <StackPanel Grid.Column="2">
                 <TextBlock Classes="eyebrow" Text="TIME" />
@@ -249,6 +282,7 @@
                   x:Name="CallEntryBox"
                   AutomationProperties.Name="Received callsign"
                   Classes="entry"
+                  GotFocus="EntryGotFocus"
                   TextInput="CallTextInput"
                   Text="{Binding CallEntry}" />
               </StackPanel>
@@ -258,6 +292,7 @@
                   x:Name="RstEntryBox"
                   AutomationProperties.Name="Received signal report"
                   Classes="entry"
+                  GotFocus="EntryGotFocus"
                   TextInput="RstTextInput"
                   Text="{Binding RstEntry}" />
               </StackPanel>
@@ -267,6 +302,7 @@
                     x:Name="Exchange1EntryBox"
                     AutomationProperties.Name="Received exchange field one"
                     Classes="entry"
+                    GotFocus="EntryGotFocus"
                     TextInput="Exchange1TextInput"
                     Text="{Binding Exchange1Entry}" />
               </StackPanel>
@@ -276,6 +312,7 @@
                     x:Name="Exchange2EntryBox"
                     AutomationProperties.Name="Received exchange field two"
                     Classes="entry"
+                    GotFocus="EntryGotFocus"
                     TextInput="Exchange2TextInput"
                     Text="{Binding Exchange2Entry}" />
               </StackPanel>
@@ -296,12 +333,22 @@
                   Grid.Row="1"
                   Margin="0,10,0,10"
                   AutomationProperties.Name="QSO log"
-                  Background="#07131E">
-                <ListBoxItem>
-                  <TextBlock
-                      Foreground="#60798D"
-                      Text="No contacts logged yet. Start with F9, then send CQ with F1." />
-                </ListBoxItem>
+                  Background="#07131E"
+                  ItemsSource="{Binding QsoLog}">
+                <ListBox.ItemTemplate>
+                  <DataTemplate x:DataType="viewModels:QsoLogEntryViewModel">
+                    <Grid
+                        ColumnDefinitions="72,100,60,*,60"
+                        Margin="8,6"
+                        ColumnSpacing="10">
+                      <TextBlock Foreground="#7890A5" Text="{Binding Time}" />
+                      <TextBlock Grid.Column="1" FontWeight="SemiBold" Foreground="#F4F8FB" Text="{Binding Call}" />
+                      <TextBlock Grid.Column="2" Foreground="#DCE7EF" Text="{Binding Rst}" />
+                      <TextBlock Grid.Column="3" Foreground="#DCE7EF" Text="{Binding Exchange}" />
+                      <TextBlock Grid.Column="4" HorizontalAlignment="Right" Foreground="#7CE7CB" Text="{Binding Points}" />
+                    </Grid>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
               </ListBox>
               <Grid Grid.Row="2" ColumnDefinitions="*,*,*" ColumnSpacing="12">
                 <StackPanel>
@@ -333,8 +380,8 @@
                 Content="Pause  Ctrl+P" />
             <Button
                 Grid.Column="2"
-                Command="{Binding AdvanceCommand}"
-                Content="Advance  Ctrl+Enter" />
+                Command="{Binding ResumeCommand}"
+                Content="Resume  Ctrl+R" />
             <Button
                 Grid.Column="3"
                 Command="{Binding ShowScoreCommand}"
@@ -357,9 +404,9 @@
               <Button Classes="send" Command="{Binding SendNumberQuestionCommand}" Content="F12  NR?" />
             </UniformGrid>
             <StackPanel Grid.Row="2" Spacing="4">
-              <TextBlock Foreground="#60798D" Text="RIT: Up / Down" />
-              <TextBlock Foreground="#60798D" Text="Bandwidth: Ctrl + Up / Down" />
-              <TextBlock Foreground="#60798D" Text="WPM: Page Up / Page Down" />
+              <TextBlock Foreground="#60798D" Text="{Binding RitOffsetHz, StringFormat='RIT: {0} Hz  (Up / Down)'}" />
+              <TextBlock Foreground="#60798D" Text="{Binding BandwidthHz, StringFormat='Bandwidth: {0} Hz  (Ctrl + Up / Down)'}" />
+              <TextBlock Foreground="#60798D" Text="{Binding WordsPerMinute, StringFormat='Speed: {0} WPM  (Page Up / Down)'}" />
             </StackPanel>
           </Grid>
         </Border>
@@ -368,7 +415,7 @@
       <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
         <TextBlock
             Foreground="#60798D"
-            Text="11,025 Hz mono  •  512 samples/block  •  Seed 12345" />
+            Text="{Binding AudioHealth, StringFormat='Audio: {0}'}" />
         <TextBlock
             Grid.Column="1"
             Foreground="#60798D"

@@ -32,6 +32,22 @@ public sealed record SessionSettings(
 
     public int BandwidthHz { get; init; } = 500;
 
+    public int Activity { get; init; } = 5;
+
+    public bool Qsk { get; init; }
+
+    public bool Qsb { get; init; }
+
+    public bool Qrm { get; init; }
+
+    public bool Qrn { get; init; }
+
+    public bool Flutter { get; init; }
+
+    public bool Lids { get; init; }
+
+    public double MonitorLevelDb { get; init; } = -15d;
+
     public static SessionSettings CreateDefault(int seed)
     {
         return new(
