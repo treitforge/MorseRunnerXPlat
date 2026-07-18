@@ -1,0 +1,115 @@
+namespace MorseRunner.Domain;
+
+public static class CompatibilityProfile
+{
+    public const int SampleRate = 11_025;
+    public const int BlockSize = 512;
+}
+
+public enum SessionState
+{
+    Created,
+    Ready,
+    Running,
+    Paused,
+    Stopping,
+    Completed,
+    Faulted,
+    Closed,
+}
+
+public sealed record SessionSettings(
+    int Seed,
+    ContestId ContestId,
+    RunModeId RunModeId,
+    long DurationBlocks)
+{
+    public string StationCall { get; init; } = "W7SST";
+
+    public int WordsPerMinute { get; init; } = 30;
+
+    public int PitchHz { get; init; } = 600;
+
+    public int BandwidthHz { get; init; } = 500;
+
+    public static SessionSettings CreateDefault(int seed)
+    {
+        return new(
+            seed,
+            ContestCatalog.All[0].Id,
+            RunModeCatalog.All[1],
+            DurationBlocks: 0);
+    }
+}
+
+public sealed record SessionHandle(
+    SessionId SessionId,
+    Guid EngineEpoch,
+    SessionState State,
+    long Revision);
+
+public sealed record EngineInfo(
+    EngineId EngineId,
+    string DisplayName,
+    string SemanticVersion,
+    Guid EngineEpoch,
+    IReadOnlyList<string> Capabilities,
+    bool IsInProcess)
+{
+    public string MinimumContractVersion { get; init; } = "1.0";
+
+    public string MaximumContractVersion { get; init; } = "1.0";
+
+    public string DiagnosticVersion { get; init; } = "0.1.0";
+}
+
+public sealed record SessionSnapshot(
+    Guid EngineEpoch,
+    SessionId SessionId,
+    SessionState State,
+    long Revision,
+    long SimulationBlock,
+    long RenderedSamples,
+    TimeSpan ElapsedSimulationTime,
+    int Seed,
+    ContestId ContestId,
+    RunModeId RunModeId,
+    string? LastCaller,
+    int QsoCount,
+    int Score,
+    string? LastError,
+    int AudioQueuedBlocks = 0,
+    long AudioUnderrunCount = 0,
+    long AudioDroppedBlockCount = 0,
+    bool AudioOutputHealthy = true,
+    string? LastOperatorMessage = null,
+    int CurrentWordsPerMinute = 30,
+    int CurrentBandwidthHz = 500,
+    int RitOffsetHz = 0,
+    string? LastLoggedCall = null);
+
+public sealed record AudioOutputDevice(
+    string Name,
+    int Index,
+    bool IsDefault);
+
+public sealed record ControlLease(
+    string Token,
+    SessionId SessionId,
+    ClientId OwningClientId,
+    DateTimeOffset IssuedAt,
+    DateTimeOffset ExpiresAt,
+    long Revision);
+
+public sealed record ControlLeaseSummary(
+    ClientId OwningClientId,
+    DateTimeOffset ExpiresAt,
+    long Revision);
+
+public sealed record SessionResult(
+    SessionId SessionId,
+    ContestId ContestId,
+    int QsoCount,
+    int Score,
+    TimeSpan ElapsedSimulationTime,
+    SessionState State);

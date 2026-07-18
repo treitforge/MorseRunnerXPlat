@@ -1,0 +1,400 @@
+syntax = "proto3";
+
+package morserunner.v1;
+
+option csharp_namespace = "MorseRunner.Contracts.V1";
+
+import "google/protobuf/timestamp.proto";
+
+service EngineService {
+  rpc GetEngineInfo(GetEngineInfoRequest) returns (GetEngineInfoResponse);
+  rpc GetHealth(GetHealthRequest) returns (GetHealthResponse);
+}
+
+service CatalogService {
+  rpc ListContests(ListContestsRequest) returns (ListContestsResponse);
+  rpc GetContestDefinition(GetContestDefinitionRequest) returns (GetContestDefinitionResponse);
+  rpc GetDefaultSettings(GetDefaultSettingsRequest) returns (GetDefaultSettingsResponse);
+  rpc GetDataStatus(GetDataStatusRequest) returns (GetDataStatusResponse);
+}
+
+service SessionService {
+  rpc CreateSession(CreateSessionRequest) returns (CreateSessionResponse);
+  rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
+  rpc ExecuteCommand(ExecuteCommandRequest) returns (ExecuteCommandResponse);
+  rpc SubscribeSession(SubscribeSessionRequest) returns (stream SubscribeSessionResponse);
+  rpc CloseSession(CloseSessionRequest) returns (CloseSessionResponse);
+  rpc AcquireControl(AcquireControlRequest) returns (AcquireControlResponse);
+  rpc RenewControl(RenewControlRequest) returns (RenewControlResponse);
+  rpc ReleaseControl(ReleaseControlRequest) returns (ReleaseControlResponse);
+  rpc TakeControl(TakeControlRequest) returns (TakeControlResponse);
+}
+
+service ResultsService {
+  rpc ListCompletedQsos(ListCompletedQsosRequest) returns (ListCompletedQsosResponse);
+  rpc GetResult(GetResultRequest) returns (GetResultResponse);
+  rpc ExportResult(ExportResultRequest) returns (ExportResultResponse);
+}
+
+message GetEngineInfoRequest {}
+message GetHealthRequest {}
+message ListContestsRequest {}
+message GetDefaultSettingsRequest { int32 seed = 1; }
+message GetDataStatusRequest {}
+
+message GetEngineInfoResponse { EngineInfoMessage engine_info = 1; }
+
+message GetHealthResponse {
+  bool ready = 1;
+  string status = 2;
+}
+
+message EngineInfoMessage {
+  string engine_id = 1;
+  string display_name = 2;
+  string semantic_version = 3;
+  string engine_epoch = 4;
+  repeated string capabilities = 5;
+  bool is_in_process = 6;
+  string minimum_contract_version = 7;
+  string maximum_contract_version = 8;
+  string diagnostic_version = 9;
+}
+
+message ContestDefinitionMessage {
+  string id = 1;
+  string key = 2;
+  string display_name = 3;
+  string exchange_type_1 = 4;
+  string exchange_type_2 = 5;
+  bool exchange_field_editable = 6;
+  string exchange_default = 7;
+}
+
+message ListContestsResponse {
+  repeated ContestDefinitionMessage contests = 1;
+}
+
+message GetContestDefinitionRequest {
+  string contest_id = 1;
+}
+
+message GetContestDefinitionResponse {
+  ContestDefinitionMessage contest = 1;
+}
+
+message GetDefaultSettingsResponse {
+  SessionSettingsMessage settings = 1;
+}
+
+message GetDataStatusResponse {
+  bool ready = 1;
+  int32 packaged_file_count = 2;
+  string status = 3;
+}
+
+message SessionSettingsMessage {
+  int32 seed = 1;
+  string contest_id = 2;
+  string run_mode_id = 3;
+  int64 duration_blocks = 4;
+  string station_call = 5;
+  int32 words_per_minute = 6;
+  int32 pitch_hz = 7;
+  int32 bandwidth_hz = 8;
+}
+
+message SessionHandleMessage {
+  string session_id = 1;
+  string engine_epoch = 2;
+  SessionStateMessage state = 3;
+  int64 revision = 4;
+}
+
+enum SessionStateMessage {
+  SESSION_STATE_MESSAGE_UNSPECIFIED = 0;
+  SESSION_STATE_MESSAGE_CREATED = 1;
+  SESSION_STATE_MESSAGE_READY = 2;
+  SESSION_STATE_MESSAGE_RUNNING = 3;
+  SESSION_STATE_MESSAGE_PAUSED = 4;
+  SESSION_STATE_MESSAGE_STOPPING = 5;
+  SESSION_STATE_MESSAGE_COMPLETED = 6;
+  SESSION_STATE_MESSAGE_FAULTED = 7;
+  SESSION_STATE_MESSAGE_CLOSED = 8;
+}
+
+message CreateSessionRequest {
+  string request_id = 1;
+  string client_id = 2;
+  SessionSettingsMessage settings = 3;
+}
+
+message CreateSessionResponse { SessionHandleMessage session = 1; }
+
+message GetSessionRequest {
+  string session_id = 1;
+}
+
+message GetSessionResponse { SessionSnapshotMessage snapshot = 1; }
+
+message CommandEnvelope {
+  string request_id = 1;
+  string session_id = 2;
+  string client_id = 3;
+  optional int64 expected_revision = 4;
+  oneof payload {
+    StartCommand start = 10;
+    PauseCommand pause = 11;
+    ResumeCommand resume = 12;
+    StopCommand stop = 13;
+    AdvanceCommand advance = 14;
+    OperatorIntentCommand operator_intent = 15;
+    RadioControlCommand radio_control = 16;
+    LogQsoCommand log_qso = 17;
+    RecoverAudioCommand recover_audio = 18;
+  }
+}
+
+message StartCommand {}
+message PauseCommand {}
+message ResumeCommand {}
+message StopCommand {}
+message AdvanceCommand { int32 block_count = 1; }
+message RecoverAudioCommand { string device_name = 1; }
+
+enum OperatorIntentMessage {
+  OPERATOR_INTENT_MESSAGE_UNSPECIFIED = 0;
+  OPERATOR_INTENT_MESSAGE_CQ = 1;
+  OPERATOR_INTENT_MESSAGE_EXCHANGE = 2;
+  OPERATOR_INTENT_MESSAGE_THANK_YOU = 3;
+  OPERATOR_INTENT_MESSAGE_MY_CALL = 4;
+  OPERATOR_INTENT_MESSAGE_HIS_CALL = 5;
+  OPERATOR_INTENT_MESSAGE_BEFORE = 6;
+  OPERATOR_INTENT_MESSAGE_QUESTION = 7;
+  OPERATOR_INTENT_MESSAGE_NIL = 8;
+  OPERATOR_INTENT_MESSAGE_NUMBER_QUESTION = 9;
+  OPERATOR_INTENT_MESSAGE_ABORT = 10;
+}
+
+message OperatorIntentCommand {
+  OperatorIntentMessage intent = 1;
+  string call = 2;
+  string rst = 3;
+  string exchange_1 = 4;
+  string exchange_2 = 5;
+}
+
+enum RadioControlMessage {
+  RADIO_CONTROL_MESSAGE_UNSPECIFIED = 0;
+  RADIO_CONTROL_MESSAGE_RIT = 1;
+  RADIO_CONTROL_MESSAGE_BANDWIDTH = 2;
+  RADIO_CONTROL_MESSAGE_SPEED = 3;
+}
+
+message RadioControlCommand {
+  RadioControlMessage control = 1;
+  int32 delta = 2;
+}
+
+message LogQsoCommand {
+  string call = 1;
+  string rst = 2;
+  string exchange_1 = 3;
+  string exchange_2 = 4;
+}
+
+message ExecuteCommandRequest {
+  CommandEnvelope command = 1;
+  string control_lease_token = 2;
+}
+
+message ExecuteCommandResponse { CommandResultMessage result = 1; }
+
+message CommandResultMessage {
+  bool accepted = 1;
+  string error_code = 2;
+  string message = 3;
+  int64 applied_revision = 4;
+  int64 applied_block = 5;
+}
+
+message SessionSnapshotMessage {
+  string engine_epoch = 1;
+  string session_id = 2;
+  SessionStateMessage state = 3;
+  int64 revision = 4;
+  int64 simulation_block = 5;
+  int64 rendered_samples = 6;
+  int64 elapsed_ticks = 7;
+  int32 seed = 8;
+  string contest_id = 9;
+  string run_mode_id = 10;
+  string last_caller = 11;
+  int32 qso_count = 12;
+  int32 score = 13;
+  string last_error = 14;
+  int32 audio_queued_blocks = 15;
+  int64 audio_underrun_count = 16;
+  int64 audio_dropped_block_count = 17;
+  bool audio_output_healthy = 18;
+  string last_operator_message = 19;
+  int32 current_words_per_minute = 20;
+  int32 current_bandwidth_hz = 21;
+  int32 rit_offset_hz = 22;
+  string last_logged_call = 23;
+  ControlLeaseSummaryMessage control_lease = 24;
+}
+
+enum SessionEventKindMessage {
+  SESSION_EVENT_KIND_MESSAGE_UNSPECIFIED = 0;
+  SESSION_EVENT_KIND_MESSAGE_CREATED = 1;
+  SESSION_EVENT_KIND_MESSAGE_READY = 2;
+  SESSION_EVENT_KIND_MESSAGE_STARTED = 3;
+  SESSION_EVENT_KIND_MESSAGE_PAUSED = 4;
+  SESSION_EVENT_KIND_MESSAGE_RESUMED = 5;
+  SESSION_EVENT_KIND_MESSAGE_STOPPING = 6;
+  SESSION_EVENT_KIND_MESSAGE_COMPLETED = 7;
+  SESSION_EVENT_KIND_MESSAGE_CLOSED = 8;
+  SESSION_EVENT_KIND_MESSAGE_COMMAND_APPLIED = 9;
+  SESSION_EVENT_KIND_MESSAGE_COMMAND_REJECTED = 10;
+  SESSION_EVENT_KIND_MESSAGE_CALLER_JOINED = 11;
+  SESSION_EVENT_KIND_MESSAGE_AUDIO_DEVICE_FAILED = 12;
+  SESSION_EVENT_KIND_MESSAGE_AUDIO_DEVICE_RECOVERED = 13;
+  SESSION_EVENT_KIND_MESSAGE_CONTROL_ACQUIRED = 14;
+  SESSION_EVENT_KIND_MESSAGE_CONTROL_RENEWED = 15;
+  SESSION_EVENT_KIND_MESSAGE_CONTROL_RELEASED = 16;
+  SESSION_EVENT_KIND_MESSAGE_CONTROL_EXPIRED = 17;
+  SESSION_EVENT_KIND_MESSAGE_CONTROL_TAKEN_OVER = 18;
+  SESSION_EVENT_KIND_MESSAGE_RESYNC_REQUIRED = 19;
+}
+
+message SessionEventMessage {
+  string engine_epoch = 1;
+  string session_id = 2;
+  int64 sequence = 3;
+  int64 revision = 4;
+  int64 simulation_block = 5;
+  SessionEventKindMessage kind = 6;
+  string detail = 7;
+}
+
+message SessionUpdateMessage {
+  oneof payload {
+    SessionEventMessage event = 1;
+    SessionSnapshotMessage snapshot = 2;
+  }
+}
+
+message SubscribeSessionRequest {
+  string session_id = 1;
+  int64 after_sequence = 2;
+}
+
+message SubscribeSessionResponse { SessionUpdateMessage update = 1; }
+
+message CloseSessionRequest {
+  string request_id = 1;
+  string session_id = 2;
+  string client_id = 3;
+  string control_lease_token = 4;
+}
+
+message CloseSessionResponse {}
+
+message ControlLeaseSummaryMessage {
+  string owning_client_id = 1;
+  google.protobuf.Timestamp expires_at = 2;
+  int64 revision = 3;
+}
+
+message ControlLeaseMessage {
+  string token = 1;
+  string session_id = 2;
+  string owning_client_id = 3;
+  google.protobuf.Timestamp issued_at = 4;
+  google.protobuf.Timestamp expires_at = 5;
+  int64 revision = 6;
+}
+
+message AcquireControlRequest {
+  string request_id = 1;
+  string session_id = 2;
+  string client_id = 3;
+}
+
+message AcquireControlResponse { ControlLeaseMessage lease = 1; }
+
+message RenewControlRequest {
+  string request_id = 1;
+  string session_id = 2;
+  string client_id = 3;
+  string token = 4;
+}
+
+message RenewControlResponse { ControlLeaseMessage lease = 1; }
+
+message ReleaseControlRequest {
+  string request_id = 1;
+  string session_id = 2;
+  string client_id = 3;
+  string token = 4;
+}
+
+message ReleaseControlResponse {}
+
+message TakeControlRequest {
+  string request_id = 1;
+  string session_id = 2;
+  string client_id = 3;
+  bool force = 4;
+}
+
+message TakeControlResponse { ControlLeaseMessage lease = 1; }
+
+message ListCompletedQsosRequest { string session_id = 1; }
+
+message QsoMessage {
+  google.protobuf.Timestamp timestamp = 1;
+  string call = 2;
+  int32 rst = 3;
+  string exchange_1 = 4;
+  string exchange_2 = 5;
+  int32 points = 6;
+  string multiplier = 7;
+  bool is_duplicate = 8;
+  string error_text = 9;
+}
+
+message ListCompletedQsosResponse {
+  repeated QsoMessage qsos = 1;
+}
+
+message GetResultRequest { string session_id = 1; }
+
+message GetResultResponse { SessionResultMessage result = 1; }
+
+message SessionResultMessage {
+  string session_id = 1;
+  string contest_id = 2;
+  int32 qso_count = 3;
+  int32 score = 4;
+  int64 elapsed_ticks = 5;
+  SessionStateMessage state = 6;
+}
+
+enum ResultExportFormat {
+  RESULT_EXPORT_FORMAT_UNSPECIFIED = 0;
+  RESULT_EXPORT_FORMAT_JSON = 1;
+  RESULT_EXPORT_FORMAT_CABRILLO = 2;
+}
+
+message ExportResultRequest {
+  string session_id = 1;
+  ResultExportFormat format = 2;
+}
+
+message ExportResultResponse {
+  string media_type = 1;
+  bytes content = 2;
+  string suggested_file_name = 3;
+}

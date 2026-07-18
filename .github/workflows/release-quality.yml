@@ -1,0 +1,66 @@
+name: Release Quality
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v5.4.0
+        with:
+          global-json-file: global.json
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install Buf
+        uses: bufbuild/buf-action@v1.4.0
+        with:
+          version: "1.67.0"
+          github_token: ${{ github.token }}
+          setup_only: true
+
+      - name: Restore
+        run: |
+          uv sync --locked
+          dotnet restore MorseRunnerXPlat.slnx
+
+      - name: Validate
+        shell: pwsh
+        run: |
+          dotnet format MorseRunnerXPlat.slnx --verify-no-changes --no-restore
+          dotnet build MorseRunnerXPlat.slnx --configuration Release --no-restore
+          dotnet test --solution MorseRunnerXPlat.slnx --configuration Release --no-build
+          buf lint
+          .\tests\parity\Test-ParityCompleteness.ps1
+          .\tests\parity\Run-Parity.ps1 -Target Both -Mode Release
+
+      - name: Publish runtime packages
+        shell: pwsh
+        run: .\tools\release\Publish-Release.ps1
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: MorseRunnerXPlat-runtime-packages
+          path: artifacts/release/*.zip
+          if-no-files-found: error
+          retention-days: 14

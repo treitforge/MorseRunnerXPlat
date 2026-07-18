@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MorseRunner.Audio\MorseRunner.Audio.csproj" />
+    <ProjectReference Include="..\..\src\MorseRunner.Client\MorseRunner.Client.csproj" />
+    <ProjectReference Include="..\..\src\MorseRunner.Contracts\MorseRunner.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\MorseRunner.Domain\MorseRunner.Domain.csproj" />
+    <ProjectReference Include="..\..\src\MorseRunner.Engine\MorseRunner.Engine.csproj" />
+    <ProjectReference Include="..\..\src\MorseRunner.Grpc\MorseRunner.Grpc.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3.mtp-v2" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

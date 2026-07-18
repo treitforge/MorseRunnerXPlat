@@ -1,0 +1,63 @@
+name: Contract Quality
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "buf.yaml"
+      - "buf.lock"
+      - "proto/**"
+      - ".github/workflows/contract-quality.yml"
+  pull_request:
+    paths:
+      - "buf.yaml"
+      - "buf.lock"
+      - "proto/**"
+      - ".github/workflows/contract-quality.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  buf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Detect contract
+        id: contract
+        shell: pwsh
+        run: |
+          $exists = Test-Path -LiteralPath 'buf.yaml'
+          "exists=$($exists.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          if (-not $exists) {
+            Write-Host 'The external gRPC contract has not been scaffolded yet.'
+          }
+
+      - name: Install Buf
+        if: steps.contract.outputs.exists == 'true'
+        uses: bufbuild/buf-action@v1.4.0
+        with:
+          version: "1.67.0"
+          github_token: ${{ github.token }}
+          setup_only: true
+
+      - name: Lint contract
+        if: steps.contract.outputs.exists == 'true'
+        run: buf lint
+
+      - name: Detect prior contract
+        if: steps.contract.outputs.exists == 'true'
+        id: prior-contract
+        shell: pwsh
+        run: |
+          $count = @(git ls-tree -r origin/main --name-only -- proto | Where-Object { $_ -like '*.proto' }).Count
+          $exists = $count -gt 0
+          "exists=$($exists.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+
+      - name: Check contract compatibility
+        if: steps.prior-contract.outputs.exists == 'true'
+        run: buf breaking --against '.git#branch=main'

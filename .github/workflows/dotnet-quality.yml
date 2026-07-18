@@ -1,0 +1,84 @@
+name: .NET Quality
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "global.json"
+      - "Directory.*"
+      - "MorseRunnerXPlat.slnx"
+      - "src/**"
+      - "tests/**"
+      - ".github/workflows/dotnet-quality.yml"
+  pull_request:
+    paths:
+      - "global.json"
+      - "Directory.*"
+      - "MorseRunnerXPlat.slnx"
+      - "src/**"
+      - "tests/**"
+      - ".github/workflows/dotnet-quality.yml"
+
+concurrency:
+  group: dotnet-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Detect solution
+        id: solution
+        shell: pwsh
+        run: |
+          $exists = Test-Path -LiteralPath 'MorseRunnerXPlat.slnx'
+          "exists=$($exists.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          if (-not $exists) {
+            Write-Host 'Solution has not been scaffolded yet; .NET checks are skipped.'
+          }
+
+      - name: Set up .NET 10
+        if: steps.solution.outputs.exists == 'true'
+        uses: actions/setup-dotnet@v5.4.0
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        if: steps.solution.outputs.exists == 'true'
+        run: dotnet restore MorseRunnerXPlat.slnx
+
+      - name: Verify formatting
+        if: steps.solution.outputs.exists == 'true' && matrix.os == 'ubuntu-latest'
+        run: dotnet format MorseRunnerXPlat.slnx --verify-no-changes --no-restore
+
+      - name: Build
+        if: steps.solution.outputs.exists == 'true'
+        run: dotnet build MorseRunnerXPlat.slnx --no-restore --configuration Release
+
+      - name: Test
+        if: steps.solution.outputs.exists == 'true'
+        run: dotnet test --solution MorseRunnerXPlat.slnx --no-build --configuration Release
+
+      - name: Check vulnerable packages
+        if: steps.solution.outputs.exists == 'true' && matrix.os == 'ubuntu-latest'
+        shell: pwsh
+        run: |
+          $output = dotnet list MorseRunnerXPlat.slnx package --vulnerable --include-transitive 2>&1 | Out-String
+          Write-Host $output
+          if ($output -match 'has the following vulnerable packages') {
+            throw 'Vulnerable NuGet packages detected.'
+          }

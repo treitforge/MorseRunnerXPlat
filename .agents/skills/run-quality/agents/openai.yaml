@@ -1,0 +1,4 @@
+interface:
+  display_name: "Run Quality"
+  short_description: "Run repository-aware build and test validation"
+  default_prompt: "Apply the run-quality workflow to validate this MorseRunnerXPlat change."

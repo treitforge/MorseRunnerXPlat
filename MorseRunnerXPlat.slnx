@@ -1,0 +1,25 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MorseRunner.App/MorseRunner.App.csproj" />
+    <Project Path="src/MorseRunner.Audio/MorseRunner.Audio.csproj" />
+    <Project Path="src/MorseRunner.Client/MorseRunner.Client.csproj" />
+    <Project Path="src/MorseRunner.Cli/MorseRunner.Cli.csproj" />
+    <Project Path="src/MorseRunner.Contracts/MorseRunner.Contracts.csproj" />
+    <Project Path="src/MorseRunner.Domain/MorseRunner.Domain.csproj" />
+    <Project Path="src/MorseRunner.Dsp/MorseRunner.Dsp.csproj" />
+    <Project Path="src/MorseRunner.Engine/MorseRunner.Engine.csproj" />
+    <Project Path="src/MorseRunner.EngineHost/MorseRunner.EngineHost.csproj" />
+    <Project Path="src/MorseRunner.Grpc/MorseRunner.Grpc.csproj" />
+    <Project Path="src/MorseRunner.Infrastructure/MorseRunner.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MorseRunner.App.Tests/MorseRunner.App.Tests.csproj" />
+    <Project Path="tests/MorseRunner.Architecture.Tests/MorseRunner.Architecture.Tests.csproj" />
+    <Project Path="tests/MorseRunner.Audio.Tests/MorseRunner.Audio.Tests.csproj" />
+    <Project Path="tests/MorseRunner.Dsp.Tests/MorseRunner.Dsp.Tests.csproj" />
+    <Project Path="tests/MorseRunner.Engine.Tests/MorseRunner.Engine.Tests.csproj" />
+    <Project Path="tests/MorseRunner.Grpc.Tests/MorseRunner.Grpc.Tests.csproj" />
+    <Project Path="tests/MorseRunner.LegacyParity.Tests/MorseRunner.LegacyParity.Tests.csproj" />
+    <Project Path="tests/MorseRunner.Infrastructure.Tests/MorseRunner.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>

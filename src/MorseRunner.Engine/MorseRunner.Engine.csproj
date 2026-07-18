@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\MorseRunner.Domain\MorseRunner.Domain.csproj" />
+    <ProjectReference Include="..\MorseRunner.Dsp\MorseRunner.Dsp.csproj" />
+  </ItemGroup>
+</Project>

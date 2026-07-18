@@ -1,0 +1,4 @@
+interface:
+  display_name: "Audio and DSP Change"
+  short_description: "Change real-time audio and DSP safely"
+  default_prompt: "Apply the audio-dsp-change workflow to this MorseRunnerXPlat task."

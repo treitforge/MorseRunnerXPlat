@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\MorseRunner.Client\MorseRunner.Client.csproj" />
+    <ProjectReference Include="..\MorseRunner.Contracts\MorseRunner.Contracts.csproj" />
+    <ProjectReference Include="..\MorseRunner.Domain\MorseRunner.Domain.csproj" />
+    <ProjectReference Include="..\MorseRunner.Infrastructure\MorseRunner.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Grpc.AspNetCore" />
+    <PackageReference Include="Grpc.Net.Client" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+</Project>

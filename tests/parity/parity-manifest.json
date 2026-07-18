@@ -1,0 +1,906 @@
+{
+  "schemaVersion": 1,
+  "inventoryStatus": "complete",
+  "reference": {
+    "repository": "https://github.com/w7sst/MorseRunner.git",
+    "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e"
+  },
+  "legacySurfaceInventory": "tests/parity/legacy-surface-inventory.json",
+  "auditedSurfaces": [
+    "Ini.pas:TSimContest",
+    "Ini.pas:TRunMode",
+    "Ini.pas:ContestDefinitions",
+    "Ini.pas:persisted settings access",
+    "Main.dfm:form objects and menu items",
+    "Main.dfm:event bindings",
+    "Main.dfm:declared shortcuts",
+    "Main.pas:bound handlers and keyboard branches",
+    "Log.pas:TLogError and TQso",
+    "Log.pas:logging, correction, scoring, rate, and result routines",
+    "Contest, Station, operator, and station-collection enums",
+    "Contest, Station, operator, and station-collection routines and state transitions",
+    "VCL portable DSP, keying, mixing, averaging, AGC, and sound data surfaces",
+    "VCL Windows sound output, buffering, and WAV adapter surfaces",
+    "VCL-only hint and volume control surfaces",
+    "Contest-specific rule and exchange implementations",
+    "Call list, DXCC, serial number, exchange field, lexer, and Sweepstakes parser surfaces",
+    "QSB and seeded random effect surfaces",
+    "Score dialog surfaces",
+    "Bundled and generated data references plus file and failure operations"
+  ],
+  "pendingAuditSurfaces": [],
+  "items": [
+    {
+      "id": "catalog.contest-enumeration",
+      "category": "contest-catalog",
+      "feature": "Legacy contest enumeration",
+      "behavior": "The contest catalog exposes every TSimContest member in its declared order.",
+      "legacySources": [
+        "Ini.pas:28-30"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.ini.contest.*"
+      ],
+      "preconditions": [
+        "The pinned legacy Ini.pas source is available or its pinned observation fixture is loaded."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacyContestCatalogTarget",
+        "XPlatCatalogTarget"
+      ],
+      "assertions": {
+        "orderedValues": [
+          "scWpx",
+          "scCwt",
+          "scFieldDay",
+          "scNaQp",
+          "scHst",
+          "scCQWW",
+          "scArrlDx",
+          "scSst",
+          "scAllJa",
+          "scAcag",
+          "scIaruHf",
+          "scArrlSS"
+        ],
+        "numericTolerance": null
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/catalog-contest-enumeration.json",
+      "evidence": "tests/parity/evidence/catalog-contest-enumeration.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "session.run-mode-enumeration",
+      "category": "session-lifecycle",
+      "feature": "Legacy run mode enumeration",
+      "behavior": "Session lifecycle behavior accounts for every legacy TRunMode value.",
+      "legacySources": [
+        "Ini.pas:31"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.ini.run-mode.*"
+      ],
+      "preconditions": [
+        "The legacy run-mode inventory has been extracted from the pinned Ini.pas source."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacyInventoryTarget",
+        "XPlatCatalogTarget"
+      ],
+      "assertions": {
+        "orderedValues": [
+          "rmStop",
+          "rmPileup",
+          "rmSingle",
+          "rmWpx",
+          "rmHst"
+        ],
+        "numericTolerance": null
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/session-run-mode-enumeration.json",
+      "evidence": "tests/parity/evidence/session-run-mode-enumeration.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "catalog.contest-definitions",
+      "category": "contest-catalog",
+      "feature": "Legacy contest definitions",
+      "behavior": "The contest catalog preserves the identity, ordering, exchange fields, editability, and defaults of every legacy contest definition.",
+      "legacySources": [
+        "Ini.pas:99-222"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.ini.contest-definition.*"
+      ],
+      "preconditions": [
+        "The legacy contest-definition inventory has been extracted from the pinned Ini.pas source."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacyInventoryTarget",
+        "XPlatCatalogTarget"
+      ],
+      "assertions": {
+        "orderedValues": [
+          "scWpx|CqWpx|CQ WPX|etRST|etSerialNr|True|5NN #",
+          "scCwt|Cwt|CWOPS CWT|etOpName|etGenericField|True|DAVID 123",
+          "scFieldDay|ArrlFd|ARRL Field Day|etFdClass|etArrlSection|True|3A OR",
+          "scNaQp|NAQP|NCJ NAQP|etOpName|etNaQpExch2|True|ALEX ON",
+          "scHst|HST|HST (High Speed Test)|etRST|etSerialNr|False|5NN #",
+          "scCQWW|CQWW|CQ WW|etRST|etCQZone|True|5NN 3",
+          "scARRLDX|ArrlDx|ARRL DX|etRST|etStateProv|True|5NN ON",
+          "scSst|Sst|K1USN Slow Speed Test|etOpName|etGenericField|True|BRUCE MA",
+          "scAllJa|AllJa|JARL ALL JA|etRST|etJaPref|True|5NN 10H",
+          "scAcag|Acag|JARL ACAG|etRST|etJaCity|True|5NN 1002H",
+          "scIaruHf|IaruHf|IARU HF|etRST|etGenericField|True|5NN 6",
+          "scArrlSS|SSCW|ARRL Sweepstakes|etSSNrPrecedence|etSSCheckSection|True|A 72 OR"
+        ],
+        "numericTolerance": null
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/catalog-contest-definitions.json",
+      "evidence": "tests/parity/evidence/catalog-contest-definitions.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "configuration.persisted-settings",
+      "category": "configuration",
+      "feature": "Legacy persisted settings",
+      "behavior": "Settings import and persistence account for every INI key read, written, migrated, or deleted by the legacy implementation.",
+      "legacySources": [
+        "Ini.pas:345-548"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.ini.setting.*"
+      ],
+      "preconditions": [
+        "The legacy persisted-setting inventory has been extracted from the pinned Ini.pas source."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacySurfaceContractTarget",
+        "XPlatSettingsContractTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedSurfaceCount": 60
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/configuration-persisted-settings.json",
+      "evidence": "tests/parity/evidence/configuration-persisted-settings.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "ux.main-form-objects",
+      "category": "operator-workflow",
+      "feature": "Legacy main-form objects",
+      "behavior": "The product retains the information, editable fields, controls, indicators, and presentation roles exposed by every legacy main-form object.",
+      "legacySources": [
+        "Main.dfm:1-1988"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.main.object.*"
+      ],
+      "preconditions": [
+        "The main-form object inventory has been extracted from the pinned Main.dfm source."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacySurfaceContractTarget",
+        "XPlatUxContractTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedSurfaceCount": 79
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/ux-main-form-objects.json",
+      "evidence": "tests/parity/evidence/ux-main-form-objects.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "ux.main-menu-commands",
+      "category": "operator-workflow",
+      "feature": "Legacy main-menu commands",
+      "behavior": "Every legacy menu command remains available through an equivalent keyboard-first or pointer-accessible workflow.",
+      "legacySources": [
+        "Main.dfm:964-1579"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.main.menu-item.*"
+      ],
+      "preconditions": [
+        "The main-menu inventory has been extracted from the pinned Main.dfm source."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacySurfaceContractTarget",
+        "XPlatUxContractTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedSurfaceCount": 129
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/ux-main-menu-commands.json",
+      "evidence": "tests/parity/evidence/ux-main-menu-commands.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "ux.main-form-events",
+      "category": "operator-workflow",
+      "feature": "Legacy main-form event bindings and handlers",
+      "behavior": "Every legacy main-form event binding and referenced handler is represented by an equivalent semantic engine command or transient UX interaction.",
+      "legacySources": [
+        "Main.dfm:1-1988",
+        "Main.pas:452-2867"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.main.event-binding.*",
+        "legacy.main.handler.*"
+      ],
+      "preconditions": [
+        "The event-binding and handler inventories have been extracted from the pinned Main.dfm and Main.pas sources."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacySurfaceContractTarget",
+        "XPlatUxContractTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedSurfaceCount": 229
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/ux-main-form-events.json",
+      "evidence": "tests/parity/evidence/ux-main-form-events.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "ux.keyboard-workflows",
+      "category": "keyboard-workflow",
+      "feature": "Legacy shortcuts and keyboard branches",
+      "behavior": "Every declared shortcut and direct keyboard branch remains available with equivalent focus-sensitive behavior.",
+      "legacySources": [
+        "Main.dfm:1000-1579",
+        "Main.pas:629-947"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.main.shortcut.*"
+      ],
+      "preconditions": [
+        "The declared-shortcut and keyboard-branch inventories have been extracted from the pinned Main.dfm and Main.pas sources."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacySurfaceContractTarget",
+        "XPlatUxContractTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedSurfaceCount": 53
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/ux-keyboard-workflows.json",
+      "evidence": "tests/parity/evidence/ux-keyboard-workflows.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "logging.qso-model",
+      "category": "logging",
+      "feature": "Legacy QSO record and error model",
+      "behavior": "The QSO log retains every recorded value, verified value, error classification, correction flag, multiplier, point, and duplicate indicator used by legacy results.",
+      "legacySources": [
+        "Log.pas:48-82"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.log.error.*",
+        "legacy.log.qso-field.*"
+      ],
+      "preconditions": [
+        "The QSO record and error inventories have been extracted from the pinned Log.pas source."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacySurfaceContractTarget",
+        "XPlatLoggingTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedSurfaceCount": 47
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/logging-qso-model.json",
+      "evidence": "tests/parity/evidence/logging-qso-model.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "logging.scoring-rate-and-results",
+      "category": "logging",
+      "feature": "Legacy logging, scoring, rate, correction, and result paths",
+      "behavior": "Every legacy log operation and score-table definition remains represented in deterministic logging, correction, score, rate, and result behavior.",
+      "legacySources": [
+        "Log.pas:147-1137"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.log.routine.*",
+        "legacy.log.score-column.*"
+      ],
+      "preconditions": [
+        "The logging routine and score-column inventories have been extracted from the pinned Log.pas source."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatLoggingTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 13
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/logging-scoring-rate-and-results.json",
+      "evidence": "tests/parity/evidence/logging-scoring-rate-and-results.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "simulation.state-models",
+      "category": "simulation",
+      "feature": "Legacy simulation state models and transitions",
+      "behavior": "Every contest, station, and simulated-operator state and observed state transition is represented in the deterministic session state machine.",
+      "legacySources": [
+        "Contest.pas",
+        "Station.pas",
+        "DxOper.pas",
+        "DxStn.pas",
+        "StnColl.pas",
+        "MyStn.pas",
+        "QrmStn.pas",
+        "QrnStn.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.sim.enum.*",
+        "legacy.sim.transition.*"
+      ],
+      "preconditions": [
+        "Simulation enums and explicit state assignments have been extracted from the pinned legacy simulation units."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatSimulationTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 10
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/simulation-state-models.json",
+      "evidence": "tests/parity/evidence/simulation-state-models.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "simulation.runtime-routines",
+      "category": "simulation",
+      "feature": "Legacy contest, station, and operator routines",
+      "behavior": "Every production routine participating in contest advancement, message exchange, station behavior, operator decisions, and station collection management is represented by acceptance coverage.",
+      "legacySources": [
+        "Contest.pas",
+        "Station.pas",
+        "DxOper.pas",
+        "DxStn.pas",
+        "StnColl.pas",
+        "MyStn.pas",
+        "QrmStn.pas",
+        "QrnStn.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.sim.routine.*"
+      ],
+      "preconditions": [
+        "Simulation routine inventories have been extracted from the pinned legacy units."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatSimulationTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 13
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/simulation-runtime-routines.json",
+      "evidence": "tests/parity/evidence/simulation-runtime-routines.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "audio-dsp.legacy-processing",
+      "category": "audio-dsp",
+      "feature": "Legacy portable keying and DSP processing",
+      "behavior": "Every legacy Morse envelope, mixer, filter, modulation, AGC, sound-data type, constant, property, and processing routine is represented by deterministic parity coverage.",
+      "legacySources": [
+        "VCL/Crc32.pas",
+        "VCL/FarnsKeyer.pas",
+        "VCL/Mixers.pas",
+        "VCL/MorseKey.pas",
+        "VCL/MorseTbl.pas",
+        "VCL/MovAvg.pas",
+        "VCL/QuickAvg.pas",
+        "VCL/SndTypes.pas",
+        "VCL/VolumCtl.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.vcl.dsp.*"
+      ],
+      "preconditions": [
+        "Portable VCL DSP declarations and production routines have been extracted from the pinned legacy units."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatDspTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 31,
+        "numericTolerance": 1e-06
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/audio-dsp-legacy-processing.json",
+      "evidence": "tests/parity/evidence/audio-dsp-legacy-processing.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "audio.legacy-adapters",
+      "category": "audio-adapter",
+      "feature": "Legacy sound output, buffering, and WAV adapters",
+      "behavior": "Legacy device selection, bounded buffering, playback lifecycle, WAV read/write, and adapter failure behavior remain available behind portable engine-owned audio contracts.",
+      "legacySources": [
+        "VCL/BaseComp.pas",
+        "VCL/SndCustm.pas",
+        "VCL/SndOut.pas",
+        "VCL/WavFile.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.vcl.adapter.*"
+      ],
+      "preconditions": [
+        "Windows-specific VCL audio adapter declarations and production routines have been extracted without treating their APIs as the target architecture."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatAudioAdapterTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 19,
+        "numericTolerance": 1e-06
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/audio-legacy-adapters.json",
+      "evidence": "tests/parity/evidence/audio-legacy-adapters.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "ux.legacy-vcl-components",
+      "category": "operator-workflow",
+      "feature": "Legacy VCL-only hint and volume controls",
+      "behavior": "The permanent hint and volume slider interaction roles remain represented in the cross-platform UX without retaining VCL dependencies.",
+      "legacySources": [
+        "VCL/PermHint.pas",
+        "VCL/VolmSldr.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.vcl.ui.*"
+      ],
+      "preconditions": [
+        "VCL-only control declarations and production routines have been extracted from the pinned legacy units."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacySurfaceContractTarget",
+        "XPlatUxContractTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedSurfaceCount": 36
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/ux-legacy-vcl-components.json",
+      "evidence": "tests/parity/evidence/ux-legacy-vcl-components.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "contest.legacy-implementations",
+      "category": "contest-rules",
+      "feature": "Legacy contest-specific implementations",
+      "behavior": "Every contest-specific type, property, and production routine remains represented in deterministic rule, exchange, multiplier, point, and validation behavior.",
+      "legacySources": [
+        "ACAG.pas",
+        "ALLJA.pas",
+        "ArrlDx.pas",
+        "ArrlFd.pas",
+        "ArrlSS.pas",
+        "CqWpx.pas",
+        "CqWW.pas",
+        "CWOPS.pas",
+        "CWSST.pas",
+        "DualExchContest.pas",
+        "IaruHf.pas",
+        "NaQp.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.support.contest.*"
+      ],
+      "preconditions": [
+        "Contest-specific declarations and production routines have been extracted from the pinned legacy units."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatContestRulesTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 72
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/contest-legacy-implementations.json",
+      "evidence": "tests/parity/evidence/contest-legacy-implementations.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "data.legacy-parsers",
+      "category": "data-and-parsing",
+      "feature": "Legacy call, prefix, exchange, and serial data parsers",
+      "behavior": "Call-list lookup, DXCC lookup, exchange fields, serial generation, callsign utilities, lexical analysis, and Sweepstakes exchange parsing preserve their legacy data model and failure behavior.",
+      "legacySources": [
+        "CallLst.pas",
+        "DXCC.pas",
+        "ExchFields.pas",
+        "SerNRGen.pas",
+        "Util/ArrlSections.pas",
+        "Util/CallsignUtils.pas",
+        "Util/Lexer.pas",
+        "Util/SSExchParser.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.support.data.*"
+      ],
+      "preconditions": [
+        "Data and parser declarations, enum members, properties, and production routines have been extracted from the pinned legacy units."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatDataParserTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 46
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/data-legacy-parsers.json",
+      "evidence": "tests/parity/evidence/data-legacy-parsers.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "simulation.legacy-effects",
+      "category": "simulation",
+      "feature": "Legacy QSB and random effects",
+      "behavior": "QSB envelopes and seeded random distributions remain represented by deterministic simulation and DSP acceptance vectors.",
+      "legacySources": [
+        "Qsb.pas",
+        "RndFunc.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.support.effect.*"
+      ],
+      "preconditions": [
+        "QSB and random-effect declarations and production routines have been extracted from the pinned legacy units."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatLegacyEffectsTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 59,
+        "numericTolerance": 1e-06
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/simulation-legacy-effects.json",
+      "evidence": "tests/parity/evidence/simulation-legacy-effects.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "ux.score-dialog",
+      "category": "operator-workflow",
+      "feature": "Legacy score dialog",
+      "behavior": "Score presentation and close behavior remain available in the cross-platform UX.",
+      "legacySources": [
+        "ScoreDlg.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.support.ui.*"
+      ],
+      "preconditions": [
+        "Score dialog declarations and production routines have been extracted from the pinned legacy unit."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacySurfaceContractTarget",
+        "XPlatUxContractTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedSurfaceCount": 5
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/ux-score-dialog.json",
+      "evidence": "tests/parity/evidence/ux-score-dialog.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "data.files-and-operational-paths",
+      "category": "data-and-failure-paths",
+      "feature": "Legacy data files, recording, export, and failure paths",
+      "behavior": "Every referenced bundled or generated data file and every explicit file, persistence, export, dialog, and exception operation remains represented by acceptance coverage.",
+      "legacySources": [
+        "Ini.pas",
+        "Main.pas",
+        "Log.pas",
+        "Station.pas",
+        "VCL",
+        "contest and data support units"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.data.reference.*",
+        "legacy.operation.*"
+      ],
+      "preconditions": [
+        "Runtime data references and explicit operational paths have been extracted from all audited production units."
+      ],
+      "input": {
+        "seed": null,
+        "commands": []
+      },
+      "targetAdapters": [
+        "LegacySurfaceContractTarget",
+        "XPlatDataOperationsTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedSurfaceCount": 65
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "pass",
+      "status": "both-green",
+      "failureCode": null,
+      "fixture": "tests/parity/fixtures/legacy/data-files-and-operational-paths.json",
+      "evidence": "tests/parity/evidence/data-files-and-operational-paths.baseline.json",
+      "firstGreenCommit": null
+    }
+  ]
+}

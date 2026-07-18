@@ -1,0 +1,31 @@
+{
+  "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "parityId": "audio.legacy-adapters",
+  "oracle": "tests/parity/legacy-oracle/LegacyOracle.lpr",
+  "toolchain": {
+    "lazarus": "4.6",
+    "fpc": "3.2.2",
+    "target": "x86_64-win64"
+  },
+  "values": [
+    "written-bytes=76",
+    "sample-count=16",
+    "current-sample=16",
+    "sample[0]=-8192.000000000",
+    "sample[1]=-7168.000000000",
+    "sample[2]=-6144.000000000",
+    "sample[3]=-5120.000000000",
+    "sample[4]=-4096.000000000",
+    "sample[5]=-3072.000000000",
+    "sample[6]=-2048.000000000",
+    "sample[7]=-1024.000000000",
+    "sample[8]=0.000000000",
+    "sample[9]=1024.000000000",
+    "sample[10]=2048.000000000",
+    "sample[11]=3072.000000000",
+    "sample[12]=4096.000000000",
+    "sample[13]=5120.000000000",
+    "sample[14]=6144.000000000",
+    "sample[15]=7168.000000000"
+  ]
+}

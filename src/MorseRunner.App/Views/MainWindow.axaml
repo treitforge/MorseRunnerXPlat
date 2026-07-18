@@ -1,0 +1,379 @@
+<Window
+    x:Class="MorseRunner.App.Views.MainWindow"
+    x:DataType="viewModels:MainWindowViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:viewModels="using:MorseRunner.App.ViewModels"
+    Title="MorseRunnerXPlat"
+    Width="1240"
+    Height="820"
+    MinWidth="980"
+    MinHeight="700"
+    Background="#07111B">
+
+  <Window.KeyBindings>
+    <KeyBinding Gesture="F1" Command="{Binding SendCqCommand}" />
+    <KeyBinding Gesture="F2" Command="{Binding SendExchangeCommand}" />
+    <KeyBinding Gesture="F3" Command="{Binding SendThankYouCommand}" />
+    <KeyBinding Gesture="F4" Command="{Binding SendMyCallCommand}" />
+    <KeyBinding Gesture="F5" Command="{Binding SendHisCallCommand}" />
+    <KeyBinding Gesture="F6" Command="{Binding SendBeforeCommand}" />
+    <KeyBinding Gesture="F7" Command="{Binding SendQuestionCommand}" />
+    <KeyBinding Gesture="F8" Command="{Binding SendNilCommand}" />
+    <KeyBinding Gesture="F9" Command="{Binding StartCommand}" />
+    <KeyBinding Gesture="Shift+F9" Command="{Binding StartSingleCommand}" />
+    <KeyBinding Gesture="Ctrl+F9" Command="{Binding StartHstCommand}" />
+    <KeyBinding Gesture="F10" Command="{Binding StopCommand}" />
+    <KeyBinding Gesture="F11" Command="{Binding WipeCommand}" />
+    <KeyBinding Gesture="Ctrl+F11" Command="{Binding ShowScoreCommand}" />
+    <KeyBinding Gesture="F12" Command="{Binding SendNumberQuestionCommand}" />
+    <KeyBinding Gesture="Insert" Command="{Binding SendCallAndExchangeCommand}" />
+    <KeyBinding Gesture="Enter" Command="{Binding CompleteQsoCommand}" />
+    <KeyBinding Gesture="Alt+W" Command="{Binding WipeCommand}" />
+    <KeyBinding Gesture="Escape" Command="{Binding AbortCommand}" />
+    <KeyBinding Gesture="Up" Command="{Binding RitUpCommand}" />
+    <KeyBinding Gesture="Down" Command="{Binding RitDownCommand}" />
+    <KeyBinding Gesture="Ctrl+Up" Command="{Binding BandwidthUpCommand}" />
+    <KeyBinding Gesture="Ctrl+Down" Command="{Binding BandwidthDownCommand}" />
+    <KeyBinding Gesture="PageUp" Command="{Binding SpeedUpCommand}" />
+    <KeyBinding Gesture="PageDown" Command="{Binding SpeedDownCommand}" />
+    <KeyBinding Gesture="Ctrl+P" Command="{Binding PauseCommand}" />
+    <KeyBinding Gesture="Ctrl+R" Command="{Binding ResumeCommand}" />
+    <KeyBinding Gesture="Ctrl+Enter" Command="{Binding AdvanceCommand}" />
+  </Window.KeyBindings>
+
+  <Window.Styles>
+    <Style Selector="TextBlock.eyebrow">
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="#7890A5" />
+      <Setter Property="LetterSpacing" Value="1.2" />
+    </Style>
+    <Style Selector="TextBlock.metric">
+      <Setter Property="FontSize" Value="24" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="#F4F8FB" />
+    </Style>
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="#0E1D2A" />
+      <Setter Property="BorderBrush" Value="#21384B" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="Padding" Value="16" />
+    </Style>
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="#31D0AA" />
+      <Setter Property="Foreground" Value="#04130F" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Button.send">
+      <Setter Property="Background" Value="#173149" />
+      <Setter Property="Foreground" Value="#EAF1F6" />
+      <Setter Property="Padding" Value="12,9" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+    </Style>
+    <Style Selector="TextBox.entry">
+      <Setter Property="FontFamily" Value="Consolas" />
+      <Setter Property="FontSize" Value="20" />
+      <Setter Property="Background" Value="#07131E" />
+      <Setter Property="Foreground" Value="#F4F8FB" />
+      <Setter Property="BorderBrush" Value="#2A465C" />
+    </Style>
+  </Window.Styles>
+
+  <DockPanel>
+    <Menu DockPanel.Dock="Top" Background="#0B1824">
+      <MenuItem Header="_File">
+        <MenuItem Header="Audio Recording Enabled" ToggleType="CheckBox" />
+        <MenuItem Header="Play Recorded Audio" />
+        <Separator />
+        <MenuItem Header="View Score Table" Command="{Binding ShowScoreCommand}" />
+        <MenuItem Header="Exit" />
+      </MenuItem>
+      <MenuItem Header="_Run">
+        <MenuItem Header="Pile-Up" HotKey="F9" Command="{Binding StartCommand}" />
+        <MenuItem Header="Single Calls" HotKey="Shift+F9" Command="{Binding StartSingleCommand}" />
+        <MenuItem Header="WPX Competition" Command="{Binding StartWpxCommand}" />
+        <MenuItem Header="HST Competition" HotKey="Ctrl+F9" Command="{Binding StartHstCommand}" />
+        <MenuItem Header="Stop" HotKey="F10" Command="{Binding StopCommand}" />
+      </MenuItem>
+      <MenuItem Header="_Send">
+        <MenuItem Header="CQ" HotKey="F1" Command="{Binding SendCqCommand}" />
+        <MenuItem Header="Exchange" HotKey="F2" Command="{Binding SendExchangeCommand}" />
+        <MenuItem Header="TU" HotKey="F3" Command="{Binding SendThankYouCommand}" />
+        <MenuItem Header="My Call" HotKey="F4" Command="{Binding SendMyCallCommand}" />
+        <MenuItem Header="His Call" HotKey="F5" Command="{Binding SendHisCallCommand}" />
+        <MenuItem Header="QSO B4" HotKey="F6" Command="{Binding SendBeforeCommand}" />
+        <MenuItem Header="?" HotKey="F7" Command="{Binding SendQuestionCommand}" />
+        <MenuItem Header="NIL" HotKey="F8" Command="{Binding SendNilCommand}" />
+        <MenuItem Header="NR?" HotKey="F12" Command="{Binding SendNumberQuestionCommand}" />
+      </MenuItem>
+      <MenuItem Header="_Settings">
+        <MenuItem Header="Call" />
+        <MenuItem Header="CW Speed" />
+        <MenuItem Header="CW Pitch" />
+        <MenuItem Header="CW Bandwidth" />
+        <MenuItem Header="Duration" />
+        <Separator />
+        <MenuItem Header="QSK" ToggleType="CheckBox" IsChecked="{Binding Qsk}" />
+        <MenuItem Header="QSB" ToggleType="CheckBox" IsChecked="{Binding Qsb}" />
+        <MenuItem Header="QRM" ToggleType="CheckBox" IsChecked="{Binding Qrm}" />
+        <MenuItem Header="QRN" ToggleType="CheckBox" IsChecked="{Binding Qrn}" />
+        <MenuItem Header="Flutter" ToggleType="CheckBox" IsChecked="{Binding Flutter}" />
+        <MenuItem Header="LIDs" ToggleType="CheckBox" IsChecked="{Binding Lids}" />
+      </MenuItem>
+      <MenuItem Header="_Help">
+        <MenuItem Header="First Time Setup" />
+        <MenuItem Header="Readme" />
+        <MenuItem Header="Community Edition Home Page" />
+        <MenuItem Header="About MorseRunnerXPlat" />
+      </MenuItem>
+    </Menu>
+
+    <Grid Margin="22" RowDefinitions="Auto,*,Auto" RowSpacing="16">
+      <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,2">
+        <StackPanel>
+          <TextBlock Classes="eyebrow" Text="CW CONTEST SIMULATOR" />
+          <TextBlock
+              Margin="0,4,0,0"
+              FontSize="26"
+              FontWeight="SemiBold"
+              Foreground="#F4F8FB"
+              Text="MorseRunnerXPlat" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+          <TextBlock Classes="eyebrow" HorizontalAlignment="Right" Text="ENGINE STATUS" />
+          <TextBlock
+              Margin="0,4,0,0"
+              Foreground="#7CE7CB"
+              Text="{Binding Status}"
+              TextTrimming="CharacterEllipsis"
+              MaxWidth="560" />
+        </StackPanel>
+      </Grid>
+
+      <Grid Grid.Row="1" ColumnDefinitions="250,*,260" ColumnSpacing="14">
+        <Grid RowDefinitions="Auto,*" RowSpacing="14">
+          <Border Classes="card">
+            <StackPanel Spacing="11">
+              <TextBlock Classes="eyebrow" Text="STATION" />
+              <TextBlock Foreground="#91A6B8" Text="Call" />
+              <TextBox
+                  AutomationProperties.Name="Station callsign"
+                  Text="{Binding StationCall}" />
+              <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <StackPanel>
+                  <TextBlock Foreground="#91A6B8" Text="CW Speed" />
+                  <NumericUpDown
+                      AutomationProperties.Name="CW speed words per minute"
+                      Minimum="10"
+                      Maximum="100"
+                      Value="{Binding WordsPerMinute}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1">
+                  <TextBlock Foreground="#91A6B8" Text="Pitch Hz" />
+                  <NumericUpDown
+                      AutomationProperties.Name="CW pitch"
+                      Minimum="300"
+                      Maximum="900"
+                      Increment="50"
+                      Value="{Binding PitchHz}" />
+                </StackPanel>
+              </Grid>
+              <TextBlock Foreground="#91A6B8" Text="RX Bandwidth" />
+              <Slider
+                  AutomationProperties.Name="Receiver bandwidth"
+                  Minimum="100"
+                  Maximum="600"
+                  TickFrequency="50"
+                  Value="{Binding BandwidthHz}" />
+              <TextBlock Foreground="#91A6B8" Text="Monitor Level" />
+              <Slider
+                  x:Name="MonitorSlider"
+                  AutomationProperties.Name="Monitor audio level"
+                  Minimum="-60"
+                  Maximum="0"
+                  TickFrequency="5"
+                  ToolTip.Tip="Monitor level in dB"
+                  Value="{Binding MonitorLevel}" />
+              <CheckBox Content="QSK" IsChecked="{Binding Qsk}" />
+            </StackPanel>
+          </Border>
+
+          <Border Grid.Row="1" Classes="card">
+            <StackPanel Spacing="9">
+              <TextBlock Classes="eyebrow" Text="BAND CONDITIONS" />
+              <CheckBox Content="QSB" IsChecked="{Binding Qsb}" />
+              <CheckBox Content="QRM" IsChecked="{Binding Qrm}" />
+              <CheckBox Content="QRN" IsChecked="{Binding Qrn}" />
+              <CheckBox Content="Flutter" IsChecked="{Binding Flutter}" />
+              <CheckBox Content="LIDs" IsChecked="{Binding Lids}" />
+              <TextBlock Foreground="#91A6B8" Text="Activity" />
+              <Slider
+                  AutomationProperties.Name="Band activity"
+                  Minimum="1"
+                  Maximum="9"
+                  TickFrequency="1"
+                  Value="{Binding Activity}" />
+            </StackPanel>
+          </Border>
+        </Grid>
+
+        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="14">
+          <Border Classes="card">
+            <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="12">
+              <StackPanel>
+                <TextBlock Classes="eyebrow" Text="CONTEST" />
+                <TextBlock Classes="metric" Margin="0,5,0,0" Text="{Binding ContestName}" />
+              </StackPanel>
+              <StackPanel Grid.Column="1">
+                <TextBlock Classes="eyebrow" Text="MODE" />
+                <TextBlock Classes="metric" Margin="0,5,0,0" Text="{Binding RunMode}" />
+              </StackPanel>
+              <StackPanel Grid.Column="2">
+                <TextBlock Classes="eyebrow" Text="TIME" />
+                <TextBlock Classes="metric" Margin="0,5,0,0" Text="{Binding Elapsed}" />
+              </StackPanel>
+              <StackPanel Grid.Column="3">
+                <TextBlock Classes="eyebrow" Text="SCORE" />
+                <TextBlock Classes="metric" Margin="0,5,0,0" Text="{Binding Score}" />
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <Border Grid.Row="1" Classes="card">
+            <Grid ColumnDefinitions="2*,*,*,*" ColumnSpacing="10">
+              <StackPanel>
+                <TextBlock Classes="eyebrow" Text="CALL" />
+              <TextBox
+                  x:Name="CallEntryBox"
+                  AutomationProperties.Name="Received callsign"
+                  Classes="entry"
+                  TextInput="CallTextInput"
+                  Text="{Binding CallEntry}" />
+              </StackPanel>
+              <StackPanel Grid.Column="1">
+                <TextBlock Classes="eyebrow" Text="RST" />
+                <TextBox
+                  x:Name="RstEntryBox"
+                  AutomationProperties.Name="Received signal report"
+                  Classes="entry"
+                  TextInput="RstTextInput"
+                  Text="{Binding RstEntry}" />
+              </StackPanel>
+              <StackPanel Grid.Column="2">
+                <TextBlock Classes="eyebrow" Text="EXCH 1" />
+                <TextBox
+                    x:Name="Exchange1EntryBox"
+                    AutomationProperties.Name="Received exchange field one"
+                    Classes="entry"
+                    TextInput="Exchange1TextInput"
+                    Text="{Binding Exchange1Entry}" />
+              </StackPanel>
+              <StackPanel Grid.Column="3">
+                <TextBlock Classes="eyebrow" Text="EXCH 2" />
+                <TextBox
+                    x:Name="Exchange2EntryBox"
+                    AutomationProperties.Name="Received exchange field two"
+                    Classes="entry"
+                    TextInput="Exchange2TextInput"
+                    Text="{Binding Exchange2Entry}" />
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <Border Grid.Row="2" Classes="card">
+            <Grid RowDefinitions="Auto,*,Auto">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Classes="eyebrow" Text="QSO LOG" />
+                <TextBlock
+                    Grid.Column="1"
+                    Foreground="#91A6B8"
+                    Text="{Binding QsoCount, StringFormat='{}{0} contacts'}" />
+              </Grid>
+              <ListBox
+                  x:Name="QsoLog"
+                  Grid.Row="1"
+                  Margin="0,10,0,10"
+                  AutomationProperties.Name="QSO log"
+                  Background="#07131E">
+                <ListBoxItem>
+                  <TextBlock
+                      Foreground="#60798D"
+                      Text="No contacts logged yet. Start with F9, then send CQ with F1." />
+                </ListBoxItem>
+              </ListBox>
+              <Grid Grid.Row="2" ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                <StackPanel>
+                  <TextBlock Classes="eyebrow" Text="BLOCK" />
+                  <TextBlock Foreground="#DCE7EF" Text="{Binding SimulationBlock}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1">
+                  <TextBlock Classes="eyebrow" Text="LAST CALLER" />
+                  <TextBlock Foreground="#DCE7EF" Text="{Binding LastCaller}" />
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                  <TextBlock Classes="eyebrow" Text="LAST SENT" />
+                  <TextBlock Foreground="#DCE7EF" Text="{Binding LastSent}" />
+                </StackPanel>
+              </Grid>
+            </Grid>
+          </Border>
+
+          <Grid Grid.Row="3" ColumnDefinitions="*,*,*,*" ColumnSpacing="10">
+            <Button
+                x:Name="StartButton"
+                AutomationProperties.Name="Start pile-up session"
+                Classes="primary"
+                Command="{Binding StartCommand}"
+                Content="Run  F9" />
+            <Button
+                Grid.Column="1"
+                Command="{Binding PauseCommand}"
+                Content="Pause  Ctrl+P" />
+            <Button
+                Grid.Column="2"
+                Command="{Binding AdvanceCommand}"
+                Content="Advance  Ctrl+Enter" />
+            <Button
+                Grid.Column="3"
+                Command="{Binding ShowScoreCommand}"
+                Content="Score  F11" />
+          </Grid>
+        </Grid>
+
+        <Border Grid.Column="2" Classes="card">
+          <Grid RowDefinitions="Auto,*,Auto" RowSpacing="10">
+            <TextBlock Classes="eyebrow" Text="SEND" />
+            <UniformGrid Grid.Row="1" Columns="1" Rows="9">
+              <Button Classes="send" Command="{Binding SendCqCommand}" Content="F1   CQ" />
+              <Button Classes="send" Command="{Binding SendExchangeCommand}" Content="F2   &lt;exchange&gt;" />
+              <Button Classes="send" Command="{Binding SendThankYouCommand}" Content="F3   TU" />
+              <Button Classes="send" Command="{Binding SendMyCallCommand}" Content="F4   &lt;my call&gt;" />
+              <Button Classes="send" Command="{Binding SendHisCallCommand}" Content="F5   &lt;his call&gt;" />
+              <Button Classes="send" Command="{Binding SendBeforeCommand}" Content="F6   QSO B4" />
+              <Button Classes="send" Command="{Binding SendQuestionCommand}" Content="F7   ?" />
+              <Button Classes="send" Command="{Binding SendNilCommand}" Content="F8   NIL" />
+              <Button Classes="send" Command="{Binding SendNumberQuestionCommand}" Content="F12  NR?" />
+            </UniformGrid>
+            <StackPanel Grid.Row="2" Spacing="4">
+              <TextBlock Foreground="#60798D" Text="RIT: Up / Down" />
+              <TextBlock Foreground="#60798D" Text="Bandwidth: Ctrl + Up / Down" />
+              <TextBlock Foreground="#60798D" Text="WPM: Page Up / Page Down" />
+            </StackPanel>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+        <TextBlock
+            Foreground="#60798D"
+            Text="11,025 Hz mono  •  512 samples/block  •  Seed 12345" />
+        <TextBlock
+            Grid.Column="1"
+            Foreground="#60798D"
+            Text="F9 Pile-Up   Shift+F9 Single   Ctrl+F9 HST   F10 Stop" />
+      </Grid>
+    </Grid>
+  </DockPanel>
+</Window>

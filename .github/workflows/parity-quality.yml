@@ -1,0 +1,68 @@
+name: Functional Parity Quality
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "tests/parity/**"
+      - "docs/architecture/engineering-specification.md"
+      - ".github/workflows/parity-quality.yml"
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/parity/**"
+      - "docs/architecture/engineering-specification.md"
+      - ".github/workflows/parity-quality.yml"
+
+concurrency:
+  group: parity-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Enforce test-first parity scaffold
+        id: parity
+        shell: pwsh
+        run: |
+          $productionFiles = @(Get-ChildItem -Path 'src' -Recurse -Filter '*.cs' -File -ErrorAction SilentlyContinue)
+          $hasProductionCode = $productionFiles.Count -gt 0
+          $required = @(
+            'tests\parity\parity-manifest.json'
+            'tests\parity\Test-ParityCompleteness.ps1'
+            'tests\parity\Run-Parity.ps1'
+          )
+          $missing = @($required | Where-Object { -not (Test-Path -LiteralPath $_) })
+
+          if ($hasProductionCode -and $missing.Count -gt 0) {
+            throw "Production code exists before the required test-first parity scaffold: $($missing -join ', ')"
+          }
+
+          $ready = $missing.Count -eq 0
+          "ready=$($ready.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+
+          if (-not $ready) {
+            Write-Host 'Repository remains in pre-implementation Phase 0. No production code was found.'
+          }
+
+      - name: Audit feature completeness
+        if: steps.parity.outputs.ready == 'true'
+        shell: pwsh
+        run: .\tests\parity\Test-ParityCompleteness.ps1
+
+      - name: Run pull-request parity suite
+        if: steps.parity.outputs.ready == 'true'
+        shell: pwsh
+        run: .\tests\parity\Run-Parity.ps1 -Target Both -Mode PullRequest

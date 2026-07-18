@@ -1,0 +1,25 @@
+{
+  "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "parityId": "simulation.runtime-routines",
+  "oracle": "tests/parity/legacy-oracle/LegacyOracle.lpr",
+  "toolchain": {
+    "lazarus": "4.6",
+    "fpc": "3.2.2",
+    "target": "x86_64-win64"
+  },
+  "values": [
+    "send-delay=8",
+    "reply-timeout=56",
+    "repeat-cq=1|patience=6",
+    "after-number=5",
+    "after-tu=6",
+    "timeout-path[1]=1|patience=8",
+    "timeout-path[2]=1|patience=7",
+    "timeout-path[3]=1|patience=6",
+    "timeout-path[4]=1|patience=5",
+    "timeout-path[5]=1|patience=4",
+    "timeout-path[6]=1|patience=3",
+    "timeout-path[7]=1|patience=2",
+    "timeout-path[8]=1|patience=1"
+  ]
+}

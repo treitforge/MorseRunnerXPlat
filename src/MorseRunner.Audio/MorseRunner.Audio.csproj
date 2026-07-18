@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="MiniAudioEx.NET" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MorseRunner.Dsp\MorseRunner.Dsp.csproj" />
+    <ProjectReference Include="..\MorseRunner.Engine\MorseRunner.Engine.csproj" />
+  </ItemGroup>
+</Project>

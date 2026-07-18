@@ -1,0 +1,14 @@
+{
+  "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "parityId": "ux.score-dialog",
+  "surfacePrefixes": [
+    "legacy.support.ui."
+  ],
+  "values": [
+    "legacy.support.ui.routine.scoredlg.tscoredialog.button1click|TScoreDialog.Button1Click|{\"unit\":\"ScoreDlg\",\"owner\":\"TScoreDialog\",\"routine\":\"Button1Click\",\"declarations\":[{\"kind\":\"procedure\",\"signature\":\"(Sender: TObject)\",\"source\":\"ScoreDlg.pas:42\"}]}",
+    "legacy.support.ui.routine.scoredlg.tscoredialog.button2click|TScoreDialog.Button2Click|{\"unit\":\"ScoreDlg\",\"owner\":\"TScoreDialog\",\"routine\":\"Button2Click\",\"declarations\":[{\"kind\":\"procedure\",\"signature\":\"(Sender: TObject)\",\"source\":\"ScoreDlg.pas:47\"}]}",
+    "legacy.support.ui.routine.scoredlg.tscoredialog.button3click|TScoreDialog.Button3Click|{\"unit\":\"ScoreDlg\",\"owner\":\"TScoreDialog\",\"routine\":\"Button3Click\",\"declarations\":[{\"kind\":\"procedure\",\"signature\":\"(Sender: TObject)\",\"source\":\"ScoreDlg.pas:52\"}]}",
+    "legacy.support.ui.routine.scoredlg.tscoredialog.formcreate|TScoreDialog.FormCreate|{\"unit\":\"ScoreDlg\",\"owner\":\"TScoreDialog\",\"routine\":\"FormCreate\",\"declarations\":[{\"kind\":\"procedure\",\"signature\":\"(Sender: TObject)\",\"source\":\"ScoreDlg.pas:57\"}]}",
+    "legacy.support.ui.type.scoredlg.tscoredialog|ScoreDlg.TScoreDialog|{\"unit\":\"ScoreDlg\",\"type\":\"TScoreDialog\",\"declarations\":[{\"source\":\"ScoreDlg.pas:15\",\"definition\":\"class(TForm)\"}]}"
+  ]
+}
