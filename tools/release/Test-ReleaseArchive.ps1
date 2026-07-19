@@ -232,6 +232,11 @@ $audioDevicesPath = Join-Path $resolvedEvidenceRoot 'audio-devices.json'
 $physicalAudioStatus = 'not-attempted'
 $physicalAudioReason = 'Run on labeled hardware with -AttemptPhysicalAudio.'
 $physicalAudioReport = $null
+$nonPhysicalDeviceNames = @(
+    'Apple Virtual Sound Device',
+    'Discard all samples (playback) or generate zero samples (capture)',
+    'Null Audio Device'
+)
 try {
     & $cli audio-devices |
         Out-File -LiteralPath $audioDevicesPath -Encoding utf8
@@ -241,22 +246,34 @@ try {
 
     $devices = @(Get-Content -LiteralPath $audioDevicesPath -Raw |
         ConvertFrom-Json)
+    $physicalDevices = @(
+        $devices |
+            Where-Object Name -NotIn $nonPhysicalDeviceNames
+    )
     if ($AttemptPhysicalAudio) {
-        if ($devices.Count -eq 0) {
+        if ($physicalDevices.Count -eq 0) {
             $physicalAudioStatus = 'hardware-unavailable'
-            $physicalAudioReason = 'The runner enumerated no playback devices.'
+            $physicalAudioReason = if ($devices.Count -eq 0) {
+                'The runner enumerated no playback devices.'
+            } else {
+                'The runner enumerated only null or virtual playback devices.'
+            }
         } else {
             $initial = if ([string]::IsNullOrWhiteSpace($InitialAudioDevice)) {
-                ($devices | Where-Object IsDefault | Select-Object -First 1).Name
+                (
+                    $physicalDevices |
+                        Where-Object IsDefault |
+                        Select-Object -First 1
+                ).Name
             } else {
                 $InitialAudioDevice
             }
             if ([string]::IsNullOrWhiteSpace($initial)) {
-                $initial = $devices[0].Name
+                $initial = $physicalDevices[0].Name
             }
 
             $recovery = if ([string]::IsNullOrWhiteSpace($RecoveryAudioDevice)) {
-                ($devices |
+                ($physicalDevices |
                     Where-Object Name -ne $initial |
                     Select-Object -First 1).Name
             } else {
@@ -278,20 +295,22 @@ try {
                 --recover-device $recovery `
                 --record $physicalRecordingPath |
                 Out-File -LiteralPath $physicalReportPath -Encoding utf8
-            if ($LASTEXITCODE -ne 0) {
-                throw "audio-probe exited with code $LASTEXITCODE."
-            }
-
+            $physicalProbeExitCode = $LASTEXITCODE
             $physicalAudioReport = Get-Content `
                 -LiteralPath $physicalReportPath `
                 -Raw |
                 ConvertFrom-Json
-            $physicalAudioStatus = if ($physicalAudioReport.Passed) {
+            $physicalAudioStatus = if (
+                $physicalProbeExitCode -eq 0 -and
+                $physicalAudioReport.Passed
+            ) {
                 'passed'
             } else {
                 'failed'
             }
-            $physicalAudioReason = if (
+            $physicalAudioReason = if ($physicalAudioStatus -eq 'failed') {
+                "audio-probe exited with code $physicalProbeExitCode."
+            } elseif (
                 $physicalAudioReport.DeviceChanged
             ) {
                 'Sustained playback, recovery, device change, and recording passed.'
@@ -348,9 +367,14 @@ $evidence |
     Set-Content -LiteralPath $manifestPath -Encoding utf8
 Remove-Item -LiteralPath $installRoot -Recurse -Force
 
+if ($physicalAudioStatus -eq 'failed') {
+    throw "Physical release evidence failed: $physicalAudioReason"
+}
+
 if ($RequirePhysicalAudio -and -not $evidence.platformComplete) {
     throw "Physical release evidence is incomplete: $physicalAudioReason"
 }
 
 Write-Host "Release evidence written to '$manifestPath'."
 Write-Output $manifestPath
+$global:LASTEXITCODE = 0
