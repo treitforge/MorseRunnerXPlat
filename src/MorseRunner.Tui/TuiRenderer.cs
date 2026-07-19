@@ -174,7 +174,7 @@ public static class TuiRenderer
         canvas.WriteRight(
             10,
             2,
-            "Enter logs  F11 wipes",
+            "Enter ESM  F11 wipes",
             CellStyle.Muted);
     }
 
@@ -203,7 +203,7 @@ public static class TuiRenderer
                 ("Shift+F9", "SINGLE"),
                 ("Ctrl+F9", "HST"),
                 ("F10", "STOP"),
-                ("Enter", "LOG"),
+                ("Enter", "ESM"),
                 ("F11", "WIPE"),
             ]);
     }
@@ -421,7 +421,7 @@ public static class TuiRenderer
             "F1 CQ        F2 Exchange     F3 TU          F4 My call",
             "F5 His call  F6 QSO B4       F7 ?           F8 NIL",
             "F9 Pile-Up   Shift+F9 Single Ctrl+F9 HST    F10 Stop",
-            "F11 Wipe     F12 NR?          Enter Log",
+            "F11 Wipe     F12 NR?          Enter ESM",
             "",
             "Insert or semicolon sends his call and exchange.",
             "Period, comma, plus, or left bracket sends TU and logs.",

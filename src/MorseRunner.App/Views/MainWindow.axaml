@@ -29,7 +29,10 @@
     <KeyBinding Gesture="Ctrl+F11" Command="{Binding ShowScoreCommand}" />
     <KeyBinding Gesture="F12" Command="{Binding SendNumberQuestionCommand}" />
     <KeyBinding Gesture="Insert" Command="{Binding SendCallAndExchangeCommand}" />
-    <KeyBinding Gesture="Enter" Command="{Binding CompleteQsoCommand}" />
+    <KeyBinding Gesture="Enter" Command="{Binding EnterSendMessageCommand}" />
+    <KeyBinding Gesture="Ctrl+Enter" Command="{Binding LogQsoOnlyCommand}" />
+    <KeyBinding Gesture="Shift+Enter" Command="{Binding LogQsoOnlyCommand}" />
+    <KeyBinding Gesture="Alt+Enter" Command="{Binding LogQsoOnlyCommand}" />
     <KeyBinding Gesture="Ctrl+W" Command="{Binding WipeCommand}" />
     <KeyBinding Gesture="Alt+W" Command="{Binding WipeCommand}" />
     <KeyBinding Gesture="Escape" Command="{Binding AbortCommand}" />

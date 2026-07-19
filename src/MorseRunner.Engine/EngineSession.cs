@@ -54,6 +54,8 @@ internal sealed class EngineSession : IAsyncDisposable
     private long _eventSequence;
     private string? _lastCaller;
     private string? _lastOperatorMessage;
+    private string? _esmSentCall;
+    private bool _esmExchangeSent;
     private int _currentWordsPerMinute;
     private int _currentBandwidthHz;
     private int _ritOffsetHz;
@@ -420,6 +422,8 @@ internal sealed class EngineSession : IAsyncDisposable
             RecoverAudioCommand recover => await ApplyAudioRecoveryAsync(recover),
             AdvanceSimulationCommand advance => await ApplyAdvanceAsync(advance),
             SendOperatorIntentCommand intent => ApplyOperatorIntent(intent),
+            TriggerEnterSendMessageCommand enter =>
+                ApplyEnterSendMessage(enter),
             AdjustRadioControlCommand control => ApplyRadioControl(control),
             LogQsoCommand qso => ApplyLogQso(qso),
             ExpireControlLeaseCommand expired => ApplyControlExpired(expired),
@@ -733,9 +737,209 @@ internal sealed class EngineSession : IAsyncDisposable
         _toneRenderer.LoadMessage(message);
         _lastOperatorMessage = message;
         ApplyIntentToStations(command);
+        if (command.Intent == OperatorIntent.HisCall)
+        {
+            _esmSentCall = command.Call;
+        }
+        else if (command.Intent == OperatorIntent.Exchange)
+        {
+            _esmExchangeSent = true;
+        }
+
         _revision++;
         return AcceptedResult();
     }
+
+    private CommandResult ApplyEnterSendMessage(
+        TriggerEnterSendMessageCommand command)
+    {
+        if (_state != SessionState.Running)
+        {
+            return InvalidState("trigger Enter Sends Message");
+        }
+
+        QsoEntrySnapshot entry = command.Entry;
+        if (entry.Call.Length == 0)
+        {
+            _esmSentCall = null;
+            _esmExchangeSent = false;
+            SendEsmMessages(
+                command,
+                [(OperatorIntent.Cq, "CQ TEST")]);
+            _revision++;
+            return AcceptedResult(
+                CreateEnterResult(
+                    EnterSendMessageOutcome.SendCq,
+                    ["CQ TEST"],
+                    EntryFocusTarget.Call));
+        }
+
+        bool callWasSent = StringComparer.Ordinal.Equals(
+            _esmSentCall,
+            entry.Call);
+        bool exchangeWasSent = _esmExchangeSent;
+        bool validCall = !entry.Call.Contains('?')
+            && CqWpxContestRules.NormalizeCall(entry.Call).Length >= 3;
+        ReceivedEntryState received =
+            ContestQsoRules.GetReceivedEntryState(
+                _settings.ContestId,
+                entry);
+        List<(OperatorIntent Intent, string Message)> messages = [];
+
+        if (!callWasSent
+            || (!exchangeWasSent && !received.SecondPresent))
+        {
+            messages.Add((OperatorIntent.HisCall, entry.Call));
+        }
+
+        if (!exchangeWasSent && validCall)
+        {
+            messages.Add(
+                (
+                    OperatorIntent.Exchange,
+                    ContestQsoRules.ComposeOwnExchange(
+                        _settings.ContestId,
+                        _settings.StationCall,
+                        _qsoCount + 1)
+                ));
+        }
+
+        if (exchangeWasSent && !received.IsComplete)
+        {
+            messages.Add((OperatorIntent.Question, "?"));
+        }
+
+        if (received.IsComplete && (callWasSent || exchangeWasSent))
+        {
+            LogQsoCommand logCommand = new(
+                command.RequestId,
+                command.SessionId,
+                command.ClientId,
+                entry.Call,
+                entry.Rst,
+                entry.Exchange1,
+                entry.Exchange2,
+                command.ExpectedRevision);
+            ContestQsoEvaluation evaluation = ContestQsoRules.EvaluateReceived(
+                _settings.ContestId,
+                _settings.StationCall,
+                logCommand);
+            if (!validCall || !evaluation.Validation.IsValid)
+            {
+                string error = validCall
+                    ? evaluation.Validation.Error
+                    : "Invalid callsign";
+                return RejectedResult(
+                    DomainErrorCodes.InvalidSetting,
+                    error,
+                    CreateEnterResult(
+                        EnterSendMessageOutcome.RejectEntry,
+                        [],
+                        FocusForValidationError(error, received),
+                        selectQuestionMark:
+                            entry.Call.Contains('?')));
+            }
+
+            messages.Add((OperatorIntent.ThankYou, "TU"));
+            SendEsmMessages(command, messages);
+            CommandResult logged = ApplyLogQsoCore(logCommand, evaluation);
+            return logged with
+            {
+                EnterSendMessage = CreateEnterResult(
+                    EnterSendMessageOutcome.CompleteAndLogQso,
+                    messages.Select(item => item.Message).ToArray(),
+                    EntryFocusTarget.Call,
+                    clearEntry: true),
+            };
+        }
+
+        SendEsmMessages(command, messages);
+        _revision++;
+        EnterSendMessageOutcome outcome = messages.Any(
+            item => item.Intent == OperatorIntent.Question)
+                ? EnterSendMessageOutcome.RequestExchangeRepeat
+                : messages.Any(
+                    item => item.Intent == OperatorIntent.Exchange)
+                    ? EnterSendMessageOutcome.SendCallAndExchange
+                    : EnterSendMessageOutcome.SendEnteredCall;
+        return AcceptedResult(
+            CreateEnterResult(
+                outcome,
+                messages.Select(item => item.Message).ToArray(),
+                validCall
+                    ? received.MissingFocusTarget
+                    : EntryFocusTarget.Call,
+                selectQuestionMark:
+                    entry.Call.Contains('?')));
+    }
+
+    private void SendEsmMessages(
+        TriggerEnterSendMessageCommand command,
+        List<(OperatorIntent Intent, string Message)> messages)
+    {
+        if (messages.Count == 0)
+        {
+            return;
+        }
+
+        string combined = String.Join(
+            ' ',
+            messages.Select(item => item.Message));
+        _toneRenderer.LoadMessage(combined);
+        _lastOperatorMessage = combined;
+        foreach ((OperatorIntent intent, _) in messages)
+        {
+            var intentCommand = new SendOperatorIntentCommand(
+                command.RequestId,
+                command.SessionId,
+                command.ClientId,
+                intent,
+                command.Entry.Call,
+                command.Entry.Rst,
+                command.Entry.Exchange1,
+                command.Entry.Exchange2,
+                command.ExpectedRevision);
+            ApplyIntentToStations(intentCommand);
+            if (intent == OperatorIntent.HisCall)
+            {
+                _esmSentCall = command.Entry.Call;
+            }
+            else if (intent == OperatorIntent.Exchange)
+            {
+                _esmExchangeSent = true;
+            }
+        }
+    }
+
+    private static EntryFocusTarget FocusForValidationError(
+        string error,
+        ReceivedEntryState received)
+    {
+        if (error.Contains("callsign", StringComparison.OrdinalIgnoreCase))
+        {
+            return EntryFocusTarget.Call;
+        }
+
+        if (error.Contains("RST", StringComparison.OrdinalIgnoreCase))
+        {
+            return EntryFocusTarget.Rst;
+        }
+
+        return received.MissingFocusTarget;
+    }
+
+    private static EnterSendMessageResult CreateEnterResult(
+        EnterSendMessageOutcome outcome,
+        IReadOnlyList<string> sentMessages,
+        EntryFocusTarget focusTarget,
+        bool selectQuestionMark = false,
+        bool clearEntry = false) =>
+        new(
+            outcome,
+            sentMessages,
+            focusTarget,
+            selectQuestionMark,
+            clearEntry);
 
     private void ApplyIntentToStations(SendOperatorIntentCommand command)
     {
@@ -950,6 +1154,13 @@ internal sealed class EngineSession : IAsyncDisposable
                 evaluation.Validation.Error);
         }
 
+        return ApplyLogQsoCore(command, evaluation);
+    }
+
+    private CommandResult ApplyLogQsoCore(
+        LogQsoCommand command,
+        ContestQsoEvaluation evaluation)
+    {
         SimulatedStation? completedStation = _stations
             .Where(
                 station => station.Operator.State == OperatorState.Done)
@@ -1043,6 +1254,8 @@ internal sealed class EngineSession : IAsyncDisposable
         {
             _stations.Remove(completedStation);
         }
+        _esmSentCall = null;
+        _esmExchangeSent = false;
         _revision++;
         PublishEvent(
             SessionEventKind.QsoLogged,
@@ -1216,24 +1429,30 @@ internal sealed class EngineSession : IAsyncDisposable
             $"Cannot {action} while the session is {_state}.");
     }
 
-    private CommandResult AcceptedResult()
+    private CommandResult AcceptedResult(
+        EnterSendMessageResult? enterSendMessage = null)
     {
         return new(
             Accepted: true,
             ErrorCode: null,
             Message: null,
             AppliedRevision: _revision,
-            AppliedBlock: _simulationBlock);
+            AppliedBlock: _simulationBlock,
+            enterSendMessage);
     }
 
-    private CommandResult RejectedResult(string errorCode, string message)
+    private CommandResult RejectedResult(
+        string errorCode,
+        string message,
+        EnterSendMessageResult? enterSendMessage = null)
     {
         return new(
             Accepted: false,
             errorCode,
             message,
             _revision,
-            _simulationBlock);
+            _simulationBlock,
+            enterSendMessage);
     }
 
     private void PublishEvent(SessionEventKind kind, string? detail)

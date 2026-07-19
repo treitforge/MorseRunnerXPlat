@@ -99,6 +99,55 @@ public sealed class GrpcTransportTests
     }
 
     [Fact]
+    public async Task EnterSendMessageOutcomeRoundTripsAcrossGrpc()
+    {
+        await using GrpcTestHost host = await GrpcTestHost.StartAsync();
+        await using GrpcMorseRunnerClient client = host.CreateClient("esm");
+        SessionHandle handle = await client.CreateSessionAsync(
+            SessionSettings.CreateDefault(314_159),
+            TestContext.Current.CancellationToken);
+        var clientId = new ClientId("esm");
+        Assert.True(
+            (await client.ExecuteAsync(
+                new StartSessionCommand(
+                    RequestId.New(),
+                    handle.SessionId,
+                    clientId),
+                TestContext.Current.CancellationToken)).Accepted);
+
+        CommandResult first = await client.ExecuteAsync(
+            new TriggerEnterSendMessageCommand(
+                RequestId.New(),
+                handle.SessionId,
+                clientId,
+                new("K1ABC", "5NN", "123", "")),
+            TestContext.Current.CancellationToken);
+        CommandResult completed = await client.ExecuteAsync(
+            new TriggerEnterSendMessageCommand(
+                RequestId.New(),
+                handle.SessionId,
+                clientId,
+                new("K1ABC", "5NN", "123", "")),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            EnterSendMessageOutcome.SendCallAndExchange,
+            first.EnterSendMessage?.Outcome);
+        Assert.Equal(
+            ["K1ABC", "5NN 001"],
+            first.EnterSendMessage?.SentMessages);
+        Assert.Equal(
+            EnterSendMessageOutcome.CompleteAndLogQso,
+            completed.EnterSendMessage?.Outcome);
+        Assert.Equal(["TU"], completed.EnterSendMessage?.SentMessages);
+        Assert.True(completed.EnterSendMessage?.ClearEntry);
+        Assert.Single(
+            await client.ListCompletedQsosAsync(
+                handle.SessionId,
+                TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task HostRejectsMissingAuthenticationToken()
     {
         await using GrpcTestHost host = await GrpcTestHost.StartAsync();

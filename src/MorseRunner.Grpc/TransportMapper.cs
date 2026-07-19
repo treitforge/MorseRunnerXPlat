@@ -117,8 +117,9 @@ public static class TransportMapper
             value.Revision);
 
     public static Contract.CommandResultMessage ToTransport(
-        Domain.CommandResult value) =>
-        new()
+        Domain.CommandResult value)
+    {
+        var message = new Contract.CommandResultMessage
         {
             Accepted = value.Accepted,
             ErrorCode = value.ErrorCode ?? String.Empty,
@@ -126,6 +127,20 @@ public static class TransportMapper
             AppliedRevision = value.AppliedRevision,
             AppliedBlock = value.AppliedBlock,
         };
+        if (value.EnterSendMessage is Domain.EnterSendMessageResult enter)
+        {
+            message.EnterSendMessage = new()
+            {
+                Outcome = ToTransport(enter.Outcome),
+                FocusTarget = ToTransport(enter.FocusTarget),
+                SelectQuestionMark = enter.SelectQuestionMark,
+                ClearEntry = enter.ClearEntry,
+            };
+            message.EnterSendMessage.SentMessages.Add(enter.SentMessages);
+        }
+
+        return message;
+    }
 
     public static Domain.CommandResult ToDomain(
         Contract.CommandResultMessage value) =>
@@ -134,7 +149,15 @@ public static class TransportMapper
             EmptyToNull(value.ErrorCode),
             EmptyToNull(value.Message),
             value.AppliedRevision,
-            value.AppliedBlock);
+            value.AppliedBlock,
+            value.EnterSendMessage is null
+                ? null
+                : new Domain.EnterSendMessageResult(
+                    ToDomain(value.EnterSendMessage.Outcome),
+                    value.EnterSendMessage.SentMessages.ToArray(),
+                    ToDomain(value.EnterSendMessage.FocusTarget),
+                    value.EnterSendMessage.SelectQuestionMark,
+                    value.EnterSendMessage.ClearEntry));
 
     public static Contract.CommandEnvelope ToTransport(
         Domain.SessionCommand value)
@@ -181,6 +204,18 @@ public static class TransportMapper
                     Rst = intent.Rst,
                     Exchange1 = intent.Exchange1,
                     Exchange2 = intent.Exchange2,
+                };
+                break;
+            case Domain.TriggerEnterSendMessageCommand enter:
+                message.EnterSendMessage = new()
+                {
+                    Entry = new()
+                    {
+                        Call = enter.Entry.Call,
+                        Rst = enter.Entry.Rst,
+                        Exchange1 = enter.Entry.Exchange1,
+                        Exchange2 = enter.Entry.Exchange2,
+                    },
                 };
                 break;
             case Domain.AdjustRadioControlCommand control:
@@ -269,6 +304,17 @@ public static class TransportMapper
                     value.OperatorIntent.Rst,
                     value.OperatorIntent.Exchange1,
                     value.OperatorIntent.Exchange2,
+                    revision),
+            Contract.CommandEnvelope.PayloadOneofCase.EnterSendMessage =>
+                new Domain.TriggerEnterSendMessageCommand(
+                    requestId,
+                    sessionId,
+                    clientId,
+                    new Domain.QsoEntrySnapshot(
+                        value.EnterSendMessage.Entry.Call,
+                        value.EnterSendMessage.Entry.Rst,
+                        value.EnterSendMessage.Entry.Exchange1,
+                        value.EnterSendMessage.Entry.Exchange2),
                     revision),
             Contract.CommandEnvelope.PayloadOneofCase.RadioControl =>
                 new Domain.AdjustRadioControlCommand(
@@ -723,6 +769,36 @@ public static class TransportMapper
         return System.Enum.IsDefined(typeof(Domain.OperatorIntent), numeric)
             ? (Domain.OperatorIntent)numeric
             : throw new ArgumentOutOfRangeException(nameof(value));
+    }
+
+    private static Contract.EnterSendMessageOutcomeMessage ToTransport(
+        Domain.EnterSendMessageOutcome value) =>
+        (Contract.EnterSendMessageOutcomeMessage)((int)value + 1);
+
+    private static Domain.EnterSendMessageOutcome ToDomain(
+        Contract.EnterSendMessageOutcomeMessage value)
+    {
+        int numeric = (int)value - 1;
+        return System.Enum.IsDefined(
+            typeof(Domain.EnterSendMessageOutcome),
+            numeric)
+                ? (Domain.EnterSendMessageOutcome)numeric
+                : throw new ArgumentOutOfRangeException(nameof(value));
+    }
+
+    private static Contract.EntryFocusTargetMessage ToTransport(
+        Domain.EntryFocusTarget value) =>
+        (Contract.EntryFocusTargetMessage)((int)value + 1);
+
+    private static Domain.EntryFocusTarget ToDomain(
+        Contract.EntryFocusTargetMessage value)
+    {
+        int numeric = (int)value - 1;
+        return System.Enum.IsDefined(
+            typeof(Domain.EntryFocusTarget),
+            numeric)
+                ? (Domain.EntryFocusTarget)numeric
+                : throw new ArgumentOutOfRangeException(nameof(value));
     }
 
     private static Contract.RadioControlMessage ToTransport(
