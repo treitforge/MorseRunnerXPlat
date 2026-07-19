@@ -115,7 +115,10 @@ jobs:
               ArchivePath = 'artifacts/release/MorseRunnerXPlat-${{ matrix.rid }}${{ matrix.archive_extension }}'
               EvidenceRoot = 'artifacts/evidence/${{ matrix.rid }}'
             }
-            if ('${{ inputs.attempt_physical_audio }}' -eq 'true') {
+            $attemptPhysicalAudio =
+              '${{ github.event_name }}' -eq 'pull_request' -or
+              '${{ inputs.attempt_physical_audio }}' -eq 'true'
+            if ($attemptPhysicalAudio) {
               $parameters.AttemptPhysicalAudio = $true
             }
             if ('${{ inputs.require_physical_audio }}' -eq 'true') {
