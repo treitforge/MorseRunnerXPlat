@@ -188,6 +188,70 @@ public sealed class StationLifecycleTests
     }
 
     [Fact]
+    public async Task ReceiveSpeedBoundsControlSeededCallerSpeed()
+    {
+        await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 404) with
+            {
+                RunModeId = new("rmPileup"),
+                WordsPerMinute = 30,
+                ReceiveSpeedBelowWpm = 6,
+                ReceiveSpeedAboveWpm = 2,
+                Activity = 9,
+            },
+            TestContext.Current.CancellationToken);
+        await StartAndAdvanceAsync(engine, handle.SessionId, blocks: 20);
+
+        ActiveStationSnapshot[] stations =
+            [.. engine.GetSnapshot(handle.SessionId).ActiveStations ?? []];
+
+        Assert.NotEmpty(stations);
+        Assert.All(
+            stations,
+            station => Assert.InRange(station.WordsPerMinute, 24, 32));
+        Assert.Contains(stations, station => station.WordsPerMinute < 30);
+        Assert.Contains(stations, station => station.WordsPerMinute > 30);
+    }
+
+    [Theory]
+    [InlineData(SerialNumberRangeMode.MidContest, 50, 499)]
+    [InlineData(SerialNumberRangeMode.EndOfContest, 500, 4_999)]
+    [InlineData(SerialNumberRangeMode.Custom, 70, 79)]
+    public async Task SerialRangeControlsCallerExchange(
+        SerialNumberRangeMode mode,
+        int expectedMinimum,
+        int expectedMaximum)
+    {
+        await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 909) with
+            {
+                ContestId = new("scWpx"),
+                RunModeId = new("rmPileup"),
+                Activity = 9,
+                SerialNumberRange = mode,
+                CustomSerialNumberMinimum = 70,
+                CustomSerialNumberExclusiveMaximum = 80,
+            },
+            TestContext.Current.CancellationToken);
+        await StartAndAdvanceAsync(engine, handle.SessionId, blocks: 20);
+
+        ActiveStationSnapshot[] stations =
+            [.. engine.GetSnapshot(handle.SessionId).ActiveStations ?? []];
+
+        Assert.NotEmpty(stations);
+        Assert.All(
+            stations,
+            station => Assert.InRange(
+                Int32.Parse(
+                    station.TrueExchange2,
+                    System.Globalization.CultureInfo.InvariantCulture),
+                expectedMinimum,
+                expectedMaximum));
+    }
+
+    [Fact]
     public async Task QskChangesStationAudioButRemainsSeedDeterministic()
     {
         SessionSettings baseSettings =

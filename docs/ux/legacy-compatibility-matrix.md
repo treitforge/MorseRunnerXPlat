@@ -7,10 +7,10 @@ the same semantic engine boundary. The primary start, send, entry, logging,
 radio-control, pause, resume, stop, recording, and help workflows operate
 end to end.
 
-Full 1:1 legacy compatibility is not yet achieved. Release remains blocked by
-the partial and missing rows below, most importantly advanced legacy settings,
-remaining result and audio-device workflows, and cross-platform visual
-verification.
+Full 1:1 legacy compatibility is not yet achieved. Avalonia now exposes the
+advanced legacy settings, result export, local high-score, and audio-device
+recovery workflows. Release remains blocked by the corresponding TUI work and
+cross-platform native evidence below.
 
 ## Evidence used
 
@@ -43,8 +43,8 @@ the partial rows below.
 | Entry formatting | Uppercase and legacy A/E/N/O/T substitutions | Text filters and focus selection | Field-aware filters and replacement | Implemented for the inventoried transformations. |
 | RIT, bandwidth, and speed | Arrow and page keys with modifiers | Live semantic radio commands and snapshot values | Same commands and values | Implemented. |
 | Pause, resume, stop, restart | Stop and run lifecycle | Pause/resume extensions plus Stop and clean restart | Same | Implemented. |
-| Live QSO log and score | Main log, score, rate, and result views | Bound log with time, call, RST, exchange, result, and duplicate status | Responsive terminal log with the same outcome | All 12 contest point, multiplier, total, corrected-retry, and `DUP` paths are engine-owned and legacy-golden. The rolling rate is available through snapshots and results. Dedicated result views remain follow-up UX work. |
-| Settings persistence | Legacy INI | Atomic versioned settings store with legacy-compatible keys | Session setup is not yet persisted | Partial. |
+| Live QSO log and score | Main log, score, rate, and result views | Bound log plus score dialog with five-minute rate and per-contest personal high score | Responsive terminal log with the same outcome | Avalonia JSON and Cabrillo exports are atomic and share the hosted Results formatter. TUI result browsing and export remain follow-up work. |
+| Settings persistence | Legacy INI | Atomic versioned settings store with legacy-compatible keys, including RX bounds, serial range, HST operator, and callsign-info visibility | Session setup is not yet persisted | Partial because TUI persistence remains. |
 | Activity and band conditions | Activity, QSK, QSB, QRM, QRN, flutter, LIDs | Seeded active-station audio, pileup activity, QSK receive-during-send, and deterministic QSB/QRM/QRN/flutter/LID behavior | Same settings through Ctrl+1 through Ctrl+6 | Implemented for the live station path. Legacy audio golden expansion remains part of the broader DSP release gate. |
 | Live callers and corrections | Station collection, best partial-call confidence, repeats, reply timing, correction, ghosting, and completion | Session-owned active station collection with block-timed state and CW replies | Same engine behavior and active pileup count | Implemented. The pinned live-station vector and seeded engine traces cover `NR?`, corrected number, partial calls, completion, and caller events. |
 | Station truth and NIL | Completed station supplies true callsign and exchange for log verification | True callsign and contest exchange populate immutable QSO records; unmatched logs are `NIL` and do not score | Same result through the shared client | Implemented with corrected and NIL engine workflows. |
@@ -58,16 +58,18 @@ the partial rows below.
 
 | Area | Current gap | Required proof |
 |---|---|---|
-| Advanced settings | Min/max RX speed, serial-number range, HST operator configuration, and callsign-info presentation are not exposed end to end. | Persisted setting, engine behavior, Avalonia, and TUI workflow tests. |
-| Result experience | The legacy five-minute QSO rate and result totals are engine-owned and transported in-process and over gRPC. Detailed views, export polish, high-score browsing, and submission remain incomplete. | Cross-UX result views plus offline/error behavior for external services. |
-| Audio device UX | Device enumeration and recovery exist below the UX, but device selection and recovery dialogs are incomplete. | Physical-device interaction test on each supported OS. |
+| Advanced settings | Avalonia and the session contract expose RX speed bounds, serial-number mode/custom range, HST operator, and callsign information. The TUI does not yet expose them. | TUI workflow and persistence tests using the same session settings. |
+| Result experience | Avalonia presents rate, result totals, local per-contest high scores, and atomic JSON/Cabrillo export. TUI result browsing/export and optional online submission remain incomplete. | Cross-UX result views plus explicit offline/error behavior for optional external services. |
+| Audio device UX | Avalonia enumerates, persists, selects before start, and recovers playback devices through the semantic client. Native interaction evidence is currently Windows-only. | Physical-device interaction test on each supported OS. |
 | TUI persistence and recording | The TUI exposes session setup and conditions but does not persist them or control WAV recording. | Restart and recording workflows through the TUI. |
 | Visual platforms | Windows live Avalonia interaction is verified. Linux and macOS captures are not yet recorded. | CI or release-machine screenshots and keyboard/focus checks on all three platforms. |
 
 ## Next acceptance slices
 
-1. Complete advanced settings once their engine semantics are acceptance-tested.
-2. Add audio-device recovery UX and TUI persistence/recording.
+1. Add the advanced settings, result/export, and audio-recording workflows to
+   the TUI with restart persistence coverage.
+2. Capture native audio-device recovery and visual evidence on Linux and
+   macOS.
 3. Expand contest-specific live exchange and audio golden traces as the
    remaining DSP and result slices land.
 4. Record Linux and macOS visual evidence and close every remaining row before

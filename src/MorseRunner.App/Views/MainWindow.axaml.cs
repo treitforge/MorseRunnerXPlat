@@ -41,6 +41,8 @@ public sealed partial class MainWindow : Window
             new ScoreWindowViewModel(
                 args.Score,
                 args.QsoCount,
+                args.QsoRatePerHour,
+                args.HighScore,
                 args.Contest,
                 args.Elapsed));
         _ = window.ShowDialog(this);

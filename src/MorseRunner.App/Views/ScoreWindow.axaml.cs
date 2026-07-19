@@ -8,7 +8,13 @@ namespace MorseRunner.App.Views;
 public sealed partial class ScoreWindow : Window
 {
     public ScoreWindow()
-        : this(new ScoreWindowViewModel(0, 0, "CQ WPX", "00:00.000"))
+        : this(new ScoreWindowViewModel(
+            0,
+            0,
+            0,
+            0,
+            "CQ WPX",
+            "00:00.000"))
     {
     }
 

@@ -8,6 +8,70 @@ namespace MorseRunner.Engine;
 
 internal sealed class EngineSession : IAsyncDisposable
 {
+    private static readonly (int Begin, int Count)[] SerialNumberBins =
+    [
+        (0, 344),
+        (10, 188),
+        (20, 178),
+        (30, 164),
+        (40, 156),
+        (50, 179),
+        (60, 149),
+        (70, 126),
+        (80, 118),
+        (90, 124),
+        (100, 957),
+        (200, 628),
+        (300, 368),
+        (400, 257),
+        (500, 239),
+        (600, 150),
+        (700, 129),
+        (800, 100),
+        (900, 65),
+        (1_000, 79),
+        (1_100, 59),
+        (1_200, 47),
+        (1_300, 44),
+        (1_400, 26),
+        (1_500, 28),
+        (1_600, 36),
+        (1_700, 23),
+        (1_800, 25),
+        (1_900, 23),
+        (2_000, 17),
+        (2_100, 24),
+        (2_200, 16),
+        (2_300, 15),
+        (2_400, 7),
+        (2_500, 11),
+        (2_600, 6),
+        (2_700, 11),
+        (2_800, 4),
+        (2_900, 5),
+        (3_000, 6),
+        (3_100, 1),
+        (3_200, 4),
+        (3_300, 6),
+        (3_400, 3),
+        (3_500, 1),
+        (3_600, 2),
+        (3_700, 3),
+        (3_800, 0),
+        (3_900, 1),
+        (4_000, 2),
+        (4_100, 0),
+        (4_200, 0),
+        (4_300, 0),
+        (4_400, 0),
+        (4_500, 0),
+        (4_600, 1),
+        (4_700, 0),
+        (4_800, 0),
+        (4_900, 0),
+        (5_000, UInt16.MaxValue),
+    ];
+
     private const int CommandCapacity = 256;
     private const int SubscriberCapacity = 64;
     private const int EventHistoryCapacity = 256;
@@ -678,7 +742,7 @@ internal sealed class EngineSession : IAsyncDisposable
     private async Task<CommandResult> ApplyAudioRecoveryAsync(
         RecoverAudioCommand command)
     {
-        if (_state != SessionState.Paused)
+        if (_state is not (SessionState.Ready or SessionState.Paused))
         {
             return InvalidState("recover audio");
         }
@@ -1022,10 +1086,11 @@ internal sealed class EngineSession : IAsyncDisposable
         StationIdentity? identity = null;
         for (int attempt = 0; attempt < 10; attempt++)
         {
+            int serialNumber = CreateStationSerialNumber();
             StationIdentity candidate = _stationCatalog.Pick(
                 _random,
                 _settings.ContestId,
-                _nextStationSerial++);
+                serialNumber);
             if (_stations.All(
                     station => !station.Identity.Callsign.Equals(
                         candidate.Callsign,
@@ -1041,15 +1106,7 @@ internal sealed class EngineSession : IAsyncDisposable
             return;
         }
 
-        int wordsPerMinute = runMode == OperatorRunMode.Hst
-            ? _settings.WordsPerMinute
-            : Math.Max(
-                10,
-                (int)Math.Round(
-                    _settings.WordsPerMinute
-                    * 0.5d
-                    * (1d + _random.NextDouble()),
-                    MidpointRounding.ToEven));
+        int wordsPerMinute = CreateStationWordsPerMinute(runMode);
         int pitchRange = runMode == OperatorRunMode.SingleCall ? 50 : 300;
         int pitchOffset = _random.Next((pitchRange * 2) + 1) - pitchRange;
         SimulatedStation station = SimulatedStation.CreateReadyCaller(
@@ -1064,6 +1121,86 @@ internal sealed class EngineSession : IAsyncDisposable
         _hasCreatedStation = true;
         _lastCaller = identity.Callsign;
         PublishEvent(SessionEventKind.CallerJoined, identity.Callsign);
+    }
+
+    private int CreateStationWordsPerMinute(OperatorRunMode runMode)
+    {
+        if (runMode == OperatorRunMode.Hst)
+        {
+            return _settings.WordsPerMinute;
+        }
+
+        if (_settings.ReceiveSpeedBelowWpm == -1
+            && _settings.ReceiveSpeedAboveWpm == -1)
+        {
+            return Math.Max(
+                10,
+                (int)Math.Round(
+                    _settings.WordsPerMinute
+                    * 0.5d
+                    * (1d + _random.NextDouble()),
+                    MidpointRounding.ToEven));
+        }
+
+        int minimum = Math.Max(
+            10,
+            _settings.WordsPerMinute - _settings.ReceiveSpeedBelowWpm);
+        int maximum =
+            _settings.WordsPerMinute + _settings.ReceiveSpeedAboveWpm;
+        if (minimum >= maximum)
+        {
+            return minimum;
+        }
+
+        return (int)Math.Round(
+            minimum + ((maximum - minimum) * _random.NextDouble()),
+            MidpointRounding.ToEven);
+    }
+
+    private int CreateStationSerialNumber()
+    {
+        int serialNumber = _settings.SerialNumberRange switch
+        {
+            SerialNumberRangeMode.StartOfContest => _nextStationSerial,
+            SerialNumberRangeMode.MidContest =>
+                CreateDistributedSerialNumber(firstBin: 5, lastBin: 13),
+            SerialNumberRangeMode.EndOfContest =>
+                CreateDistributedSerialNumber(firstBin: 14, lastBin: 58),
+            SerialNumberRangeMode.Custom =>
+                _settings.CustomSerialNumberMinimum
+                + _random.Next(
+                    _settings.CustomSerialNumberExclusiveMaximum
+                    - _settings.CustomSerialNumberMinimum),
+            _ => throw new InvalidOperationException(
+                $"Unknown serial-number range '{_settings.SerialNumberRange}'."),
+        };
+        _nextStationSerial++;
+        return serialNumber;
+    }
+
+    private int CreateDistributedSerialNumber(int firstBin, int lastBin)
+    {
+        int total = 0;
+        for (int index = firstBin; index <= lastBin; index++)
+        {
+            total += SerialNumberBins[index].Count;
+        }
+
+        int selectedCount = _random.Next(total) + 1;
+        int cumulative = 0;
+        for (int index = firstBin; index <= lastBin; index++)
+        {
+            cumulative += SerialNumberBins[index].Count;
+            if (selectedCount <= cumulative)
+            {
+                int begin = SerialNumberBins[index].Begin;
+                int width = SerialNumberBins[index + 1].Begin - begin;
+                return begin + _random.Next(width);
+            }
+        }
+
+        throw new InvalidOperationException(
+            "The serial-number distribution did not select a bin.");
     }
 
     private void RemoveFailedStations()

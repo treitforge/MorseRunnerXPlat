@@ -29,6 +29,7 @@ public sealed class MainWindowViewModelTests
         Assert.Equal(8, viewModel.SimulationBlock);
         Assert.Equal(1, viewModel.ActiveCallerCount);
         Assert.Equal("Calling", viewModel.CallerState);
+        Assert.Contains("WPM", viewModel.CallsignInformation);
 
         await viewModel.PauseCommand.ExecuteAsync(null);
         Assert.True(viewModel.ResumeCommand.CanExecute(null));
@@ -117,6 +118,13 @@ public sealed class MainWindowViewModelTests
             await first.InitializeAsync();
             first.StationCall = "K7ABC";
             first.WordsPerMinute = 37;
+            first.ReceiveSpeedBelowWpm = 6;
+            first.ReceiveSpeedAboveWpm = 2;
+            first.SelectedSerialNumberRange = first.SerialNumberRanges[3];
+            first.CustomSerialNumberMinimum = 70;
+            first.CustomSerialNumberExclusiveMaximum = 80;
+            first.HstOperatorName = "Randy";
+            first.ShowCallsignInformation = false;
             first.Qsb = true;
             first.SelectedContest = first.Contests[6];
             first.SelectedDuration = first.Durations[4];
@@ -129,6 +137,15 @@ public sealed class MainWindowViewModelTests
 
             Assert.Equal("K7ABC", second.StationCall);
             Assert.Equal(37, second.WordsPerMinute);
+            Assert.Equal(6, second.ReceiveSpeedBelowWpm);
+            Assert.Equal(2, second.ReceiveSpeedAboveWpm);
+            Assert.Equal(
+                SerialNumberRangeMode.Custom,
+                second.SelectedSerialNumberRange.Mode);
+            Assert.Equal(70, second.CustomSerialNumberMinimum);
+            Assert.Equal(80, second.CustomSerialNumberExclusiveMaximum);
+            Assert.Equal("RANDY", second.HstOperatorName);
+            Assert.False(second.ShowCallsignInformation);
             Assert.True(second.Qsb);
             Assert.Equal(first.Contests[6].Id, second.SelectedContest.Id);
             Assert.Equal(30, second.SelectedDuration.Minutes);
@@ -136,6 +153,39 @@ public sealed class MainWindowViewModelTests
         finally
         {
             File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task ResultExportWritesJsonThroughTheViewModel()
+    {
+        string directory = Path.Combine(
+            Path.GetTempPath(),
+            $"MorseRunnerXPlat-export-{Guid.NewGuid():N}");
+        try
+        {
+            await using var viewModel = new MainWindowViewModel(
+                InProcessMorseRunnerClient.CreateDefault(),
+                resultsDirectory: directory);
+            await viewModel.StartCommand.ExecuteAsync(null);
+            await viewModel.StopCommand.ExecuteAsync(null);
+
+            await viewModel.ExportJsonCommand.ExecuteAsync(null);
+
+            string path = Assert.Single(
+                Directory.GetFiles(directory, "*.json"));
+            Assert.Equal(path, viewModel.LastExportPath);
+            Assert.Contains(
+                "Exported",
+                viewModel.Status,
+                StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
         }
     }
 }
