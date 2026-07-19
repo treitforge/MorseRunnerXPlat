@@ -20,9 +20,21 @@ public static class TuiRenderer
         height = Math.Max(1, height);
 
         var canvas = new TerminalCanvas(width, height);
-        if (state.ShowHelp)
+        if (state.View == TuiView.Help)
         {
             RenderHelp(canvas);
+        }
+        else if (state.View == TuiView.Settings)
+        {
+            RenderSettings(state, canvas);
+        }
+        else if (state.View == TuiView.Results)
+        {
+            RenderResults(state, canvas);
+        }
+        else if (state.View == TuiView.Diagnostics)
+        {
+            RenderDiagnostics(state, canvas);
         }
         else if (width < StandardMinimumWidth
             || height < StandardMinimumHeight)
@@ -35,6 +47,201 @@ public static class TuiRenderer
         }
 
         return canvas.Render(useColor);
+    }
+
+    private static void RenderSettings(
+        TuiState state,
+        TerminalCanvas canvas)
+    {
+        canvas.DrawBox(
+            0,
+            0,
+            canvas.Width - 1,
+            canvas.Height - 1,
+            " ADVANCED SETTINGS ");
+        string[] values =
+        [
+            $"STATION CALL        {state.StationCall}",
+            $"WPM                 {state.WordsPerMinute}",
+            $"PITCH               {state.PitchHz} Hz",
+            $"BANDWIDTH           {state.BandwidthHz} Hz",
+            $"ACTIVITY            {state.Activity}",
+            $"MONITOR             {state.MonitorLevelDb:+0;-0;0} dB",
+            $"RX BELOW            {state.ReceiveSpeedBelowWpm} WPM",
+            $"RX ABOVE            {state.ReceiveSpeedAboveWpm} WPM",
+            $"SERIAL RANGE        {SerialRangeName(state.SerialNumberRange)}",
+            $"CUSTOM MINIMUM      {state.CustomSerialNumberMinimum}",
+            $"CUSTOM MAXIMUM      {state.CustomSerialNumberExclusiveMaximum}",
+            $"HST OPERATOR        {state.HstOperatorName}",
+            $"QSK                 {OnOff(state.Qsk)}",
+            $"QSB                 {OnOff(state.Qsb)}",
+            $"QRM                 {OnOff(state.Qrm)}",
+            $"QRN                 {OnOff(state.Qrn)}",
+            $"FLUTTER             {OnOff(state.Flutter)}",
+            $"LIDS                {OnOff(state.Lids)}",
+            $"WAV RECORDING       "
+                + (state.IsHosted
+                    ? "HOST MANAGED"
+                    : OnOff(state.RecordingEnabled)),
+        ];
+        int visibleRows = Math.Max(0, canvas.Height - 5);
+        int start = Math.Clamp(
+            state.SettingsIndex - visibleRows / 2,
+            0,
+            Math.Max(0, values.Length - visibleRows));
+        for (int index = start;
+            index < values.Length && index - start < visibleRows;
+            index++)
+        {
+            bool selected = index == state.SettingsIndex;
+            canvas.Write(
+                2 + index - start,
+                2,
+                selected ? ">" : " ",
+                selected ? CellStyle.Accent : CellStyle.Default);
+            canvas.Write(
+                2 + index - start,
+                4,
+                Fit(values[index], Math.Max(1, canvas.Width - 6)),
+                selected ? CellStyle.Active : CellStyle.Value);
+        }
+
+        canvas.Write(
+            canvas.Height - 2,
+            2,
+            "Up/Down select  Left/Right change  Type edits text",
+            CellStyle.Muted);
+        canvas.WriteRight(
+            canvas.Height - 2,
+            2,
+            "Esc or Ctrl+S returns",
+            CellStyle.Muted);
+    }
+
+    private static void RenderResults(
+        TuiState state,
+        TerminalCanvas canvas)
+    {
+        canvas.DrawBox(
+            0,
+            0,
+            canvas.Width - 1,
+            canvas.Height - 1,
+            " RESULTS ");
+        SessionResult? result = state.Result;
+        if (result is null)
+        {
+            canvas.Write(
+                3,
+                3,
+                "No completed result is available.",
+                CellStyle.Warning);
+        }
+        else
+        {
+            canvas.Write(
+                2,
+                3,
+                $"CONTEST    {result.ContestId.Value}",
+                CellStyle.Value);
+            canvas.Write(
+                4,
+                3,
+                $"SCORE      {result.Score}",
+                CellStyle.Accent);
+            canvas.Write(
+                5,
+                3,
+                $"QSOS       {result.QsoCount}",
+                CellStyle.Value);
+            canvas.Write(
+                6,
+                3,
+                $"QSO RATE   {result.QsoRatePerHour} / hour",
+                CellStyle.Good);
+            canvas.Write(
+                7,
+                3,
+                $"ELAPSED    {result.ElapsedSimulationTime:mm\\:ss\\.fff}",
+                CellStyle.Value);
+            string highScore = state.PersonalHighScore is null
+                ? "No personal high score recorded."
+                : $"PERSONAL HIGH SCORE  {state.PersonalHighScore.Score}"
+                    + $" ({state.PersonalHighScore.QsoCount} QSOs, "
+                    + $"{state.PersonalHighScore.QsoRatePerHour}/hour)";
+            canvas.Write(
+                9,
+                3,
+                Fit(highScore, Math.Max(1, canvas.Width - 6)),
+                CellStyle.Accent);
+        }
+
+        canvas.Write(
+            Math.Min(12, canvas.Height - 4),
+            3,
+            Fit(
+                $"LAST EXPORT  {state.LastExportPath ?? "none"}",
+                Math.Max(1, canvas.Width - 6)),
+            CellStyle.Muted);
+        canvas.Write(
+            Math.Min(13, canvas.Height - 3),
+            3,
+            Fit(
+                $"LAST WAV     {state.LastRecordingPath ?? "none"}",
+                Math.Max(1, canvas.Width - 6)),
+            CellStyle.Muted);
+        canvas.Write(
+            canvas.Height - 2,
+            2,
+            "Ctrl+E JSON  Ctrl+Shift+E Cabrillo  Ctrl+O open WAV",
+            CellStyle.Muted);
+        canvas.WriteRight(
+            canvas.Height - 2,
+            2,
+            "Ctrl+T returns",
+            CellStyle.Muted);
+    }
+
+    private static void RenderDiagnostics(
+        TuiState state,
+        TerminalCanvas canvas)
+    {
+        canvas.DrawBox(
+            0,
+            0,
+            canvas.Width - 1,
+            canvas.Height - 1,
+            " DIAGNOSTICS ");
+        SessionSnapshot? snapshot = state.Snapshot;
+        string[] lines =
+        [
+            $"CONNECTION  {state.ConnectionStatus}",
+            $"ENGINE      {state.EngineDiagnostic}",
+            $"SESSION     {snapshot?.State.ToString() ?? "not started"}",
+            $"REVISION    {snapshot?.Revision ?? 0}",
+            $"BLOCK       {snapshot?.SimulationBlock ?? 0}",
+            $"AUDIO       {AudioState(snapshot)}",
+            $"QUEUED      {snapshot?.AudioQueuedBlocks ?? 0}",
+            $"UNDERRUNS   {snapshot?.AudioUnderrunCount ?? 0}",
+            $"DROPS       {snapshot?.AudioDroppedBlockCount ?? 0}",
+            $"STATUS      {state.Status}",
+        ];
+        for (int index = 0;
+            index < lines.Length && index + 2 < canvas.Height - 2;
+            index++)
+        {
+            canvas.Write(
+                index + 2,
+                2,
+                Fit(lines[index], Math.Max(1, canvas.Width - 4)),
+                index == 0 ? CellStyle.Accent : CellStyle.Value);
+        }
+
+        canvas.Write(
+            canvas.Height - 2,
+            2,
+            "Ctrl+G returns  ? keyboard help  Ctrl+Q quits",
+            CellStyle.Muted);
     }
 
     private static void RenderStandard(
@@ -80,14 +287,21 @@ public static class TuiRenderer
             CultureInfo.InvariantCulture) ?? "00:00.000";
         string context =
             $"{state.Contest.DisplayName}  {RunModeName(state.RunMode)}";
-        canvas.Write(1, 34, context, CellStyle.Accent);
+        canvas.Write(1, 30, session, sessionStyle);
+        if (canvas.Width >= 120)
+        {
+            canvas.Write(1, 43, context, CellStyle.Accent);
+        }
+
         canvas.WriteRight(
             1,
             2,
-            $"SCORE {snapshot?.Score ?? 0}",
+            canvas.Width >= 120
+                ? $"TIME {elapsed}  SCORE {snapshot?.Score ?? 0}  RATE "
+                    + $"{snapshot?.QsoRatePerHour ?? 0}"
+                : $"SCORE {snapshot?.Score ?? 0}  RATE "
+                    + $"{snapshot?.QsoRatePerHour ?? 0}",
             CellStyle.Value);
-        canvas.WriteRight(1, 16, elapsed, CellStyle.Value);
-        canvas.WriteRight(1, 29, session, sessionStyle);
     }
 
     private static void RenderSessionSetup(
@@ -316,16 +530,18 @@ public static class TuiRenderer
             StatusStyle(state.Status));
         canvas.WriteRight(top + 1, 2, telemetry, audioStyle);
 
-        canvas.Write(
-            top + 2,
-            2,
-            "Tab fields  ↑/↓ RIT  Ctrl+↑/↓ BW  PgUp/PgDn WPM",
-            CellStyle.Muted);
-        canvas.WriteRight(
-            top + 2,
-            2,
-            "? help  Ctrl+Q quit",
-            CellStyle.Muted);
+        string radioHints = canvas.Width >= 125
+            ? "Tab fields  Up/Down RIT  Ctrl+Up/Down BW  PgUp/PgDn WPM"
+            : canvas.Width >= 90
+                ? "Tab fields  Up/Down RIT  PgUp/PgDn WPM"
+                : "Tab fields  Up/Down RIT";
+        string viewHints = canvas.Width >= 125
+            ? "? help  Ctrl+S settings  Ctrl+T results  Ctrl+G diagnostics"
+            : canvas.Width >= 90
+                ? "? help  Ctrl+S/T/G views"
+                : "? help  Ctrl+Q quit";
+        canvas.Write(top + 2, 2, radioHints, CellStyle.Muted);
+        canvas.WriteRight(top + 2, 2, viewHints, CellStyle.Muted);
     }
 
     private static CellStyle StatusStyle(string status)
@@ -392,7 +608,8 @@ public static class TuiRenderer
                 9,
                 1,
                 $"SCORE {snapshot?.Score ?? 0}  PILEUP "
-                + $"{snapshot?.ActiveStations?.Count ?? 0}",
+                + $"{snapshot?.ActiveStations?.Count ?? 0}  RATE "
+                + $"{snapshot?.QsoRatePerHour ?? 0}",
                 CellStyle.Accent);
         }
 
@@ -431,6 +648,10 @@ public static class TuiRenderer
             "Ctrl+Left/Right changes contest before a session.",
             "Alt+Left/Right changes run mode. Ctrl+D changes duration.",
             "Ctrl+1..6 toggles QSK, QSB, QRM, QRN, Flutter, and LIDs.",
+            "Ctrl+S settings, Ctrl+T results, Ctrl+G diagnostics.",
+            "Ctrl+A toggles WAV recording for the next local session.",
+            "Ctrl+E exports JSON. Ctrl+Shift+E exports Cabrillo.",
+            "Ctrl+O opens the latest completed WAV recording.",
             "Ctrl+P pauses, Ctrl+R resumes, Ctrl+W wipes, Ctrl+Q quits.",
             "",
             "Press ? to return.",
@@ -480,6 +701,19 @@ public static class TuiRenderer
 
     private static string DurationName(int minutes) =>
         minutes == 0 ? "unlimited" : $"{minutes} min";
+
+    private static string SerialRangeName(SerialNumberRangeMode mode) =>
+        mode switch
+        {
+            SerialNumberRangeMode.StartOfContest => "start of contest",
+            SerialNumberRangeMode.MidContest => "mid contest",
+            SerialNumberRangeMode.EndOfContest => "end of contest",
+            SerialNumberRangeMode.Custom => "custom",
+            _ => mode.ToString(),
+        };
+
+    private static string OnOff(bool enabled) =>
+        enabled ? "ON" : "off";
 
     private static string JoinExchange(Qso qso)
     {

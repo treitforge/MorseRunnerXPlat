@@ -1,6 +1,16 @@
 using MorseRunner.Domain;
+using MorseRunner.Infrastructure;
 
 namespace MorseRunner.Tui;
+
+public enum TuiView
+{
+    Operator,
+    Settings,
+    Results,
+    Diagnostics,
+    Help,
+}
 
 public sealed class TuiState
 {
@@ -37,9 +47,49 @@ public sealed class TuiState
 
     public bool Lids { get; set; }
 
-    public bool ShowHelp { get; set; }
-
     public bool IsHosted { get; init; }
+
+    public TuiView View { get; set; }
+
+    public int SettingsIndex { get; set; }
+
+    public string StationCall { get; set; } = "W7SST";
+
+    public int WordsPerMinute { get; set; } = 30;
+
+    public int PitchHz { get; set; } = 600;
+
+    public int BandwidthHz { get; set; } = 500;
+
+    public int Activity { get; set; } = 5;
+
+    public double MonitorLevelDb { get; set; }
+
+    public int ReceiveSpeedBelowWpm { get; set; }
+
+    public int ReceiveSpeedAboveWpm { get; set; }
+
+    public SerialNumberRangeMode SerialNumberRange { get; set; }
+
+    public int CustomSerialNumberMinimum { get; set; } = 1;
+
+    public int CustomSerialNumberExclusiveMaximum { get; set; } = 99;
+
+    public string HstOperatorName { get; set; } = string.Empty;
+
+    public bool RecordingEnabled { get; set; }
+
+    public string? LastRecordingPath { get; set; }
+
+    public SessionResult? Result { get; set; }
+
+    public ContestHighScore? PersonalHighScore { get; set; }
+
+    public string? LastExportPath { get; set; }
+
+    public string ConnectionStatus { get; set; } = "Local in-process engine.";
+
+    public string EngineDiagnostic { get; set; } = "Engine information not loaded.";
 
     public SessionSnapshot? Snapshot { get; set; }
 

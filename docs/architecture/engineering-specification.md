@@ -2138,6 +2138,10 @@ Recorded Phase 5 implementation:
   ten per second while key input repaints immediately. A Windows ConPTY and
   xterm capture verified typing and resize behavior at 120 by 34 and 100 by 28
   without scrolling, line accumulation, or overlapping status content.
+- The TUI honors `NO_COLOR` and `--no-color` independently from ANSI cursor
+  support. Dumb terminals use the plain repaint path. Operator, compact,
+  settings, results, diagnostics, and help views render within their requested
+  cell bounds and expose equivalent textual state without relying on color.
 - A live Windows Avalonia launch verified a three-caller pileup with readable
   layout and keyboard focus retained in the callsign field.
 - Settings persist atomically. Optional recording uses a bounded WAV writer
@@ -2155,15 +2159,34 @@ Recorded Phase 5 implementation:
   personal high score. JSON and Cabrillo exports are written atomically to the
   platform results directory, and the gRPC Results service reuses the same
   formatter.
+- The TUI persists the same legacy-compatible station, contest, run-mode,
+  duration, condition, receive-speed, serial-range, HST operator, monitor, and
+  recording keys as Avalonia. Its advanced settings view changes immutable
+  session inputs before creation and sends no widget state into the engine.
+- Completed TUI sessions show engine-owned score, QSO count, five-minute rate,
+  elapsed time, and the shared per-contest personal high score. JSON and
+  Cabrillo exports use the same infrastructure formatter and atomic save path
+  as Avalonia and gRPC.
+- Local physical TUI sessions can enable the bounded WAV sink for the next
+  session, discover the latest completed recording, and launch it through the
+  operating system. Hosted TUI sessions state that recording belongs to the
+  engine-host process, preserving the rule that real-time PCM never crosses
+  gRPC.
+- The TUI diagnostics view exposes authenticated-host connection state, engine
+  version and capabilities, session revision and block, audio health, queue
+  depth, underruns, drops, and the latest operator status. The gRPC client
+  performs its bounded reconnect and snapshot resync below this presentation
+  layer; terminal command and subscription failures become explicit textual
+  recovery states.
 - QSB, QRM, QRN, flutter, activity, LIDs, monitor level, and QSK settings cross
   the semantic and gRPC session contract. Implemented audio and station
   interactions are seeded and deterministic.
 - Compiled bindings and `x:DataType` are enabled. View-model tests, a headless
   window-open and focus test, and live Windows visual and interaction checks
   cover the primary path.
-- Linux and macOS visual review, TUI exposure of the advanced settings and
-  result workflows, and optional external score services remain release
-  checklist items in `docs/ux/legacy-compatibility-matrix.md`.
+- Native Linux and macOS visual and physical-audio review, plus optional
+  external score services, remain release checklist items in
+  `docs/ux/legacy-compatibility-matrix.md`.
 
 ### Phase 6: optional gRPC host
 

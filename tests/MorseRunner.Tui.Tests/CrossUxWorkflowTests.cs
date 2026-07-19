@@ -1,5 +1,6 @@
 using MorseRunner.App.ViewModels;
 using MorseRunner.Client;
+using MorseRunner.Domain;
 
 namespace MorseRunner.Tui.Tests;
 
@@ -156,5 +157,74 @@ public sealed class CrossUxWorkflowTests
             "duplicate",
             tui.State.Status,
             StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task CompletedResultAndRateMatchAcrossBothUxSurfaces()
+    {
+        await using var avalonia = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+        await avalonia.StartCommand.ExecuteAsync(null);
+        avalonia.CallEntry = "K1ABC";
+        avalonia.Exchange1Entry = "123";
+        await avalonia.CompleteQsoCommand.ExecuteAsync(null);
+        await avalonia.StopCommand.ExecuteAsync(null);
+
+        await using InProcessMorseRunnerClient tuiClient =
+            InProcessMorseRunnerClient.CreateDefault();
+        using var tui = new TuiApplication(tuiClient, isHosted: false);
+        await tui.HandleAsync(
+            new(TuiActionKind.StartPileup),
+            CancellationToken.None);
+        tui.State.Call = "K1ABC";
+        tui.State.Exchange1 = "123";
+        await tui.HandleAsync(
+            new(TuiActionKind.LogQso),
+            CancellationToken.None);
+        await tui.HandleAsync(
+            new(TuiActionKind.Stop),
+            CancellationToken.None);
+
+        Assert.NotNull(tui.State.Result);
+        Assert.Equal(avalonia.Score, tui.State.Result.Score);
+        Assert.Equal(avalonia.QsoCount, tui.State.Result.QsoCount);
+        Assert.Equal(avalonia.QsoRatePerHour, tui.State.Result.QsoRatePerHour);
+    }
+
+    [Fact]
+    public async Task TuiAdvancedSettingsReachTheAuthoritativeEngine()
+    {
+        await using InProcessMorseRunnerClient client =
+            InProcessMorseRunnerClient.CreateDefault();
+        using var tui = new TuiApplication(client, isHosted: false);
+        tui.State.WordsPerMinute = 60;
+        tui.State.ReceiveSpeedBelowWpm = 0;
+        tui.State.ReceiveSpeedAboveWpm = 0;
+        tui.State.Activity = 9;
+
+        await tui.HandleAsync(
+            new(TuiActionKind.StartPileup),
+            CancellationToken.None);
+
+        Assert.NotNull(tui.State.Snapshot);
+        SessionId sessionId = tui.State.Snapshot.SessionId;
+        CommandResult advance = await client.ExecuteAsync(
+            new AdvanceSimulationCommand(
+                RequestId.New(),
+                sessionId,
+                new("tui"),
+                BlockCount: 20),
+            TestContext.Current.CancellationToken);
+        Assert.True(advance.Accepted, advance.Message);
+        SessionSnapshot snapshot = await client.GetSnapshotAsync(
+            sessionId,
+            TestContext.Current.CancellationToken);
+        IReadOnlyList<ActiveStationSnapshot> stations =
+            Assert.IsAssignableFrom<IReadOnlyList<ActiveStationSnapshot>>(
+                snapshot.ActiveStations);
+        Assert.NotEmpty(stations);
+        Assert.All(
+            stations,
+            station => Assert.Equal(60, station.WordsPerMinute));
     }
 }

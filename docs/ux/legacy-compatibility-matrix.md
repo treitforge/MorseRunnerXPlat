@@ -7,10 +7,11 @@ the same semantic engine boundary. The primary start, send, entry, logging,
 radio-control, pause, resume, stop, recording, and help workflows operate
 end to end.
 
-Full 1:1 legacy compatibility is not yet achieved. Avalonia now exposes the
-advanced legacy settings, result export, local high-score, and audio-device
-recovery workflows. Release remains blocked by the corresponding TUI work and
-cross-platform native evidence below.
+Full 1:1 legacy compatibility is not yet achieved. Avalonia and the TUI now
+expose the advanced legacy settings, result export, local high-score, and
+recording workflows through the shared engine and persistence layers. Release
+remains blocked by cross-platform native visual and physical-audio evidence
+below.
 
 ## Evidence used
 
@@ -43,34 +44,29 @@ the partial rows below.
 | Entry formatting | Uppercase and legacy A/E/N/O/T substitutions | Text filters and focus selection | Field-aware filters and replacement | Implemented for the inventoried transformations. |
 | RIT, bandwidth, and speed | Arrow and page keys with modifiers | Live semantic radio commands and snapshot values | Same commands and values | Implemented. |
 | Pause, resume, stop, restart | Stop and run lifecycle | Pause/resume extensions plus Stop and clean restart | Same | Implemented. |
-| Live QSO log and score | Main log, score, rate, and result views | Bound log plus score dialog with five-minute rate and per-contest personal high score | Responsive terminal log with the same outcome | Avalonia JSON and Cabrillo exports are atomic and share the hosted Results formatter. TUI result browsing and export remain follow-up work. |
-| Settings persistence | Legacy INI | Atomic versioned settings store with legacy-compatible keys, including RX bounds, serial range, HST operator, and callsign-info visibility | Session setup is not yet persisted | Partial because TUI persistence remains. |
+| Live QSO log and score | Main log, score, rate, and result views | Bound log plus score dialog with five-minute rate and per-contest personal high score | Responsive log plus results view with the same score, rate, high score, and exports | Implemented. Avalonia, TUI, and hosted Results reuse the shared JSON and Cabrillo formatter. Cross-UX result tests pin the same engine-owned outcome. |
+| Settings persistence | Legacy INI | Atomic versioned settings store with legacy-compatible keys, including RX bounds, serial range, HST operator, and callsign-info visibility | Uses the same atomic store and legacy-compatible keys for session setup and advanced settings | Implemented. Restart coverage verifies TUI settings survive a new application instance. |
 | Activity and band conditions | Activity, QSK, QSB, QRM, QRN, flutter, LIDs | Seeded active-station audio, pileup activity, QSK receive-during-send, and deterministic QSB/QRM/QRN/flutter/LID behavior | Same settings through Ctrl+1 through Ctrl+6 | Implemented for the live station path. Legacy audio golden expansion remains part of the broader DSP release gate. |
 | Live callers and corrections | Station collection, best partial-call confidence, repeats, reply timing, correction, ghosting, and completion | Session-owned active station collection with block-timed state and CW replies | Same engine behavior and active pileup count | Implemented. The pinned live-station vector and seeded engine traces cover `NR?`, corrected number, partial calls, completion, and caller events. |
 | Station truth and NIL | Completed station supplies true callsign and exchange for log verification | True callsign and contest exchange populate immutable QSO records; unmatched logs are `NIL` and do not score | Same result through the shared client | Implemented with corrected and NIL engine workflows. |
-| Monitor level | Persistent self-monitor level, defaulting to `0 dB` | Applied as engine output gain with the legacy default | Fixed legacy `0 dB` default | Partial because the TUI does not yet expose an adjustment. Physical startup is prebuffered and the automated probe reports zero underruns and drops. |
-| Audio recording and playback | Optional WAV and playback command | Bounded WAV recording beside physical output; completed file opens from File menu | Not exposed | Partial. |
+| Monitor level | Persistent self-monitor level, defaulting to `0 dB` | Applied as engine output gain with the legacy default | Persisted and adjustable from the advanced settings view | Implemented. Physical startup is prebuffered and the automated probe reports zero underruns and drops. |
+| Audio recording and playback | Optional WAV and playback command | Bounded WAV recording beside physical output; completed file opens from File menu | Local recording toggle, latest-WAV discovery, and operating-system launch; hosted mode identifies recording as host-owned | Implemented at the UX boundary. Native physical recording evidence remains a release gate. |
 | Help, first-time setup, readme, community link | Help menu | Working dialogs and packaged readme | Built-in keyboard help | Implemented, except TUI does not open the long packaged readme. |
-| Responsive/scaled layout | Fixed VCL form | Scroll-safe desktop layout, compiled bindings, accessible names | Fixed viewport, adaptive compact layout, colored panels, incremental row repaint, and resize handling | Implemented on Windows. ConPTY captures at 120 by 34 and 100 by 28 prove typing and resizing without scrolling or line accumulation. Linux and macOS visual review remains. |
-| Hosted operation | Not applicable | In-process default | Local or authenticated loopback gRPC | XPlat extension implemented. Cross-client transport tests pass. |
+| Responsive/scaled layout | Fixed VCL form | Scroll-safe desktop layout, compiled bindings, accessible names | Bounded operator, compact, settings, results, diagnostics, and help views; ANSI and color capability detection; incremental row repaint | Automated compact and wide renderer tests pass. Windows ConPTY captures at 120 by 34 and 100 by 28 prove typing and resizing without scrolling or line accumulation. Linux and macOS native review remains. |
+| Hosted operation | Not applicable | In-process default | Local or authenticated loopback gRPC with explicit connected, reconnect-failed, and host-owned recording text | XPlat extension implemented. Cross-client transport tests and TUI diagnostic-state coverage pass. |
 
 ## Release-blocking functional gaps
 
 | Area | Current gap | Required proof |
 |---|---|---|
-| Advanced settings | Avalonia and the session contract expose RX speed bounds, serial-number mode/custom range, HST operator, and callsign information. The TUI does not yet expose them. | TUI workflow and persistence tests using the same session settings. |
-| Result experience | Avalonia presents rate, result totals, local per-contest high scores, and atomic JSON/Cabrillo export. TUI result browsing/export and optional online submission remain incomplete. | Cross-UX result views plus explicit offline/error behavior for optional external services. |
 | Audio device UX | Avalonia enumerates, persists, selects before start, and recovers playback devices through the semantic client. Native interaction evidence is currently Windows-only. | Physical-device interaction test on each supported OS. |
-| TUI persistence and recording | The TUI exposes session setup and conditions but does not persist them or control WAV recording. | Restart and recording workflows through the TUI. |
 | Visual platforms | Windows live Avalonia interaction is verified. Linux and macOS captures are not yet recorded. | CI or release-machine screenshots and keyboard/focus checks on all three platforms. |
 
 ## Next acceptance slices
 
-1. Add the advanced settings, result/export, and audio-recording workflows to
-   the TUI with restart persistence coverage.
-2. Capture native audio-device recovery and visual evidence on Linux and
+1. Capture native audio-device recovery and visual evidence on Linux and
    macOS.
-3. Expand contest-specific live exchange and audio golden traces as the
+2. Expand contest-specific live exchange and audio golden traces as the
    remaining DSP and result slices land.
-4. Record Linux and macOS visual evidence and close every remaining row before
+3. Record Linux and macOS visual evidence and close every remaining row before
    changing the verdict to full compatibility.

@@ -84,6 +84,28 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Capture TUI native snapshot
+        if: steps.solution.outputs.exists == 'true'
+        shell: pwsh
+        run: |
+          $directory = '${{ github.workspace }}/artifacts/tui/${{ matrix.os }}'
+          New-Item -ItemType Directory -Force -Path $directory | Out-Null
+          foreach ($view in @('operator', 'settings', 'results', 'diagnostics', 'help')) {
+            dotnet run --project src/MorseRunner.Tui/MorseRunner.Tui.csproj `
+              --configuration Release --no-build -- `
+              --snapshot --no-audio --no-color --snapshot-view $view |
+              Out-File -LiteralPath "$directory/$view.txt" -Encoding utf8
+          }
+
+      - name: Upload TUI native evidence
+        if: steps.solution.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tui-native-${{ matrix.os }}
+          path: artifacts/tui/${{ matrix.os }}/*.txt
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Check vulnerable packages
         if: steps.solution.outputs.exists == 'true' && matrix.os == 'ubuntu-latest'
         shell: pwsh

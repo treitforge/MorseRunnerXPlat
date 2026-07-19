@@ -1,4 +1,6 @@
+using MorseRunner.Client;
 using MorseRunner.Domain;
+using MorseRunner.Infrastructure;
 
 namespace MorseRunner.Tui.Tests;
 
@@ -20,6 +22,11 @@ public sealed class TuiInteractionTests
     [InlineData(ConsoleKey.UpArrow, '\0', ConsoleModifiers.Control, TuiActionKind.BandwidthUp)]
     [InlineData(ConsoleKey.W, '\u0017', ConsoleModifiers.Control, TuiActionKind.Wipe)]
     [InlineData(ConsoleKey.D2, '\0', ConsoleModifiers.Control, TuiActionKind.ToggleQsb)]
+    [InlineData(ConsoleKey.S, '\u0013', ConsoleModifiers.Control, TuiActionKind.ToggleSettings)]
+    [InlineData(ConsoleKey.T, '\u0014', ConsoleModifiers.Control, TuiActionKind.ToggleResults)]
+    [InlineData(ConsoleKey.G, '\a', ConsoleModifiers.Control, TuiActionKind.ToggleDiagnostics)]
+    [InlineData(ConsoleKey.A, '\u0001', ConsoleModifiers.Control, TuiActionKind.ToggleRecording)]
+    [InlineData(ConsoleKey.E, '\u0005', ConsoleModifiers.Control, TuiActionKind.ExportJson)]
     public void LegacyKeysMapToSemanticActions(
         ConsoleKey key,
         char character,
@@ -98,6 +105,14 @@ public sealed class TuiInteractionTests
         Assert.Contains("K1ABC", compact, StringComparison.Ordinal);
         Assert.Contains("SCORE 1", wide, StringComparison.Ordinal);
         Assert.Contains("CALLER NEED EXCHANGE", wide, StringComparison.Ordinal);
+        Assert.Contains(
+            "PgUp/PgDn WPM",
+            wide,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "Ctrl+G diagnostics",
+            wide,
+            StringComparison.Ordinal);
         Assert.False(compact.EndsWith(Environment.NewLine, StringComparison.Ordinal));
         Assert.False(wide.EndsWith(Environment.NewLine, StringComparison.Ordinal));
         Assert.Equal(24, compact.Split(Environment.NewLine).Length);
@@ -121,5 +136,215 @@ public sealed class TuiInteractionTests
         Assert.DoesNotContain("\u001b[", plain, StringComparison.Ordinal);
         Assert.Contains("\u001b[", styled, StringComparison.Ordinal);
         Assert.False(styled.EndsWith(Environment.NewLine, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task SettingsPersistAcrossTuiRestarts()
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            $"MorseRunner-Tui-{Guid.NewGuid():N}");
+        try
+        {
+            var paths = new ApplicationPaths(root);
+            paths.EnsureWritableDirectories();
+            await using (InProcessMorseRunnerClient firstClient =
+                InProcessMorseRunnerClient.CreateDefault())
+            using (var first = new TuiApplication(
+                firstClient,
+                isHosted: false,
+                paths))
+            {
+                await first.InitializeAsync(CancellationToken.None);
+                first.State.WordsPerMinute = 37;
+                first.State.ReceiveSpeedBelowWpm = 4;
+                first.State.SerialNumberRange =
+                    SerialNumberRangeMode.Custom;
+                first.State.CustomSerialNumberMinimum = 40;
+                first.State.CustomSerialNumberExclusiveMaximum = 80;
+                first.State.HstOperatorName = "W7SST";
+                await first.HandleAsync(
+                    new(TuiActionKind.ToggleQsb),
+                    CancellationToken.None);
+                await first.HandleAsync(
+                    new(TuiActionKind.ToggleRecording),
+                    CancellationToken.None);
+                await first.SavePreferencesAsync(CancellationToken.None);
+            }
+
+            await using InProcessMorseRunnerClient secondClient =
+                InProcessMorseRunnerClient.CreateDefault();
+            using var second = new TuiApplication(
+                secondClient,
+                isHosted: false,
+                paths);
+            await second.InitializeAsync(CancellationToken.None);
+
+            Assert.Equal(37, second.State.WordsPerMinute);
+            Assert.Equal(4, second.State.ReceiveSpeedBelowWpm);
+            Assert.Equal(
+                SerialNumberRangeMode.Custom,
+                second.State.SerialNumberRange);
+            Assert.Equal(40, second.State.CustomSerialNumberMinimum);
+            Assert.Equal(80, second.State.CustomSerialNumberExclusiveMaximum);
+            Assert.Equal("W7SST", second.State.HstOperatorName);
+            Assert.True(second.State.Qsb);
+            Assert.True(second.State.RecordingEnabled);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task CompletedResultCanBeViewedAndExported()
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            $"MorseRunner-Tui-{Guid.NewGuid():N}");
+        try
+        {
+            var paths = new ApplicationPaths(root);
+            paths.EnsureWritableDirectories();
+            await using InProcessMorseRunnerClient client =
+                InProcessMorseRunnerClient.CreateDefault();
+            using var application = new TuiApplication(
+                client,
+                isHosted: false,
+                paths);
+            await application.InitializeAsync(CancellationToken.None);
+            await application.HandleAsync(
+                new(TuiActionKind.StartPileup),
+                CancellationToken.None);
+            application.State.Call = "K1ABC";
+            application.State.Exchange1 = "123";
+            await application.HandleAsync(
+                new(TuiActionKind.LogQso),
+                CancellationToken.None);
+            await application.HandleAsync(
+                new(TuiActionKind.Stop),
+                CancellationToken.None);
+            await application.HandleAsync(
+                new(TuiActionKind.ToggleResults),
+                CancellationToken.None);
+            await application.HandleAsync(
+                new(TuiActionKind.ExportJson),
+                CancellationToken.None);
+
+            Assert.Equal(TuiView.Results, application.State.View);
+            Assert.NotNull(application.State.Result);
+            Assert.Equal(1, application.State.Result.QsoCount);
+            Assert.NotNull(application.State.PersonalHighScore);
+            Assert.True(File.Exists(application.State.LastExportPath));
+            Assert.Contains(
+                "\"QsoCount\": 1",
+                await File.ReadAllTextAsync(
+                    application.State.LastExportPath,
+                    TestContext.Current.CancellationToken),
+                StringComparison.Ordinal);
+            Assert.Contains(
+                "QSO RATE",
+                TuiRenderer.Render(application.State, 100, 28),
+                StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void RendererExposesSettingsResultsAndDiagnosticsTextually()
+    {
+        var state = new TuiState
+        {
+            View = TuiView.Settings,
+            HstOperatorName = "W7SST",
+            ConnectionStatus = "Connected to authenticated local host.",
+        };
+
+        string settings = TuiRenderer.Render(state, 100, 28);
+        state.View = TuiView.Results;
+        string results = TuiRenderer.Render(state, 100, 28);
+        state.View = TuiView.Diagnostics;
+        string diagnostics = TuiRenderer.Render(state, 64, 18);
+
+        Assert.Contains("ADVANCED SETTINGS", settings, StringComparison.Ordinal);
+        Assert.Contains("HST OPERATOR", settings, StringComparison.Ordinal);
+        Assert.Contains("RESULTS", results, StringComparison.Ordinal);
+        Assert.Contains("No completed result", results, StringComparison.Ordinal);
+        Assert.Contains("DIAGNOSTICS", diagnostics, StringComparison.Ordinal);
+        Assert.Contains("Connected", diagnostics, StringComparison.Ordinal);
+        Assert.All(
+            diagnostics.Split(Environment.NewLine),
+            line => Assert.True(line.Length <= 64));
+    }
+
+    [Theory]
+    [InlineData(null, null, false, true)]
+    [InlineData("xterm-256color", "1", false, false)]
+    [InlineData("dumb", null, false, false)]
+    [InlineData("xterm-256color", null, true, false)]
+    public void TerminalCapabilitiesHonorNoColorAndDumbTerminals(
+        string? term,
+        string? noColor,
+        bool forceNoColor,
+        bool expectedColor)
+    {
+        TerminalCapabilities capabilities =
+            TerminalCapabilities.Detect(term, noColor, forceNoColor);
+
+        Assert.Equal(expectedColor, capabilities.UseColor);
+        Assert.Equal(
+            !String.Equals(term, "dumb", StringComparison.OrdinalIgnoreCase),
+            capabilities.UseAnsi);
+    }
+
+    [Fact]
+    public async Task HostedModeExplainsThatRecordingBelongsToTheHost()
+    {
+        await using InProcessMorseRunnerClient client =
+            InProcessMorseRunnerClient.CreateDefault();
+        using var application = new TuiApplication(client, isHosted: true);
+
+        await application.HandleAsync(
+            new(TuiActionKind.ToggleRecording),
+            CancellationToken.None);
+
+        Assert.False(application.State.RecordingEnabled);
+        Assert.Contains(
+            "controlled by the engine host",
+            application.State.Status,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void RecordingPreferenceCreatesAndDiscoversWavPaths()
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            $"MorseRunner-Tui-{Guid.NewGuid():N}");
+        try
+        {
+            var paths = new ApplicationPaths(root);
+            paths.EnsureWritableDirectories();
+            var preference = new TuiRecordingPreference(paths);
+
+            Assert.Null(preference.CreatePath());
+            preference.Enabled = true;
+            string path = Assert.IsType<string>(preference.CreatePath());
+            File.WriteAllBytes(path, [0x52, 0x49, 0x46, 0x46]);
+
+            Assert.EndsWith(
+                ".wav",
+                path,
+                StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(path, preference.DiscoverLatest());
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
     }
 }
