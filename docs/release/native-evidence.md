@@ -5,6 +5,8 @@
 Release evidence is collected from the self-contained archive on its target
 operating system and architecture. A successful cross-publish is not evidence
 that the archive launches, renders, records, or communicates correctly.
+Windows is packaged as ZIP. Linux and macOS use `tar.gz` so their executable
+permission bits survive installation.
 
 The `Native Release Evidence` workflow runs this matrix:
 

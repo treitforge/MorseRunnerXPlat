@@ -83,7 +83,23 @@ if (Test-Path -LiteralPath $resolvedEvidenceRoot) {
 
 New-Item -ItemType Directory -Force -Path $resolvedEvidenceRoot | Out-Null
 $installRoot = Join-Path $resolvedEvidenceRoot 'install'
-Expand-Archive -LiteralPath $resolvedArchive -DestinationPath $installRoot
+New-Item -ItemType Directory -Force -Path $installRoot | Out-Null
+if ($resolvedArchive.EndsWith(
+    '.zip',
+    [System.StringComparison]::OrdinalIgnoreCase
+)) {
+    Expand-Archive -LiteralPath $resolvedArchive -DestinationPath $installRoot
+} elseif ($resolvedArchive.EndsWith(
+    '.tar.gz',
+    [System.StringComparison]::OrdinalIgnoreCase
+)) {
+    & tar -xzf $resolvedArchive -C $installRoot
+    if ($LASTEXITCODE -ne 0) {
+        throw "Archive extraction failed with exit code $LASTEXITCODE."
+    }
+} else {
+    throw "Archive must use the .zip or .tar.gz extension."
+}
 
 $extension = if ($IsWindows) { '.exe' } else { '' }
 $cli = Join-Path $installRoot "cli\MorseRunner.Cli$extension"

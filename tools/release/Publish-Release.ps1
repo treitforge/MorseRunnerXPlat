@@ -72,14 +72,36 @@ foreach ($runtimeIdentifier in $RuntimeIdentifiers) {
             -Destination $destination
     }
 
+    $isWindowsArchive = $runtimeIdentifier.StartsWith(
+        'win-',
+        [System.StringComparison]::Ordinal
+    )
+    $archiveExtension = if ($isWindowsArchive) {
+        '.zip'
+    } else {
+        '.tar.gz'
+    }
     $archive = Join-Path $resolvedOutputRoot (
-        "MorseRunnerXPlat-$runtimeIdentifier.zip"
+        "MorseRunnerXPlat-$runtimeIdentifier$archiveExtension"
     )
     if (Test-Path -LiteralPath $archive) {
         Remove-Item -LiteralPath $archive -Force
     }
 
-    Compress-Archive -Path (Join-Path $runtimeRoot '*') `
-        -DestinationPath $archive `
-        -CompressionLevel Optimal
+    if ($isWindowsArchive) {
+        Compress-Archive -Path (Join-Path $runtimeRoot '*') `
+            -DestinationPath $archive `
+            -CompressionLevel Optimal
+    } else {
+        Push-Location $runtimeRoot
+        try {
+            & tar -czf $archive *
+            if ($LASTEXITCODE -ne 0) {
+                throw "Archive creation failed for $runtimeIdentifier."
+            }
+        }
+        finally {
+            Pop-Location
+        }
+    }
 }

@@ -41,12 +41,16 @@ jobs:
         include:
           - os: windows-latest
             rid: win-x64
+            archive_extension: .zip
           - os: ubuntu-latest
             rid: linux-x64
+            archive_extension: .tar.gz
           - os: macos-15-intel
             rid: osx-x64
+            archive_extension: .tar.gz
           - os: macos-15
             rid: osx-arm64
+            archive_extension: .tar.gz
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
 
@@ -109,7 +113,8 @@ jobs:
             $parameters = @{
               RuntimeIdentifier = '${{ matrix.rid }}'
               ArchivePath = (
-                'artifacts/release/MorseRunnerXPlat-${{ matrix.rid }}.zip'
+                'artifacts/release/MorseRunnerXPlat-${{ matrix.rid }}'
+                + '${{ matrix.archive_extension }}'
               )
               EvidenceRoot = 'artifacts/evidence/${{ matrix.rid }}'
             }
@@ -143,6 +148,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: native-archive-${{ matrix.rid }}
-          path: artifacts/release/MorseRunnerXPlat-${{ matrix.rid }}.zip
+          path: artifacts/release/MorseRunnerXPlat-${{ matrix.rid }}${{ matrix.archive_extension }}
           if-no-files-found: error
           retention-days: 14
