@@ -82,12 +82,18 @@ to a passing result.
 
 ## Current evidence
 
+GitHub Actions run
+[`29676157899`](https://github.com/treitforge/MorseRunnerXPlat/actions/runs/29676157899)
+captured the target-native archive results below. Its `native-evidence-*`
+artifacts retain the manifests, UX captures, WAV reports, scenarios, device
+enumeration, and host diagnostics for 30 days.
+
 | Runtime | Archive, UX, WAV, and hosted checks | Physical audio | Complete |
 |---|---|---|---|
-| `win-x64` | Passed locally from the extracted archive | Passed a 30-second run with 14 enumerated endpoints, a distinct endpoint change, healthy output, zero underruns, zero drops, and buffered WAV capture | Yes |
-| `linux-x64` | Native workflow pending | Labeled physical hardware pending | No |
-| `osx-x64` | Native workflow pending | Labeled physical hardware pending | No |
-| `osx-arm64` | Native workflow pending | Labeled physical hardware pending | No |
+| `win-x64` | Passed on native x64 CI and locally from the extracted ZIP | Hosted runner reported no playback devices. Local hardware passed a 30-second run with 14 enumerated endpoints, a distinct endpoint change, healthy output, zero underruns, zero drops, and buffered WAV capture | Yes |
+| `linux-x64` | Passed from the extracted native `tar.gz` | Hosted runner enumerated only ALSA's null/discard endpoint and recorded `hardware-unavailable` | No |
+| `osx-x64` | Passed from the extracted native `tar.gz` | Hosted runner enumerated only the null endpoint and recorded `hardware-unavailable` | No |
+| `osx-arm64` | Passed from the extracted native `tar.gz` | Hosted runner enumerated only Apple/Null virtual endpoints and recorded `hardware-unavailable` | No |
 
 The Windows evidence was captured on 2026-07-18 Pacific time with .NET 10.0.8
 on Windows x64. Release artifacts from the final candidate must be retained
