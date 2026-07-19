@@ -1,0 +1,148 @@
+name: Native Release Evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      attempt_physical_audio:
+        description: Attempt playback, device recovery, and physical WAV capture
+        required: true
+        type: boolean
+        default: false
+      require_physical_audio:
+        description: Fail unless physical audio and a device change pass
+        required: true
+        type: boolean
+        default: false
+  pull_request:
+    paths:
+      - "global.json"
+      - "Directory.*"
+      - "MorseRunnerXPlat.slnx"
+      - "src/**"
+      - "tests/**"
+      - "tools/release/**"
+      - ".github/workflows/release-evidence.yml"
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: native-release-evidence-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  native-evidence:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: macos-15-intel
+            rid: osx-x64
+          - os: macos-15
+            rid: osx-arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v5.4.0
+        with:
+          global-json-file: global.json
+
+      - name: Install Linux display dependencies
+        if: runner.os == 'Linux'
+        shell: pwsh
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes xvfb
+
+      - name: Restore and build
+        shell: pwsh
+        run: |
+          dotnet restore MorseRunnerXPlat.slnx
+          dotnet build MorseRunnerXPlat.slnx `
+            --configuration Release --no-restore
+
+      - name: Capture interaction and visual evidence
+        shell: pwsh
+        env:
+          MORSE_RUNNER_VISUAL_EVIDENCE_DIR: >-
+            ${{ github.workspace }}/artifacts/visual/${{ matrix.rid }}
+        run: |
+          dotnet test `
+            --project tests/MorseRunner.App.Tests/MorseRunner.App.Tests.csproj `
+            --configuration Release --no-build
+          dotnet test `
+            --project tests/MorseRunner.Tui.Tests/MorseRunner.Tui.Tests.csproj `
+            --configuration Release --no-build
+
+      - name: Publish target-native archive
+        shell: pwsh
+        run: |
+          .\tools\release\Publish-Release.ps1 `
+            -RuntimeIdentifiers @('${{ matrix.rid }}')
+
+      - name: Install and launch archive
+        shell: pwsh
+        run: |
+          $xvfb = $null
+          try {
+            if ($IsLinux) {
+              $xvfb = Start-Process `
+                -FilePath 'Xvfb' `
+                -ArgumentList ':99 -screen 0 1280x1024x24' `
+                -PassThru
+              $env:DISPLAY = ':99'
+              Start-Sleep -Seconds 1
+            }
+
+            $parameters = @{
+              RuntimeIdentifier = '${{ matrix.rid }}'
+              ArchivePath = (
+                'artifacts/release/MorseRunnerXPlat-${{ matrix.rid }}.zip'
+              )
+              EvidenceRoot = 'artifacts/evidence/${{ matrix.rid }}'
+            }
+            if ('${{ inputs.attempt_physical_audio }}' -eq 'true') {
+              $parameters.AttemptPhysicalAudio = $true
+            }
+            if ('${{ inputs.require_physical_audio }}' -eq 'true') {
+              $parameters.RequirePhysicalAudio = $true
+            }
+
+            .\tools\release\Test-ReleaseArchive.ps1 @parameters
+          }
+          finally {
+            if ($null -ne $xvfb -and -not $xvfb.HasExited) {
+              Stop-Process -Id $xvfb.Id -Force
+            }
+          }
+
+      - name: Upload native evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-evidence-${{ matrix.rid }}
+          path: |
+            artifacts/evidence/${{ matrix.rid }}
+            artifacts/visual/${{ matrix.rid }}
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload tested archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-archive-${{ matrix.rid }}
+          path: artifacts/release/MorseRunnerXPlat-${{ matrix.rid }}.zip
+          if-no-files-found: error
+          retention-days: 14

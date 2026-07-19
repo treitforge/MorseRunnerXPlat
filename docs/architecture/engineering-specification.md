@@ -2267,6 +2267,21 @@ Recorded Phase 7 initial implementation:
 - Cross-platform .NET quality, contract lint, release parity, vulnerability
   audit, package publication, and artifact upload are encoded in GitHub
   workflows.
+- `Native Release Evidence` publishes each runtime archive on its target
+  operating system and architecture, extracts it into a clean evidence root,
+  and launches the archived Avalonia, TUI, CLI, and engine-host products.
+  `win-x64`, `linux-x64`, `osx-x64`, and `osx-arm64` use explicit native runner
+  labels.
+- The archive evidence harness initializes Avalonia platform services, captures
+  all terminal views, validates and hashes a buffered WAV, compares normalized
+  in-process and authenticated hosted snapshots, and requires graceful host
+  discovery cleanup. The archived product binaries, not build-tree binaries,
+  perform these checks.
+- Physical evidence records device count, selected and recovery endpoints,
+  whether the endpoint changed, sustained playback duration, queue depth,
+  health, underruns, drops, and simultaneous WAV length. A platform is complete
+  only when physical playback, recovery, and a distinct device change pass.
+  Missing runner hardware remains an explicit incomplete result.
 - The release checklist records clean-machine, physical audio, recording,
   keyboard, persistence, long-run, signing, notarization, and packaging-format
   verification. Hardware, signing, and notarization remain release operations,
