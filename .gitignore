@@ -14,6 +14,8 @@
 [Rr]eleases/
 !tools/release/
 !tools/release/**
+!docs/release/
+!docs/release/**
 x64/
 x86/
 [Ww][Ii][Nn]32/

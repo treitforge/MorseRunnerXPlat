@@ -25,6 +25,10 @@ below.
 - Avalonia headless tests, TUI renderer and key-router tests, Windows ConPTY
   and xterm captures, cross-UX workflow tests, engine/DSP tests, and in-process
   versus gRPC scenario tests.
+- Target-native archive evidence defined in
+  `docs/release/native-evidence.md`, including native Avalonia initialization,
+  five terminal views, WAV integrity, normalized in-process and authenticated
+  hosted outcomes, and physical-device status.
 
 The existing 20/20 parity report proves fixture and structural adapter
 coverage. It must not be interpreted as live behavioral or visual proof for
@@ -52,7 +56,7 @@ the partial rows below.
 | Monitor level | Persistent self-monitor level, defaulting to `0 dB` | Applied as engine output gain with the legacy default | Persisted and adjustable from the advanced settings view | Implemented. Physical startup is prebuffered and the automated probe reports zero underruns and drops. |
 | Audio recording and playback | Optional WAV and playback command | Bounded WAV recording beside physical output; completed file opens from File menu | Local recording toggle, latest-WAV discovery, and operating-system launch; hosted mode identifies recording as host-owned | Implemented at the UX boundary. Native physical recording evidence remains a release gate. |
 | Help, first-time setup, readme, community link | Help menu | Working dialogs and packaged readme | Built-in keyboard help | Implemented, except TUI does not open the long packaged readme. |
-| Responsive/scaled layout | Fixed VCL form | Scroll-safe desktop layout, compiled bindings, accessible names | Bounded operator, compact, settings, results, diagnostics, and help views; ANSI and color capability detection; incremental row repaint | Automated compact and wide renderer tests pass. Windows ConPTY captures at 120 by 34 and 100 by 28 prove typing and resizing without scrolling or line accumulation. Linux and macOS native review remains. |
+| Responsive/scaled layout | Fixed VCL form | Scroll-safe desktop layout, compiled bindings, accessible names | Bounded operator, compact, settings, results, diagnostics, and help views; ANSI and color capability detection; incremental row repaint | Automated compact and wide renderer tests pass. Windows ConPTY captures at 120 by 34 and 100 by 28 prove typing and resizing without scrolling or line accumulation. Target-native archive captures are produced by `Native Release Evidence`; Linux and macOS physical review remains. |
 | Hosted operation | Not applicable | In-process default | Local or authenticated loopback gRPC with explicit connected, reconnect-failed, and host-owned recording text | XPlat extension implemented. Cross-client transport tests and TUI diagnostic-state coverage pass. |
 
 ## Release-blocking functional gaps

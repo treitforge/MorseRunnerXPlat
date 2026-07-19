@@ -12,6 +12,10 @@
 
 ## Platform validation
 
+- Run `Native Release Evidence` for `win-x64`, `linux-x64`, `osx-x64`, and
+  `osx-arm64`; retain every `native-evidence-*` artifact with the release.
+- Confirm each `evidence-manifest.json` identifies the expected native
+  architecture and sets `platformComplete` to `true`.
 - Launch the Avalonia application on a clean machine.
 - Enumerate and play through a physical audio device.
 - Record and inspect a WAV session.
@@ -21,6 +25,10 @@
 - Launch the standalone host, run `host-info`, and run `hosted-scenario`.
 - Confirm host discovery is loopback-only and removed after graceful shutdown.
 - Run a two-hour session without unbounded memory, handle, or subscriber growth.
+
+The reproducible commands, artifact contents, and incomplete-hardware handling
+are documented in `docs/release/native-evidence.md`. Publish success alone
+does not satisfy any platform row.
 
 ## Distribution review
 

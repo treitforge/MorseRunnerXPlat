@@ -61,6 +61,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: MorseRunnerXPlat-runtime-packages
-          path: artifacts/release/*.zip
+          path: |
+            artifacts/release/*.zip
+            artifacts/release/*.tar.gz
           if-no-files-found: error
           retention-days: 14

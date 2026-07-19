@@ -54,6 +54,16 @@ public sealed class InProcessMorseRunnerClient(
                 }));
     }
 
+    public static InProcessMorseRunnerClient CreateWithBufferedWavAudio(
+        string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        string fullPath = Path.GetFullPath(path);
+        return new(
+            new MorseRunnerEngine(
+                _ => new BufferedWavAudioSink(fullPath)));
+    }
+
     public Task<EngineInfo> GetEngineInfoAsync(
         CancellationToken cancellationToken)
     {
