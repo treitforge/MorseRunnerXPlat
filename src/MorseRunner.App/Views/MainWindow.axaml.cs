@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using MorseRunner.App.ViewModels;
+using MorseRunner.Domain;
 using MorseRunner.Infrastructure;
 
 namespace MorseRunner.App.Views;
@@ -27,6 +28,7 @@ public sealed partial class MainWindow : Window
             this.FindControl<TextBox>("CallEntryBox")?.Focus();
         };
         viewModel.ShowScoreRequested += ShowScore;
+        viewModel.EntryFocusRequested += FocusEntry;
         Closed += async (_, _) => await viewModel.DisposeAsync();
     }
 
@@ -42,6 +44,34 @@ public sealed partial class MainWindow : Window
                 args.Contest,
                 args.Elapsed));
         _ = window.ShowDialog(this);
+    }
+
+    private void FocusEntry(
+        object? sender,
+        EntryFocusRequestedEventArgs args)
+    {
+        string controlName = args.Target switch
+        {
+            EntryFocusTarget.Call => "CallEntryBox",
+            EntryFocusTarget.Rst => "RstEntryBox",
+            EntryFocusTarget.Exchange1 => "Exchange1EntryBox",
+            EntryFocusTarget.Exchange2 => "Exchange2EntryBox",
+            _ => throw new InvalidOperationException(
+                $"Unknown entry focus target '{args.Target}'."),
+        };
+        TextBox? entry = this.FindControl<TextBox>(controlName);
+        entry?.Focus();
+        if (entry is not null && args.SelectQuestionMark)
+        {
+            int questionMark = (entry.Text ?? String.Empty).IndexOf(
+                '?',
+                StringComparison.Ordinal);
+            if (questionMark >= 0)
+            {
+                entry.SelectionStart = questionMark;
+                entry.SelectionEnd = questionMark + 1;
+            }
+        }
     }
 
     private void ExitClick(object? sender, RoutedEventArgs args)
@@ -67,7 +97,8 @@ public sealed partial class MainWindow : Window
             F6 QSO B4             F10 Stop
             F11 Wipe              F12 NR?
 
-            Enter logs the QSO. Insert or semicolon sends the caller's
+            Enter sends the next QSO message and logs only after validation.
+            Insert or semicolon sends the caller's
             call and exchange. Period, comma, plus, or left bracket sends
             TU and logs. Space moves through the entry fields.
 

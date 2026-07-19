@@ -6,6 +6,51 @@ namespace MorseRunner.Tui.Tests;
 public sealed class CrossUxWorkflowTests
 {
     [Fact]
+    public async Task AvaloniaAndTuiUseTheSameEnterSendMessageFlow()
+    {
+        await using var avalonia = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+        await avalonia.StartCommand.ExecuteAsync(null);
+        avalonia.CallEntry = "K1ABC";
+        avalonia.Exchange1Entry = "123";
+
+        await using InProcessMorseRunnerClient tuiClient =
+            InProcessMorseRunnerClient.CreateDefault();
+        using var tui = new TuiApplication(tuiClient, isHosted: false);
+        await tui.HandleAsync(
+            new(TuiActionKind.StartPileup),
+            CancellationToken.None);
+        tui.State.Call = "K1ABC";
+        tui.State.Exchange1 = "123";
+
+        await avalonia.EnterSendMessageCommand.ExecuteAsync(null);
+        await tui.HandleAsync(
+            new(TuiActionKind.EnterSendMessage),
+            CancellationToken.None);
+
+        Assert.Equal("K1ABC 5NN 001", avalonia.LastSent);
+        Assert.Equal(
+            avalonia.LastSent,
+            tui.State.Snapshot?.LastOperatorMessage);
+        Assert.Equal(0, avalonia.QsoCount);
+        Assert.Equal(0, tui.State.Snapshot?.QsoCount);
+
+        await avalonia.EnterSendMessageCommand.ExecuteAsync(null);
+        await tui.HandleAsync(
+            new(TuiActionKind.EnterSendMessage),
+            CancellationToken.None);
+
+        Assert.Equal("TU", avalonia.LastSent);
+        Assert.Equal(
+            avalonia.LastSent,
+            tui.State.Snapshot?.LastOperatorMessage);
+        Assert.Equal(1, avalonia.QsoCount);
+        Assert.Equal(1, tui.State.Snapshot?.QsoCount);
+        Assert.Empty(avalonia.CallEntry);
+        Assert.Empty(tui.State.Call);
+    }
+
+    [Fact]
     public async Task AvaloniaAndTuiProduceTheSameLoggedQsoOutcome()
     {
         await using var avalonia = new MainWindowViewModel(

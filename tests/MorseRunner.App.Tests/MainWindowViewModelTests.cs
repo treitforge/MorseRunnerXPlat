@@ -1,5 +1,6 @@
 using MorseRunner.App.ViewModels;
 using MorseRunner.Client;
+using MorseRunner.Domain;
 using MorseRunner.Infrastructure;
 
 namespace MorseRunner.App.Tests;
@@ -57,6 +58,47 @@ public sealed class MainWindowViewModelTests
 
         Assert.Equal(1, viewModel.QsoCount);
         Assert.Equal(1, viewModel.Score);
+        Assert.Empty(viewModel.CallEntry);
+    }
+
+    [Fact]
+    public async Task EnterUsesEngineEsmOutcomeAndRetainsUncertainCall()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+        await viewModel.StartCommand.ExecuteAsync(null);
+        viewModel.CallEntry = "KC?";
+        EntryFocusRequestedEventArgs? focus = null;
+        viewModel.EntryFocusRequested += (_, args) => focus = args;
+
+        await viewModel.EnterSendMessageCommand.ExecuteAsync(null);
+
+        Assert.Equal("KC?", viewModel.LastSent);
+        Assert.Equal(0, viewModel.QsoCount);
+        Assert.Equal("KC?", viewModel.CallEntry);
+        Assert.Equal(EntryFocusTarget.Call, focus?.Target);
+        Assert.True(focus?.SelectQuestionMark);
+    }
+
+    [Fact]
+    public async Task EnterClearsFieldsOnlyAfterValidatedCompletion()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+        await viewModel.StartCommand.ExecuteAsync(null);
+        viewModel.CallEntry = "K1ABC";
+        viewModel.Exchange1Entry = "123";
+
+        await viewModel.EnterSendMessageCommand.ExecuteAsync(null);
+
+        Assert.Equal(0, viewModel.QsoCount);
+        Assert.Equal("K1ABC 5NN 001", viewModel.LastSent);
+        Assert.Equal("K1ABC", viewModel.CallEntry);
+
+        await viewModel.EnterSendMessageCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, viewModel.QsoCount);
+        Assert.Equal("TU", viewModel.LastSent);
         Assert.Empty(viewModel.CallEntry);
     }
 

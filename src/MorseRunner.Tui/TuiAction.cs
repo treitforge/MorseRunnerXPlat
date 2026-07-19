@@ -24,6 +24,8 @@ public enum TuiActionKind
     SendNil,
     SendNumberQuestion,
     SendCallAndExchange,
+    EnterSendMessage,
+    SaveQso,
     LogQso,
     Wipe,
     Abort,

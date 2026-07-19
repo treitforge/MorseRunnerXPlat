@@ -813,6 +813,30 @@ different payload fails.
 - Correct callsign or exchange.
 - Trigger Enter Sends Message behavior.
 
+Enter Sends Message is one ordered session command carrying an immutable QSO
+entry snapshot (call, RST, exchange field one, and exchange field two). The
+session loop owns the active call-sent and operator-exchange-sent state. It
+evaluates Enter in this order:
+
+1. An empty call sends CQ.
+2. A new, changed, partial, or uncertain call sends the entered call exactly.
+3. A complete call whose operator exchange has not been sent sends the
+   contest-specific operator exchange.
+4. Missing received exchange data after the operator exchange was sent sends
+   `?`.
+5. A complete received exchange is validated before any `TU` is sent.
+6. Successful validation sends `TU` and commits exactly one QSO as one command
+   application.
+7. Failed validation sends no `TU`, commits no QSO, and retains the active
+   entry.
+
+The command result includes a semantic outcome, the ordered messages sent,
+the preferred entry field, whether the UX should select an uncertain-call
+question mark, and whether successful completion permits clearing the entry.
+Caret placement, selection, and focus remain UX responsibilities. Explicit
+function-key messages such as F3 `TU` and F7 `?` do not invoke ESM or log a
+QSO.
+
 #### Runtime control
 
 - Set RIT.
@@ -1316,6 +1340,9 @@ a concrete client use case.
 - Use one package namespace for the versioned API.
 - Use cohesive files by service or tightly related model group.
 - Use unique request and response envelopes for RPCs.
+- Represent Enter Sends Message as an additive command payload. Its result is
+  an additive command-result message so in-process and gRPC clients receive
+  identical outcome and focus guidance.
 - Use explicit `oneof` payloads for commands and events.
 - Keep zero enum values unspecified.
 - Prefer additive evolution.

@@ -53,6 +53,15 @@ public sealed class ScoreSummaryEventArgs(
     public string Elapsed { get; } = Elapsed;
 }
 
+public sealed class EntryFocusRequestedEventArgs(
+    EntryFocusTarget target,
+    bool selectQuestionMark) : EventArgs
+{
+    public EntryFocusTarget Target { get; } = target;
+
+    public bool SelectQuestionMark { get; } = selectQuestionMark;
+}
+
 public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposable
 {
     private static readonly ClientId DesktopClientId = new("avalonia-desktop");
@@ -174,8 +183,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             CreateIntentCommand(OperatorIntent.NumberQuestion);
         AbortCommand = CreateIntentCommand(OperatorIntent.Abort);
         WipeCommand = new AsyncCommand(WipeAsync);
+        EnterSendMessageCommand = new AsyncCommand(
+            EnterSendMessageAsync,
+            () => _sessionState == SessionState.Running);
         CompleteQsoCommand = new AsyncCommand(
             CompleteQsoAsync,
+            () => _sessionState == SessionState.Running);
+        LogQsoOnlyCommand = new AsyncCommand(
+            LogQsoOnlyAsync,
             () => _sessionState == SessionState.Running);
         SendCallAndExchangeCommand = new AsyncCommand(
             SendCallAndExchangeAsync,
@@ -195,6 +210,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public event EventHandler<ScoreSummaryEventArgs>? ShowScoreRequested;
+
+    public event EventHandler<EntryFocusRequestedEventArgs>?
+        EntryFocusRequested;
 
     public IReadOnlyList<ContestOption> Contests { get; }
 
@@ -480,7 +498,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
 
     public AsyncCommand WipeCommand { get; }
 
+    public AsyncCommand EnterSendMessageCommand { get; }
+
     public AsyncCommand CompleteQsoCommand { get; }
+
+    public AsyncCommand LogQsoOnlyCommand { get; }
 
     public AsyncCommand SendCallAndExchangeCommand { get; }
 
@@ -644,7 +666,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                     handle.SessionId,
                     DesktopClientId));
             Status = result.Accepted
-                ? $"{RunMode} running. F1 through F8 send, Enter logs."
+                ? $"{RunMode} running. F1 through F8 send, Enter uses ESM."
                 : result.Message ?? "Start was rejected.";
             await RefreshAsync();
         }
@@ -752,7 +774,71 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         await SendIntentAsync(OperatorIntent.Exchange);
     }
 
+    private async Task EnterSendMessageAsync()
+    {
+        CommandResult result = await ExecuteAsync(
+            new TriggerEnterSendMessageCommand(
+                RequestId.New(),
+                _sessionId!.Value,
+                DesktopClientId,
+                new(
+                    CallEntry,
+                    RstEntry,
+                    Exchange1Entry,
+                    Exchange2Entry)));
+        EnterSendMessageResult? enter = result.EnterSendMessage;
+        if (enter is null)
+        {
+            Status = result.Message ?? "Enter Sends Message was rejected.";
+            await RefreshAsync();
+            return;
+        }
+
+        string loggedCall = CallEntry.ToUpperInvariant();
+        Status = enter.Outcome switch
+        {
+            EnterSendMessageOutcome.SendCq => "Sent CQ.",
+            EnterSendMessageOutcome.SendEnteredCall =>
+                "Sent entered callsign.",
+            EnterSendMessageOutcome.SendCallAndExchange =>
+                "Sent callsign and exchange.",
+            EnterSendMessageOutcome.RequestExchangeRepeat =>
+                "Requested an exchange repeat.",
+            EnterSendMessageOutcome.CompleteAndLogQso =>
+                $"Logged {loggedCall}.",
+            EnterSendMessageOutcome.RejectEntry =>
+                result.Message ?? "The QSO entry is invalid.",
+            _ => throw new InvalidOperationException(
+                $"Unknown ESM outcome '{enter.Outcome}'."),
+        };
+
+        if (enter.ClearEntry)
+        {
+            ClearEntryFields();
+            Qso? loggedQso = await RefreshQsoLogAsync();
+            if (loggedQso?.IsDuplicate == true)
+            {
+                Status = $"Logged {loggedCall} as a duplicate.";
+            }
+        }
+
+        EntryFocusRequested?.Invoke(
+            this,
+            new(enter.FocusTarget, enter.SelectQuestionMark));
+        await RefreshAsync();
+    }
+
     private async Task CompleteQsoAsync()
+    {
+        await LogQsoAsync(sendThankYou: true);
+    }
+
+    private async Task LogQsoOnlyAsync()
+    {
+        await LogQsoAsync(sendThankYou: false);
+    }
+
+    private async Task LogQsoAsync(bool sendThankYou)
     {
         if (CallEntry.Length < 3)
         {
@@ -761,7 +847,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         }
 
         string loggedCall = CallEntry.ToUpperInvariant();
-        await SendIntentAsync(OperatorIntent.ThankYou);
+        if (sendThankYou)
+        {
+            await SendIntentAsync(OperatorIntent.ThankYou);
+        }
+
         CommandResult result = await ExecuteAsync(
             new LogQsoCommand(
                 RequestId.New(),
@@ -1084,7 +1174,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             SendNilCommand,
             SendNumberQuestionCommand,
             AbortCommand,
+            EnterSendMessageCommand,
             CompleteQsoCommand,
+            LogQsoOnlyCommand,
             SendCallAndExchangeCommand,
             RitUpCommand,
             RitDownCommand,

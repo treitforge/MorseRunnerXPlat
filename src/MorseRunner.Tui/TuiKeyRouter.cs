@@ -8,6 +8,11 @@ public static class TuiKeyRouter
         bool shift = key.Modifiers.HasFlag(ConsoleModifiers.Shift);
         bool alt = key.Modifiers.HasFlag(ConsoleModifiers.Alt);
 
+        if (key.Key == ConsoleKey.Enter && (control || shift || alt))
+        {
+            return new(TuiActionKind.SaveQso);
+        }
+
         if (control)
         {
             return key.Key switch
@@ -62,7 +67,7 @@ public static class TuiKeyRouter
             ConsoleKey.F11 => new(TuiActionKind.Wipe),
             ConsoleKey.F12 => new(TuiActionKind.SendNumberQuestion),
             ConsoleKey.Insert => new(TuiActionKind.SendCallAndExchange),
-            ConsoleKey.Enter => new(TuiActionKind.LogQso),
+            ConsoleKey.Enter => new(TuiActionKind.EnterSendMessage),
             ConsoleKey.Escape => new(TuiActionKind.Abort),
             ConsoleKey.UpArrow => new(TuiActionKind.RitUp),
             ConsoleKey.DownArrow => new(TuiActionKind.RitDown),

@@ -1,9 +1,11 @@
+using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using MorseRunner.App.ViewModels;
 using MorseRunner.App.Views;
 using MorseRunner.Client;
+using MorseRunner.Domain;
 
 namespace MorseRunner.App.Tests;
 
@@ -26,6 +28,15 @@ public sealed class HeadlessUiTests
         TextBox? callEntry = window.FindControl<TextBox>("CallEntryBox");
         Assert.NotNull(callEntry);
         Assert.True(callEntry.IsFocused);
+        callEntry.Text = "KC?";
+        MethodInfo focusEntry = typeof(MainWindow).GetMethod(
+            "FocusEntry",
+            BindingFlags.Instance | BindingFlags.NonPublic)!;
+        _ = focusEntry.Invoke(
+            window,
+            [null, new EntryFocusRequestedEventArgs(EntryFocusTarget.Call, true)]);
+        Assert.Equal(2, callEntry.SelectionStart);
+        Assert.Equal(3, callEntry.SelectionEnd);
 
         window.Close();
     }

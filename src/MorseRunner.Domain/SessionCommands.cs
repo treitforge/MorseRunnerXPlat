@@ -76,6 +76,45 @@ public sealed record SendOperatorIntentCommand(
     long? ExpectedRevision = null)
     : SessionCommand(RequestId, SessionId, ClientId, ExpectedRevision);
 
+public sealed record QsoEntrySnapshot(
+    string Call,
+    string Rst,
+    string Exchange1,
+    string Exchange2);
+
+public enum EnterSendMessageOutcome
+{
+    SendCq,
+    SendEnteredCall,
+    SendCallAndExchange,
+    RequestExchangeRepeat,
+    CompleteAndLogQso,
+    RejectEntry,
+}
+
+public enum EntryFocusTarget
+{
+    Call,
+    Rst,
+    Exchange1,
+    Exchange2,
+}
+
+public sealed record EnterSendMessageResult(
+    EnterSendMessageOutcome Outcome,
+    IReadOnlyList<string> SentMessages,
+    EntryFocusTarget FocusTarget,
+    bool SelectQuestionMark,
+    bool ClearEntry);
+
+public sealed record TriggerEnterSendMessageCommand(
+    RequestId RequestId,
+    SessionId SessionId,
+    ClientId ClientId,
+    QsoEntrySnapshot Entry,
+    long? ExpectedRevision = null)
+    : SessionCommand(RequestId, SessionId, ClientId, ExpectedRevision);
+
 public enum RadioControl
 {
     Rit,
@@ -115,7 +154,8 @@ public sealed record CommandResult(
     string? ErrorCode,
     string? Message,
     long AppliedRevision,
-    long AppliedBlock);
+    long AppliedBlock,
+    EnterSendMessageResult? EnterSendMessage = null);
 
 public static class DomainErrorCodes
 {

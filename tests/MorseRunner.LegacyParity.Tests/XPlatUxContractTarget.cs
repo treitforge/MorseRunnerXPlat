@@ -225,7 +225,10 @@ public sealed class XPlatUxContractTarget : IParityTarget
             "VK_F10" => xaml.Contains("Gesture=\"F10\"", StringComparison.Ordinal),
             "VK_F11" => xaml.Contains("Gesture=\"F11\"", StringComparison.Ordinal),
             "VK_INSERT" => xaml.Contains("Gesture=\"Insert\"", StringComparison.Ordinal),
-            "VK_RETURN" => xaml.Contains("Gesture=\"Enter\"", StringComparison.Ordinal),
+            "VK_RETURN" =>
+                xaml.Contains(
+                    "Gesture=\"Enter\" Command=\"{Binding EnterSendMessageCommand}\"",
+                    StringComparison.Ordinal),
             "VK_MENU" or "87" or "119" =>
                 xaml.Contains("Gesture=\"Alt+W\"", StringComparison.Ordinal),
             "VK_CONTROL" => xaml.Contains("Gesture=\"Ctrl+Up\"", StringComparison.Ordinal),
@@ -235,7 +238,7 @@ public sealed class XPlatUxContractTarget : IParityTarget
             "' '" => xaml.Contains("CallEntryBox", StringComparison.Ordinal),
             "';'" => xaml.Contains("SendCallAndExchangeCommand", StringComparison.Ordinal),
             "'.'" or "'+'" or "'['" or "','" =>
-                xaml.Contains("CompleteQsoCommand", StringComparison.Ordinal),
+                code.Contains("CompleteQsoCommand", StringComparison.Ordinal),
             _ => false,
         };
     }

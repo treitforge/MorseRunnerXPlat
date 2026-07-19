@@ -160,6 +160,7 @@ message CommandEnvelope {
     RadioControlCommand radio_control = 16;
     LogQsoCommand log_qso = 17;
     RecoverAudioCommand recover_audio = 18;
+    EnterSendMessageCommand enter_send_message = 19;
   }
 }
 
@@ -211,6 +212,17 @@ message LogQsoCommand {
   string exchange_2 = 4;
 }
 
+message EnterSendMessageCommand {
+  QsoEntrySnapshotMessage entry = 1;
+}
+
+message QsoEntrySnapshotMessage {
+  string call = 1;
+  string rst = 2;
+  string exchange_1 = 3;
+  string exchange_2 = 4;
+}
+
 message ExecuteCommandRequest {
   CommandEnvelope command = 1;
   string control_lease_token = 2;
@@ -224,6 +236,33 @@ message CommandResultMessage {
   string message = 3;
   int64 applied_revision = 4;
   int64 applied_block = 5;
+  EnterSendMessageResultMessage enter_send_message = 6;
+}
+
+enum EnterSendMessageOutcomeMessage {
+  ENTER_SEND_MESSAGE_OUTCOME_MESSAGE_UNSPECIFIED = 0;
+  ENTER_SEND_MESSAGE_OUTCOME_MESSAGE_SEND_CQ = 1;
+  ENTER_SEND_MESSAGE_OUTCOME_MESSAGE_SEND_ENTERED_CALL = 2;
+  ENTER_SEND_MESSAGE_OUTCOME_MESSAGE_SEND_CALL_AND_EXCHANGE = 3;
+  ENTER_SEND_MESSAGE_OUTCOME_MESSAGE_REQUEST_EXCHANGE_REPEAT = 4;
+  ENTER_SEND_MESSAGE_OUTCOME_MESSAGE_COMPLETE_AND_LOG_QSO = 5;
+  ENTER_SEND_MESSAGE_OUTCOME_MESSAGE_REJECT_ENTRY = 6;
+}
+
+enum EntryFocusTargetMessage {
+  ENTRY_FOCUS_TARGET_MESSAGE_UNSPECIFIED = 0;
+  ENTRY_FOCUS_TARGET_MESSAGE_CALL = 1;
+  ENTRY_FOCUS_TARGET_MESSAGE_RST = 2;
+  ENTRY_FOCUS_TARGET_MESSAGE_EXCHANGE_1 = 3;
+  ENTRY_FOCUS_TARGET_MESSAGE_EXCHANGE_2 = 4;
+}
+
+message EnterSendMessageResultMessage {
+  EnterSendMessageOutcomeMessage outcome = 1;
+  repeated string sent_messages = 2;
+  EntryFocusTargetMessage focus_target = 3;
+  bool select_question_mark = 4;
+  bool clear_entry = 5;
 }
 
 message SessionSnapshotMessage {

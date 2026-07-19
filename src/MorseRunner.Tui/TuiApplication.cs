@@ -209,8 +209,18 @@ public sealed class TuiApplication : IDisposable
                 await SendAsync(OperatorIntent.HisCall, cancellationToken);
                 await SendAsync(OperatorIntent.Exchange, cancellationToken);
                 break;
+            case TuiActionKind.EnterSendMessage:
+                await EnterSendMessageAsync(cancellationToken);
+                break;
+            case TuiActionKind.SaveQso:
+                await LogQsoAsync(
+                    sendThankYou: false,
+                    cancellationToken);
+                break;
             case TuiActionKind.LogQso:
-                await LogQsoAsync(cancellationToken);
+                await LogQsoAsync(
+                    sendThankYou: true,
+                    cancellationToken);
                 break;
             case TuiActionKind.Wipe:
                 State.ClearEntry();
@@ -395,7 +405,9 @@ public sealed class TuiApplication : IDisposable
         await RefreshSnapshotAsync(cancellationToken);
     }
 
-    private async Task LogQsoAsync(CancellationToken cancellationToken)
+    private async Task LogQsoAsync(
+        bool sendThankYou,
+        CancellationToken cancellationToken)
     {
         if (_sessionId is not SessionId sessionId)
         {
@@ -410,7 +422,11 @@ public sealed class TuiApplication : IDisposable
         }
 
         string call = State.Call.ToUpperInvariant();
-        await SendAsync(OperatorIntent.ThankYou, cancellationToken);
+        if (sendThankYou)
+        {
+            await SendAsync(OperatorIntent.ThankYou, cancellationToken);
+        }
+
         CommandResult result = await _client.ExecuteAsync(
             new LogQsoCommand(
                 RequestId.New(),
@@ -432,6 +448,68 @@ public sealed class TuiApplication : IDisposable
             if (State.Qsos[^1].IsDuplicate)
             {
                 State.Status = $"Logged {call} as a duplicate.";
+            }
+
+            State.ClearEntry();
+        }
+
+        await RefreshSnapshotAsync(cancellationToken);
+    }
+
+    private async Task EnterSendMessageAsync(
+        CancellationToken cancellationToken)
+    {
+        if (_sessionId is not SessionId sessionId)
+        {
+            State.Status = "Start a session before sending.";
+            return;
+        }
+
+        CommandResult result = await _client.ExecuteAsync(
+            new TriggerEnterSendMessageCommand(
+                RequestId.New(),
+                sessionId,
+                TuiClientId,
+                new(
+                    State.Call,
+                    State.Rst,
+                    State.Exchange1,
+                    State.Exchange2)),
+            cancellationToken);
+        EnterSendMessageResult? enter = result.EnterSendMessage;
+        if (enter is null)
+        {
+            State.Status = result.Message ?? "Enter Sends Message rejected.";
+            await RefreshSnapshotAsync(cancellationToken);
+            return;
+        }
+
+        string loggedCall = State.Call.ToUpperInvariant();
+        State.Status = enter.Outcome switch
+        {
+            EnterSendMessageOutcome.SendCq => "Sent CQ.",
+            EnterSendMessageOutcome.SendEnteredCall =>
+                "Sent entered callsign.",
+            EnterSendMessageOutcome.SendCallAndExchange =>
+                "Sent callsign and exchange.",
+            EnterSendMessageOutcome.RequestExchangeRepeat =>
+                "Requested an exchange repeat.",
+            EnterSendMessageOutcome.CompleteAndLogQso =>
+                $"Logged {loggedCall}.",
+            EnterSendMessageOutcome.RejectEntry =>
+                result.Message ?? "The QSO entry is invalid.",
+            _ => throw new InvalidOperationException(
+                $"Unknown ESM outcome '{enter.Outcome}'."),
+        };
+        State.ActiveField = (int)enter.FocusTarget;
+        if (enter.ClearEntry)
+        {
+            State.Qsos = await _client.ListCompletedQsosAsync(
+                sessionId,
+                cancellationToken);
+            if (State.Qsos[^1].IsDuplicate)
+            {
+                State.Status = $"Logged {loggedCall} as a duplicate.";
             }
 
             State.ClearEntry();

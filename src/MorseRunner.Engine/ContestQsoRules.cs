@@ -18,6 +18,14 @@ internal sealed record ContestQsoEvaluation(
     int Points,
     bool UsesAdditiveScore = false);
 
+internal sealed record ReceivedEntryState(
+    bool FirstPresent,
+    bool SecondPresent,
+    EntryFocusTarget MissingFocusTarget)
+{
+    public bool IsComplete => FirstPresent && SecondPresent;
+}
+
 public static class ContestQsoRules
 {
     private static readonly ContestDxccDatabase Dxcc = new();
@@ -97,6 +105,96 @@ public static class ContestQsoRules
             "scArrlSS" => EvaluateSweepstakes(command, call),
             _ => Invalid(call, $"Unsupported contest '{contestId.Value}'."),
         };
+    }
+
+    internal static ReceivedEntryState GetReceivedEntryState(
+        ContestId contestId,
+        QsoEntrySnapshot entry)
+    {
+        bool firstPresent;
+        bool secondPresent;
+        EntryFocusTarget firstTarget;
+        EntryFocusTarget secondTarget;
+        switch (contestId.Value)
+        {
+            case "scWpx":
+            case "scHst":
+                firstPresent = entry.Rst.Length > 0;
+                secondPresent = entry.Exchange1.Length > 0;
+                firstTarget = EntryFocusTarget.Rst;
+                secondTarget = EntryFocusTarget.Exchange1;
+                break;
+            case "scCwt":
+            case "scFieldDay":
+            case "scSst":
+                firstPresent = entry.Exchange1.Length > 0;
+                secondPresent = entry.Exchange2.Length > 0;
+                firstTarget = EntryFocusTarget.Exchange1;
+                secondTarget = EntryFocusTarget.Exchange2;
+                break;
+            case "scNaQp":
+                firstPresent = entry.Exchange1.Length > 0;
+                secondPresent = IsNaqpSecondFieldValid(
+                    entry.Call,
+                    entry.Exchange2);
+                firstTarget = EntryFocusTarget.Exchange1;
+                secondTarget = EntryFocusTarget.Exchange2;
+                break;
+            case "scCQWW":
+            case "scArrlDx":
+            case "scAllJa":
+            case "scAcag":
+            case "scIaruHf":
+                firstPresent = entry.Rst.Length > 0;
+                secondPresent = entry.Exchange2.Length > 0;
+                firstTarget = EntryFocusTarget.Rst;
+                secondTarget = EntryFocusTarget.Exchange2;
+                break;
+            case "scArrlSS":
+                firstPresent = true;
+                secondPresent = SweepstakesExchangeParser.ParseEntered(
+                    entry.Call,
+                    $"{entry.Exchange1} {entry.Exchange2}").IsValid;
+                firstTarget = EntryFocusTarget.Exchange1;
+                secondTarget = entry.Exchange1.Length == 0
+                    ? EntryFocusTarget.Exchange1
+                    : EntryFocusTarget.Exchange2;
+                break;
+            default:
+                firstPresent = entry.Exchange1.Length > 0;
+                secondPresent = entry.Exchange2.Length > 0;
+                firstTarget = EntryFocusTarget.Exchange1;
+                secondTarget = EntryFocusTarget.Exchange2;
+                break;
+        }
+
+        return new(
+            firstPresent,
+            secondPresent,
+            firstPresent ? secondTarget : firstTarget);
+    }
+
+    internal static string ComposeOwnExchange(
+        ContestId contestId,
+        string stationCall,
+        int serialNumber)
+    {
+        string exchange = ContestCatalog.Get(contestId).ExchangeDefault;
+        if (contestId.Value == "scArrlSS")
+        {
+            string[] fields = exchange.Split(
+                ' ',
+                StringSplitOptions.RemoveEmptyEntries);
+            return fields.Length >= 3
+                ? $"{serialNumber:D3}{fields[0]} {stationCall} "
+                    + String.Join(' ', fields.Skip(1))
+                : $"{serialNumber:D3} {stationCall} {exchange}";
+        }
+
+        return exchange.Replace(
+            "#",
+            serialNumber.ToString("D3", CultureInfo.InvariantCulture),
+            StringComparison.Ordinal);
     }
 
     private static ContestQsoEvaluation EvaluateWpx(
