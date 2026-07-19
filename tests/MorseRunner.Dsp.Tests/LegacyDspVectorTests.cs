@@ -148,6 +148,8 @@ public sealed class LegacyDspVectorTests
             renderer.Render(block);
         }
 
+        _ = Stopwatch.GetTimestamp();
+        _ = Stopwatch.Frequency;
         long allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
         for (int index = 0; index < durations.Length; index++)
         {
@@ -198,6 +200,8 @@ public sealed class LegacyDspVectorTests
             receiver.Process(real, imaginary, output);
         }
 
+        _ = Stopwatch.GetTimestamp();
+        _ = Stopwatch.Frequency;
         long allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
         for (int index = 0; index < durations.Length; index++)
         {
