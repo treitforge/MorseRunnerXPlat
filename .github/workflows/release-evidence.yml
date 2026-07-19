@@ -112,10 +112,7 @@ jobs:
 
             $parameters = @{
               RuntimeIdentifier = '${{ matrix.rid }}'
-              ArchivePath = (
-                'artifacts/release/MorseRunnerXPlat-${{ matrix.rid }}'
-                + '${{ matrix.archive_extension }}'
-              )
+              ArchivePath = 'artifacts/release/MorseRunnerXPlat-${{ matrix.rid }}${{ matrix.archive_extension }}'
               EvidenceRoot = 'artifacts/evidence/${{ matrix.rid }}'
             }
             if ('${{ inputs.attempt_physical_audio }}' -eq 'true') {
