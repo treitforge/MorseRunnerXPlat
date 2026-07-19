@@ -767,6 +767,9 @@ At minimum, `SessionSettings` includes:
 - Duration.
 - Operator callsign and contest-specific station information.
 - WPM and Farnsworth settings.
+- Minimum and maximum receive-speed offsets.
+- Serial-number range mode and validated custom range.
+- HST operator identity.
 - Pitch and filter bandwidth.
 - Activity and station behavior settings.
 - QRN, QRM, QSB, flutter, LID, QSK, and other condition toggles.
@@ -1343,6 +1346,8 @@ a concrete client use case.
 - Represent Enter Sends Message as an additive command payload. Its result is
   an additive command-result message so in-process and gRPC clients receive
   identical outcome and focus guidance.
+- Represent receive-speed bounds, serial-number ranges, HST operator identity,
+  and preferred audio-device name as additive session-setting fields.
 - Use explicit `oneof` payloads for commands and events.
 - Keep zero enum values unspecified.
 - Prefer additive evolution.
@@ -1483,6 +1488,9 @@ A completed result contains:
 
 Result writes are atomic. Export formatting is an infrastructure concern over
 project-owned result models.
+JSON and Cabrillo exports use one formatter for in-process and hosted
+workflows. Per-contest personal high scores are stored atomically beside
+result exports.
 
 ## 18. Avalonia application
 
@@ -2135,14 +2143,26 @@ Recorded Phase 5 implementation:
 - Settings persist atomically. Optional recording uses a bounded WAV writer
   beside physical playback, and completed recordings can be opened from the
   File menu.
+- Avalonia exposes persisted receive-speed bounds, legacy serial-number range
+  choices, a validated custom serial range, HST operator identity, and optional
+  live callsign context. These values remain immutable after session creation.
+- Mid-contest and end-of-contest serial selection uses the pinned legacy WPX
+  weighted bins. Custom ranges retain the legacy exclusive upper bound.
+- Avalonia enumerates playback devices through `IMorseRunnerClient`, selects a
+  preferred device before start, and can pause, recover to another device, and
+  resume without mutating the audio adapter from the UI thread.
+- The score view presents the engine-owned five-minute rate and per-contest
+  personal high score. JSON and Cabrillo exports are written atomically to the
+  platform results directory, and the gRPC Results service reuses the same
+  formatter.
 - QSB, QRM, QRN, flutter, activity, LIDs, monitor level, and QSK settings cross
   the semantic and gRPC session contract. Implemented audio and station
   interactions are seeded and deterministic.
 - Compiled bindings and `x:DataType` are enabled. View-model tests, a headless
   window-open and focus test, and live Windows visual and interaction checks
   cover the primary path.
-- Linux and macOS visual review, full contest-specific score/rate behavior,
-  advanced legacy settings, and external score services remain release
+- Linux and macOS visual review, TUI exposure of the advanced settings and
+  result workflows, and optional external score services remain release
   checklist items in `docs/ux/legacy-compatibility-matrix.md`.
 
 ### Phase 6: optional gRPC host

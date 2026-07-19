@@ -72,6 +72,17 @@ jobs:
       - name: Test
         if: steps.solution.outputs.exists == 'true'
         run: dotnet test --solution MorseRunnerXPlat.slnx --no-build --configuration Release
+        env:
+          MORSE_RUNNER_VISUAL_EVIDENCE_DIR: ${{ github.workspace }}/artifacts/visual/${{ matrix.os }}
+
+      - name: Upload Avalonia visual evidence
+        if: steps.solution.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: avalonia-visual-${{ matrix.os }}
+          path: artifacts/visual/${{ matrix.os }}/*.png
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Check vulnerable packages
         if: steps.solution.outputs.exists == 'true' && matrix.os == 'ubuntu-latest'

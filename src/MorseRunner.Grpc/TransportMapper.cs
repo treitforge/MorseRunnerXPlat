@@ -72,6 +72,14 @@ public static class TransportMapper
             Flutter = value.Flutter,
             Lids = value.Lids,
             MonitorLevelDb = value.MonitorLevelDb,
+            ReceiveSpeedBelowWpm = value.ReceiveSpeedBelowWpm,
+            ReceiveSpeedAboveWpm = value.ReceiveSpeedAboveWpm,
+            SerialNumberRange = ToTransport(value.SerialNumberRange),
+            CustomSerialNumberMinimum = value.CustomSerialNumberMinimum,
+            CustomSerialNumberExclusiveMaximum =
+                value.CustomSerialNumberExclusiveMaximum,
+            HstOperatorName = value.HstOperatorName,
+            AudioOutputDeviceName = value.AudioOutputDeviceName ?? string.Empty,
         };
 
     public static Domain.SessionSettings ToDomain(
@@ -96,6 +104,22 @@ public static class TransportMapper
             MonitorLevelDb = value.HasMonitorLevelDb
                 ? value.MonitorLevelDb
                 : -15d,
+            ReceiveSpeedBelowWpm = value.HasReceiveSpeedBelowWpm
+                ? value.ReceiveSpeedBelowWpm
+                : -1,
+            ReceiveSpeedAboveWpm = value.HasReceiveSpeedAboveWpm
+                ? value.ReceiveSpeedAboveWpm
+                : -1,
+            SerialNumberRange = ToDomain(value.SerialNumberRange),
+            CustomSerialNumberMinimum = value.HasCustomSerialNumberMinimum
+                ? value.CustomSerialNumberMinimum
+                : 1,
+            CustomSerialNumberExclusiveMaximum =
+                value.HasCustomSerialNumberExclusiveMaximum
+                ? value.CustomSerialNumberExclusiveMaximum
+                : 99,
+            HstOperatorName = value.HstOperatorName,
+            AudioOutputDeviceName = EmptyToNull(value.AudioOutputDeviceName),
         };
 
     public static Contract.SessionHandleMessage ToTransport(
@@ -755,6 +779,37 @@ public static class TransportMapper
                 Domain.SessionState.Faulted,
             Contract.SessionStateMessage.Closed =>
                 Domain.SessionState.Closed,
+            _ => throw new ArgumentOutOfRangeException(nameof(value)),
+        };
+
+    private static Contract.SerialNumberRangeModeMessage ToTransport(
+        Domain.SerialNumberRangeMode value) =>
+        value switch
+        {
+            Domain.SerialNumberRangeMode.StartOfContest =>
+                Contract.SerialNumberRangeModeMessage.StartOfContest,
+            Domain.SerialNumberRangeMode.MidContest =>
+                Contract.SerialNumberRangeModeMessage.MidContest,
+            Domain.SerialNumberRangeMode.EndOfContest =>
+                Contract.SerialNumberRangeModeMessage.EndOfContest,
+            Domain.SerialNumberRangeMode.Custom =>
+                Contract.SerialNumberRangeModeMessage.Custom,
+            _ => throw new ArgumentOutOfRangeException(nameof(value)),
+        };
+
+    private static Domain.SerialNumberRangeMode ToDomain(
+        Contract.SerialNumberRangeModeMessage value) =>
+        value switch
+        {
+            Contract.SerialNumberRangeModeMessage.Unspecified
+                or Contract.SerialNumberRangeModeMessage.StartOfContest =>
+                Domain.SerialNumberRangeMode.StartOfContest,
+            Contract.SerialNumberRangeModeMessage.MidContest =>
+                Domain.SerialNumberRangeMode.MidContest,
+            Contract.SerialNumberRangeModeMessage.EndOfContest =>
+                Domain.SerialNumberRangeMode.EndOfContest,
+            Contract.SerialNumberRangeModeMessage.Custom =>
+                Domain.SerialNumberRangeMode.Custom,
             _ => throw new ArgumentOutOfRangeException(nameof(value)),
         };
 

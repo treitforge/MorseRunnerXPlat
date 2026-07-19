@@ -11,6 +11,26 @@ namespace MorseRunner.Grpc.Tests;
 public sealed class GrpcTransportTests
 {
     [Fact]
+    public void AdvancedSessionSettingsRoundTripWithoutLoss()
+    {
+        SessionSettings expected = SessionSettings.CreateDefault(42) with
+        {
+            ReceiveSpeedBelowWpm = 6,
+            ReceiveSpeedAboveWpm = 2,
+            SerialNumberRange = SerialNumberRangeMode.Custom,
+            CustomSerialNumberMinimum = 70,
+            CustomSerialNumberExclusiveMaximum = 80,
+            HstOperatorName = "RANDY",
+            AudioOutputDeviceName = "Test Device",
+        };
+
+        SessionSettings actual = TransportMapper.ToDomain(
+            TransportMapper.ToTransport(expected));
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
     public void QsoTruthAndCorrectionFieldsRoundTripWithoutLoss()
     {
         Qso expected = new()

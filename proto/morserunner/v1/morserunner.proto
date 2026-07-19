@@ -110,6 +110,21 @@ message SessionSettingsMessage {
   bool flutter = 14;
   bool lids = 15;
   optional double monitor_level_db = 16;
+  optional int32 receive_speed_below_wpm = 17;
+  optional int32 receive_speed_above_wpm = 18;
+  SerialNumberRangeModeMessage serial_number_range = 19;
+  optional int32 custom_serial_number_minimum = 20;
+  optional int32 custom_serial_number_exclusive_maximum = 21;
+  string hst_operator_name = 22;
+  string audio_output_device_name = 23;
+}
+
+enum SerialNumberRangeModeMessage {
+  SERIAL_NUMBER_RANGE_MODE_MESSAGE_UNSPECIFIED = 0;
+  SERIAL_NUMBER_RANGE_MODE_MESSAGE_START_OF_CONTEST = 1;
+  SERIAL_NUMBER_RANGE_MODE_MESSAGE_MID_CONTEST = 2;
+  SERIAL_NUMBER_RANGE_MODE_MESSAGE_END_OF_CONTEST = 3;
+  SERIAL_NUMBER_RANGE_MODE_MESSAGE_CUSTOM = 4;
 }
 
 message SessionHandleMessage {

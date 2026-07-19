@@ -327,6 +327,30 @@ public sealed class SessionLoopTests
     }
 
     [Fact]
+    public async Task AudioDeviceCanBeSelectedBeforeSessionStart()
+    {
+        var sink = new RecoverableTestSink();
+        await using MorseRunnerEngine engine = new(_ => sink);
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 18),
+            TestContext.Current.CancellationToken);
+
+        CommandResult recovery = await engine.ExecuteAsync(
+            new RecoverAudioCommand(
+                RequestId.New(),
+                handle.SessionId,
+                TestClient,
+                DeviceName: "preferred"),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(recovery.Accepted);
+        Assert.Equal("preferred", sink.RecoveredDeviceName);
+        Assert.Equal(
+            SessionState.Ready,
+            engine.GetSnapshot(handle.SessionId).State);
+    }
+
+    [Fact]
     public async Task BandConditionsAreDeterministicAndChangeRenderedAudio()
     {
         SessionSettings cleanSettings =

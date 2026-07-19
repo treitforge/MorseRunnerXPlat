@@ -69,6 +69,7 @@ public sealed class InProcessMorseRunnerClient(
         cancellationToken.ThrowIfCancellationRequested();
         IReadOnlyList<AudioOutputDevice> devices = PhysicalAudioSink
             .GetPlaybackDevices()
+            .Where(device => !string.IsNullOrWhiteSpace(device.Name))
             .Select(device => new AudioOutputDevice(
                 device.Name,
                 device.Index,

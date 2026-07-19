@@ -199,6 +199,29 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
                 "Monitor level must be between -60 dB and 0 dB.");
         }
 
+        bool usesLegacyOriginalSpeed =
+            settings.ReceiveSpeedBelowWpm == -1
+            && settings.ReceiveSpeedAboveWpm == -1;
+        if (!usesLegacyOriginalSpeed
+            && (settings.ReceiveSpeedBelowWpm is < 0 or > 10
+                || settings.ReceiveSpeedAboveWpm is < 0 or > 10))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(settings),
+                "Receive speed offsets must be between 0 and 10 WPM.");
+        }
+
+        if (settings.SerialNumberRange == SerialNumberRangeMode.Custom
+            && (settings.CustomSerialNumberMinimum < 1
+                || settings.CustomSerialNumberExclusiveMaximum
+                    <= settings.CustomSerialNumberMinimum
+                || settings.CustomSerialNumberExclusiveMaximum > 9_999))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(settings),
+                "The custom serial range must be min-max with 1 <= min < max <= 9999.");
+        }
+
         ContestCatalog.Get(settings.ContestId);
         if (!RunModeCatalog.All.Contains(settings.RunModeId))
         {

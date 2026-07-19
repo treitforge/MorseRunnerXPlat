@@ -18,6 +18,14 @@ public enum SessionState
     Closed,
 }
 
+public enum SerialNumberRangeMode
+{
+    StartOfContest = 0,
+    MidContest = 1,
+    EndOfContest = 2,
+    Custom = 3,
+}
+
 public sealed record SessionSettings(
     int Seed,
     ContestId ContestId,
@@ -47,6 +55,20 @@ public sealed record SessionSettings(
     public bool Lids { get; init; }
 
     public double MonitorLevelDb { get; init; }
+
+    public int ReceiveSpeedBelowWpm { get; init; } = -1;
+
+    public int ReceiveSpeedAboveWpm { get; init; } = -1;
+
+    public SerialNumberRangeMode SerialNumberRange { get; init; }
+
+    public int CustomSerialNumberMinimum { get; init; } = 1;
+
+    public int CustomSerialNumberExclusiveMaximum { get; init; } = 99;
+
+    public string HstOperatorName { get; init; } = string.Empty;
+
+    public string? AudioOutputDeviceName { get; init; }
 
     public static SessionSettings CreateDefault(int seed)
     {
