@@ -1200,13 +1200,29 @@ The physical sink uses a preallocated single-producer, single-consumer queue of
 four 512-sample blocks. The native callback performs only bounded queue reads,
 sample copies, zero fill, and lock-free metric updates. Playback begins only
 after two blocks are queued (or one block when the configured queue capacity is
-one). Automatic sessions use a periodic block timer rather than chaining
-relative delays, so render work does not accumulate timing drift and exhaust
-the prebuffer. Callback staleness or failure marks the output unhealthy. The
-session pauses at the next block boundary, publishes `AudioDeviceFailed`, and
-accepts `RecoverAudioCommand` for device reselection before resume. The default
-monitor level is the legacy `0 dB`; lower levels remain explicit session
-settings.
+one). Automatic sessions use periodic wakeups governed by an absolute
+sample-count deadline. A late wakeup renders at most two catch-up blocks per
+turn, so scheduler latency does not permanently change the simulation rate or
+allow unbounded catch-up work. Callback staleness or failure marks the output
+unhealthy. The session pauses at the next block boundary, publishes
+`AudioDeviceFailed`, and accepts `RecoverAudioCommand` for device reselection
+before resume.
+
+Receiver audio uses the legacy complex-mix topology: stateful alternating
+three-pass moving-average filters, lookup-table up-conversion with legacy
+carrier quantization, and look-ahead AGC normalized to floating-point device
+output. A requested 600 Hz carrier therefore produces the legacy effective
+612.5 Hz carrier at 11,025 Hz. Numeric parity vectors compare receiver samples,
+AGC block peaks, active RMS, and effective-versus-requested carrier
+correlations with a `1e-6` cross-runtime tolerance while retaining the exact
+legacy fixture values.
+
+Local sidetone remains separate from receiver audio until the final monitor
+boundary. The default monitor level is the legacy `0 dB`. A lower monitor level
+attenuates only local sidetone and never changes remote stations, QRM, QRN, or
+the receiver noise floor. With QSK disabled, local transmission mutes the
+receiver path. With QSK enabled, the monitored local signal and receiver output
+are combined.
 
 ### 14.5 Device failure
 

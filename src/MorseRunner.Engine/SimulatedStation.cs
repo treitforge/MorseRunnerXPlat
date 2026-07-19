@@ -9,6 +9,7 @@ public sealed class SimulatedStation
     private readonly MorseToneRenderer _renderer;
     private readonly float[] _scratch =
         new float[CompatibilityProfile.BlockSize];
+    private double _bfoPhase;
     private int _timeoutBlocks = int.MaxValue;
 
     public SimulatedStation(
@@ -36,8 +37,8 @@ public sealed class SimulatedStation
             CompatibilityProfile.SampleRate,
             CompatibilityProfile.BlockSize,
             wordsPerMinute,
-            Math.Clamp(600 + pitchOffsetHz, 100, 2_000),
-            gain: 0.12f);
+            carrierFrequency: 600f,
+            gain: 1f);
     }
 
     public StationIdentity Identity { get; }
@@ -140,18 +141,35 @@ public sealed class SimulatedStation
     }
 
     public void AdvanceBlock(
-        Span<float> mixedOutput,
+        Span<float> receiverReal,
+        Span<float> receiverImaginary,
         bool mixOutput = true)
     {
         if (State == StationState.Sending)
         {
             bool hadAudio = _renderer.HasPendingAudio;
-            _renderer.Render(_scratch);
+            _renderer.RenderEnvelope(_scratch);
             if (mixOutput)
             {
-                for (int index = 0; index < mixedOutput.Length; index++)
+                double phaseStep =
+                    2d * Math.PI * PitchOffsetHz
+                    / CompatibilityProfile.SampleRate;
+                for (int index = 0; index < receiverReal.Length; index++)
                 {
-                    mixedOutput[index] += _scratch[index];
+                    float amplitude = _scratch[index] * 36_000f;
+                    receiverReal[index] +=
+                        amplitude * (float)Math.Cos(_bfoPhase);
+                    receiverImaginary[index] -=
+                        amplitude * (float)Math.Sin(_bfoPhase);
+                    _bfoPhase += phaseStep;
+                    if (_bfoPhase >= 2d * Math.PI)
+                    {
+                        _bfoPhase -= 2d * Math.PI;
+                    }
+                    else if (_bfoPhase <= -2d * Math.PI)
+                    {
+                        _bfoPhase += 2d * Math.PI;
+                    }
                 }
             }
 

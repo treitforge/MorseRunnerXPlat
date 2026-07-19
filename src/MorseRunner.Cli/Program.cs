@@ -10,7 +10,7 @@ return args.Length == 0
     : args[0].ToUpperInvariant() switch
     {
         "AUDIO-DEVICES" => await ListAudioDevicesAsync(),
-        "AUDIO-PROBE" => await RunAudioProbeAsync(),
+        "AUDIO-PROBE" => await RunAudioProbeAsync(args[1..]),
         "SCENARIO" => await RunHeadlessScenarioAsync(),
         "HOST-INFO" => await ShowHostInfoAsync(),
         "HOSTED-SCENARIO" => await RunHostedScenarioAsync(),
@@ -20,7 +20,7 @@ return args.Length == 0
 static int PrintUsage()
 {
     Console.Error.WriteLine(
-        "Usage: MorseRunner.Cli <audio-devices|audio-probe|scenario"
+        "Usage: MorseRunner.Cli <audio-devices|audio-probe [--seconds N]|scenario"
         + "|host-info|hosted-scenario>");
     return 2;
 }
@@ -35,8 +35,26 @@ static async Task<int> ListAudioDevicesAsync()
     return 0;
 }
 
-static async Task<int> RunAudioProbeAsync()
+static async Task<int> RunAudioProbeAsync(string[] arguments)
 {
+    double durationSeconds = 0.75d;
+    if (arguments.Length == 2
+        && arguments[0].Equals("--seconds", StringComparison.OrdinalIgnoreCase)
+        && double.TryParse(
+            arguments[1],
+            CultureInfo.InvariantCulture,
+            out double parsedSeconds)
+        && parsedSeconds is > 0d and <= 300d)
+    {
+        durationSeconds = parsedSeconds;
+    }
+    else if (arguments.Length != 0)
+    {
+        Console.Error.WriteLine(
+            "audio-probe accepts --seconds greater than 0 and at most 300.");
+        return 2;
+    }
+
     await using InProcessMorseRunnerClient client =
         InProcessMorseRunnerClient.CreateWithPhysicalAudio();
     SessionHandle handle = await client.CreateSessionAsync(
@@ -50,7 +68,7 @@ static async Task<int> RunAudioProbeAsync()
             clientId),
         CancellationToken.None);
 
-    await Task.Delay(TimeSpan.FromMilliseconds(750));
+    await Task.Delay(TimeSpan.FromSeconds(durationSeconds));
 
     SessionSnapshot snapshot = await client.GetSnapshotAsync(
         handle.SessionId,
@@ -74,7 +92,11 @@ static async Task<int> RunAudioProbeAsync()
             handle.SessionId,
             clientId),
         CancellationToken.None);
-    return snapshot.AudioOutputHealthy ? 0 : 1;
+    return snapshot.AudioOutputHealthy
+        && snapshot.AudioUnderrunCount == 0
+        && snapshot.AudioDroppedBlockCount == 0
+        ? 0
+        : 1;
 }
 
 static async Task<int> RunHeadlessScenarioAsync()

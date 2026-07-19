@@ -28,12 +28,22 @@ internal sealed class EngineSession : IAsyncDisposable
         new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly float[] _renderBuffer =
         new float[CompatibilityProfile.BlockSize];
+    private readonly float[] _operatorBuffer =
+        new float[CompatibilityProfile.BlockSize];
+    private readonly float[] _receiverReal =
+        new float[CompatibilityProfile.BlockSize];
+    private readonly float[] _receiverImaginary =
+        new float[CompatibilityProfile.BlockSize];
     private readonly MorseToneRenderer _toneRenderer;
+    private readonly LegacyReceiverPipeline _receiverPipeline;
     private readonly LegacyRandom _effectRandom;
     private readonly QsbProcessor? _qsbProcessor;
     private readonly float _monitorGain;
     private readonly bool _automaticTiming;
     private readonly TimeSpan _blockPeriod;
+    private readonly AutomaticBlockClock _automaticBlockClock = new(
+        CompatibilityProfile.SampleRate,
+        CompatibilityProfile.BlockSize);
     private readonly Task _worker;
     private PeriodicTimer? _automaticTimer;
     private SessionSnapshot _snapshot;
@@ -90,6 +100,11 @@ internal sealed class EngineSession : IAsyncDisposable
             CompatibilityProfile.SampleRate,
             CompatibilityProfile.BlockSize,
             settings.WordsPerMinute,
+            settings.PitchHz);
+        _receiverPipeline = new(
+            CompatibilityProfile.SampleRate,
+            CompatibilityProfile.BlockSize,
+            settings.BandwidthHz,
             settings.PitchHz);
         _commands = Channel.CreateBounded<WorkItem>(
             new BoundedChannelOptions(CommandCapacity)
@@ -345,7 +360,12 @@ internal sealed class EngineSession : IAsyncDisposable
                 return await ProcessWorkItemAsync(pending);
             }
 
-            await RenderBlocksAsync(1);
+            int blocksDue = _automaticBlockClock.GetDueBlockCount(
+                _simulationBlock);
+            if (blocksDue > 0)
+            {
+                await RenderBlocksAsync(blocksDue);
+            }
             PublishSnapshot();
             return true;
         }
@@ -533,7 +553,8 @@ internal sealed class EngineSession : IAsyncDisposable
             }
 
             bool operatorIsSending = _toneRenderer.HasPendingAudio;
-            _toneRenderer.Render(_renderBuffer);
+            _toneRenderer.Render(_operatorBuffer);
+            PrepareReceiverInput();
             for (int stationIndex = 0;
                  stationIndex < _stations.Count;
                  stationIndex++)
@@ -541,7 +562,8 @@ internal sealed class EngineSession : IAsyncDisposable
                 SimulatedStation station = _stations[stationIndex];
                 StationState priorStationState = station.State;
                 station.AdvanceBlock(
-                    _renderBuffer,
+                    _receiverReal,
+                    _receiverImaginary,
                     mixOutput: _settings.Qsk || !operatorIsSending);
                 if (priorStationState != StationState.Sending
                     && station.State == StationState.Sending)
@@ -560,7 +582,11 @@ internal sealed class EngineSession : IAsyncDisposable
                         station.Identity.Callsign);
                 }
             }
-            ApplyAudioEffects();
+            _receiverPipeline.Process(
+                _receiverReal,
+                _receiverImaginary,
+                _renderBuffer);
+            ApplyAudioEffects(operatorIsSending);
             await _audioSink.WriteAsync(
                 _renderBuffer,
                 _simulationBlock,
@@ -584,7 +610,19 @@ internal sealed class EngineSession : IAsyncDisposable
         }
     }
 
-    private void ApplyAudioEffects()
+    private void PrepareReceiverInput()
+    {
+        const float noiseAmplitude = 18_000f;
+        for (int index = 0; index < _receiverReal.Length; index++)
+        {
+            _receiverReal[index] =
+                noiseAmplitude * (_effectRandom.NextSingle() - 0.5f);
+            _receiverImaginary[index] =
+                noiseAmplitude * (_effectRandom.NextSingle() - 0.5f);
+        }
+    }
+
+    private void ApplyAudioEffects(bool operatorIsSending)
     {
         _qsbProcessor?.Apply(_renderBuffer);
         float qrmIncrement =
@@ -620,10 +658,16 @@ internal sealed class EngineSession : IAsyncDisposable
                 }
             }
 
+            float localMonitor =
+                _operatorBuffer[index] * _monitorGain;
             _renderBuffer[index] = Math.Clamp(
-                sample * _monitorGain,
-                -1F,
-                1F);
+                operatorIsSending
+                    ? (_settings.Qsk
+                        ? sample + localMonitor
+                        : localMonitor)
+                    : sample,
+                -1f,
+                1f);
         }
     }
 
@@ -1147,6 +1191,7 @@ internal sealed class EngineSession : IAsyncDisposable
 
         StopAutomaticTimer();
         _automaticTimer = new PeriodicTimer(_blockPeriod);
+        _automaticBlockClock.Start(_simulationBlock);
     }
 
     private void StopAutomaticTimer()

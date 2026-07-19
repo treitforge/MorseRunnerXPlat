@@ -149,6 +149,48 @@ public sealed class SessionLoopTests
     }
 
     [Fact]
+    public void AutomaticClockUsesAbsoluteDeadlinesAndBoundedCatchUp()
+    {
+        var clock = new AutomaticBlockClock(
+            CompatibilityProfile.SampleRate,
+            CompatibilityProfile.BlockSize,
+            maximumCatchUpBlocks: 2);
+        long expectedAtSixtySeconds = (long)Math.Floor(
+            60d * CompatibilityProfile.SampleRate
+            / CompatibilityProfile.BlockSize);
+        long sampleDriftAtSixtySeconds =
+            (60L * CompatibilityProfile.SampleRate)
+            - (expectedAtSixtySeconds * CompatibilityProfile.BlockSize);
+
+        Assert.Equal(
+            1,
+            clock.GetDueBlockCount(
+                TimeSpan.FromSeconds(
+                    (double)CompatibilityProfile.BlockSize
+                    / CompatibilityProfile.SampleRate),
+                renderedBlocks: 0));
+        Assert.Equal(
+            2,
+            clock.GetDueBlockCount(
+                TimeSpan.FromSeconds(1),
+                renderedBlocks: 0));
+        Assert.Equal(
+            0,
+            clock.GetDueBlockCount(
+                TimeSpan.FromSeconds(60),
+                renderedBlocks: expectedAtSixtySeconds));
+        Assert.Equal(
+            1,
+            clock.GetDueBlockCount(
+                TimeSpan.FromSeconds(60),
+                renderedBlocks: expectedAtSixtySeconds - 1));
+        Assert.InRange(
+            sampleDriftAtSixtySeconds,
+            0,
+            CompatibilityProfile.BlockSize - 1);
+    }
+
+    [Fact]
     public async Task InvalidStateAndDuplicateRequestConflictAreStable()
     {
         await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
@@ -291,6 +333,7 @@ public sealed class SessionLoopTests
             SessionSettings.CreateDefault(seed: 12345) with
             {
                 MonitorLevelDb = 0,
+                Qsk = true,
             };
         SessionSettings conditionSettings = cleanSettings with
         {

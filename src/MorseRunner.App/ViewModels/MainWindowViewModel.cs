@@ -79,11 +79,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private readonly RecordingPreference? _recordingPreference;
     private readonly SettingsStore? _settingsStore;
     private readonly SynchronizationContext? _uiContext;
+    private readonly object _snapshotApplicationGate = new();
     private readonly CancellationTokenSource _lifetime = new();
     private SessionId? _sessionId;
     private Task? _subscriptionTask;
     private SessionSnapshot? _pendingSnapshot;
     private int _snapshotDispatchScheduled;
+    private long _lastAppliedSnapshotRevision = -1;
     private SessionState _sessionState = SessionState.Ready;
     private ContestOption _selectedContest;
     private RunModeOption _selectedRunMode = RunModeOptions[0];
@@ -632,6 +634,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                 settings,
                 _lifetime.Token);
             _sessionId = handle.SessionId;
+            _lastAppliedSnapshotRevision = -1;
             _sessionState = handle.State;
             BeginSubscription(handle.SessionId);
 
@@ -871,7 +874,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         SessionSnapshot snapshot = await _client.GetSnapshotAsync(
             sessionId,
             _lifetime.Token);
-        QueueSnapshot(snapshot);
+        await QueueSnapshotAsync(snapshot);
     }
 
     private void ApplySnapshot(SessionSnapshot snapshot)
@@ -881,6 +884,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             return;
         }
 
+        if (snapshot.Revision < _lastAppliedSnapshotRevision)
+        {
+            return;
+        }
+
+        _lastAppliedSnapshotRevision = snapshot.Revision;
         _sessionState = snapshot.State;
         OnPropertyChanged(nameof(SessionStateLabel));
         OnPropertyChanged(nameof(IsSetupEnabled));
@@ -932,6 +941,46 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         }
     }
 
+    private Task QueueSnapshotAsync(SessionSnapshot snapshot)
+    {
+        if (_uiContext is null)
+        {
+            ApplySnapshotSynchronized(snapshot);
+            return Task.CompletedTask;
+        }
+
+        if (ReferenceEquals(SynchronizationContext.Current, _uiContext))
+        {
+            QueueSnapshot(snapshot);
+            return Task.CompletedTask;
+        }
+
+        var completion = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        Dispatch(
+            () =>
+            {
+                try
+                {
+                    QueueSnapshot(snapshot);
+                    completion.SetResult(true);
+                }
+                catch (Exception exception)
+                {
+                    completion.SetException(exception);
+                }
+            });
+        return completion.Task;
+    }
+
+    private void ApplySnapshotSynchronized(SessionSnapshot snapshot)
+    {
+        lock (_snapshotApplicationGate)
+        {
+            ApplySnapshot(snapshot);
+        }
+    }
+
     private void DrainSnapshots()
     {
         while (true)
@@ -940,7 +989,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                 Interlocked.Exchange(ref _pendingSnapshot, null);
             if (snapshot is not null)
             {
-                ApplySnapshot(snapshot);
+                ApplySnapshotSynchronized(snapshot);
             }
 
             Volatile.Write(ref _snapshotDispatchScheduled, 0);

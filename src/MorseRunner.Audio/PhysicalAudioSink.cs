@@ -294,20 +294,7 @@ public sealed class PhysicalAudioSink :
     {
         try
         {
-            bool underrun = false;
-            int outputIndex = 0;
-            for (ulong frame = 0; frame < frameCount; frame++)
-            {
-                bool hasSample = _queue!.TryReadSample(out float sample);
-                underrun |= !hasSample;
-                for (int channel = 0; channel < channels; channel++)
-                {
-                    output[outputIndex] = sample;
-                    outputIndex++;
-                }
-            }
-
-            if (underrun)
+            if (!_queue!.FillInterleaved(output, frameCount, channels))
             {
                 Interlocked.Increment(ref _underrunCount);
             }

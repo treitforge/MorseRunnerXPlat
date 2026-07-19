@@ -126,12 +126,13 @@ public sealed class LegacyDspVectorTests
         second.Render(secondOutput);
 
         Assert.Equal(firstOutput, secondOutput);
+        string actualHash = Convert.ToHexString(
+            SHA256.HashData(
+                System.Runtime.InteropServices.MemoryMarshal.AsBytes(
+                    firstOutput.AsSpan())));
         Assert.Equal(
-            "09BF83C236AE4833FE7808A21E8D641ED5F11529C8979E2F6735B2B75E2C7853",
-            Convert.ToHexString(
-                SHA256.HashData(
-                    System.Runtime.InteropServices.MemoryMarshal.AsBytes(
-                        firstOutput.AsSpan()))));
+            "594029C53287852FABCE497ABF49DFE8F97177E9D9E5CCE014C6911E17998583",
+            actualHash);
     }
 
     [Fact]
@@ -165,5 +166,54 @@ public sealed class LegacyDspVectorTests
         Assert.True(
             p99Milliseconds < 11.6d,
             $"p99 render duration was {p99Milliseconds:F3} ms.");
+    }
+
+    [Fact]
+    public void ReceiverPipelineUsesLegacyCarrierQuantization()
+    {
+        var receiver = new LegacyReceiverPipeline(
+            sampleRate: 11_025,
+            blockSize: 512,
+            bandwidthHz: 500,
+            requestedCarrierHz: 600);
+
+        Assert.Equal(612.5f, receiver.EffectiveCarrierHz);
+    }
+
+    [Fact]
+    public void ReceiverPipelineMeetsTheCompatibilityBlockBudget()
+    {
+        var receiver = new LegacyReceiverPipeline(
+            sampleRate: 11_025,
+            blockSize: 512,
+            bandwidthHz: 500,
+            requestedCarrierHz: 600);
+        var real = new float[512];
+        var imaginary = new float[512];
+        var output = new float[512];
+        var durations = new long[200];
+
+        for (int index = 0; index < 8; index++)
+        {
+            receiver.Process(real, imaginary, output);
+        }
+
+        long allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
+        for (int index = 0; index < durations.Length; index++)
+        {
+            long started = Stopwatch.GetTimestamp();
+            receiver.Process(real, imaginary, output);
+            durations[index] = Stopwatch.GetTimestamp() - started;
+        }
+
+        long allocated =
+            GC.GetAllocatedBytesForCurrentThread() - allocatedBefore;
+        Array.Sort(durations);
+        double p99Milliseconds =
+            durations[197] * 1_000d / Stopwatch.Frequency;
+        Assert.Equal(0, allocated);
+        Assert.True(
+            p99Milliseconds < 11.6d,
+            $"p99 receiver duration was {p99Milliseconds:F3} ms.");
     }
 }

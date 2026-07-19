@@ -38,6 +38,26 @@
     "quick-average[8]=6.000000000",
     "quick-average[9]=7.000000000",
     "quick-average[10]=8.000000000",
-    "quick-average[11]=9.000000000"
+    "quick-average[11]=9.000000000",
+    "receiver-effective-carrier=612.500000000",
+    "receiver-agc-peak[0]=0.595907509",
+    "receiver[0,0]=0.000000000",
+    "receiver[0,128]=0.000000000",
+    "receiver[0,256]=0.000000000",
+    "receiver[0,511]=0.142843083",
+    "receiver-agc-peak[5]=0.610351741",
+    "receiver[5,0]=-0.424421132",
+    "receiver[5,128]=-0.035348650",
+    "receiver[5,256]=-0.004895844",
+    "receiver[5,511]=-0.006415226",
+    "receiver-agc-peak[11]=0.203410760",
+    "receiver[11,0]=0.005037303",
+    "receiver[11,128]=-0.003188355",
+    "receiver[11,256]=-0.048425149",
+    "receiver[11,511]=-0.075655870",
+    "receiver-peak=0.610351861",
+    "receiver-active-rms=0.326372490",
+    "receiver-effective-carrier-correlation=0.357008934",
+    "receiver-requested-carrier-correlation=0.097037311"
   ]
 }

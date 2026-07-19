@@ -6,13 +6,13 @@
     "outcome": "pass",
     "source": "tests/parity/legacy-oracle/LegacyOracle.lpr",
     "fixture": "tests/parity/fixtures/legacy/audio-dsp-legacy-processing.json",
-    "observedValueCount": 31,
+    "observedValueCount": 51,
     "toolchain": "Lazarus 4.6, FPC 3.2.2, x86_64-win64"
   },
   "xplat": {
-    "outcome": "fail",
-    "failureCode": "unsupported-capability",
-    "firstDivergence": "The XPlat audio-dsp.legacy-processing capability does not exist."
+    "outcome": "pass",
+    "source": "tests/MorseRunner.LegacyParity.Tests/XPlatDspTarget.cs",
+    "observedValueCount": 51
   },
-  "classification": "legacy-green-xplat-red"
+  "classification": "both-green"
 }

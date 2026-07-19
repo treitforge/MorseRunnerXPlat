@@ -15,7 +15,7 @@ public sealed class MorseToneRenderer
         int blockSize,
         int wordsPerMinute = 30,
         float carrierFrequency = 600f,
-        float gain = 0.2f)
+        float gain = 1f)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sampleRate);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(blockSize);
@@ -27,7 +27,7 @@ public sealed class MorseToneRenderer
         }
 
         _sampleRate = sampleRate;
-        _carrierFrequency = carrierFrequency;
+        _carrierFrequency = QuantizeCarrier(carrierFrequency);
         _gain = gain;
         _keyer = new(sampleRate, blockSize);
         _keyer.SetWordsPerMinute(wordsPerMinute);
@@ -43,7 +43,7 @@ public sealed class MorseToneRenderer
         set
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value);
-            _carrierFrequency = value;
+            _carrierFrequency = QuantizeCarrier(value);
         }
     }
 
@@ -75,5 +75,25 @@ public sealed class MorseToneRenderer
                 _phase -= 2d * Math.PI;
             }
         }
+    }
+
+    public void RenderEnvelope(Span<float> output)
+    {
+        for (int index = 0; index < output.Length; index++)
+        {
+            float envelope = _envelopePosition < _envelope.Length
+                ? _envelope[_envelopePosition]
+                : 0f;
+            output[index] = envelope * _gain;
+            _envelopePosition++;
+        }
+    }
+
+    private float QuantizeCarrier(float requestedFrequency)
+    {
+        int periodSamples = Math.Max(
+            2,
+            (int)MathF.Round(_sampleRate / requestedFrequency));
+        return (float)_sampleRate / periodSamples;
     }
 }

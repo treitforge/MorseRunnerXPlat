@@ -254,8 +254,10 @@ public sealed class LegacyOracleParityTests
 
         Assert.Equal(ParityTargetOutcome.Passed, legacy.Outcome);
         Assert.Equal(fixture.Values, legacy.Values);
+        Assert.True(
+            XPlatDspTarget.ValuesEquivalent(xplat.Values, fixture.Values),
+            "XPlat DSP values exceeded the documented numeric tolerance.");
         Assert.Equal(ParityTargetOutcome.Passed, xplat.Outcome);
-        Assert.Equal(fixture.Values, xplat.Values);
         Assert.Equal(
             ParityAssessment.BothGreen,
             ParityAssessmentClassifier.Classify(legacy, xplat));
