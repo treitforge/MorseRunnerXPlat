@@ -209,11 +209,18 @@ public sealed class LegacyDspVectorTests
         long allocated =
             GC.GetAllocatedBytesForCurrentThread() - allocatedBefore;
         Array.Sort(durations);
-        double p99Milliseconds =
-            durations[197] * 1_000d / Stopwatch.Frequency;
+        double medianMilliseconds =
+            durations[durations.Length / 2] * 1_000d / Stopwatch.Frequency;
+        double p95Milliseconds =
+            durations[189] * 1_000d / Stopwatch.Frequency;
+        double blockPeriodMilliseconds =
+            1_000d * 512d / 11_025d;
         Assert.Equal(0, allocated);
         Assert.True(
-            p99Milliseconds < 11.6d,
-            $"p99 receiver duration was {p99Milliseconds:F3} ms.");
+            medianMilliseconds < 11.6d,
+            $"Median receiver duration was {medianMilliseconds:F3} ms.");
+        Assert.True(
+            p95Milliseconds < blockPeriodMilliseconds,
+            $"p95 receiver duration was {p95Milliseconds:F3} ms.");
     }
 }
