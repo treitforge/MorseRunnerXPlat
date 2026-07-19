@@ -18,6 +18,7 @@ public sealed class XPlatSimulationTarget : IParityTarget
             "simulation.runtime-routines" => ObserveRuntime(),
             "simulation.live-operator-session" =>
                 await ObserveLiveOperatorSessionAsync(cancellationToken),
+            "simulation.live-station-session" => ObserveLiveStationSession(),
             _ => [],
         };
         bool matches = values.SequenceEqual(
@@ -170,6 +171,84 @@ public sealed class XPlatSimulationTarget : IParityTarget
         values.Add($"after-tu={(int?)snapshot.ActiveOperatorState}");
         return [.. values];
     }
+
+    private static string[] ObserveLiveStationSession()
+    {
+        var values = new List<string>();
+        var random = new LegacyRandom(24_680);
+        random.NextDouble();
+        var station = new SimulatedStation(
+            new(
+                "P29SX",
+                "599",
+                1,
+                "599",
+                "1"),
+            wordsPerMinute: 30,
+            pitchOffsetHz: 0,
+            random,
+            OperatorRunMode.SingleCall);
+        values.Add(
+            $"created={station.Identity.Callsign}"
+            + $"|station={(int)station.State}"
+            + $"|operator={(int)station.Operator.State}"
+            + $"|patience={station.Operator.Patience}"
+            + $"|repeat={station.Operator.RepeatCount}"
+            + $"|nr={station.Identity.Number}"
+            + $"|rst={station.Identity.Rst}");
+
+        station.ReceiveOperatorStarted();
+        station.ReceiveOperatorFinished(
+            StationMessage.HisCall,
+            station.Identity.Callsign);
+        values.Add(
+            $"after-call={(int)station.State}"
+            + $"|operator={(int)station.Operator.State}"
+            + $"|patience={station.Operator.Patience}");
+
+        station.ExpireTimeout();
+        values.Add(
+            $"number-reply={(int)station.State}"
+            + $"|operator={(int)station.Operator.State}"
+            + $"|messages={LegacyReplyName(station.LastReply)}"
+            + $"|text={station.LastReplyText}");
+
+        station.FinishTransmission();
+        values.Add(
+            $"after-number-sent={(int)station.State}"
+            + $"|operator={(int)station.Operator.State}");
+
+        station.ReceiveOperatorStarted();
+        station.ReceiveOperatorFinished(StationMessage.Number);
+        values.Add(
+            $"after-exchange={(int)station.State}"
+            + $"|operator={(int)station.Operator.State}"
+            + $"|patience={station.Operator.Patience}");
+
+        station.ExpireTimeout();
+        values.Add(
+            $"end-reply={(int)station.State}"
+            + $"|operator={(int)station.Operator.State}"
+            + $"|messages={LegacyReplyName(station.LastReply)}"
+            + $"|text={station.LastReplyText}");
+
+        station.FinishTransmission();
+        station.ReceiveOperatorStarted();
+        station.ReceiveOperatorFinished(StationMessage.ThankYou);
+        values.Add(
+            $"after-tu={(int)station.State}"
+            + $"|operator={(int)station.Operator.State}"
+            + $"|patience={station.Operator.Patience}");
+        return [.. values];
+    }
+
+    private static string LegacyReplyName(StationReply reply) =>
+        reply switch
+        {
+            StationReply.NumberQuestion => "[msgNrQm]",
+            StationReply.RogerNumber => "[msgR_NR]",
+            _ => $"[{reply}]",
+        };
 
     private static async Task ExecuteAsync(
         MorseRunnerEngine engine,

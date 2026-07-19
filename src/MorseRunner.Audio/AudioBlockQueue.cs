@@ -1,3 +1,5 @@
+using MiniAudioExNET;
+
 namespace MorseRunner.Audio;
 
 internal sealed class AudioBlockQueue
@@ -78,5 +80,27 @@ internal sealed class AudioBlockQueue
         }
 
         return true;
+    }
+
+    public bool FillInterleaved(
+        AudioBuffer<float> output,
+        ulong frameCount,
+        int channels)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(channels);
+        bool complete = true;
+        int outputIndex = 0;
+        for (ulong frame = 0; frame < frameCount; frame++)
+        {
+            bool hasSample = TryReadSample(out float sample);
+            complete &= hasSample;
+            for (int channel = 0; channel < channels; channel++)
+            {
+                output[outputIndex] = sample;
+                outputIndex++;
+            }
+        }
+
+        return complete;
     }
 }

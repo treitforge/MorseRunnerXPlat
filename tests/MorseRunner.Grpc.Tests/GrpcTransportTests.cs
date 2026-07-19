@@ -11,6 +11,48 @@ namespace MorseRunner.Grpc.Tests;
 public sealed class GrpcTransportTests
 {
     [Fact]
+    public void QsoTruthAndCorrectionFieldsRoundTripWithoutLoss()
+    {
+        Qso expected = new()
+        {
+            Timestamp = DateTimeOffset.UnixEpoch.AddSeconds(12),
+            Call = "K1AB?",
+            TrueCall = "K1ABC",
+            RawCallsign = "k1ab?",
+            Rst = 599,
+            TrueRst = 579,
+            Number = 12,
+            TrueNumber = 13,
+            Precedence = "A",
+            TruePrecedence = "B",
+            Check = 72,
+            TrueCheck = 73,
+            Section = "OR",
+            TrueSection = "WA",
+            Exchange1 = "AL",
+            TrueExchange1 = "ALEX",
+            Exchange2 = "12",
+            TrueExchange2 = "13",
+            TrueWpm = "31",
+            Prefix = "K1",
+            Multiplier = "K1",
+            Points = 0,
+            ExchangeError = LogError.Call,
+            Exchange1Error = LogError.Name,
+            Exchange1SecondaryError = LogError.Number,
+            Exchange2Error = LogError.Section,
+            Exchange2SecondaryError = LogError.Check,
+            ErrorText = "CALL",
+            ColumnErrorFlags = 0x21,
+        };
+
+        Qso actual = TransportMapper.ToDomain(
+            TransportMapper.ToTransport(expected));
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
     public async Task InProcessAndGrpcClientsProduceEquivalentScenario()
     {
         await using GrpcTestHost host = await GrpcTestHost.StartAsync();
@@ -241,6 +283,7 @@ public sealed class GrpcTransportTests
         Assert.Equal(expected.RunModeId, actual.RunModeId);
         Assert.Equal(expected.LastCaller, actual.LastCaller);
         Assert.Equal(expected.ActiveOperatorState, actual.ActiveOperatorState);
+        Assert.Equal(expected.ActiveStations, actual.ActiveStations);
         Assert.Equal(expected.LastOperatorMessage, actual.LastOperatorMessage);
         Assert.Equal(expected.QsoCount, actual.QsoCount);
         Assert.Equal(expected.Score, actual.Score);

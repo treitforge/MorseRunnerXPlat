@@ -42,6 +42,7 @@ public sealed class PhysicalAudioSink :
     private static PhysicalAudioSink? s_contextOwner;
 
     private readonly PhysicalAudioSinkOptions _options;
+    private readonly int _prebufferBlockCount;
     private string? _deviceName;
     private AudioBlockQueue? _queue;
     private AudioSource? _source;
@@ -53,6 +54,7 @@ public sealed class PhysicalAudioSink :
     private long _droppedBlockCount;
     private long _callbackFaultCount;
     private long _lastSimulationBlock = -1;
+    private int _playbackStarted;
     private int _state = (int)PhysicalAudioSinkState.Created;
 
     public PhysicalAudioSink(PhysicalAudioSinkOptions? options = null)
@@ -60,6 +62,7 @@ public sealed class PhysicalAudioSink :
         _options = options ?? new();
         _deviceName = _options.DeviceName;
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(_options.QueueDepth);
+        _prebufferBlockCount = Math.Min(2, _options.QueueDepth);
     }
 
     public static IReadOnlyList<AudioDeviceInfo> GetPlaybackDevices()
@@ -93,9 +96,12 @@ public sealed class PhysicalAudioSink :
     public AudioSinkMetrics GetMetrics()
     {
         PhysicalAudioSinkDiagnostics diagnostics = GetDiagnostics();
+        bool awaitingPrebuffer = diagnostics.State == PhysicalAudioSinkState.Running
+            && Volatile.Read(ref _playbackStarted) == 0;
         bool isHealthy = diagnostics.State == PhysicalAudioSinkState.Running
             && diagnostics.CallbackFaultCount == 0
-            && diagnostics.TimeSinceLastCallback < TimeSpan.FromSeconds(2);
+            && (awaitingPrebuffer
+                || diagnostics.TimeSinceLastCallback < TimeSpan.FromSeconds(2));
         return new(
             diagnostics.QueuedBlocks,
             diagnostics.UnderrunCount,
@@ -160,7 +166,6 @@ public sealed class PhysicalAudioSink :
                 Volatile.Write(
                     ref _lastCallbackTimestamp,
                     Stopwatch.GetTimestamp());
-                _source.Play();
                 Volatile.Write(
                     ref _state,
                     (int)PhysicalAudioSinkState.Running);
@@ -195,9 +200,26 @@ public sealed class PhysicalAudioSink :
                 "Physical audio writes must contain one canonical block.");
         }
 
-        if (!_queue!.TryWrite(samples.Span))
+        bool queued = _queue!.TryWrite(samples.Span);
+        if (!queued)
         {
             Interlocked.Increment(ref _droppedBlockCount);
+        }
+        else if (_queue.Count >= _prebufferBlockCount
+            && Interlocked.CompareExchange(
+                ref _playbackStarted,
+                1,
+                0) == 0)
+        {
+            try
+            {
+                _source!.Play();
+            }
+            catch
+            {
+                Volatile.Write(ref _playbackStarted, 0);
+                throw;
+            }
         }
 
         Interlocked.Exchange(ref _lastSimulationBlock, simulationBlock);
@@ -272,20 +294,7 @@ public sealed class PhysicalAudioSink :
     {
         try
         {
-            bool underrun = false;
-            int outputIndex = 0;
-            for (ulong frame = 0; frame < frameCount; frame++)
-            {
-                bool hasSample = _queue!.TryReadSample(out float sample);
-                underrun |= !hasSample;
-                for (int channel = 0; channel < channels; channel++)
-                {
-                    output[outputIndex] = sample;
-                    outputIndex++;
-                }
-            }
-
-            if (underrun)
+            if (!_queue!.FillInterleaved(output, frameCount, channels))
             {
                 Interlocked.Increment(ref _underrunCount);
             }
@@ -325,6 +334,7 @@ public sealed class PhysicalAudioSink :
         }
 
         _queue = null;
+        Volatile.Write(ref _playbackStarted, 0);
         Volatile.Write(ref _state, (int)finalState);
     }
 }

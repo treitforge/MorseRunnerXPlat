@@ -13,7 +13,9 @@ uses
   SndTypes,
   MorseKey,
   Mixers,
+  MovAvg,
   QuickAvg,
+  VolumCtl,
   WavFile,
   CallsignUtils,
   DXCC,
@@ -22,6 +24,7 @@ uses
   SerNRGen,
   Station,
   DxOper,
+  DxStn,
   Contest,
   Log,
   CqWpx,
@@ -132,13 +135,34 @@ begin
 end;
 
 procedure ObserveDsp(const Values: TStrings);
+const
+  ReceiverSampleIndexes: array[0..3] of Integer = (0, 128, 256, 511);
 var
+  Agc: TVolumeControl;
   Index: Integer;
+  Block: Integer;
+  GlobalSample: Integer;
   Envelope: TSingleArray;
+  FilterA: TMovingAverage;
+  FilterB: TMovingAverage;
+  FilterSwap: TMovingAverage;
+  Filtered: TReImArrays;
   Keyer: TKeyer;
   Mixer: TDownMixer;
   Mixed: TComplexArray;
   Input: TSingleArray;
+  Modulator: TModulator;
+  BlockPeak: Double;
+  CarrierCosine: Double;
+  CarrierSine: Double;
+  NormalizedSample: Double;
+  Peak: Double;
+  RequestedCarrierCosine: Double;
+  RequestedCarrierSine: Double;
+  ReceiverInput: TReImArrays;
+  ReceiverOutput: TSingleArray;
+  SamplePosition: Integer;
+  SumSquares: Double;
   Average: TQuickAverage;
 begin
   Keyer := TKeyer.Create(11025, 512);
@@ -183,6 +207,130 @@ begin
         [Index, FloatValue(Average.Filter(Index + 1))]));
   finally
     Average.Free;
+  end;
+
+  FilterA := TMovingAverage.Create(nil);
+  FilterB := TMovingAverage.Create(nil);
+  Modulator := TModulator.Create;
+  Agc := TVolumeControl.Create(nil);
+  try
+    FilterA.Points := Round(0.7 * 11025 / 500);
+    FilterA.Passes := 3;
+    FilterA.SamplesInInput := 512;
+    FilterA.GainDb := 10 * Log10(500 / 500);
+    FilterB.Points := FilterA.Points;
+    FilterB.Passes := FilterA.Passes;
+    FilterB.SamplesInInput := FilterA.SamplesInInput;
+    FilterB.GainDb := FilterA.GainDb;
+
+    Modulator.SamplesPerSec := 11025;
+    Modulator.CarrierFreq := 600;
+    Values.Add(
+      'receiver-effective-carrier=' + FloatValue(Modulator.CarrierFreq));
+
+    Agc.NoiseInDb := 76;
+    Agc.NoiseOutDb := 76;
+    Agc.AttackSamples := 155;
+    Agc.HoldSamples := 155;
+    Agc.AgcEnabled := True;
+
+    Peak := 0;
+    SumSquares := 0;
+    CarrierCosine := 0;
+    CarrierSine := 0;
+    RequestedCarrierCosine := 0;
+    RequestedCarrierSine := 0;
+    for Block := 0 to 11 do
+    begin
+      SetLengthReIm(ReceiverInput, 512);
+      for Index := 0 to 511 do
+      begin
+        GlobalSample := Block * 512 + Index;
+        ReceiverInput.Re[Index] :=
+          9000 * Cos(TWO_PI * 37 * GlobalSample / 11025);
+        ReceiverInput.Im[Index] :=
+          -9000 * Sin(TWO_PI * 37 * GlobalSample / 11025);
+        if GlobalSample < Length(Envelope) then
+        begin
+          ReceiverInput.Re[Index] := ReceiverInput.Re[Index]
+            + 300000 * Envelope[GlobalSample];
+          ReceiverInput.Im[Index] := ReceiverInput.Im[Index]
+            + 300000 * Envelope[GlobalSample];
+        end;
+      end;
+
+      FilterB.Filter(ReceiverInput);
+      Filtered := FilterA.Filter(ReceiverInput);
+      if ((Block + 1) mod 10) = 0 then
+      begin
+        FilterSwap := FilterA;
+        FilterA := FilterB;
+        FilterB := FilterSwap;
+        FilterB.Reset;
+      end;
+      ReceiverOutput := Agc.Process(Modulator.Modulate(Filtered));
+
+      BlockPeak := 0;
+      for Index := 0 to High(ReceiverOutput) do
+      begin
+        GlobalSample := Block * 512 + Index;
+        NormalizedSample := ReceiverOutput[Index] / 32768;
+        Peak := Max(Peak, Abs(NormalizedSample));
+        BlockPeak := Max(BlockPeak, Abs(NormalizedSample));
+        SumSquares := SumSquares
+          + Sqr(NormalizedSample);
+        CarrierCosine := CarrierCosine
+          + NormalizedSample * Cos(
+            TWO_PI * Modulator.CarrierFreq * GlobalSample / 11025);
+        CarrierSine := CarrierSine
+          + NormalizedSample * Sin(
+            TWO_PI * Modulator.CarrierFreq * GlobalSample / 11025);
+        RequestedCarrierCosine := RequestedCarrierCosine
+          + NormalizedSample * Cos(
+            TWO_PI * 600 * GlobalSample / 11025);
+        RequestedCarrierSine := RequestedCarrierSine
+          + NormalizedSample * Sin(
+            TWO_PI * 600 * GlobalSample / 11025);
+      end;
+      if Block in [0, 5, 11] then
+      begin
+        Values.Add(Format(
+          'receiver-agc-peak[%d]=%s',
+          [Block, FloatValue(BlockPeak)]));
+        for SamplePosition := Low(ReceiverSampleIndexes)
+          to High(ReceiverSampleIndexes) do
+        begin
+          Index := ReceiverSampleIndexes[SamplePosition];
+          Values.Add(Format(
+            'receiver[%d,%d]=%s',
+            [
+              Block,
+              Index,
+              FloatValue(ReceiverOutput[Index] / 32768)
+            ]));
+        end;
+      end;
+    end;
+    Values.Add('receiver-peak=' + FloatValue(Peak));
+    Values.Add(
+      'receiver-active-rms='
+      + FloatValue(Sqrt(SumSquares / (12 * 512))));
+    Values.Add(
+      'receiver-effective-carrier-correlation='
+      + FloatValue(
+        2 * Sqrt(Sqr(CarrierCosine) + Sqr(CarrierSine))
+        / (12 * 512)));
+    Values.Add(
+      'receiver-requested-carrier-correlation='
+      + FloatValue(
+        2 * Sqrt(
+          Sqr(RequestedCarrierCosine) + Sqr(RequestedCarrierSine))
+        / (12 * 512)));
+  finally
+    Agc.Free;
+    Modulator.Free;
+    FilterB.Free;
+    FilterA.Free;
   end;
 end;
 
@@ -415,6 +563,110 @@ begin
       ContestValue.Free;
     end;
   finally
+    gDXCCList.Free;
+    gDXCCList := nil;
+  end;
+end;
+
+procedure ObserveLiveStationSession(const Values: TStrings);
+var
+  ContestValue: TContest;
+  StationValue: TDxStation;
+begin
+  RandSeed := 24680;
+  Ini.RunMode := rmSingle;
+  Ini.Lids := False;
+  Ini.Call := 'W7SST';
+  Ini.Wpm := 30;
+  Ini.BufSize := 512;
+  gDXCCList := TDXCC.Create;
+  MakeKeyer;
+  try
+    ContestValue := TCqWpx.Create;
+    Tst := ContestValue;
+    Tst.LoadCallHistory(Ini.Call);
+    StationValue := TDxStation.CreateStation;
+    try
+      Values.Add(Format(
+        'created=%s|station=%d|operator=%d|patience=%d|repeat=%d|nr=%d|rst=%d',
+        [
+          StationValue.MyCall,
+          Ord(StationValue.State),
+          Ord(StationValue.Oper.State),
+          StationValue.Oper.Patience,
+          StationValue.Oper.RepeatCnt,
+          StationValue.NR,
+          StationValue.RST
+        ]));
+
+      Tst.Me.HisCall := StationValue.MyCall;
+      StationValue.ProcessEvent(evMeStarted);
+      Tst.Me.Msg := [msgHisCall];
+      StationValue.ProcessEvent(evMeFinished);
+      Values.Add(Format(
+        'after-call=%d|operator=%d|patience=%d',
+        [
+          Ord(StationValue.State),
+          Ord(StationValue.Oper.State),
+          StationValue.Oper.Patience
+        ]));
+
+      StationValue.ProcessEvent(evTimeout);
+      Values.Add(Format(
+        'number-reply=%d|operator=%d|messages=%s|text=%s',
+        [
+          Ord(StationValue.State),
+          Ord(StationValue.Oper.State),
+          ToStr(StationValue.Msg),
+          StationValue.MsgText
+        ]));
+
+      StationValue.Envelope := nil;
+      StationValue.Tick;
+      Values.Add(Format(
+        'after-number-sent=%d|operator=%d',
+        [Ord(StationValue.State), Ord(StationValue.Oper.State)]));
+
+      StationValue.ProcessEvent(evMeStarted);
+      Tst.Me.Msg := [msgNR];
+      StationValue.ProcessEvent(evMeFinished);
+      Values.Add(Format(
+        'after-exchange=%d|operator=%d|patience=%d',
+        [
+          Ord(StationValue.State),
+          Ord(StationValue.Oper.State),
+          StationValue.Oper.Patience
+        ]));
+
+      StationValue.ProcessEvent(evTimeout);
+      Values.Add(Format(
+        'end-reply=%d|operator=%d|messages=%s|text=%s',
+        [
+          Ord(StationValue.State),
+          Ord(StationValue.Oper.State),
+          ToStr(StationValue.Msg),
+          StationValue.MsgText
+        ]));
+
+      StationValue.Envelope := nil;
+      StationValue.Tick;
+      StationValue.ProcessEvent(evMeStarted);
+      Tst.Me.Msg := [msgTU];
+      StationValue.ProcessEvent(evMeFinished);
+      Values.Add(Format(
+        'after-tu=%d|operator=%d|patience=%d',
+        [
+          Ord(StationValue.State),
+          Ord(StationValue.Oper.State),
+          StationValue.Oper.Patience
+        ]));
+    finally
+      StationValue.Free;
+      Tst := nil;
+      ContestValue.Free;
+    end;
+  finally
+    DestroyKeyer;
     gDXCCList.Free;
     gDXCCList := nil;
   end;
@@ -1191,6 +1443,8 @@ begin
       ObserveSimulationRuntime(Values)
     else if Scenario = 'simulation.live-operator-session' then
       ObserveLiveOperatorSession(Values)
+    else if Scenario = 'simulation.live-station-session' then
+      ObserveLiveStationSession(Values)
     else if Scenario = 'logging.scoring-rate-and-results' then
       ObserveLogging(Values)
     else if Scenario = 'contest.cq-wpx-scoring' then

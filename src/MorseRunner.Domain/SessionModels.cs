@@ -46,7 +46,7 @@ public sealed record SessionSettings(
 
     public bool Lids { get; init; }
 
-    public double MonitorLevelDb { get; init; } = -15d;
+    public double MonitorLevelDb { get; init; }
 
     public static SessionSettings CreateDefault(int seed)
     {
@@ -104,7 +104,8 @@ public sealed record SessionSnapshot(
     int RitOffsetHz = 0,
     string? LastLoggedCall = null,
     OperatorState? ActiveOperatorState = null,
-    int QsoRatePerHour = 0);
+    int QsoRatePerHour = 0,
+    IReadOnlyList<ActiveStationSnapshot>? ActiveStations = null);
 
 public sealed record AudioOutputDevice(
     string Name,

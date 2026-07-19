@@ -336,6 +336,9 @@ public static class TransportMapper
             };
         }
 
+        message.ActiveStations.AddRange(
+            (value.ActiveStations ?? [])
+            .Select(ToTransport));
         return message;
     }
 
@@ -366,7 +369,73 @@ public static class TransportMapper
             value.RitOffsetHz,
             EmptyToNull(value.LastLoggedCall),
             ToDomain(value.ActiveOperatorState),
-            value.QsoRatePerHour);
+            value.QsoRatePerHour,
+            value.ActiveStations.Select(ToDomain).ToArray());
+
+    private static Contract.ActiveStationMessage ToTransport(
+        Domain.ActiveStationSnapshot value) =>
+        new()
+        {
+            Callsign = value.Callsign,
+            StationState = ToTransport(value.StationState),
+            OperatorState = ToTransport(value.OperatorState),
+            Patience = value.Patience,
+            RepeatCount = value.RepeatCount,
+            WordsPerMinute = value.WordsPerMinute,
+            PitchOffsetHz = value.PitchOffsetHz,
+            TrueRst = value.TrueRst,
+            TrueExchange1 = value.TrueExchange1,
+            TrueExchange2 = value.TrueExchange2,
+            LastReply = value.LastReply ?? String.Empty,
+        };
+
+    private static Domain.ActiveStationSnapshot ToDomain(
+        Contract.ActiveStationMessage value) =>
+        new(
+            value.Callsign,
+            ToDomain(value.StationState),
+            ToDomain(value.OperatorState)
+                ?? throw new ArgumentException(
+                    "Active station operator state is required.",
+                    nameof(value)),
+            value.Patience,
+            value.RepeatCount,
+            value.WordsPerMinute,
+            value.PitchOffsetHz,
+            value.TrueRst,
+            value.TrueExchange1,
+            value.TrueExchange2,
+            EmptyToNull(value.LastReply));
+
+    private static Contract.StationStateMessage ToTransport(
+        Domain.StationState value) =>
+        value switch
+        {
+            Domain.StationState.Listening =>
+                Contract.StationStateMessage.Listening,
+            Domain.StationState.Copying =>
+                Contract.StationStateMessage.Copying,
+            Domain.StationState.PreparingToSend =>
+                Contract.StationStateMessage.PreparingToSend,
+            Domain.StationState.Sending =>
+                Contract.StationStateMessage.Sending,
+            _ => throw new ArgumentOutOfRangeException(nameof(value)),
+        };
+
+    private static Domain.StationState ToDomain(
+        Contract.StationStateMessage value) =>
+        value switch
+        {
+            Contract.StationStateMessage.Listening =>
+                Domain.StationState.Listening,
+            Contract.StationStateMessage.Copying =>
+                Domain.StationState.Copying,
+            Contract.StationStateMessage.PreparingToSend =>
+                Domain.StationState.PreparingToSend,
+            Contract.StationStateMessage.Sending =>
+                Domain.StationState.Sending,
+            _ => throw new ArgumentOutOfRangeException(nameof(value)),
+        };
 
     private static Contract.OperatorStateMessage ToTransport(
         Domain.OperatorState? value) =>
@@ -503,6 +572,26 @@ public static class TransportMapper
             Number = value.Number,
             Prefix = value.Prefix,
             ExchangeError = ToTransport(value.ExchangeError),
+            TrueCall = value.TrueCall,
+            RawCallsign = value.RawCallsign,
+            TrueRst = value.TrueRst,
+            TrueNumber = value.TrueNumber,
+            Precedence = value.Precedence,
+            TruePrecedence = value.TruePrecedence,
+            Check = value.Check,
+            TrueCheck = value.TrueCheck,
+            Section = value.Section,
+            TrueSection = value.TrueSection,
+            TrueExchange1 = value.TrueExchange1,
+            TrueExchange2 = value.TrueExchange2,
+            TrueWpm = value.TrueWpm,
+            Exchange1Error = ToTransport(value.Exchange1Error),
+            Exchange1SecondaryError =
+                ToTransport(value.Exchange1SecondaryError),
+            Exchange2Error = ToTransport(value.Exchange2Error),
+            Exchange2SecondaryError =
+                ToTransport(value.Exchange2SecondaryError),
+            ColumnErrorFlags = value.ColumnErrorFlags,
         };
 
     public static Domain.Qso ToDomain(Contract.QsoMessage value) =>
@@ -510,22 +599,36 @@ public static class TransportMapper
         {
             Timestamp = value.Timestamp.ToDateTimeOffset(),
             Call = value.Call,
-            TrueCall = value.Call,
-            RawCallsign = value.Call,
+            TrueCall = value.TrueCall,
+            RawCallsign = value.RawCallsign,
             Rst = value.Rst,
-            TrueRst = value.Rst,
+            TrueRst = value.TrueRst,
             Number = value.Number,
-            TrueNumber = value.Number,
+            TrueNumber = value.TrueNumber,
+            Precedence = value.Precedence,
+            TruePrecedence = value.TruePrecedence,
+            Check = value.Check,
+            TrueCheck = value.TrueCheck,
+            Section = value.Section,
+            TrueSection = value.TrueSection,
             Exchange1 = value.Exchange1,
-            TrueExchange1 = value.Exchange1,
+            TrueExchange1 = value.TrueExchange1,
             Exchange2 = value.Exchange2,
-            TrueExchange2 = value.Exchange2,
+            TrueExchange2 = value.TrueExchange2,
+            TrueWpm = value.TrueWpm,
             Prefix = value.Prefix,
             Points = value.Points,
             Multiplier = value.Multiplier,
             IsDuplicate = value.IsDuplicate,
             ExchangeError = ToDomain(value.ExchangeError),
+            Exchange1Error = ToDomain(value.Exchange1Error),
+            Exchange1SecondaryError =
+                ToDomain(value.Exchange1SecondaryError),
+            Exchange2Error = ToDomain(value.Exchange2Error),
+            Exchange2SecondaryError =
+                ToDomain(value.Exchange2SecondaryError),
             ErrorText = value.ErrorText,
+            ColumnErrorFlags = value.ColumnErrorFlags,
         };
 
     public static Contract.SessionResultMessage ToTransport(
@@ -669,6 +772,14 @@ public static class TransportMapper
                 Contract.SessionEventKindMessage.ControlExpired,
             Domain.SessionEventKind.ResyncRequired =>
                 Contract.SessionEventKindMessage.ResyncRequired,
+            Domain.SessionEventKind.StationReplyStarted =>
+                Contract.SessionEventKindMessage.StationReplyStarted,
+            Domain.SessionEventKind.StationReplyCompleted =>
+                Contract.SessionEventKindMessage.StationReplyCompleted,
+            Domain.SessionEventKind.CallerLeft =>
+                Contract.SessionEventKindMessage.CallerLeft,
+            Domain.SessionEventKind.QsoLogged =>
+                Contract.SessionEventKindMessage.QsoLogged,
             _ => throw new ArgumentOutOfRangeException(nameof(value)),
         };
 
@@ -706,6 +817,14 @@ public static class TransportMapper
                 Domain.SessionEventKind.ControlExpired,
             Contract.SessionEventKindMessage.ResyncRequired =>
                 Domain.SessionEventKind.ResyncRequired,
+            Contract.SessionEventKindMessage.StationReplyStarted =>
+                Domain.SessionEventKind.StationReplyStarted,
+            Contract.SessionEventKindMessage.StationReplyCompleted =>
+                Domain.SessionEventKind.StationReplyCompleted,
+            Contract.SessionEventKindMessage.CallerLeft =>
+                Domain.SessionEventKind.CallerLeft,
+            Contract.SessionEventKindMessage.QsoLogged =>
+                Domain.SessionEventKind.QsoLogged,
             _ => throw new ArgumentOutOfRangeException(nameof(value)),
         };
 

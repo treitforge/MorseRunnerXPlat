@@ -1198,10 +1198,31 @@ tests do not depend on the selected native library.
 
 The physical sink uses a preallocated single-producer, single-consumer queue of
 four 512-sample blocks. The native callback performs only bounded queue reads,
-sample copies, zero fill, and lock-free metric updates. Callback staleness or
-failure marks the output unhealthy. The session pauses at the next block
-boundary, publishes `AudioDeviceFailed`, and accepts `RecoverAudioCommand` for
-device reselection before resume.
+sample copies, zero fill, and lock-free metric updates. Playback begins only
+after two blocks are queued (or one block when the configured queue capacity is
+one). Automatic sessions use periodic wakeups governed by an absolute
+sample-count deadline. A late wakeup renders at most two catch-up blocks per
+turn, so scheduler latency does not permanently change the simulation rate or
+allow unbounded catch-up work. Callback staleness or failure marks the output
+unhealthy. The session pauses at the next block boundary, publishes
+`AudioDeviceFailed`, and accepts `RecoverAudioCommand` for device reselection
+before resume.
+
+Receiver audio uses the legacy complex-mix topology: stateful alternating
+three-pass moving-average filters, lookup-table up-conversion with legacy
+carrier quantization, and look-ahead AGC normalized to floating-point device
+output. A requested 600 Hz carrier therefore produces the legacy effective
+612.5 Hz carrier at 11,025 Hz. Numeric parity vectors compare receiver samples,
+AGC block peaks, active RMS, and effective-versus-requested carrier
+correlations with a `1e-6` cross-runtime tolerance while retaining the exact
+legacy fixture values.
+
+Local sidetone remains separate from receiver audio until the final monitor
+boundary. The default monitor level is the legacy `0 dB`. A lower monitor level
+attenuates only local sidetone and never changes remote stations, QRM, QRN, or
+the receiver noise floor. With QSK disabled, local transmission mutes the
+receiver path. With QSK enabled, the monitored local signal and receiver output
+are combined.
 
 ### 14.5 Device failure
 
@@ -1973,15 +1994,29 @@ Recorded Phase 3 implementation:
 - The exact Free Pascal MT19937 numeric behavior, legacy distribution helpers,
   serial-number selection, QSB processing, and operator state transitions are
   deterministic for a fixed seed.
-- The session loop owns the active simulated operator directly. A caller joins
-  in `NeedQso`, and semantic callsign, exchange, and thank-you commands drive
-  the pinned legacy `NeedNumber`, `NeedEnd`, and `Done` sequence at command
-  block boundaries. Partial calls also retain the legacy call-correction
-  states. No additional station-service abstraction sits between the session
-  and the operator state machine.
-- The active operator state is an additive immutable snapshot field. The
-  in-process client, gRPC mapping, Avalonia status area, and TUI consume the
-  same semantic value.
+- The session loop directly owns the active `SimulatedStation` collection.
+  Each station owns its operator, reply timeout, CW renderer, callsign, and true
+  exchange. Listening, copying, preparation, and sending transitions use
+  simulation blocks. Full calls, partial calls, repeats, corrections, ghosting,
+  completion, and pileup best-confidence selection follow pinned Pascal
+  observations. No station repository or station-service abstraction sits
+  between the session and this state.
+- Live station calls and contest exchanges are selected deterministically from
+  the same 12 packaged call-history sources used by the data adapter, including
+  `MASTER.DTA` for CQ WPX and HST. The engine links those immutable resources
+  privately so its portable dependency boundary remains Domain plus DSP.
+- Active operator state and active station summaries are additive immutable
+  snapshot fields. The station summary includes callsign, station and operator
+  states, patience, repeat count, WPM, pitch offset, true exchange, and last
+  reply. The in-process client and explicit gRPC mapping carry the same values.
+  Avalonia and the TUI expose the active pileup count.
+- Station reply start and completion, caller departure, and QSO logging are
+  ordered session events with revision and simulation-block metadata. Seeded
+  tests verify caller sets, station event traces, true-exchange logging, NIL
+  outcomes, and deterministic audio hashes.
+- QSK controls whether callers are audible while the local operator is
+  transmitting. QSB, QRM, QRN, flutter, and LID decisions remain seeded and
+  deterministic when mixed with active station audio.
 - Immutable QSO records, score and multiplier behavior, radio controls,
   versioned settings, one-way INI import, atomic persistence, and
   platform-specific application paths are implemented.
@@ -2013,10 +2048,12 @@ Recorded Phase 4 implementation:
   scoring, validation, multiplier, and duplicate observations plus four
   rolling-rate observations. Direct engine workflow tests exercise invalid,
   corrected, and duplicate attempts for every contest.
-- Station-derived true-exchange correction and NIL classification consume the
-  same QSO error model, but remain coupled to completion of the station and
-  operator state machines in Phase 3. They are not implemented as UI or
-  contest-rule policy.
+- Station-derived truth now supplies callsign, RST, serial, precedence, check,
+  section, and contest exchange fields to completed QSO records. Missing
+  completed stations produce `NIL`; incorrect copied fields produce the
+  corresponding log error; only verified non-duplicate QSOs affect score.
+  Direct explicit-log scenarios remain available for headless scoring vectors
+  that intentionally do not start live simulation.
 - All five run modes are available through the shared session model.
 - Contest, simulation, data, configuration, logging, and result acceptance
   cases pass unchanged against the pinned legacy oracle and XPlat.
@@ -2056,12 +2093,24 @@ Recorded Phase 5 implementation:
   client commands.
 - Physical sessions advance in real time on the engine session loop. Avalonia
   consumes bounded live updates through `IMorseRunnerClient`.
+- The operator status row exposes both the selected caller state and the active
+  pileup count. The terminal status line exposes the same count and physical
+  audio health.
+- The TUI renders a fixed-size cell canvas in the alternate screen with no
+  trailing terminal newline. ANSI-capable terminals receive cyan panel borders,
+  highlighted entry fields, colored state, and keycaps. After the first frame,
+  only changed rows are written, and snapshot-driven refreshes are limited to
+  ten per second while key input repaints immediately. A Windows ConPTY and
+  xterm capture verified typing and resize behavior at 120 by 34 and 100 by 28
+  without scrolling, line accumulation, or overlapping status content.
+- A live Windows Avalonia launch verified a three-caller pileup with readable
+  layout and keyboard focus retained in the callsign field.
 - Settings persist atomically. Optional recording uses a bounded WAV writer
   beside physical playback, and completed recordings can be opened from the
   File menu.
 - QSB, QRM, QRN, flutter, activity, LIDs, monitor level, and QSK settings cross
-  the semantic and gRPC session contract. Implemented audio effects are seeded
-  and deterministic.
+  the semantic and gRPC session contract. Implemented audio and station
+  interactions are seeded and deterministic.
 - Compiled bindings and `x:DataType` are enabled. View-model tests, a headless
   window-open and focus test, and live Windows visual and interaction checks
   cover the primary path.

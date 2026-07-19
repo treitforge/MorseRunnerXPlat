@@ -8,21 +8,31 @@ public sealed class SimulatedOperator
     private const int FullPatience = 5;
     private readonly LegacyRandom _random;
     private readonly LegacyRandomEffects _effects;
+    private readonly double _responseChoice;
+    private readonly bool _lids;
+    private readonly bool _sweepstakes;
     private string _lastCheckedCall = string.Empty;
     private CallMatch _lastCallMatch;
+    private int _numberQuestionCount;
+    private bool _correctedCallAndExchangeSent;
+    private bool _isActiveInQso;
 
     public SimulatedOperator(
         string callsign,
         OperatorState initialState,
         LegacyRandom random,
-        OperatorRunMode runMode)
+        OperatorRunMode runMode,
+        bool lids = false,
+        bool sweepstakes = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(callsign);
         _random = random ?? throw new ArgumentNullException(nameof(random));
         _effects = new LegacyRandomEffects(random);
         Callsign = callsign;
         RunMode = runMode;
-        _random.NextDouble();
+        _lids = lids;
+        _sweepstakes = sweepstakes;
+        _responseChoice = _random.NextDouble();
         Skills = 1 + _random.Next(3);
         RepeatCount = 1;
         SetState(initialState);
@@ -55,10 +65,24 @@ public sealed class SimulatedOperator
             && _random.NextDouble() < 0.1d
                 ? 2
                 : 1;
+        if (state == OperatorState.NeedQso)
+        {
+            _correctedCallAndExchangeSent = false;
+        }
+
+        if (state == OperatorState.NeedNumber)
+        {
+            _numberQuestionCount = 0;
+        }
     }
 
     public int GetSendDelay(int wordsPerMinute = 30)
     {
+        if (State == OperatorState.NeedPreviousEnd)
+        {
+            return int.MaxValue;
+        }
+
         float seconds = RunMode == OperatorRunMode.Hst
             ? (float)(0.05d + (0.5d * _random.NextDouble() * 10d / wordsPerMinute))
             : (float)(0.1d + (0.5d * _random.NextDouble()));
@@ -73,7 +97,11 @@ public sealed class SimulatedOperator
         return RoundLegacy(_effects.GaussianLimited(blocks, blocks / 2f));
     }
 
-    public void Receive(StationMessage messages, string? copiedCall = null)
+    public void Receive(
+        StationMessage messages,
+        string? copiedCall = null,
+        int minimumCallConfidence = 1,
+        bool allowLidErrors = false)
     {
         if ((messages & StationMessage.Cq) != 0)
         {
@@ -122,7 +150,10 @@ public sealed class SimulatedOperator
 
         if ((messages & StationMessage.HisCall) != 0)
         {
-            ReceiveCall(copiedCall ?? string.Empty);
+            ReceiveCall(
+                copiedCall ?? string.Empty,
+                minimumCallConfidence,
+                allowLidErrors);
         }
 
         if ((messages & StationMessage.Before) != 0)
@@ -145,13 +176,29 @@ public sealed class SimulatedOperator
             }
             else if (State == OperatorState.NeedNumber)
             {
-                _random.NextDouble();
-                SetState(OperatorState.NeedEnd);
+                if (_random.NextDouble() < 0.9d
+                    || RunMode is OperatorRunMode.Hst
+                        or OperatorRunMode.SingleCall)
+                {
+                    SetState(OperatorState.NeedEnd);
+                }
+                else
+                {
+                    AddPatience();
+                }
             }
             else if (State == OperatorState.NeedCallAndNumber)
             {
-                _random.NextDouble();
-                SetState(OperatorState.NeedCall);
+                if (_random.NextDouble() < 0.9d
+                    || RunMode is OperatorRunMode.Hst
+                        or OperatorRunMode.SingleCall)
+                {
+                    SetState(OperatorState.NeedCall);
+                }
+                else
+                {
+                    AddPatience();
+                }
             }
             else if (State is OperatorState.NeedCall or OperatorState.NeedEnd)
             {
@@ -165,22 +212,52 @@ public sealed class SimulatedOperator
             {
                 SetState(OperatorState.NeedQso);
             }
+            else if (State is OperatorState.NeedNumber or OperatorState.NeedCall)
+            {
+                if (_isActiveInQso)
+                {
+                    State = OperatorState.Done;
+                }
+                else
+                {
+                    SetState(OperatorState.NeedQso);
+                }
+            }
+            else if (State == OperatorState.NeedCallAndNumber)
+            {
+                if (_isActiveInQso && _correctedCallAndExchangeSent)
+                {
+                    State = OperatorState.Done;
+                }
+                else
+                {
+                    SetState(OperatorState.NeedQso);
+                }
+            }
             else if (State == OperatorState.NeedEnd)
             {
                 State = OperatorState.Done;
             }
         }
 
-        if ((messages & StationMessage.Question) != 0
-            && State is OperatorState.NeedNumber
+        if ((messages & StationMessage.Question) != 0)
+        {
+            if (State == OperatorState.NeedPreviousEnd
+                && string.IsNullOrEmpty(copiedCall))
+            {
+                SetState(OperatorState.NeedQso);
+            }
+            else if (State is OperatorState.NeedNumber
                 or OperatorState.NeedCall
                 or OperatorState.NeedCallAndNumber
                 or OperatorState.NeedEnd)
-        {
-            AddPatience();
+            {
+                AddPatience();
+            }
         }
 
         if ((messages & StationMessage.Garbage) != 0
+            && !_lids
             && State is OperatorState.NeedQso
                 or OperatorState.NeedNumber
                 or OperatorState.NeedCall
@@ -246,9 +323,65 @@ public sealed class SimulatedOperator
         return SetMatch(result, callConfidence == 0 && result == CallMatch.Almost ? 10 : callConfidence);
     }
 
-    private void ReceiveCall(string copiedCall)
+    public StationReply GetReply()
+    {
+        if (IsGhosting)
+        {
+            return StationReply.None;
+        }
+
+        return State switch
+        {
+            OperatorState.NeedPreviousEnd
+                or OperatorState.Done
+                or OperatorState.Failed => StationReply.None,
+            OperatorState.NeedQso => StationReply.MyCall,
+            OperatorState.NeedNumber => GetNumberRequestReply(),
+            OperatorState.NeedCall => GetCallCorrectionReply(includeNumber: true),
+            OperatorState.NeedCallAndNumber =>
+                GetCallCorrectionReply(includeNumber: false),
+            OperatorState.NeedEnd when Patience < FullPatience - 1 =>
+                StationReply.Number,
+            OperatorState.NeedEnd when RunMode == OperatorRunMode.Hst
+                || _sweepstakes
+                || _random.NextDouble() < 0.9d => StationReply.RogerNumber,
+            OperatorState.NeedEnd => StationReply.RogerNumberTwice,
+            _ => throw new InvalidOperationException(
+                $"Unknown operator state '{State}'."),
+        };
+    }
+
+    private void ReceiveCall(
+        string copiedCall,
+        int minimumCallConfidence,
+        bool allowLidErrors)
     {
         CallMatch match = MatchCall(copiedCall);
+        if (match == CallMatch.Almost
+            && CallConfidence < minimumCallConfidence)
+        {
+            match = CallMatch.No;
+        }
+
+        if (allowLidErrors
+            && _lids
+            && copiedCall.Length > 3
+            && !copiedCall.Contains('?', StringComparison.Ordinal))
+        {
+            if (match == CallMatch.Yes && _random.NextDouble() < 0.01d)
+            {
+                match = CallMatch.Almost;
+                CallConfidence = 100 * (Callsign.Length - 1) / Callsign.Length;
+            }
+            else if (match == CallMatch.Almost
+                && _random.NextDouble() < 0.04d)
+            {
+                match = CallMatch.Yes;
+                CallConfidence = 100;
+            }
+        }
+
+        _isActiveInQso = CallConfidence >= minimumCallConfidence;
         switch (match)
         {
             case CallMatch.Yes:
@@ -308,6 +441,62 @@ public sealed class SimulatedOperator
                 throw new InvalidOperationException(
                     $"Unknown call match '{match}'.");
         }
+    }
+
+    private StationReply GetNumberRequestReply()
+    {
+        bool sendNumberQuestion = Patience == FullPatience - 1
+            || _numberQuestionCount++ % 3 == 0
+            || _random.NextDouble() < 0.2d;
+        return sendNumberQuestion
+            ? StationReply.NumberQuestion
+            : StationReply.Again;
+    }
+
+    private StationReply GetCallCorrectionReply(bool includeNumber)
+    {
+        if (RunMode == OperatorRunMode.Hst)
+        {
+            return includeNumber
+                ? StationReply.DeMyCallAndNumber
+                : StationReply.DeMyCall;
+        }
+
+        int selection = (int)(_responseChoice * 6d);
+        if (includeNumber)
+        {
+            if (_sweepstakes)
+            {
+                return selection == 0
+                    ? StationReply.DeMyCallAndNumber
+                    : StationReply.MyCallAndNumber;
+            }
+
+            return selection switch
+            {
+                0 => StationReply.DeMyCallAndNumber,
+                1 => StationReply.DeMyCallTwiceAndNumber,
+                2 or 3 => StationReply.MyCallAndNumber,
+                4 => StationReply.MyCallTwiceAndNumber,
+                _ => StationReply.MyCall,
+            };
+        }
+
+        StationReply reply = selection switch
+        {
+            0 => StationReply.DeMyCall,
+            1 => StationReply.DeMyCallTwice,
+            2 or 3 => StationReply.MyCall,
+            4 => StationReply.MyCallTwice,
+            _ => StationReply.MyCall,
+        };
+        if (selection == 5 && _lids && _responseChoice < 0.88d)
+        {
+            _correctedCallAndExchangeSent = true;
+            reply = StationReply.MyCallAndNumber;
+        }
+
+        return reply;
     }
 
     private CallMatch SetMatch(CallMatch match, int confidence)

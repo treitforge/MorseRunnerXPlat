@@ -8,9 +8,9 @@ radio-control, pause, resume, stop, recording, and help workflows operate
 end to end.
 
 Full 1:1 legacy compatibility is not yet achieved. Release remains blocked by
-the partial and missing rows below, most importantly realistic station state
-machines and their true-exchange verification, advanced legacy settings, and
-cross-platform visual verification.
+the partial and missing rows below, most importantly advanced legacy settings,
+remaining result and audio-device workflows, and cross-platform visual
+verification.
 
 ## Evidence used
 
@@ -21,8 +21,9 @@ cross-platform visual verification.
   provider could identify the legacy process and title but could not capture
   its VCL window, so structural UI comparison uses the form resources.
 - Live Windows launch and interaction with the Avalonia executable.
-- Avalonia headless tests, TUI renderer and key-router tests, cross-UX workflow
-  tests, engine/DSP tests, and in-process versus gRPC scenario tests.
+- Avalonia headless tests, TUI renderer and key-router tests, Windows ConPTY
+  and xterm captures, cross-UX workflow tests, engine/DSP tests, and in-process
+  versus gRPC scenario tests.
 
 The existing 20/20 parity report proves fixture and structural adapter
 coverage. It must not be interpreted as live behavioral or visual proof for
@@ -44,20 +45,19 @@ the partial rows below.
 | Pause, resume, stop, restart | Stop and run lifecycle | Pause/resume extensions plus Stop and clean restart | Same | Implemented. |
 | Live QSO log and score | Main log, score, rate, and result views | Bound log with time, call, RST, exchange, result, and duplicate status | Responsive terminal log with the same outcome | All 12 contest point, multiplier, total, corrected-retry, and `DUP` paths are engine-owned and legacy-golden. The rolling rate is available through snapshots and results. Dedicated result views remain follow-up UX work. |
 | Settings persistence | Legacy INI | Atomic versioned settings store with legacy-compatible keys | Session setup is not yet persisted | Partial. |
-| Activity and band conditions | Activity, QSK, QSB, QRM, QRN, flutter, LIDs | Passed through session settings; deterministic QSB/QRM/QRN/flutter DSP and activity/LIDs behavior | Same settings through Ctrl+1 through Ctrl+6 | Partial. QSK is carried but its complete legacy keying semantics still need an acceptance vector. |
-| Monitor level | Persistent self-monitor level | Applied as engine output gain | Fixed default | Partial. |
+| Activity and band conditions | Activity, QSK, QSB, QRM, QRN, flutter, LIDs | Seeded active-station audio, pileup activity, QSK receive-during-send, and deterministic QSB/QRM/QRN/flutter/LID behavior | Same settings through Ctrl+1 through Ctrl+6 | Implemented for the live station path. Legacy audio golden expansion remains part of the broader DSP release gate. |
+| Live callers and corrections | Station collection, best partial-call confidence, repeats, reply timing, correction, ghosting, and completion | Session-owned active station collection with block-timed state and CW replies | Same engine behavior and active pileup count | Implemented. The pinned live-station vector and seeded engine traces cover `NR?`, corrected number, partial calls, completion, and caller events. |
+| Station truth and NIL | Completed station supplies true callsign and exchange for log verification | True callsign and contest exchange populate immutable QSO records; unmatched logs are `NIL` and do not score | Same result through the shared client | Implemented with corrected and NIL engine workflows. |
+| Monitor level | Persistent self-monitor level, defaulting to `0 dB` | Applied as engine output gain with the legacy default | Fixed legacy `0 dB` default | Partial because the TUI does not yet expose an adjustment. Physical startup is prebuffered and the automated probe reports zero underruns and drops. |
 | Audio recording and playback | Optional WAV and playback command | Bounded WAV recording beside physical output; completed file opens from File menu | Not exposed | Partial. |
 | Help, first-time setup, readme, community link | Help menu | Working dialogs and packaged readme | Built-in keyboard help | Implemented, except TUI does not open the long packaged readme. |
-| Responsive/scaled layout | Fixed VCL form | Scroll-safe desktop layout, compiled bindings, accessible names | 80-column and wide-terminal render coverage | Implemented on Windows. Linux and macOS visual review remains. |
+| Responsive/scaled layout | Fixed VCL form | Scroll-safe desktop layout, compiled bindings, accessible names | Fixed viewport, adaptive compact layout, colored panels, incremental row repaint, and resize handling | Implemented on Windows. ConPTY captures at 120 by 34 and 100 by 28 prove typing and resizing without scrolling or line accumulation. Linux and macOS visual review remains. |
 | Hosted operation | Not applicable | In-process default | Local or authenticated loopback gRPC | XPlat extension implemented. Cross-client transport tests pass. |
 
 ## Release-blocking functional gaps
 
 | Area | Current gap | Required proof |
 |---|---|---|
-| Station-derived exchange verification | Contest-specific entry validation, corrected retry, and duplicate feedback are integrated for all 12 contests. True-exchange correction and NIL classification still require the completed live station truth model. | Seeded dual-run vectors for corrected and NIL QSOs produced by live simulated stations. |
-| Station simulation | The live loop emits simplified seeded callers and does not yet integrate the full operator and station-collection state machines. | Seeded event, reply timing, station-state, and audio vectors against legacy. |
-| Callsign and reference data | Packaged data and parsers exist, but live calls are not yet sourced and annotated through the complete legacy workflow. | Callsign, DXCC, prefix, and contest-file scenario vectors. |
 | Advanced settings | Min/max RX speed, serial-number range, HST operator configuration, and callsign-info presentation are not exposed end to end. | Persisted setting, engine behavior, Avalonia, and TUI workflow tests. |
 | Result experience | The legacy five-minute QSO rate and result totals are engine-owned and transported in-process and over gRPC. Detailed views, export polish, high-score browsing, and submission remain incomplete. | Cross-UX result views plus offline/error behavior for external services. |
 | Audio device UX | Device enumeration and recovery exist below the UX, but device selection and recovery dialogs are incomplete. | Physical-device interaction test on each supported OS. |
@@ -66,11 +66,9 @@ the partial rows below.
 
 ## Next acceptance slices
 
-1. Replace placeholder caller generation with the existing seeded operator and
-   station state machines, then capture reply and event timing.
-2. Add station-derived true-exchange correction and NIL vectors once live
-   station truth is authoritative.
-3. Complete advanced settings once their engine semantics are acceptance-tested.
-4. Add audio-device recovery UX and TUI persistence/recording.
-5. Record Linux and macOS visual evidence and close every remaining row before
+1. Complete advanced settings once their engine semantics are acceptance-tested.
+2. Add audio-device recovery UX and TUI persistence/recording.
+3. Expand contest-specific live exchange and audio golden traces as the
+   remaining DSP and result slices land.
+4. Record Linux and macOS visual evidence and close every remaining row before
    changing the verdict to full compatibility.

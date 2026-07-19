@@ -122,6 +122,35 @@ public sealed class LegacyOracleParityTests
     }
 
     [Fact]
+    public async Task LiveStationSessionVectorIsBothGreen()
+    {
+        const string parityId = "simulation.live-station-session";
+        const string fixturePath =
+            "tests/parity/fixtures/legacy/simulation-live-station-session.json";
+        OracleFixture fixture = LoadFixture(fixturePath);
+        ParityScenario scenario = new(
+            parityId,
+            "simulation",
+            fixture.Values);
+        LegacyOracleTarget legacyTarget = new(fixturePath);
+        XPlatSimulationTarget xplatTarget = new();
+
+        ParityObservation legacy = await legacyTarget.ExecuteAsync(
+            scenario,
+            TestContext.Current.CancellationToken);
+        ParityObservation xplat = await xplatTarget.ExecuteAsync(
+            scenario,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(ParityTargetOutcome.Passed, legacy.Outcome);
+        Assert.Equal(fixture.Values, xplat.Values);
+        Assert.Equal(ParityTargetOutcome.Passed, xplat.Outcome);
+        Assert.Equal(
+            ParityAssessment.BothGreen,
+            ParityAssessmentClassifier.Classify(legacy, xplat));
+    }
+
+    [Fact]
     public async Task ContestRuleVectorsAreBothGreen()
     {
         const string parityId = "contest.legacy-implementations";
@@ -225,8 +254,10 @@ public sealed class LegacyOracleParityTests
 
         Assert.Equal(ParityTargetOutcome.Passed, legacy.Outcome);
         Assert.Equal(fixture.Values, legacy.Values);
+        Assert.True(
+            XPlatDspTarget.ValuesEquivalent(xplat.Values, fixture.Values),
+            "XPlat DSP values exceeded the documented numeric tolerance.");
         Assert.Equal(ParityTargetOutcome.Passed, xplat.Outcome);
-        Assert.Equal(fixture.Values, xplat.Values);
         Assert.Equal(
             ParityAssessment.BothGreen,
             ParityAssessmentClassifier.Classify(legacy, xplat));

@@ -25,6 +25,8 @@ public sealed class MainWindowViewModelTests
 
         await viewModel.AdvanceCommand.ExecuteAsync(null);
 
+        Assert.Equal(8, viewModel.SimulationBlock);
+        Assert.Equal(1, viewModel.ActiveCallerCount);
         Assert.Equal("Calling", viewModel.CallerState);
 
         await viewModel.PauseCommand.ExecuteAsync(null);

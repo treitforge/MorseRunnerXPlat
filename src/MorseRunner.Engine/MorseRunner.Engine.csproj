@@ -8,5 +8,10 @@
     <EmbeddedResource
       Include="..\MorseRunner.Infrastructure\Data\DXCC.LIST"
       LogicalName="MorseRunner.Engine.Data.DXCC.LIST" />
+    <EmbeddedResource
+      Include="..\MorseRunner.Infrastructure\Data\*"
+      Exclude="..\MorseRunner.Infrastructure\Data\DXCC.LIST"
+      Link="ReferenceData\%(Filename)%(Extension)"
+      LogicalName="MorseRunner.Engine.ReferenceData.%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

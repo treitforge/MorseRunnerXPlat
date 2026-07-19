@@ -350,7 +350,7 @@
                   </DataTemplate>
                 </ListBox.ItemTemplate>
               </ListBox>
-              <Grid Grid.Row="2" ColumnDefinitions="*,*,*,*" ColumnSpacing="12">
+              <Grid Grid.Row="2" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="12">
                 <StackPanel>
                   <TextBlock Classes="eyebrow" Text="BLOCK" />
                   <TextBlock Foreground="#DCE7EF" Text="{Binding SimulationBlock}" />
@@ -367,6 +367,13 @@
                       Text="{Binding CallerState}" />
                 </StackPanel>
                 <StackPanel Grid.Column="3">
+                  <TextBlock Classes="eyebrow" Text="PILEUP" />
+                  <TextBlock
+                      AutomationProperties.Name="Active caller count"
+                      Foreground="#DCE7EF"
+                      Text="{Binding ActiveCallerCount, StringFormat='{}{0} active'}" />
+                </StackPanel>
+                <StackPanel Grid.Column="4">
                   <TextBlock Classes="eyebrow" Text="LAST SENT" />
                   <TextBlock Foreground="#DCE7EF" Text="{Binding LastSent}" />
                 </StackPanel>

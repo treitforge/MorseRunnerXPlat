@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using MorseRunner.Domain;
@@ -15,6 +16,8 @@ internal sealed class EngineSession : IAsyncDisposable
     private readonly SessionSettings _settings;
     private readonly IAudioSink _audioSink;
     private readonly LegacyRandom _random;
+    private readonly StationReferenceCatalog _stationCatalog;
+    private readonly List<SimulatedStation> _stations = [];
     private readonly Channel<WorkItem> _commands;
     private readonly Dictionary<RequestId, RequestRecord> _requests = [];
     private readonly List<Subscriber> _subscribers = [];
@@ -25,13 +28,24 @@ internal sealed class EngineSession : IAsyncDisposable
         new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly float[] _renderBuffer =
         new float[CompatibilityProfile.BlockSize];
+    private readonly float[] _operatorBuffer =
+        new float[CompatibilityProfile.BlockSize];
+    private readonly float[] _receiverReal =
+        new float[CompatibilityProfile.BlockSize];
+    private readonly float[] _receiverImaginary =
+        new float[CompatibilityProfile.BlockSize];
     private readonly MorseToneRenderer _toneRenderer;
+    private readonly LegacyReceiverPipeline _receiverPipeline;
     private readonly LegacyRandom _effectRandom;
     private readonly QsbProcessor? _qsbProcessor;
     private readonly float _monitorGain;
     private readonly bool _automaticTiming;
     private readonly TimeSpan _blockPeriod;
+    private readonly AutomaticBlockClock _automaticBlockClock = new(
+        CompatibilityProfile.SampleRate,
+        CompatibilityProfile.BlockSize);
     private readonly Task _worker;
+    private PeriodicTimer? _automaticTimer;
     private SessionSnapshot _snapshot;
     private SessionState _state = SessionState.Created;
     private long _revision;
@@ -39,13 +53,14 @@ internal sealed class EngineSession : IAsyncDisposable
     private long _renderedSamples;
     private long _eventSequence;
     private string? _lastCaller;
-    private SimulatedOperator? _activeOperator;
     private string? _lastOperatorMessage;
     private int _currentWordsPerMinute;
     private int _currentBandwidthHz;
     private int _ritOffsetHz;
     private int _qsoCount;
     private int _score;
+    private int _nextStationSerial = 1;
+    private bool _hasCreatedStation;
     private int _verifiedPoints;
     private readonly HashSet<string> _workedCalls =
         new(StringComparer.Ordinal);
@@ -71,6 +86,7 @@ internal sealed class EngineSession : IAsyncDisposable
         _automaticTiming = options.AutomaticTiming;
         _blockPeriod = options.BlockPeriod;
         _random = new(settings.Seed);
+        _stationCatalog = StationReferenceCatalog.Load(settings.ContestId);
         _effectRandom = new(unchecked(settings.Seed ^ 0x51B5_4A32));
         _qsbProcessor = settings.Qsb
             ? new QsbProcessor(
@@ -84,6 +100,11 @@ internal sealed class EngineSession : IAsyncDisposable
             CompatibilityProfile.SampleRate,
             CompatibilityProfile.BlockSize,
             settings.WordsPerMinute,
+            settings.PitchHz);
+        _receiverPipeline = new(
+            CompatibilityProfile.SampleRate,
+            CompatibilityProfile.BlockSize,
+            settings.BandwidthHz,
             settings.PitchHz);
         _commands = Channel.CreateBounded<WorkItem>(
             new BoundedChannelOptions(CommandCapacity)
@@ -267,6 +288,7 @@ internal sealed class EngineSession : IAsyncDisposable
 
         _commands.Writer.TryComplete();
         _lifetime.Cancel();
+        StopAutomaticTimer();
         try
         {
             await _worker;
@@ -315,6 +337,7 @@ internal sealed class EngineSession : IAsyncDisposable
         }
         finally
         {
+            StopAutomaticTimer();
             CompleteSubscribers();
         }
     }
@@ -328,13 +351,21 @@ internal sealed class EngineSession : IAsyncDisposable
 
         if (_automaticTiming && _state == SessionState.Running)
         {
-            await Task.Delay(_blockPeriod, _lifetime.Token);
+            PeriodicTimer timer = _automaticTimer
+                ?? throw new InvalidOperationException(
+                    "Automatic timing is running without a block timer.");
+            await timer.WaitForNextTickAsync(_lifetime.Token);
             if (_commands.Reader.TryRead(out pending))
             {
                 return await ProcessWorkItemAsync(pending);
             }
 
-            await RenderBlocksAsync(1);
+            int blocksDue = _automaticBlockClock.GetDueBlockCount(
+                _simulationBlock);
+            if (blocksDue > 0)
+            {
+                await RenderBlocksAsync(blocksDue);
+            }
             PublishSnapshot();
             return true;
         }
@@ -427,6 +458,7 @@ internal sealed class EngineSession : IAsyncDisposable
         }
 
         _state = SessionState.Running;
+        StartAutomaticTimer();
         _toneRenderer.LoadMessage("CQ TEST");
         _revision++;
         PublishEvent(SessionEventKind.Started, null);
@@ -441,6 +473,7 @@ internal sealed class EngineSession : IAsyncDisposable
         }
 
         _state = SessionState.Paused;
+        StopAutomaticTimer();
         _revision++;
         PublishEvent(SessionEventKind.Paused, null);
         return AcceptedResult();
@@ -454,6 +487,7 @@ internal sealed class EngineSession : IAsyncDisposable
         }
 
         _state = SessionState.Running;
+        StartAutomaticTimer();
         _revision++;
         PublishEvent(SessionEventKind.Resumed, null);
         return AcceptedResult();
@@ -467,6 +501,7 @@ internal sealed class EngineSession : IAsyncDisposable
         }
 
         _state = SessionState.Stopping;
+        StopAutomaticTimer();
         _revision++;
         PublishEvent(SessionEventKind.Stopping, null);
         await _audioSink.CompleteAsync(_lifetime.Token);
@@ -517,8 +552,41 @@ internal sealed class EngineSession : IAsyncDisposable
                 break;
             }
 
-            _toneRenderer.Render(_renderBuffer);
-            ApplyAudioEffects();
+            bool operatorIsSending = _toneRenderer.HasPendingAudio;
+            _toneRenderer.Render(_operatorBuffer);
+            PrepareReceiverInput();
+            for (int stationIndex = 0;
+                 stationIndex < _stations.Count;
+                 stationIndex++)
+            {
+                SimulatedStation station = _stations[stationIndex];
+                StationState priorStationState = station.State;
+                station.AdvanceBlock(
+                    _receiverReal,
+                    _receiverImaginary,
+                    mixOutput: _settings.Qsk || !operatorIsSending);
+                if (priorStationState != StationState.Sending
+                    && station.State == StationState.Sending)
+                {
+                    PublishEvent(
+                        SessionEventKind.StationReplyStarted,
+                        station.Identity.Callsign
+                        + "|"
+                        + station.LastReplyText);
+                }
+                else if (priorStationState == StationState.Sending
+                    && station.State == StationState.Listening)
+                {
+                    PublishEvent(
+                        SessionEventKind.StationReplyCompleted,
+                        station.Identity.Callsign);
+                }
+            }
+            _receiverPipeline.Process(
+                _receiverReal,
+                _receiverImaginary,
+                _renderBuffer);
+            ApplyAudioEffects(operatorIsSending);
             await _audioSink.WriteAsync(
                 _renderBuffer,
                 _simulationBlock,
@@ -527,26 +595,14 @@ internal sealed class EngineSession : IAsyncDisposable
             _renderedSamples += CompatibilityProfile.BlockSize;
             _revision++;
 
-            int callerInterval = Math.Max(2, 13 - _settings.Activity);
-            if (_simulationBlock % callerInterval == 0)
-            {
-                _lastCaller = $"DX{_random.Next(1000):000}";
-                if (_settings.Lids && _random.Next(4) == 0)
-                {
-                    _lastCaller += "?";
-                }
-                _activeOperator = new(
-                    _lastCaller.TrimEnd('?'),
-                    OperatorState.NeedQso,
-                    _random,
-                    ToOperatorRunMode(_settings.RunModeId));
-                PublishEvent(SessionEventKind.CallerJoined, _lastCaller);
-            }
+            RemoveFailedStations();
+            AddCallersAtCurrentBlock();
 
             if (_settings.DurationBlocks > 0
                 && _simulationBlock >= _settings.DurationBlocks)
             {
                 _state = SessionState.Completed;
+                StopAutomaticTimer();
                 PublishEvent(SessionEventKind.Completed, null);
                 await _audioSink.CompleteAsync(_lifetime.Token);
                 break;
@@ -554,7 +610,19 @@ internal sealed class EngineSession : IAsyncDisposable
         }
     }
 
-    private void ApplyAudioEffects()
+    private void PrepareReceiverInput()
+    {
+        const float noiseAmplitude = 18_000f;
+        for (int index = 0; index < _receiverReal.Length; index++)
+        {
+            _receiverReal[index] =
+                noiseAmplitude * (_effectRandom.NextSingle() - 0.5f);
+            _receiverImaginary[index] =
+                noiseAmplitude * (_effectRandom.NextSingle() - 0.5f);
+        }
+    }
+
+    private void ApplyAudioEffects(bool operatorIsSending)
     {
         _qsbProcessor?.Apply(_renderBuffer);
         float qrmIncrement =
@@ -590,10 +658,16 @@ internal sealed class EngineSession : IAsyncDisposable
                 }
             }
 
+            float localMonitor =
+                _operatorBuffer[index] * _monitorGain;
             _renderBuffer[index] = Math.Clamp(
-                sample * _monitorGain,
-                -1F,
-                1F);
+                operatorIsSending
+                    ? (_settings.Qsk
+                        ? sample + localMonitor
+                        : localMonitor)
+                    : sample,
+                -1f,
+                1f);
         }
     }
 
@@ -658,14 +732,14 @@ internal sealed class EngineSession : IAsyncDisposable
         };
         _toneRenderer.LoadMessage(message);
         _lastOperatorMessage = message;
-        ApplyIntentToActiveOperator(command);
+        ApplyIntentToStations(command);
         _revision++;
         return AcceptedResult();
     }
 
-    private void ApplyIntentToActiveOperator(SendOperatorIntentCommand command)
+    private void ApplyIntentToStations(SendOperatorIntentCommand command)
     {
-        if (_activeOperator is null)
+        if (_stations.Count == 0)
         {
             return;
         }
@@ -687,7 +761,121 @@ internal sealed class EngineSession : IAsyncDisposable
         };
         if (stationMessage != StationMessage.None)
         {
-            _activeOperator.Receive(stationMessage, command.Call);
+            int bestConfidence = 1;
+            if (stationMessage == StationMessage.HisCall)
+            {
+                foreach (SimulatedStation station in _stations)
+                {
+                    station.Operator.MatchCall(command.Call);
+                    bestConfidence = Math.Max(
+                        bestConfidence,
+                        station.Operator.CallConfidence);
+                }
+            }
+
+            foreach (SimulatedStation station in _stations.ToArray())
+            {
+                station.ReceiveOperatorStarted();
+                station.ReceiveOperatorFinished(
+                    stationMessage,
+                    command.Call,
+                    bestConfidence,
+                    allowLidErrors: true);
+            }
+        }
+    }
+
+    private void AddCallersAtCurrentBlock()
+    {
+        OperatorRunMode runMode = ToOperatorRunMode(_settings.RunModeId);
+        int activeCount = _stations.Count(
+            station => !station.IsComplete);
+        int maximumCallers = runMode switch
+        {
+            OperatorRunMode.Stop => 0,
+            OperatorRunMode.SingleCall => 1,
+            _ => Math.Max(1, _settings.Activity),
+        };
+        if (activeCount >= maximumCallers)
+        {
+            return;
+        }
+
+        int callerInterval = Math.Max(2, 13 - _settings.Activity);
+        int callersToAdd = runMode == OperatorRunMode.Hst
+            ? maximumCallers - activeCount
+            : _simulationBlock % callerInterval == 0
+                ? 1
+                : 0;
+        for (int index = 0; index < callersToAdd; index++)
+        {
+            AddCaller(runMode);
+        }
+    }
+
+    private void AddCaller(OperatorRunMode runMode)
+    {
+        StationIdentity? identity = null;
+        for (int attempt = 0; attempt < 10; attempt++)
+        {
+            StationIdentity candidate = _stationCatalog.Pick(
+                _random,
+                _settings.ContestId,
+                _nextStationSerial++);
+            if (_stations.All(
+                    station => !station.Identity.Callsign.Equals(
+                        candidate.Callsign,
+                        StringComparison.Ordinal)))
+            {
+                identity = candidate;
+                break;
+            }
+        }
+
+        if (identity is null)
+        {
+            return;
+        }
+
+        int wordsPerMinute = runMode == OperatorRunMode.Hst
+            ? _settings.WordsPerMinute
+            : Math.Max(
+                10,
+                (int)Math.Round(
+                    _settings.WordsPerMinute
+                    * 0.5d
+                    * (1d + _random.NextDouble()),
+                    MidpointRounding.ToEven));
+        int pitchRange = runMode == OperatorRunMode.SingleCall ? 50 : 300;
+        int pitchOffset = _random.Next((pitchRange * 2) + 1) - pitchRange;
+        SimulatedStation station = SimulatedStation.CreateReadyCaller(
+            identity,
+            wordsPerMinute,
+            pitchOffset,
+            _random,
+            runMode,
+            _settings.Lids,
+            sweepstakes: _settings.ContestId.Value == "scArrlSS");
+        _stations.Add(station);
+        _hasCreatedStation = true;
+        _lastCaller = identity.Callsign;
+        PublishEvent(SessionEventKind.CallerJoined, identity.Callsign);
+    }
+
+    private void RemoveFailedStations()
+    {
+        for (int index = _stations.Count - 1; index >= 0; index--)
+        {
+            if (_stations[index].Operator.State != OperatorState.Failed)
+            {
+                continue;
+            }
+
+            SimulatedStation station = _stations[index];
+            _stations.RemoveAt(index);
+            PublishEvent(
+                SessionEventKind.CallerLeft,
+                station.Identity.Callsign + "|failed");
         }
     }
 
@@ -762,8 +950,27 @@ internal sealed class EngineSession : IAsyncDisposable
                 evaluation.Validation.Error);
         }
 
+        SimulatedStation? completedStation = _stations
+            .Where(
+                station => station.Operator.State == OperatorState.Done)
+            .OrderByDescending(
+                station =>
+                {
+                    station.Operator.MatchCall(evaluation.Call);
+                    return station.Operator.CallConfidence;
+                })
+            .FirstOrDefault();
+        LogError exchangeError = DetermineLogError(
+            evaluation,
+            command,
+            completedStation);
         bool duplicate = !_workedCalls.Add(evaluation.Call);
-        if (!duplicate)
+        if (duplicate && exchangeError == LogError.None)
+        {
+            exchangeError = LogError.Duplicate;
+        }
+
+        if (!duplicate && exchangeError == LogError.None)
         {
             _verifiedPoints += evaluation.Points;
             if (evaluation.UsesAdditiveScore)
@@ -785,45 +992,167 @@ internal sealed class EngineSession : IAsyncDisposable
         _qsoCount++;
         _lastLoggedCall = evaluation.Call;
         _lastCaller = _lastLoggedCall;
+        StationIdentity? truth = completedStation?.Identity;
+        bool directLogScenario = !_hasCreatedStation;
         Qso qso = new()
         {
             Timestamp = DateTimeOffset.UnixEpoch
                 + TimeSpan.FromSeconds(
                     (double)_renderedSamples / CompatibilityProfile.SampleRate),
             Call = _lastLoggedCall,
-            TrueCall = _lastLoggedCall,
+            TrueCall = truth?.Callsign
+                ?? (directLogScenario ? evaluation.Call : string.Empty),
             RawCallsign = command.Call,
             Rst = evaluation.Rst,
-            TrueRst = evaluation.Rst,
+            TrueRst = truth is null
+                ? (directLogScenario ? evaluation.Rst : 0)
+                : ParseRst(truth.Rst),
             Number = evaluation.Number,
-            TrueNumber = evaluation.Number,
+            TrueNumber = truth?.Number
+                ?? (directLogScenario ? evaluation.Number : 0),
             Precedence = evaluation.Precedence,
-            TruePrecedence = evaluation.Precedence,
+            TruePrecedence = truth?.Precedence
+                ?? (directLogScenario ? evaluation.Precedence : string.Empty),
             Check = evaluation.Check,
-            TrueCheck = evaluation.Check,
+            TrueCheck = truth?.Check
+                ?? (directLogScenario ? evaluation.Check : 0),
             Section = evaluation.Section,
-            TrueSection = evaluation.Section,
+            TrueSection = truth?.Section
+                ?? (directLogScenario ? evaluation.Section : string.Empty),
             Exchange1 = command.Exchange1,
-            TrueExchange1 = command.Exchange1,
+            TrueExchange1 = truth?.Exchange1
+                ?? (directLogScenario ? command.Exchange1 : string.Empty),
             Exchange2 = command.Exchange2,
-            TrueExchange2 = command.Exchange2,
+            TrueExchange2 = truth?.Exchange2
+                ?? (directLogScenario ? command.Exchange2 : string.Empty),
             Prefix = evaluation.Prefix,
             Multiplier = evaluation.Multiplier,
-            Points = evaluation.Points,
+            Points = exchangeError is LogError.None or LogError.Duplicate
+                ? evaluation.Points
+                : 0,
             IsDuplicate = duplicate,
-            ExchangeError = duplicate
-                ? LogError.Duplicate
-                : LogError.None,
-            ErrorText = duplicate ? "DUP" : "   ",
+            ExchangeError = exchangeError,
+            ErrorText = ErrorText(exchangeError),
         };
         Qso[] current = _completedQsos;
         Qso[] next = new Qso[current.Length + 1];
         Array.Copy(current, next, current.Length);
         next[^1] = qso;
         Volatile.Write(ref _completedQsos, next);
+        if (completedStation is not null)
+        {
+            _stations.Remove(completedStation);
+        }
         _revision++;
+        PublishEvent(
+            SessionEventKind.QsoLogged,
+            qso.Call + "|" + qso.ErrorText.Trim());
         return AcceptedResult();
     }
+
+    private LogError DetermineLogError(
+        ContestQsoEvaluation evaluation,
+        LogQsoCommand command,
+        SimulatedStation? station)
+    {
+        if (station is null)
+        {
+            return _hasCreatedStation ? LogError.Nil : LogError.None;
+        }
+
+        StationIdentity truth = station.Identity;
+        if (!evaluation.Call.Equals(
+                truth.Callsign,
+                StringComparison.Ordinal))
+        {
+            return LogError.Call;
+        }
+
+        if (evaluation.Rst != ParseRst(truth.Rst))
+        {
+            return LogError.Rst;
+        }
+
+        return _settings.ContestId.Value switch
+        {
+            "scWpx" or "scHst"
+                when evaluation.Number != truth.Number => LogError.Number,
+            "scCwt" or "scSst"
+                when !Equivalent(command.Exchange1, truth.Exchange1) =>
+                    LogError.Name,
+            "scCwt" or "scSst"
+                when !Equivalent(command.Exchange2, truth.Exchange2) =>
+                    LogError.Number,
+            "scFieldDay"
+                when !Equivalent(command.Exchange1, truth.Exchange1) =>
+                    LogError.Class,
+            "scFieldDay" or "scArrlSS"
+                when !Equivalent(command.Exchange2, truth.Exchange2) =>
+                    LogError.Section,
+            "scCQWW"
+                when !Equivalent(command.Exchange2, truth.Exchange2) =>
+                    LogError.Zone,
+            "scArrlDx"
+                when !Equivalent(command.Exchange2, truth.Exchange2) =>
+                    LogError.Power,
+            "scNaQp"
+                when !Equivalent(command.Exchange1, truth.Exchange1) =>
+                    LogError.Name,
+            "scNaQp"
+                when !Equivalent(command.Exchange2, truth.Exchange2) =>
+                    LogError.State,
+            "scAllJa" or "scAcag" or "scIaruHf"
+                when !Equivalent(command.Exchange2, truth.Exchange2) =>
+                    LogError.Error,
+            _ => LogError.None,
+        };
+    }
+
+    private static bool Equivalent(string left, string right)
+    {
+        string normalizedLeft = NormalizeExchange(left);
+        string normalizedRight = NormalizeExchange(right);
+        return normalizedLeft.Equals(
+            normalizedRight,
+            StringComparison.Ordinal);
+    }
+
+    private static string NormalizeExchange(string value)
+    {
+        string normalized = value
+            .Trim()
+            .ToUpperInvariant()
+            .Replace('N', '9')
+            .Replace('T', '0')
+            .Replace('O', '0');
+        return int.TryParse(normalized, out int number)
+            ? number.ToString(CultureInfo.InvariantCulture)
+            : normalized;
+    }
+
+    private static int ParseRst(string? value)
+    {
+        string normalized = NormalizeExchange(value ?? string.Empty);
+        return int.TryParse(normalized, out int rst) ? rst : 0;
+    }
+
+    private static string ErrorText(LogError error) =>
+        error switch
+        {
+            LogError.None => "   ",
+            LogError.Nil => "NIL",
+            LogError.Duplicate => "DUP",
+            LogError.Call => "CALL",
+            LogError.Rst => "RST",
+            LogError.Number => "NR",
+            LogError.Name => "NAME",
+            LogError.Class => "CLASS",
+            LogError.Section => "SECT",
+            LogError.Zone => "ZONE",
+            LogError.State => "STATE",
+            LogError.Power => "PWR",
+            _ => "ERROR",
+        };
 
     private CommandResult ApplyControlExpired(
         ExpireControlLeaseCommand command)
@@ -845,11 +1174,30 @@ internal sealed class EngineSession : IAsyncDisposable
 
     private void ApplyClose(TaskCompletionSource<bool> completion)
     {
+        StopAutomaticTimer();
         _state = SessionState.Closed;
         _revision++;
         PublishEvent(SessionEventKind.Closed, null);
         PublishSnapshot();
         completion.TrySetResult(true);
+    }
+
+    private void StartAutomaticTimer()
+    {
+        if (!_automaticTiming)
+        {
+            return;
+        }
+
+        StopAutomaticTimer();
+        _automaticTimer = new PeriodicTimer(_blockPeriod);
+        _automaticBlockClock.Start(_simulationBlock);
+    }
+
+    private void StopAutomaticTimer()
+    {
+        _automaticTimer?.Dispose();
+        _automaticTimer = null;
     }
 
     private void Reject(
@@ -956,6 +1304,16 @@ internal sealed class EngineSession : IAsyncDisposable
                 IsHealthy: true);
         TimeSpan elapsed = TimeSpan.FromSeconds(
             (double)_renderedSamples / CompatibilityProfile.SampleRate);
+        ActiveStationSnapshot[] activeStations = _stations
+            .Select(station => station.CreateSnapshot())
+            .ToArray();
+        OperatorState? activeOperatorState = _stations
+            .LastOrDefault(
+                station => station.Identity.Callsign.Equals(
+                    _lastCaller,
+                    StringComparison.Ordinal))
+            ?.Operator.State
+            ?? _stations.LastOrDefault()?.Operator.State;
         return new(
             _engineEpoch,
             _sessionId,
@@ -980,8 +1338,9 @@ internal sealed class EngineSession : IAsyncDisposable
             _currentBandwidthHz,
             _ritOffsetHz,
             _lastLoggedCall,
-            _activeOperator?.State,
-            QsoRateCalculator.Calculate(_completedQsos, elapsed));
+            activeOperatorState,
+            QsoRateCalculator.Calculate(_completedQsos, elapsed),
+            activeStations);
     }
 
     private void FailPendingCommands(Exception exception)
