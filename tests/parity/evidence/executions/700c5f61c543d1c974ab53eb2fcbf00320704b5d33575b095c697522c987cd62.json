@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "target": "XPlat",
+  "platform": "windows",
+  "operatingSystem": "Microsoft Windows 10.0.26200",
+  "architecture": "x64",
+  "runtimeIdentifier": "win-x64",
+  "revision": "405ce1cc52b3a4a2171335821e8bc08fa5d5fc2b",
+  "tree": "efc5df906b9116a86f5424b51db65686e672b304",
+  "resultSha256": "4a4741a95a92bd6adf81276766b1180b404f0f6dcab67e49cf173971febe5c2c",
+  "testReportSha256": "2098e74a6527d56b3eaaaa9ed20ea9b03e1dc7031386f42ee523199d0e04fbbf",
+  "testProcessExitCode": 2,
+  "wrapper": {
+    "completed": true,
+    "correlationValidated": true,
+    "exitCode": 0
+  },
+  "functionalDivergences": [
+    {
+      "caseId": "contest.cwt-remote-exchange-format-seed-12345",
+      "failureCode": "contest-cwt-remote-exchange-format-mismatch"
+    }
+  ]
+}
