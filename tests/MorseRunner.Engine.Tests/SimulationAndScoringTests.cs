@@ -1,3 +1,4 @@
+using System.Globalization;
 using MorseRunner.Domain;
 using MorseRunner.Dsp;
 
@@ -95,6 +96,29 @@ public sealed class SimulationAndScoringTests
             new LegacyRandom(12_345),
             OperatorRunMode.Pileup,
             contestId: new("scNaQp"));
+
+        Assert.Equal(expected, station.ObserveExchangeForParity());
+    }
+
+    [Theory]
+    [InlineData(7, "5NN007")]
+    [InlineData(1234, "5NN1234")]
+    public void HstRemoteExchangeUsesUncutMinimumThreeDigitSerial(
+        int serialNumber,
+        string expected)
+    {
+        var station = new SimulatedStation(
+            new StationIdentity(
+                "K1ABC",
+                "599",
+                serialNumber,
+                "599",
+                serialNumber.ToString(CultureInfo.InvariantCulture)),
+            wordsPerMinute: 25,
+            pitchOffsetHz: 0,
+            new LegacyRandom(12_345),
+            OperatorRunMode.Hst,
+            contestId: new("scHst"));
 
         Assert.Equal(expected, station.ObserveExchangeForParity());
     }

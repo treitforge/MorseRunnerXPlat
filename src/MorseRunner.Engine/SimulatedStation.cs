@@ -470,6 +470,12 @@ public sealed class SimulatedStation
                 : $"{Identity.Exchange1} {Identity.Exchange2}";
         }
 
+        if (_contestId.Value == "scHst")
+        {
+            return ToCutNumbers(Identity.Rst)
+                + Identity.Number.ToString("000", CultureInfo.InvariantCulture);
+        }
+
         string rst = ToCutNumbers(Identity.Rst);
         string exchange = Identity.Exchange2;
         if (int.TryParse(exchange, out int number))

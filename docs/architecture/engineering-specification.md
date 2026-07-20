@@ -2659,6 +2659,18 @@ name when the location is empty, matching both CE branches. Numeric cutting,
 leading-zero width, other contests, repeat and correction variants, and LID
 errors remain within the partial obligation.
 
+The authored `contest.hst-remote-exchange-format-seed-12345` case extends the
+same obligation through HST serial formatting. Its pinned CE v24 adapter fixes
+the remote serial at seven and observes the exact `5NN007` exchange. HST keeps
+the minimum three-digit serial width and skips the ordinary run-mode numeric
+cutting that would replace both leading zeroes. Retained red evidence records
+`contest-hst-remote-exchange-format-mismatch`, where XPlat instead produced
+`5NNTT7`. Production simulated HST stations now use their numeric station
+serial, preserve decimal zeroes, and apply a minimum three-digit width while
+retaining the CE `5NN` RST form. WPX serial-range modes, other contests,
+repeats, correction variants, and LID errors remain within the partial
+obligation.
+
 The authored
 `audio.flutter-no-station-noise-invariance-seed-12345` case narrows the first
 flutter acceptance boundary to station-free receiver audio. Its pinned CE
