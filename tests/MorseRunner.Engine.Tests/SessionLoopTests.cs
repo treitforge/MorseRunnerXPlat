@@ -351,7 +351,7 @@ public sealed class SessionLoopTests
     }
 
     [Fact]
-    public async Task QrmAndQrnAreDeterministicAndChangeRenderedAudio()
+    public async Task QrnIsDeterministicAndChangesRenderedAudio()
     {
         SessionSettings cleanSettings =
             SessionSettings.CreateDefault(seed: 12345) with
@@ -361,7 +361,6 @@ public sealed class SessionLoopTests
             };
         SessionSettings conditionSettings = cleanSettings with
         {
-            Qrm = true,
             Qrn = true,
         };
 
@@ -397,6 +396,23 @@ public sealed class SessionLoopTests
             flutterEnabled: true);
 
         Assert.Equal(clean, flutter);
+    }
+
+    [Fact]
+    public async Task QrmDoesNotChangeAudioWhenNoInterfererTriggers()
+    {
+        byte[] clean = await RenderStationFreeHashAsync(
+            qsbEnabled: false,
+            flutterEnabled: false,
+            qrmEnabled: false,
+            blockCount: 1);
+        byte[] qrm = await RenderStationFreeHashAsync(
+            qsbEnabled: false,
+            flutterEnabled: false,
+            qrmEnabled: true,
+            blockCount: 1);
+
+        Assert.Equal(clean, qrm);
     }
 
     [Fact]
@@ -457,7 +473,9 @@ public sealed class SessionLoopTests
 
     private static async Task<byte[]> RenderStationFreeHashAsync(
         bool qsbEnabled,
-        bool flutterEnabled)
+        bool flutterEnabled,
+        bool qrmEnabled = false,
+        int blockCount = 2)
     {
         var sink = new HashingAudioSink();
         await using MorseRunnerEngine engine = new(_ => sink);
@@ -474,7 +492,7 @@ public sealed class SessionLoopTests
             Activity = 1,
             Qsk = false,
             Qsb = qsbEnabled,
-            Qrm = false,
+            Qrm = qrmEnabled,
             Qrn = false,
             Flutter = flutterEnabled,
             Lids = false,
@@ -505,14 +523,14 @@ public sealed class SessionLoopTests
                 RequestId.New(),
                 handle.SessionId,
                 TestClient,
-                BlockCount: 2),
+                BlockCount: blockCount),
             TestContext.Current.CancellationToken);
         SessionSnapshot snapshot = engine.GetSnapshot(handle.SessionId);
 
         Assert.True(start.Accepted);
         Assert.True(abort.Accepted);
         Assert.True(advance.Accepted);
-        Assert.Equal(2, snapshot.SimulationBlock);
+        Assert.Equal(blockCount, snapshot.SimulationBlock);
         Assert.NotNull(snapshot.ActiveStations);
         Assert.Empty(snapshot.ActiveStations);
         return sink.GetHash();

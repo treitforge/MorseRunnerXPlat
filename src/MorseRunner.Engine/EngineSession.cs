@@ -133,7 +133,6 @@ internal sealed class EngineSession : IAsyncDisposable
         new(StringComparer.Ordinal);
     private Qso[] _completedQsos = [];
     private string? _lastLoggedCall;
-    private float _qrmPhase;
     private int _disposed;
 
     public EngineSession(
@@ -686,22 +685,9 @@ internal sealed class EngineSession : IAsyncDisposable
 
     private void ApplyAudioEffects(bool operatorIsSending)
     {
-        float qrmIncrement =
-            2F * MathF.PI * (_settings.PitchHz + 170F)
-            / CompatibilityProfile.SampleRate;
         for (int index = 0; index < _renderBuffer.Length; index++)
         {
             float sample = _renderBuffer[index];
-            if (_settings.Qrm)
-            {
-                sample += 0.06F * MathF.Sin(_qrmPhase);
-                _qrmPhase += qrmIncrement;
-                if (_qrmPhase >= 2F * MathF.PI)
-                {
-                    _qrmPhase -= 2F * MathF.PI;
-                }
-            }
-
             if (_settings.Qrn)
             {
                 sample += (_effectRandom.NextSingle() * 2F - 1F) * 0.035F;

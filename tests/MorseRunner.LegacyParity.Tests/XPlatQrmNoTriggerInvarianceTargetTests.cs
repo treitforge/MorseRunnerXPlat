@@ -6,8 +6,7 @@ public sealed class XPlatQrmNoTriggerInvarianceTargetTests
 {
     [Fact]
     [Trait("Category", "ParityInfrastructure")]
-    public async Task
-        CurrentProductionFailsAtFirstQrmBlockWithPinnedCode()
+    public async Task PublicEngineCaptureMatchesPinnedCeFixture()
     {
         ParityCertificationCase definition =
             ParityCertificationCase.LoadForInspection(
@@ -19,33 +18,15 @@ public sealed class XPlatQrmNoTriggerInvarianceTargetTests
                     definition.Scenario,
                     TestContext.Current.CancellationToken);
 
-        Assert.Equal(ParityTargetOutcome.Failed, observation.Outcome);
-        Assert.Equal(
-            XPlatQrmNoTriggerInvarianceTarget.FunctionalDivergenceCode,
-            observation.FailureCode);
+        Assert.Equal(ParityTargetOutcome.Passed, observation.Outcome);
+        Assert.Null(observation.FailureCode);
         Assert.Equal(
             XPlatQrmNoTriggerInvarianceTarget.EvidenceSource,
             observation.EvidenceSource);
         Assert.Equal(
-            definition.Scenario.ExpectedValues.Take(2),
-            observation.Values.Take(2),
+            definition.Scenario.ExpectedValues,
+            observation.Values,
             StringComparer.Ordinal);
-        Assert.Equal(
-            2,
-            FindFirstDivergence(
-                definition.Scenario.ExpectedValues,
-                observation.Values));
-        Assert.StartsWith(
-            "qrm-block[0]|",
-            observation.Values[2],
-            StringComparison.Ordinal);
-        Assert.Equal(
-            definition.Scenario.ExpectedValues[3],
-            observation.Values[3]);
-        Assert.EndsWith(
-            "|exact-equal=false",
-            observation.Values[4],
-            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -126,21 +107,21 @@ public sealed class XPlatQrmNoTriggerInvarianceTargetTests
             QrmNoTriggerInvarianceInput.ExpectedValueCount,
             first.Length);
         Assert.Equal(
-            "be97dbb000d9ddb03617bd693a90024e"
-                + "f4c7587948e988f0223517b7f8da145a",
+            "174b52c82a01661240a302c8a890d6ad"
+                + "705738c66281076a482f30bb30fbe68f",
             ParityObservedValuesDigest.Compute(first));
         Assert.Equal(
             "6b468ab13ccc1accb6ec587b8a51d27c"
                 + "a23eb80b20bce034106e547ad3565378",
             ExtractHash(first[1]));
         Assert.Equal(
-            "e4710b52669c98d2f40b2e3a71d1fd88"
-                + "727c7cd7f19a888433bbe0936e99534a",
+            "6b468ab13ccc1accb6ec587b8a51d27c"
+                + "a23eb80b20bce034106e547ad3565378",
             ExtractHash(first[2]));
-        Assert.NotEqual(ExtractHash(first[1]), ExtractHash(first[2]));
+        Assert.Equal(ExtractHash(first[1]), ExtractHash(first[2]));
         Assert.Equal("station-counts|clean=0|qrm=0", first[3]);
         Assert.EndsWith(
-            "|exact-equal=false",
+            "|exact-equal=true",
             first[4],
             StringComparison.Ordinal);
     }
@@ -365,24 +346,6 @@ public sealed class XPlatQrmNoTriggerInvarianceTargetTests
                 input,
                 clean,
                 qrm));
-    }
-
-    private static int FindFirstDivergence(
-        IReadOnlyList<string> expected,
-        IReadOnlyList<string> actual)
-    {
-        int commonCount = Math.Min(expected.Count, actual.Count);
-        for (int index = 0; index < commonCount; index++)
-        {
-            if (!StringComparer.Ordinal.Equals(
-                    expected[index],
-                    actual[index]))
-            {
-                return index;
-            }
-        }
-
-        return expected.Count == actual.Count ? -1 : commonCount;
     }
 
     private static string ExtractHash(string row)

@@ -1438,6 +1438,13 @@ the station-free and aggregate-path invariant, but positive station
 construction and fast per-station QSB remain pending retained acceptance
 coverage and implementation.
 
+CE QRM is produced only by probabilistically created interfering CW stations.
+Enabling QRM when the block's trigger does not create a station must not add
+an aggregate tone or otherwise change that block's receiver output. XPlat
+enforces this no-trigger invariant, but QRM trigger ownership, station
+construction, messages, levels, pitch, speed, retries, and lifetime remain
+pending retained acceptance coverage and implementation.
+
 ### 14.3 Renderer ownership
 
 - One renderer instance belongs to one session.
@@ -2546,10 +2553,12 @@ The XPlat adapter performs the paired capture through two fresh actual
 `MorseRunnerEngine` and `EngineSession` sessions and the production
 `IAudioSink` port. It starts and immediately aborts each `rmStop` session,
 proves no audio was written before one explicit block advance, and requires
-zero active stations. The current unconditional post-receiver QRM sine changes
-the QRM-enabled block, so the case remains `legacy-green-xplat-red` with first
-divergence at the `qrm-block[0]` row and code
-`audio-qrm-no-trigger-invariance-mismatch`.
+zero active stations. The retained pre-implementation baseline remains
+`legacy-green-xplat-red` with first divergence at the `qrm-block[0]` row and
+code `audio-qrm-no-trigger-invariance-mismatch`. Production `EngineSession` no
+longer applies an unconditional post-receiver QRM sine, so the unchanged
+development case now preserves the CE no-trigger block exactly while the
+retained red evidence remains immutable.
 
 This case does not certify positive QRM construction, construction probability
 and draw ownership, a shared-random sentinel, message selection, levels,
@@ -2632,12 +2641,12 @@ Current Phase 3 implementation inventory, not parity certification:
   ordered session events with revision and simulation-block metadata. Seeded
   tests verify caller sets, station event traces, true-exchange logging, NIL
   outcomes, and deterministic audio hashes.
-- QSK, QRM, QRN, and LID paths exist and use deterministic XPlat state. Setting
-  carriage for QSB and flutter exists, but their incorrect session-global
-  receiver applications have been removed and the CE per-station construction
-  and application are not implemented yet. The audit found further differences
-  in audio ordering, signal models, and random-source ownership, so these paths
-  are not CE-equivalent yet.
+- QSK, QRN, and LID paths exist and use deterministic XPlat state. Setting
+  carriage for QSB, flutter, and QRM exists, but their incorrect session-global
+  receiver applications have been removed and the CE station construction and
+  application paths are not implemented yet. The audit found further
+  differences in audio ordering, signal models, and random-source ownership,
+  so these paths are not CE-equivalent yet.
 - Immutable QSO records, score and multiplier behavior, radio controls,
   versioned settings, one-way INI import, atomic persistence, and
   platform-specific application paths are implemented.
