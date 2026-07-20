@@ -1,0 +1,32 @@
+<TestRun id="fd7cf81c-3bc2-4d34-b5d4-38c85ca9fb38" name="randy@TREIT-XIDAX 2026-07-20T13:03:07.7963591-07:00" runUser="randy" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-07-20T13:03:07.7963591-07:00" queuing="2026-07-20T13:03:07.7963591-07:00" start="2026-07-20T13:03:07.7963591-07:00" finish="2026-07-20T20:03:08.7337499+00:00" />
+  <TestSettings name="default" id="6c4d5628-128d-4c3b-a1a4-ab366a4594ad" />
+  <Results>
+    <UnitTestResult testName="parity:engine.start-silent-empty-enter-cq-seed-12345()" outcome="Failed" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" testId="f4546c25-2244-4a83-92d7-b64dd7697cd5" executionId="f4546c25-2244-4a83-92d7-b64dd7697cd5" computerName="TREIT-XIDAX" duration="00:00:00.8311959" startTime="2026-07-20T20:03:07.8693560+00:00" endTime="2026-07-20T20:03:08.7337499+00:00">
+      <Output>
+        <ErrorInfo>
+          <Message>MorseRunner.LegacyParity.Tests.ParityFunctionalDivergenceException : PARITY_FUNCTIONAL_DIVERGENCE|engine.start-silent-empty-enter-cq-seed-12345|engine-start-silent-empty-enter-cq-mismatch</Message>
+          <StackTrace>   at MorseRunner.LegacyParity.Tests.LegacyOracleParityTests.AssertCertifyingObservation(ParityCertificationCase definition, SelectedParityObservation selected) in C:\Users\randy\Git\MorseRunnerXPlat\tests\MorseRunner.LegacyParity.Tests\LegacyOracleParityTests.cs:line 264
+   at MorseRunner.LegacyParity.Tests.LegacyOracleParityTests.AssertCertifyingManifestCaseAsync(String parityId) in C:\Users\randy\Git\MorseRunnerXPlat\tests\MorseRunner.LegacyParity.Tests\LegacyOracleParityTests.cs:line 244
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="parity:engine.start-silent-empty-enter-cq-seed-12345()" id="f4546c25-2244-4a83-92d7-b64dd7697cd5" storage="C:\Users\randy\Git\MorseRunnerXPlat\tests\MorseRunner.LegacyParity.Tests\bin\Release\net10.0\MorseRunner.LegacyParity.Tests.dll">
+      <Execution id="f4546c25-2244-4a83-92d7-b64dd7697cd5" />
+      <TestMethod codeBase="C:\Users\randy\Git\MorseRunnerXPlat\tests\MorseRunner.LegacyParity.Tests\bin\Release\net10.0\MorseRunner.LegacyParity.Tests.dll" className="MorseRunner.LegacyParity.Tests.LegacyOracleParityTests" name="ManifestCaseMatchesSelectedTarget" adapterTypeName="executor://fd7cf81c-3bc2-4d34-b5d4-38c85ca9fb38/xunit.v3/3.2.2" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" testId="f4546c25-2244-4a83-92d7-b64dd7697cd5" executionId="f4546c25-2244-4a83-92d7-b64dd7697cd5" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="1" executed="1" passed="0" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+  </ResultSummary>
+</TestRun>

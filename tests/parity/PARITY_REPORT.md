@@ -22,7 +22,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Mapped legacy surfaces: 3668
 - Unmapped legacy surfaces: 0
 - Pending audit surfaces: 0
-- Overlapping case surface/platform assignments: 69
+- Overlapping case surface/platform assignments: 75
 
 | Category | Discovered surfaces |
 |---|---:|
@@ -107,18 +107,18 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 
 - Manifest capabilities: 24
 - Complete capabilities: 0
-- Partially authored capabilities: 4
-- Not-authored capabilities: 20
+- Partially authored capabilities: 5
+- Not-authored capabilities: 19
 - Behavioral obligations: 119
-- Source-bound obligations: 11
-- Pending source bindings: 108
+- Source-bound obligations: 12
+- Pending source bindings: 107
 - Complete obligations: 0
-- Partially authored obligations: 11
-- Not-authored obligations: 108
+- Partially authored obligations: 12
+- Not-authored obligations: 107
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 15
+- Active acceptance cases: 16
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 15
+- Legacy-green/XPlat-red cases: 16
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
@@ -134,7 +134,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `logging.qso-model` | Legacy QSO record and error model | `not-authored` | 0 | 47 | 0 | `Log.pas:48-82` |
 | `logging.scoring-rate-and-results` | Legacy logging, scoring, rate, correction, and result paths | `not-authored` | 0 | 55 | 0 | `Log.pas:147-1137` |
 | `simulation.state-models` | Legacy simulation state models and transitions | `not-authored` | 0 | 66 | 0 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
-| `simulation.runtime-routines` | Legacy contest, station, and operator routines | `not-authored` | 0 | 93 | 63 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
+| `simulation.runtime-routines` | Legacy contest, station, and operator routines | `partial` | 1 | 93 | 69 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
 | `audio-dsp.legacy-processing` | Legacy portable keying and DSP processing | `partial` | 3 | 131 | 0 | `VCL/Crc32.pas`<br>`VCL/FarnsKeyer.pas`<br>`VCL/Mixers.pas`<br>`VCL/MorseKey.pas`<br>`VCL/MorseTbl.pas`<br>`VCL/MovAvg.pas`<br>`VCL/QuickAvg.pas`<br>`VCL/SndTypes.pas`<br>`VCL/VolumCtl.pas` |
 | `audio.legacy-adapters` | Legacy sound output, buffering, and WAV adapters | `not-authored` | 0 | 85 | 0 | `VCL/BaseComp.pas`<br>`VCL/SndCustm.pas`<br>`VCL/SndOut.pas`<br>`VCL/WavFile.pas` |
 | `ux.legacy-vcl-components` | Legacy VCL-only hint and volume controls | `not-authored` | 0 | 36 | 0 | `VCL/PermHint.pas`<br>`VCL/VolmSldr.pas` |
@@ -194,7 +194,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `audio.all-effects-performance` | `audio.legacy-adapters` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | All-effects rendering retains allocation, latency, queue-depth, underrun, drop, and GC evidence representative of sustained play. |
 | `engine.operator-message-completion-timing` | `simulation.runtime-routines` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Operator transmission completion and remote interpretation occur only after the rendered CW envelope completes. |
 | `engine.event-driven-poisson-caller-arrivals` | `simulation.runtime-routines` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Caller creation follows completed CQ, TU, and MyCall events with CE Poisson and no-stop rules. |
-| `engine.start-silent-empty-enter-cq` | `simulation.runtime-routines` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Start is silent and an empty Enter initiates the appropriate CE contest CQ. |
+| `engine.start-silent-empty-enter-cq` | `simulation.runtime-routines` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | Start is silent and an empty Enter initiates the appropriate CE contest CQ. |
 | `engine.contest-specific-cq-tu-and-station-id` | `contest.legacy-implementations` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | CQ, TU, operator call insertion, and periodic station-ID messages match each CE contest. |
 | `contest.full-remote-exchange-formatting` | `contest.legacy-implementations` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Remote exchanges retain and format every CE contest identity field, cut number, repeat, and correction variant. |
 | `contest.required-exchange-fields-all-contests` | `contest.legacy-implementations` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | CWT, SST, Field Day, NAQP, Sweepstakes, WPX, HST, and all other contests include every required CE exchange field. |
@@ -289,6 +289,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `audio.qrn-burst-station-lifecycle-seed-1903` | `simulation.legacy-effects` | `audio.qrn-impulses-and-burst-stations` | `legacy-green-xplat-red` | `audio-qrn-burst-station-lifecycle-mismatch` | `pass` | `fail` |
 | `audio.qsb-no-station-noise-invariance-seed-12345` | `simulation.legacy-effects` | `audio.qsb-independent-per-station` | `legacy-green-xplat-red` | `audio-qsb-no-station-noise-invariance-mismatch` | `pass` | `fail` |
 | `audio.qsb-runtime-toggle-active-station-seed-12345` | `simulation.legacy-effects` | `audio.qsb-independent-per-station` | `legacy-green-xplat-red` | `audio-qsb-runtime-toggle-active-station-mismatch` | `pass` | `fail` |
+| `engine.start-silent-empty-enter-cq-seed-12345` | `simulation.runtime-routines` | `engine.start-silent-empty-enter-cq` | `legacy-green-xplat-red` | `engine-start-silent-empty-enter-cq-mismatch` | `pass` | `fail` |
 | `audio.realistic-hiss-noise-floor` | `audio-dsp.legacy-processing` | `audio.realistic-hiss-and-noise-floor` | `legacy-green-xplat-red` | `audio-realistic-hiss-noise-floor-mismatch` | `pass` | `fail` |
 | `audio.receiver-hiss-shared-random-checkpoint-seed-12345` | `simulation.legacy-effects` | `audio.single-seeded-random-stream` | `legacy-green-xplat-red` | `audio-receiver-hiss-shared-random-checkpoint-mismatch` | `pass` | `fail` |
 | `audio.sst-farnsworth-envelope-timing` | `audio-dsp.legacy-processing` | `audio.sst-farnsworth-timing` | `legacy-green-xplat-red` | `audio-sst-farnsworth-timing-mismatch` | `pass` | `fail` |

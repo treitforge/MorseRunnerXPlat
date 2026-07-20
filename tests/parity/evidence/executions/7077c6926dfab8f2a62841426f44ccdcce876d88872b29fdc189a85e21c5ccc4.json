@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "target": "XPlat",
+  "platform": "windows",
+  "operatingSystem": "Microsoft Windows 10.0.26200",
+  "architecture": "x64",
+  "runtimeIdentifier": "win-x64",
+  "revision": "e5f714a058a76a363282ff902a625176a0835312",
+  "tree": "8279dc32c8cefbba6d233e312576116a31b3d9b3",
+  "resultSha256": "38cb506867416d6ab909760679a57bb2d5e0f8e6b98956b84a4e3034916d53cc",
+  "testReportSha256": "b55c22873fbf4e58ba1ae109fda1c212c5653bc259ddffaa06167b4c4ea81773",
+  "testProcessExitCode": 2,
+  "wrapper": {
+    "completed": true,
+    "correlationValidated": true,
+    "exitCode": 0
+  },
+  "functionalDivergences": [
+    {
+      "caseId": "engine.start-silent-empty-enter-cq-seed-12345",
+      "failureCode": "engine-start-silent-empty-enter-cq-mismatch"
+    }
+  ]
+}

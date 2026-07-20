@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "e5f714a058a76a363282ff902a625176a0835312",
+      "tree": "8279dc32c8cefbba6d233e312576116a31b3d9b3",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "engine.start-silent-empty-enter-cq-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "engine.start-silent-empty-enter-cq-seed-12345",
+      "acceptanceTestName": "parity:engine.start-silent-empty-enter-cq-seed-12345()",
+      "target": "xplat",
+      "adapter": "XPlatStartSilentEmptyEnterCqTarget",
+      "caseDefinitionSha256": "8bdbbaa1a17a77e929488dd73d34f211a190d7e9b1a6095b13a81053a7963ac6",
+      "fixtureSha256": "77a01903a454b6d90628e5214a339d4f2bd936e442849db5f858b0e7f835c284",
+      "outcome": "functional-divergence",
+      "failureCode": "engine-start-silent-empty-enter-cq-mismatch",
+      "evidenceSource": "MorseRunner.Engine.MorseRunnerEngine.ExecuteAsync\u002BMorseRunner.Engine.EngineSession.ApplyStart\u002BMorseRunner.Engine.EngineSession.ApplyEnterSendMessage\u002BMorseRunner.Engine.IAudioSink.WriteAsync",
+      "observedValues": [
+        "configuration|scenario=engine.start-silent-empty-enter-cq-seed-12345|contest=scWpx|run-mode=rmPileup|station=W7SST|seed=12345",
+        "start-boundary|operator-state=stSending|message-set=cq|message-text=CQ TEST|envelope-sample-count-positive=true|qso-count=0",
+        "empty-enter|operator-state=stSending|message-set=cq|message-text=CQ TEST|envelope-sample-count-positive=true|qso-count=0"
+      ],
+      "observedValueCount": 3,
+      "observedValuesSha256": "e9dcf8f81523b4dce1d06b2f238271259be5a67370cb86773a004f972a356cad",
+      "firstDivergence": {
+        "index": 1,
+        "expected": "start-boundary|operator-state=stListening|message-set=none|message-text=|envelope-sample-count=0|qso-count=0",
+        "actual": "start-boundary|operator-state=stSending|message-set=cq|message-text=CQ TEST|envelope-sample-count-positive=true|qso-count=0"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}
