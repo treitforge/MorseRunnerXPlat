@@ -2684,6 +2684,16 @@ the existing numeric cutting stage. Start, end, and custom range acceptance,
 custom leading-zero intent, probabilistic cut variants, repeats, correction
 variants, and LID errors remain within the partial obligation.
 
+The authored `contest.fieldday-remote-exchange-format-seed-12345` case extends
+the same obligation through Field Day's two-field exchange composition. Its
+pinned CE v26 adapter fixes the remote class at `3A` and ARRL section at `OR`,
+and observes the exact `3A OR` exchange. Retained red evidence records
+`contest-fieldday-remote-exchange-format-mismatch`, where XPlat discarded the
+class and composed `5NNOR`. Production simulated Field Day stations now compose
+the class and section with one separating space. Missing or malformed fields,
+other contests, numeric cutting, repeats, correction variants, LID errors, and
+random reply prefixes remain within the partial obligation.
+
 The authored
 `audio.flutter-no-station-noise-invariance-seed-12345` case narrows the first
 flutter acceptance boundary to station-free receiver audio. Its pinned CE

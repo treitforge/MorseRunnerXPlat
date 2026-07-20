@@ -77,6 +77,25 @@ public sealed class SimulationAndScoringTests
         Assert.Equal("DAVID  123", station.ObserveExchangeForParity());
     }
 
+    [Fact]
+    public void FieldDayRemoteExchangeIncludesClassAndSection()
+    {
+        var station = new SimulatedStation(
+            new StationIdentity(
+                "K1ABC",
+                "599",
+                Number: 0,
+                "3A",
+                "OR"),
+            wordsPerMinute: 25,
+            pitchOffsetHz: 0,
+            new LegacyRandom(12_345),
+            OperatorRunMode.Pileup,
+            contestId: new("scFieldDay"));
+
+        Assert.Equal("3A OR", station.ObserveExchangeForParity());
+    }
+
     [Theory]
     [InlineData("CO", "DAVID CO")]
     [InlineData("", "DAVID")]
