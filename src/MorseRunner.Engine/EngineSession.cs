@@ -133,6 +133,7 @@ internal sealed class EngineSession : IAsyncDisposable
         new(StringComparer.Ordinal);
     private Qso[] _completedQsos = [];
     private string? _lastLoggedCall;
+    private bool _parityRandomCheckpointTaken;
     private int _disposed;
 
     public EngineSession(
@@ -352,6 +353,7 @@ internal sealed class EngineSession : IAsyncDisposable
         ArgumentOutOfRangeException.ThrowIfNegative(expectedRevision);
         ArgumentOutOfRangeException.ThrowIfNegative(
             expectedSimulationBlock);
+        cancellationToken.ThrowIfCancellationRequested();
 
         TaskCompletionSource<float> completion =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -367,8 +369,7 @@ internal sealed class EngineSession : IAsyncDisposable
 
         Task completed = await Task.WhenAny(
                 completion.Task,
-                _worker)
-            .WaitAsync(cancellationToken);
+                _worker);
         if (completion.Task.IsCompleted)
         {
             return await completion.Task;
@@ -577,6 +578,16 @@ internal sealed class EngineSession : IAsyncDisposable
             return;
         }
 
+        if (_parityRandomCheckpointTaken)
+        {
+            checkpoint.Completion.TrySetException(
+                new InvalidOperationException(
+                    "The terminal parity random checkpoint was already "
+                    + "observed for this session."));
+            return;
+        }
+
+        _parityRandomCheckpointTaken = true;
         checkpoint.Completion.TrySetResult(_random.NextSingle());
     }
 
