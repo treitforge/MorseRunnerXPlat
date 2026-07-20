@@ -398,7 +398,8 @@
       ],
       "acceptanceStatus": "partial",
       "caseIds": [
-        "contest.exchange-shapes"
+        "contest.exchange-shapes",
+        "engine.contest-specific-cq-tu-station-id-seed-12345"
       ]
     },
     {
@@ -684,7 +685,7 @@
     {"id": "engine.operator-message-completion-timing", "capabilityId": "simulation.runtime-routines", "behavior": "Operator transmission completion and remote interpretation occur only after the rendered CW envelope completes.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "engine.event-driven-poisson-caller-arrivals", "capabilityId": "simulation.runtime-routines", "behavior": "Caller creation follows completed CQ, TU, and MyCall events with CE Poisson and no-stop rules.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "engine.start-silent-empty-enter-cq", "capabilityId": "simulation.runtime-routines", "behavior": "Start is silent and an empty Enter initiates the appropriate CE contest CQ.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.pas", "Contest.pas", "MyStn.pas"], "legacySurfaceSelectors": ["legacy.integration.command-line-path.main-pas.tmainform.run", "legacy.sim.routine.contest.tcontest.sendmsg", "legacy.sim.routine.mystn.tmystation.sendtext"], "acceptanceStatus": "partial", "caseIds": ["engine.start-silent-empty-enter-cq-seed-12345"]},
-    {"id": "engine.contest-specific-cq-tu-and-station-id", "capabilityId": "contest.legacy-implementations", "behavior": "CQ, TU, operator call insertion, and periodic station-ID messages match each CE contest.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "engine.contest-specific-cq-tu-and-station-id", "capabilityId": "contest.legacy-implementations", "behavior": "CQ, TU, operator call insertion, and periodic station-ID messages match each CE contest.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Contest.pas", "MyStn.pas", "CWOPS.pas", "ArrlFd.pas", "CWSST.pas", "ArrlSS.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.settings.stationidrate", "legacy.sim.routine.contest.tcontest.sendmsg", "legacy.sim.routine.contest.tcontest.onmefinishedsending", "legacy.sim.routine.contest.tcontest.onsaveqsocomplete", "legacy.sim.routine.contest.tcontest.onstationidsent", "legacy.sim.routine.mystn.tmystation.sendtext", "legacy.support.contest.routine.cwops.tcwops.sendmsg", "legacy.support.contest.routine.arrlfd.tarrlfieldday.sendmsg", "legacy.support.contest.routine.cwsst.tcwsst.sendmsg", "legacy.support.contest.routine.arrlss.tsweepstakes.sendmsg"], "acceptanceStatus": "partial", "caseIds": ["engine.contest-specific-cq-tu-station-id-seed-12345"]},
     {"id": "contest.full-remote-exchange-formatting", "capabilityId": "contest.legacy-implementations", "behavior": "Remote exchanges retain and format every CE contest identity field, cut number, repeat, and correction variant.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.required-exchange-fields-all-contests", "capabilityId": "contest.legacy-implementations", "behavior": "CWT, SST, Field Day, NAQP, Sweepstakes, WPX, HST, and all other contests include every required CE exchange field.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.allja-acag-truth-column-mapping", "capabilityId": "contest.legacy-implementations", "behavior": "ALLJA and ACAG station truth use the correct CE data columns without serial fallback.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -1727,6 +1728,94 @@
       "failureCode": "engine-start-silent-empty-enter-cq-mismatch",
       "fixture": "tests/parity/fixtures/legacy/engine-start-silent-empty-enter-cq-seed-12345.json",
       "evidence": "tests/parity/evidence/engine-start-silent-empty-enter-cq-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "engine.contest-specific-cq-tu-station-id-seed-12345",
+      "capabilityId": "contest.legacy-implementations",
+      "obligationIds": [
+        "engine.contest-specific-cq-tu-and-station-id"
+      ],
+      "behavior": "For all 12 CE contests, the local operator expands the exact contest CQ text, emits the contest-specific ordinary TU, inserts W7SST at the default third-QSO station-ID boundary only in CE-eligible run modes, and returns to the ordinary TU after the completed ID transmission resets the counter.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v21",
+        "source": "tests/parity/legacy-oracle/v21/LegacyOracle.lpr",
+        "sourceSha256": "ad28dffd69b483df529d47ff9a35730022e69da628d2e4dccb41b11a35983f86",
+        "buildRecipe": "tests/parity/legacy-oracle/v21/build-recipe.json",
+        "buildRecipeSha256": "caeece02e2b28fb723c70b10baa656bbd58c5d4efa9dc857ee9b3e580d5c492a"
+      },
+      "legacySources": [
+        "Ini.pas",
+        "Contest.pas",
+        "MyStn.pas",
+        "CWOPS.pas",
+        "ArrlFd.pas",
+        "CWSST.pas",
+        "ArrlSS.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.ini.setting.settings.stationidrate",
+        "legacy.sim.routine.contest.tcontest.sendmsg",
+        "legacy.sim.routine.contest.tcontest.onmefinishedsending",
+        "legacy.sim.routine.contest.tcontest.onsaveqsocomplete",
+        "legacy.sim.routine.contest.tcontest.onstationidsent",
+        "legacy.sim.routine.mystn.tmystation.sendtext",
+        "legacy.support.contest.routine.cwops.tcwops.sendmsg",
+        "legacy.support.contest.routine.arrlfd.tarrlfieldday.sendmsg",
+        "legacy.support.contest.routine.cwsst.tcwsst.sendmsg",
+        "legacy.support.contest.routine.arrlss.tsweepstakes.sendmsg"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "Each fresh handleless CE runtime uses station W7SST, seed 12345, 25 WPM, 11025 Hz, 512 samples per block, StationIdRate 3, no effects, and no remote stations.",
+        "Every contest uses rmPileup except HST, which uses rmHst and therefore does not insert a periodic station ID under the base TContest rule.",
+        "The oracle drains each complete local envelope and calls TMyStation.Tick so TContest.OnMeFinishedSending applies the CE station-ID reset boundary.",
+        "Before the threshold TU, the oracle records two completed QSOs. It records the third completion after TU composition but before envelope completion, matching Main.ProcessEnter and Log.SaveQso ordering.",
+        "The current XPlat engine has no station-ID counter or StationIdRate session setting, always emits TU, and retains generic CQ TEST text outside CQ WPX."
+      ],
+      "input": {
+        "scenario": "engine.contest-specific-cq-tu-station-id-seed-12345",
+        "stationCall": "W7SST",
+        "seed": 12345,
+        "stationIdRate": 3,
+        "contests": [
+          {"contestId": "scWpx", "runModeId": "rmPileup", "call": "K1ABC", "rst": "5NN", "exchange1": "123", "exchange2": ""},
+          {"contestId": "scCwt", "runModeId": "rmPileup", "call": "K1ABC", "rst": "5NN", "exchange1": "DAVID", "exchange2": "123"},
+          {"contestId": "scFieldDay", "runModeId": "rmPileup", "call": "K1ABC", "rst": "5NN", "exchange1": "3A", "exchange2": "OR"},
+          {"contestId": "scNaQp", "runModeId": "rmPileup", "call": "K1ABC", "rst": "5NN", "exchange1": "ALEX", "exchange2": "ON"},
+          {"contestId": "scHst", "runModeId": "rmHst", "call": "K1ABC", "rst": "5NN", "exchange1": "123", "exchange2": ""},
+          {"contestId": "scCQWW", "runModeId": "rmPileup", "call": "DL1ABC", "rst": "5NN", "exchange1": "", "exchange2": "14"},
+          {"contestId": "scArrlDx", "runModeId": "rmPileup", "call": "DL1ABC", "rst": "5NN", "exchange1": "", "exchange2": "KW"},
+          {"contestId": "scSst", "runModeId": "rmPileup", "call": "K1ABC", "rst": "5NN", "exchange1": "BRUCE", "exchange2": "MA"},
+          {"contestId": "scAllJa", "runModeId": "rmPileup", "call": "JA1ABC", "rst": "5NN", "exchange1": "", "exchange2": "10H"},
+          {"contestId": "scAcag", "runModeId": "rmPileup", "call": "JA1ABC", "rst": "5NN", "exchange1": "", "exchange2": "1002H"},
+          {"contestId": "scIaruHf", "runModeId": "rmPileup", "call": "DL1ABC", "rst": "5NN", "exchange1": "", "exchange2": "28"},
+          {"contestId": "scArrlSS", "runModeId": "rmPileup", "call": "K1ABC", "rst": "5NN", "exchange1": "123 A", "exchange2": "72 OR"}
+        ]
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatContestOperatorMessagesTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 13,
+        "observedValuesSha256": "cd22c100e1aee8f55222b6b7602b3f754cda9c00cb240011245f8e9f09475f79",
+        "firstDivergence": "The zero-based first mismatch is ordinal 1, contest[0]. CQ WPX and the ordinary TU already match, but XPlat has no completed-QSO station-ID counter and emits TU instead of CE's threshold TU W7SST.",
+        "functionalDivergenceCode": "engine-contest-specific-cq-tu-station-id-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "engine-contest-specific-cq-tu-station-id-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/engine-contest-specific-cq-tu-station-id-seed-12345.json",
+      "evidence": "tests/parity/evidence/engine-contest-specific-cq-tu-station-id-seed-12345.baseline.json",
       "firstGreenCommit": null
     },
     {

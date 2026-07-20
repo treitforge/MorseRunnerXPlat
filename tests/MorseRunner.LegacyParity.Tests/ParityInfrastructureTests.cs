@@ -77,6 +77,7 @@ public sealed class ParityInfrastructureTests
                 "audio.sst-farnsworth-envelope-timing",
                 "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
                 "contest.exchange-shapes",
+                "engine.contest-specific-cq-tu-station-id-seed-12345",
                 "engine.start-silent-empty-enter-cq-seed-12345",
                 "ux.enter-esm-partial-call-message-selection-live",
             ],
@@ -98,6 +99,7 @@ public sealed class ParityInfrastructureTests
                 "audio.sst-farnsworth-envelope-timing",
                 "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
                 "contest.exchange-shapes",
+                "engine.contest-specific-cq-tu-station-id-seed-12345",
                 "engine.start-silent-empty-enter-cq-seed-12345",
                 "ux.enter-esm-partial-call-message-selection-live",
             ],
@@ -179,6 +181,11 @@ public sealed class ParityInfrastructureTests
             ParityAcceptanceRegistry
                 .Get(
                     "engine.start-silent-empty-enter-cq-seed-12345")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatContestOperatorMessagesTarget>(
+            ParityAcceptanceRegistry
+                .Get(
+                    "engine.contest-specific-cq-tu-station-id-seed-12345")
                 .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatEnterEsmTarget>(
             ParityAcceptanceRegistry

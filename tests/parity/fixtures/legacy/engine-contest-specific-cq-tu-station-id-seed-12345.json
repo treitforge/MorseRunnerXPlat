@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 2,
+  "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+  "parityId": "engine.contest-specific-cq-tu-station-id-seed-12345",
+  "referenceDefinitionSha256": "663adf3bf230161abb923cf8b6651d394af1b99eab05efeafb696cb29992da23",
+  "oracle": "tests/parity/legacy-oracle/v21/LegacyOracle.lpr",
+  "legacyOracleVersionId": "legacy-oracle-v21",
+  "oracleSourceSha256": "ad28dffd69b483df529d47ff9a35730022e69da628d2e4dccb41b11a35983f86",
+  "oracleBuildRecipeSha256": "caeece02e2b28fb723c70b10baa656bbd58c5d4efa9dc857ee9b3e580d5c492a",
+  "oracleExecutableSha256": "44cacc632d2d085eb40e0e612da37b450840032ae1b21d66835e121d4edc87df",
+  "toolchain": {
+    "lazarus": "4.6",
+    "fpc": "3.2.2",
+    "target": "x86_64-win64",
+    "compilerSha256": "8ba500bbb84bd7100c169f151082b1461e9241e4491e0f6f38f2376bec49c319",
+    "backendCompilerSha256": "1f33c43b890e2d02e6b07c88401fc47cfcac48e003a29bb58b2e1220ac6a3e22",
+    "lazbuildSha256": "9554983fff43cfe5b5cef9a8374a37ff8a152e2de9c40c5750e723501f6edfd1",
+    "fingerprintSha256": "3eb50f2aac396bac975d8f628ad44421318d05179c81a98524802bcf04c8afee"
+  },
+  "values": [
+    "configuration|scenario=engine.contest-specific-cq-tu-station-id-seed-12345|station=W7SST|seed=12345|station-id-rate=3|contest-count=12",
+    "contest[0]|id=scWpx|run-mode=rmPileup|cq=CQ W7SST TEST|tu-before=TU|tu-threshold=TU W7SST|tu-after-reset=TU",
+    "contest[1]|id=scCwt|run-mode=rmPileup|cq=CQ CWT W7SST|tu-before=TU|tu-threshold=TU W7SST|tu-after-reset=TU",
+    "contest[2]|id=scFieldDay|run-mode=rmPileup|cq=CQ FD W7SST|tu-before=TU|tu-threshold=TU W7SST|tu-after-reset=TU",
+    "contest[3]|id=scNaQp|run-mode=rmPileup|cq=CQ W7SST TEST|tu-before=TU|tu-threshold=TU W7SST|tu-after-reset=TU",
+    "contest[4]|id=scHst|run-mode=rmHst|cq=CQ W7SST TEST|tu-before=TU|tu-threshold=TU|tu-after-reset=TU",
+    "contest[5]|id=scCQWW|run-mode=rmPileup|cq=CQ W7SST TEST|tu-before=TU|tu-threshold=TU W7SST|tu-after-reset=TU",
+    "contest[6]|id=scArrlDx|run-mode=rmPileup|cq=CQ W7SST TEST|tu-before=TU|tu-threshold=TU W7SST|tu-after-reset=TU",
+    "contest[7]|id=scSst|run-mode=rmPileup|cq=CQ SST W7SST|tu-before=TU W7SST|tu-threshold=TU W7SST|tu-after-reset=TU W7SST",
+    "contest[8]|id=scAllJa|run-mode=rmPileup|cq=CQ W7SST TEST|tu-before=TU|tu-threshold=TU W7SST|tu-after-reset=TU",
+    "contest[9]|id=scAcag|run-mode=rmPileup|cq=CQ W7SST TEST|tu-before=TU|tu-threshold=TU W7SST|tu-after-reset=TU",
+    "contest[10]|id=scIaruHf|run-mode=rmPileup|cq=CQ W7SST TEST|tu-before=TU|tu-threshold=TU W7SST|tu-after-reset=TU",
+    "contest[11]|id=scArrlSS|run-mode=rmPileup|cq=CQ SS W7SST|tu-before=TU|tu-threshold=TU W7SST|tu-after-reset=TU"
+  ]
+}
