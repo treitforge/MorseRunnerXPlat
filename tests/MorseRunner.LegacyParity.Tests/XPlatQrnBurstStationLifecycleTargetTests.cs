@@ -117,7 +117,7 @@ public sealed class XPlatQrnBurstStationLifecycleTargetTests
 
     [Fact]
     [Trait("Category", "ParityInfrastructure")]
-    public async Task CurrentProductionIsRedOnlyForMissingBurstBehavior()
+    public async Task CurrentProductionMatchesPinnedBurstBehavior()
     {
         ParityCertificationCase burstDefinition =
             ParityCertificationCase.LoadForInspection(
@@ -137,29 +137,15 @@ public sealed class XPlatQrnBurstStationLifecycleTargetTests
                     sparseDefinition.Scenario,
                     TestContext.Current.CancellationToken);
 
-        Assert.Equal(ParityTargetOutcome.Failed, burst.Outcome);
-        Assert.Equal(
-            XPlatQrnBurstStationLifecycleTarget
-                .FunctionalDivergenceCode,
-            burst.FailureCode);
+        Assert.Equal(ParityTargetOutcome.Passed, burst.Outcome);
+        Assert.Null(burst.FailureCode);
         Assert.Equal(
             XPlatQrnBurstStationLifecycleTarget.EvidenceSource,
             burst.EvidenceSource);
         Assert.Equal(
-            burstDefinition.Scenario.ExpectedValues.Take(3),
-            burst.Values.Take(3),
+            burstDefinition.Scenario.ExpectedValues,
+            burst.Values,
             StringComparer.Ordinal);
-        Assert.Equal(
-            "station-lifecycle"
-                + "|after-block1-count=0"
-                + "|after-block1-class=none"
-                + "|after-block1-state=none"
-                + "|after-block1-envelope-samples=0"
-                + "|after-block2-count=0",
-            burst.Values[3]);
-        Assert.NotEqual(
-            burstDefinition.Scenario.ExpectedValues[3],
-            burst.Values[3]);
         Assert.Equal(ParityTargetOutcome.Passed, sparse.Outcome);
         Assert.Null(sparse.FailureCode);
     }
@@ -192,7 +178,7 @@ public sealed class XPlatQrnBurstStationLifecycleTargetTests
             first[6],
             StringComparison.Ordinal);
         Assert.Contains(
-            "|after-block1-count=0|",
+            "|after-block1-count=1|",
             first[3],
             StringComparison.Ordinal);
     }

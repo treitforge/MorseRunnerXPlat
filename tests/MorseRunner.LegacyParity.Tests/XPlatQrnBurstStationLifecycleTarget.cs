@@ -22,7 +22,9 @@ public sealed class XPlatQrnBurstStationLifecycleTarget :
         + ".TakeNextSessionRandomSingleForParityAsync"
         + "+MorseRunner.Engine.MorseRunnerEngine"
         + ".ObserveQrnBurstForParityAsync"
+        + "+MorseRunner.Engine.MorseRunnerEngine.SubscribeAsync"
         + "+MorseRunner.Engine.QrnBurstParityObservation"
+        + "+MorseRunner.Engine.QrnBurstStation"
         + "+MorseRunner.Dsp.LegacyReceiverNoiseGenerator"
         + "+MorseRunner.Dsp.LegacyRandom";
 
@@ -393,6 +395,12 @@ public sealed class XPlatQrnBurstStationLifecycleTarget :
 
         SessionSnapshot terminalSnapshot =
             afterBlock2 ?? afterBlock1;
+        await RequireNoPublicCallerEventsAsync(
+            engine,
+            handle.SessionId,
+            terminalSnapshot,
+            requestedBlockCount,
+            cancellationToken);
         CapturedAudioBlock[] blocks =
             sink.RequireCompleteCapture(requestedBlockCount);
         float terminalRandom =
@@ -859,6 +867,7 @@ public sealed class XPlatQrnBurstStationLifecycleTarget :
             || snapshot.SimulationBlock != expectedBlock
             || snapshot.RenderedSamples
                 != (long)expectedBlock * input.BlockSize
+            || snapshot.LastCaller is not null
             || snapshot.ActiveStations is not { Count: 0 })
         {
             throw new InvalidOperationException(
@@ -866,6 +875,72 @@ public sealed class XPlatQrnBurstStationLifecycleTarget :
                 + "framing or exposed internal QRN as a public "
                 + "caller.");
         }
+    }
+
+    private static async Task RequireNoPublicCallerEventsAsync(
+        MorseRunnerEngine engine,
+        SessionId sessionId,
+        SessionSnapshot expectedSnapshot,
+        int expectedAdvanceCount,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(engine);
+        var observedKinds = new List<SessionEventKind>(
+            5 + expectedAdvanceCount);
+        await foreach (SessionUpdate update in engine.SubscribeAsync(
+                           new(sessionId, AfterSequence: 0),
+                           cancellationToken))
+        {
+            if (update.Event is SessionEvent sessionEvent)
+            {
+                observedKinds.Add(sessionEvent.Kind);
+                if (sessionEvent.Kind is
+                    SessionEventKind.CallerJoined
+                    or SessionEventKind.StationReplyStarted
+                    or SessionEventKind.StationReplyCompleted
+                    or SessionEventKind.CallerLeft)
+                {
+                    throw new InvalidOperationException(
+                        "The internal XPlat QRN burst leaked a public "
+                        + "caller event.");
+                }
+            }
+
+            if (update.Snapshot is SessionSnapshot snapshot)
+            {
+                int expectedEventCount = 5 + expectedAdvanceCount;
+                bool hasExpectedPrefix =
+                    observedKinds.Count == expectedEventCount
+                    && observedKinds[0] == SessionEventKind.Created
+                    && observedKinds[1] == SessionEventKind.Ready
+                    && observedKinds[2] == SessionEventKind.Started;
+                for (int index = 3;
+                     hasExpectedPrefix
+                        && index < observedKinds.Count;
+                     index++)
+                {
+                    hasExpectedPrefix =
+                        observedKinds[index]
+                            == SessionEventKind.CommandApplied;
+                }
+
+                if (!hasExpectedPrefix
+                    || snapshot.Revision != expectedSnapshot.Revision
+                    || snapshot.SimulationBlock
+                        != expectedSnapshot.SimulationBlock)
+                {
+                    throw new InvalidOperationException(
+                        "The XPlat QRN burst public-event replay had "
+                        + "invalid framing.");
+                }
+
+                return;
+            }
+        }
+
+        throw new InvalidOperationException(
+            "The XPlat QRN burst event-isolation check did not "
+            + "receive its terminal snapshot.");
     }
 
     private static async ValueTask<QrnBurstProbe>

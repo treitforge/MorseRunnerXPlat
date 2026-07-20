@@ -2660,9 +2660,9 @@ trigger after the background loop. The prepared complex block enters both
 receiver filters before modulation and AGC. The old effect-specific random
 source and normalized post-AGC continuous QRN addition have been removed.
 This path allocates no memory per block and preserves the clean ordinal 1024
-and QRN ordinal 1543 terminal checkpoints. A true burst trigger is consumed
-but is not yet converted into an internal QRN station; that behavior remains
-the next required QRN tranche.
+and QRN ordinal 1543 terminal checkpoints. A true burst trigger now eagerly
+constructs an internal pooled QRN station from the same authoritative random
+stream before any receiver source is mixed.
 
 This case covers first-block background trigger probability, replacement
 semantics, source-order draw ownership, final receiver output, the no-burst
@@ -2717,14 +2717,49 @@ automatic timing and stale or mismatched boundaries, and neither advances
 simulation nor consumes random values. It is not part of
 `IMorseRunnerClient`, snapshots, gRPC, or any production UX contract.
 
-Before burst production exists, the guarded internal seam returns an explicit
-empty observation. Rows zero through two still reproduce CE's background and
-eager-constructor source-order replay. The first functional divergence is row
-three, `station-lifecycle`, with code
-`audio-qrn-burst-station-lifecycle-mismatch`. Later rows expose the missing
-same-block burst audio, skipped constructor draws, wrong block-two stream
-position, and terminal checkpoints. No retained evidence is created during
-authoring. Evidence capture and promotion are separate reviewed steps.
+The retained preimplementation evidence records an explicit empty internal
+observation and first divergence at row three, `station-lifecycle`, with code
+`audio-qrn-burst-station-lifecycle-mismatch`. Production now owns 22
+preallocated `QrnBurstStation` instances. The bound follows from one possible
+creation per block and the maximum
+`Round(11025 / 512 * Single(Random)) = 22` block duration. Every activation
+consumes the binary32 duration argument, the binary64 amplitude expression
+with one final binary32 cast, then all envelope trigger and replacement draws
+eagerly. Reused active envelope samples are cleared before decisions are
+applied, so pooled storage has the same zero initialization as CE
+`SetLength`.
+
+The session keeps one chronological internal receiver-source order for
+callers and QRN bursts. Caller creation reserves capacity for all 22 possible
+bursts, so a burst trigger, mix, and release do not allocate. A new burst is
+appended only after its eager constructor completes, mixes into the real
+complex component in its trigger block with zero intrinsic BFO, and advances
+one complete compatibility block even when local non-QSK audio later hides
+the receiver. The full envelope length and sending state remain observable
+through the final mix. The post-render reverse cleanup releases the pooled
+station only after its completed block reaches the audio sink, matching CE's
+`GetBlock` followed by `Tick` boundary. Public caller snapshots and caller
+events continue to use only the normal station collection.
+
+The production target now matches all nine pinned CE rows: the internal count
+and retained envelope after block one, removal after block two, both exact
+receiver hashes, the aggregate hash, and terminal ordinals 2576 and 4117.
+The retained red artifacts remain immutable evidence of the former missing
+behavior.
+
+The incremental QRN hot-path gate uses a preallocated 22-station test harness
+with the production burst primitive and stable `List.RemoveAt` ordering. After
+256 warmup blocks, 4096 measured blocks each begin with 21 maximum-duration
+bursts, activate the twenty-second from seed 1989, mix all 22 into one
+512-sample complex block, and release the completed oldest burst. The Release
+gate requires zero measured allocation, p99 below 11.6 ms, and the p99.9
+nearest-rank normal maximum below 23.2 ms. It retains the raw maximum for
+audit without treating an operating-system deschedule as render work.
+Opt-in evidence capture records the clean source revision and tree, hardware,
+OS, runtime, complete sorted tick distribution, thresholds, and result after
+the measured region. This scoped gate measures the QRN increment only. It
+does not replace the pending release-wide all-effects and 30-minute underrun
+gates in Section 21.
 
 This vector certifies one successful eager construction, exact sparse
 envelope, same-block audibility, two-block lifetime, destruction, and
@@ -2810,16 +2845,18 @@ Current Phase 3 implementation inventory, not parity certification:
   ordered session events with revision and simulation-block metadata. Seeded
   tests verify caller sets, station event traces, true-exchange logging, NIL
   outcomes, and deterministic audio hashes.
-- QRN sparse background impulses now use the CE shared-stream draw order,
-  real-component replacement semantics, and pre-filter receiver stage.
-  Triggered QRN burst-station construction and lifetime remain pending. QSK
-  and LID paths still use deterministic XPlat behavior rather than certified
-  CE behavior. Setting carriage for QSB, flutter, and QRM exists, but their
-  incorrect session-global receiver applications have been removed and the CE
-  station construction and application paths are not implemented yet. The
-  audit found further differences in audio ordering, signal models, remaining
-  random-source ownership, and cross-feature draw ordering, so these paths
-  are not CE-equivalent yet.
+- QRN sparse background impulses and the pinned seed-1903 two-block burst now
+  use the CE shared-stream draw order, real-component replacement semantics,
+  pre-filter receiver stage, eager burst construction, same-block mixing, and
+  post-render lifetime boundary. Other burst durations, overlapping bursts,
+  caller and QRM interaction, runtime QRN toggling, and RIT rotation remain
+  uncertified. QSK and LID paths still use deterministic XPlat behavior rather
+  than certified CE behavior. Setting carriage for QSB, flutter, and QRM
+  exists, but their incorrect session-global receiver applications have been
+  removed and the CE station construction and application paths are not
+  implemented yet. The audit found further differences in audio ordering,
+  signal models, remaining random-source ownership, and cross-feature draw
+  ordering, so these paths are not CE-equivalent yet.
 - Immutable QSO records, score and multiplier behavior, radio controls,
   versioned settings, one-way INI import, atomic persistence, and
   platform-specific application paths are implemented.

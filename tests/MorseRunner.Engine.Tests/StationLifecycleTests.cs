@@ -153,6 +153,105 @@ public sealed class StationLifecycleTests
         Assert.Contains("|", replyEvent.Detail);
     }
 
+    [Fact]
+    public async Task RetainedCompletedCallersLeaveCapacityForQrnBursts()
+    {
+        await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 1_903) with
+            {
+                RunModeId = new("rmSingle"),
+                Activity = 9,
+                Qrn = true,
+            },
+            TestContext.Current.CancellationToken);
+        await StartAndAdvanceAsync(engine, handle.SessionId, blocks: 4);
+
+        int retainedCallerCount =
+            QrnBurstStation.MaximumConcurrentStations + 1;
+        for (int callerIndex = 0;
+             callerIndex < retainedCallerCount;
+             callerIndex++)
+        {
+            SessionSnapshot beforeExchange =
+                engine.GetSnapshot(handle.SessionId);
+            ActiveStationSnapshot caller = Assert.Single(
+                beforeExchange.ActiveStations
+                    ?.Where(
+                        station =>
+                            station.OperatorState
+                                is not OperatorState.Done
+                                and not OperatorState.Failed)
+                ?? []);
+
+            await SendAsync(
+                engine,
+                handle.SessionId,
+                OperatorIntent.HisCall,
+                caller.Callsign);
+            await SendAsync(
+                engine,
+                handle.SessionId,
+                OperatorIntent.Exchange,
+                caller.Callsign,
+                caller.TrueRst,
+                caller.TrueExchange2);
+            await SendAsync(
+                engine,
+                handle.SessionId,
+                OperatorIntent.ThankYou,
+                caller.Callsign);
+
+            ActiveStationSnapshot completed =
+                Assert.Single(
+                    engine.GetSnapshot(handle.SessionId)
+                        .ActiveStations
+                        ?.Where(
+                            station =>
+                                station.Callsign == caller.Callsign)
+                    ?? []);
+            Assert.Equal(OperatorState.Done, completed.OperatorState);
+            if (callerIndex + 1 < retainedCallerCount)
+            {
+                await AdvanceAsync(
+                    engine,
+                    handle.SessionId,
+                    blocks: 4);
+            }
+        }
+
+        SessionSnapshot retained = engine.GetSnapshot(handle.SessionId);
+        Assert.Equal(retainedCallerCount, retained.ActiveStations?.Count);
+        Assert.All(
+            retained.ActiveStations ?? [],
+            station => Assert.Equal(
+                OperatorState.Done,
+                station.OperatorState));
+        Assert.Equal(
+            retainedCallerCount,
+            retained.ActiveStations
+                ?.Select(station => station.Callsign)
+                .Distinct(StringComparer.Ordinal)
+                .Count());
+        Assert.Equal(0, retained.QsoCount);
+        Assert.Empty(engine.GetCompletedQsos(handle.SessionId));
+        Assert.Equal(SessionState.Running, retained.State);
+
+        await AdvanceAsync(engine, handle.SessionId, blocks: 1);
+        SessionSnapshot burstSnapshot =
+            engine.GetSnapshot(handle.SessionId);
+        QrnBurstParityObservation observation =
+            await engine.ObserveQrnBurstForParityAsync(
+                handle.SessionId,
+                burstSnapshot.Revision,
+                burstSnapshot.SimulationBlock,
+                TestContext.Current.CancellationToken);
+
+        Assert.Equal(93, burstSnapshot.SimulationBlock);
+        Assert.True(observation.ActiveCount > 0);
+        Assert.Equal(SessionState.Running, burstSnapshot.State);
+    }
+
     [Theory]
     [InlineData("scWpx")]
     [InlineData("scCwt")]
@@ -280,6 +379,14 @@ public sealed class StationLifecycleTests
                     sessionId,
                     TestClient),
                 TestContext.Current.CancellationToken)).Accepted);
+        await AdvanceAsync(engine, sessionId, blocks);
+    }
+
+    private static async Task AdvanceAsync(
+        MorseRunnerEngine engine,
+        SessionId sessionId,
+        int blocks)
+    {
         Assert.True(
             (await engine.ExecuteAsync(
                 new AdvanceSimulationCommand(
