@@ -2477,8 +2477,47 @@ components; station and operator mixing; QRM, QRN, QSB, flutter, QSK, or RIT;
 runtime bandwidth changes; PCM or WAV conversion; recording; physical
 devices; or audio-sink failure behavior. Those obligations remain pending
 until separate live cases prove them. Session-wide shared random-stream
-ownership and cross-feature draw order also remain pending under
+ownership is now partially covered by the receiver-hiss checkpoint case below.
+Cross-feature draw order remains pending under
 `audio.single-seeded-random-stream`.
+
+The authored
+`audio.receiver-hiss-shared-random-checkpoint-seed-12345` case binds the base
+receiver hiss to the one CE process random stream. Its pinned v13 CE adapter
+creates an actual CQ WPX `TContest.GetAudio` runtime in `rmStop` with seed
+12345, 11025 Hz audio, one 512-sample complete block, 500 Hz bandwidth, 600 Hz
+pitch, no remote or operator transmission, and QSB, flutter, QRM, QRN, QSK,
+and LIDs disabled. It executes the real handleless `MainForm.SetBw` path,
+resets `RandSeed` immediately before audio framing, verifies five actual
+one-`Single` zero startup requests, and captures the first complete receiver
+block.
+
+CE consumes two consecutive `Random` values for each raw complex hiss sample.
+The complete block therefore consumes exactly 1024 values before filtering,
+modulation, AGC, and normalization. The oracle then makes one final `Random`
+call. It verifies that this zero-based ordinal 1024 came from raw value
+`0x2c80d4e4` and records its rounded binary32 bits as `3e320354`. The normalized
+receiver block has raw-`Single` SHA-256
+`6b468ab13ccc1accb6ec587b8a51d27ca23eb80b20bce034106e547ad3565378`.
+
+The XPlat adapter runs the equivalent production `MorseRunnerEngine` and
+`EngineSession` scenario with automatic timing disabled, captures the block
+through `IAudioSink`, and validates the final public `SessionSnapshot`. As its
+final engine operation, it requests exactly one value from the authoritative
+session random source through an internal parity-only session-loop work item.
+The request is guarded by the observed revision and simulation block and does
+not add a Domain, client, Protobuf, or gRPC contract. The authored case is
+legacy-green/XPlat-red with divergence code
+`audio-receiver-hiss-shared-random-checkpoint-mismatch`: XPlat currently emits
+the exact CE block from an effect-specific stream but returns checkpoint bits
+`3f6dfb52` from an untouched authoritative session stream. The first
+divergence is row 2, `shared-random-checkpoint`.
+
+This narrow vector proves only ownership and draw order for receiver hiss in
+the first complete block. It does not cover later blocks or ordering across
+QRN, QRM, station construction, QSB, flutter, call selection, or exchanges.
+Those require separate checkpointed live vectors, so
+`audio.single-seeded-random-stream` remains partial.
 
 The authored
 `audio.qsb-no-station-noise-invariance-seed-12345` case narrows the first QSB

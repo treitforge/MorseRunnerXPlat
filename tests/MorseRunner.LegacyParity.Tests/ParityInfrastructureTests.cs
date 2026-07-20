@@ -68,6 +68,7 @@ public sealed class ParityInfrastructureTests
                 "audio.qrm-no-trigger-invariance-seed-12345",
                 "audio.qsb-no-station-noise-invariance-seed-12345",
                 "audio.realistic-hiss-noise-floor",
+                "audio.receiver-hiss-shared-random-checkpoint-seed-12345",
                 "audio.sst-farnsworth-envelope-timing",
                 "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
                 "contest.exchange-shapes",
@@ -82,6 +83,7 @@ public sealed class ParityInfrastructureTests
                 "audio.qrm-no-trigger-invariance-seed-12345",
                 "audio.qsb-no-station-noise-invariance-seed-12345",
                 "audio.realistic-hiss-noise-floor",
+                "audio.receiver-hiss-shared-random-checkpoint-seed-12345",
                 "audio.sst-farnsworth-envelope-timing",
                 "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
                 "contest.exchange-shapes",
@@ -116,6 +118,12 @@ public sealed class ParityInfrastructureTests
         Assert.IsType<XPlatRealisticHissNoiseFloorTarget>(
             ParityAcceptanceRegistry
                 .Get("audio.realistic-hiss-noise-floor")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatReceiverHissSharedRandomCheckpointTarget>(
+            ParityAcceptanceRegistry
+                .Get(
+                    "audio.receiver-hiss-shared-random-checkpoint"
+                    + "-seed-12345")
                 .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatSstFarnsworthTarget>(
             ParityAcceptanceRegistry

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+  "parityId": "audio.receiver-hiss-shared-random-checkpoint-seed-12345",
+  "referenceDefinitionSha256": "663adf3bf230161abb923cf8b6651d394af1b99eab05efeafb696cb29992da23",
+  "oracle": "tests/parity/legacy-oracle/v13/LegacyOracle.lpr",
+  "legacyOracleVersionId": "legacy-oracle-v13",
+  "oracleSourceSha256": "b1d3606bbfbdb43107187f049e80f48a99b42aaf538e0265769bdcb1cefe4f87",
+  "oracleBuildRecipeSha256": "1e74ab93082541630b0a04b6c1553510879e72f9e55d7efaa87e9f4b29dc19a2",
+  "oracleExecutableSha256": "95a47a2c248b89c070bc837d4359286a9964e7852728523734e9d10dfd35fbbd",
+  "toolchain": {
+    "lazarus": "4.6",
+    "fpc": "3.2.2",
+    "target": "x86_64-win64",
+    "compilerSha256": "8ba500bbb84bd7100c169f151082b1461e9241e4491e0f6f38f2376bec49c319",
+    "backendCompilerSha256": "1f33c43b890e2d02e6b07c88401fc47cfcac48e003a29bb58b2e1220ac6a3e22",
+    "lazbuildSha256": "9554983fff43cfe5b5cef9a8374a37ff8a152e2de9c40c5750e723501f6edfd1",
+    "fingerprintSha256": "3eb50f2aac396bac975d8f628ad44421318d05179c81a98524802bcf04c8afee"
+  },
+  "values": [
+    "configuration|sample-rate=11025|block-size=512|seed=12345|bandwidth-hz=500|pitch-hz=600|startup-request-count=5|complete-block-count=1|hiss-random-draw-count=1024|random-checkpoint-ordinal=1024|probe-sample-indexes=0,1,2,3,310,511|run-mode=rmStop|qsb=false|flutter=false|qrm=false|qrn=false|qsk=false|lids=false|operator-transmission=false|normal-dx-stations=false|normalization=ce-single-div-32768-clamp-unit",
+    "receiver-block[0]|sample-count=512|probe-bits=00000000,00000000,00000000,00000000,b864f231,3b26ef5d|float-sha256=6b468ab13ccc1accb6ec587b8a51d27ca23eb80b20bce034106e547ad3565378",
+    "shared-random-checkpoint|draw-count-before-checkpoint=1024|ordinal=1024|single-bits=3e320354"
+  ]
+}

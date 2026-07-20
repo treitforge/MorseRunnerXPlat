@@ -75,6 +75,22 @@ public static class ParityAcceptanceRegistry
                     static () => new LegacyOracleTarget(),
                     static () =>
                         new XPlatRealisticHissNoiseFloorTarget()),
+            [XPlatReceiverHissSharedRandomCheckpointTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatReceiverHissSharedRandomCheckpointTarget
+                        .ParityId,
+                    "LegacyOracleTarget",
+                    nameof(
+                        XPlatReceiverHissSharedRandomCheckpointTarget),
+                    XPlatReceiverHissSharedRandomCheckpointTarget
+                        .FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = ReceiverHissSharedRandomCheckpointInput
+                            .Parse(scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () =>
+                        new
+                            XPlatReceiverHissSharedRandomCheckpointTarget()),
             [XPlatSstFarnsworthTarget.ParityId] =
                 new ParityAcceptanceRegistration(
                     XPlatSstFarnsworthTarget.ParityId,

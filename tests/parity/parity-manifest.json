@@ -460,7 +460,8 @@
         "audio.deterministic-random-primitives-seed-12345",
         "audio.flutter-no-station-noise-invariance-seed-12345",
         "audio.qrm-no-trigger-invariance-seed-12345",
-        "audio.qsb-no-station-noise-invariance-seed-12345"
+        "audio.qsb-no-station-noise-invariance-seed-12345",
+        "audio.receiver-hiss-shared-random-checkpoint-seed-12345"
       ]
     },
     {
@@ -664,7 +665,7 @@
     {"id": "audio.bfo-phase-state-and-reset", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Station BFO phase advances and resets at the same CE transmission boundaries.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.sst-farnsworth-timing", "capabilityId": "audio-dsp.legacy-processing", "behavior": "The production keyer primitive used by SST supports independent character and spacing speeds with CE-equivalent marker encoding, sample counts, default ramps, and block padding.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["VCL/FarnsKeyer.pas", "VCL/MorseKey.pas"], "legacySurfaceSelectors": ["legacy.vcl.dsp.type.farnskeyer.tfarnskeyer", "legacy.vcl.dsp.routine.farnskeyer.tfarnskeyer.create", "legacy.vcl.dsp.routine.farnskeyer.tfarnskeyer.encode", "legacy.vcl.dsp.routine.farnskeyer.tfarnskeyer.getenvelope", "legacy.vcl.dsp.routine.farnskeyer.tfarnskeyer.loadmorsetable", "legacy.vcl.dsp.routine.morsekey.tkeyer.create", "legacy.vcl.dsp.routine.morsekey.tkeyer.setrisetime", "legacy.vcl.dsp.routine.morsekey.tkeyer.setwpm", "legacy.vcl.dsp.routine.morsekey.tkeyer.blackmanharriskernel", "legacy.vcl.dsp.routine.morsekey.tkeyer.blackmanharrisstepresponse", "legacy.vcl.dsp.routine.morsekey.tkeyer.makeramp"], "acceptanceStatus": "partial", "caseIds": ["audio.sst-farnsworth-envelope-timing"]},
     {"id": "audio.sst-farnsworth-session-wiring", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Selecting SST carries the configured sending and character speeds through settings, session state, station message sequencing, and the production renderer so operator audio uses CE Farnsworth timing.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "audio.single-seeded-random-stream", "capabilityId": "simulation.legacy-effects", "behavior": "One seeded session random stream reproduces CE ownership and cross-feature draw order.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.single-seeded-random-stream", "capabilityId": "simulation.legacy-effects", "behavior": "One seeded session random stream reproduces CE ownership and cross-feature draw order.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio"], "acceptanceStatus": "partial", "caseIds": ["audio.receiver-hiss-shared-random-checkpoint-seed-12345"]},
     {"id": "audio.legacy-block-size-configurations", "capabilityId": "audio-dsp.legacy-processing", "behavior": "CE block sizes from 128 through 2048 are supported or proven import-equivalent with matching timing.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.startup-warmup-and-filter-timing", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Startup warmup requests, block numbering, prefill, and alternating-filter swap timing match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "Main.pas", "VCL/MovAvg.pas", "VCL/SndCustm.pas", "VCL/SndOut.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.create", "legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.contest.tcontest.swapfilters", "legacy.vcl.dsp.routine.movavg.tmovingaverage.filter", "legacy.vcl.dsp.routine.movavg.tmovingaverage.dofilter", "legacy.vcl.dsp.routine.movavg.tmovingaverage.reset", "legacy.vcl.adapter.property.sndout.talsoundout.bufcount", "legacy.vcl.adapter.routine.sndout.talsoundout.start", "legacy.vcl.adapter.routine.sndout.talsoundout.bufferdone"], "acceptanceStatus": "partial", "caseIds": ["audio.startup-warmup-and-filter-timing-fresh-seed-12345"]},
     {"id": "audio.realistic-hiss-and-noise-floor", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Base complex hiss and receiver noise floor match CE level, spectrum, random draws, and processing order.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "Main.pas"], "legacySurfaceSelectors": ["legacy.main.handler.combobox2change", "legacy.sim.routine.contest.tcontest.create", "legacy.sim.routine.contest.tcontest.getaudio"], "acceptanceStatus": "partial", "caseIds": ["audio.realistic-hiss-noise-floor"]},
@@ -1190,6 +1191,81 @@
       "failureCode": "audio-realistic-hiss-noise-floor-mismatch",
       "fixture": "tests/parity/fixtures/legacy/audio-realistic-hiss-noise-floor.json",
       "evidence": "tests/parity/evidence/audio-realistic-hiss-noise-floor.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "audio.receiver-hiss-shared-random-checkpoint-seed-12345",
+      "capabilityId": "simulation.legacy-effects",
+      "obligationIds": [
+        "audio.single-seeded-random-stream"
+      ],
+      "behavior": "For the fixed station-free CE receiver vector, the first complete TContest.GetAudio block consumes exactly 1024 consecutive values from the one seeded process random stream, two values for every complex hiss sample. The immediately following random value is ordinal 1024 with CE binary32 bits 3e320354. The XPlat production engine must emit the identical receiver block through IAudioSink and expose the same final checkpoint from its authoritative session random stream.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v13",
+        "source": "tests/parity/legacy-oracle/v13/LegacyOracle.lpr",
+        "sourceSha256": "b1d3606bbfbdb43107187f049e80f48a99b42aaf538e0265769bdcb1cefe4f87",
+        "buildRecipe": "tests/parity/legacy-oracle/v13/build-recipe.json",
+        "buildRecipeSha256": "1e74ab93082541630b0a04b6c1553510879e72f9e55d7efaa87e9f4b29dc19a2"
+      },
+      "legacySources": [
+        "Contest.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.sim.routine.contest.tcontest.getaudio"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The CE runtime uses CQ WPX, rmStop, seed 12345, 11025 Hz, 512 samples per complete block, 500 Hz bandwidth, 600 Hz pitch, no normal DX stations, no operator transmission, and QSB, flutter, QRM, QRN, QSK, and LIDs disabled.",
+        "After contest construction, the CE adapter executes the real MainForm.SetBw path with handleless controls and resets RandSeed to 12345 immediately before its first GetAudio request.",
+        "The CE adapter executes and verifies five real one-Single zero startup requests through TContest.GetAudio without resetting RandSeed, then captures exactly one complete receiver block through the real TContest.GetAudio path.",
+        "CE generates each of the block's 512 raw complex hiss samples with two consecutive Random calls before filtering, modulation, AGC, and normalization. The adapter then performs exactly one final Random call, verifies its underlying source value is 0x2c80d4e4, and records the rounded Single bits 3e320354 at zero-based ordinal 1024.",
+        "The XPlat adapter creates a production MorseRunnerEngine and EngineSession with automatic timing disabled, starts and immediately aborts the rmStop session, verifies no audio before one explicit simulation-block advance and zero active stations, and captures the complete block through the actual IAudioSink.",
+        "After validating the final public SessionSnapshot, the XPlat adapter makes one final internal parity-only checkpoint request on the session loop, guarded by the observed revision and simulation block. The checkpoint draws exactly one value from the authoritative session random source and does not alter public Domain, client, or transport contracts.",
+        "This case proves receiver-hiss ownership and the first complete block's draw order only. Cross-feature ordering for QRN, QRM, station construction, QSB, flutter, calls, exchanges, and later blocks remains explicitly pending, so audio.single-seeded-random-stream remains partial."
+      ],
+      "input": {
+        "scenario": "audio.receiver-hiss-shared-random-checkpoint-seed-12345",
+        "sampleRate": 11025,
+        "blockSize": 512,
+        "seed": 12345,
+        "bandwidthHz": 500,
+        "pitchHz": 600,
+        "startupRequestCount": 5,
+        "completeBlockCount": 1,
+        "hissRandomDrawCount": 1024,
+        "randomCheckpointOrdinal": 1024,
+        "probeSampleIndexes": [
+          0,
+          1,
+          2,
+          3,
+          310,
+          511
+        ]
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatReceiverHissSharedRandomCheckpointTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 3,
+        "observedValuesSha256": "6af5b9552bd37181add531e082c9798239fa16df8e5fb3805a57717fc1391060",
+        "firstDivergence": "The zero-based first mismatch is ordinal 2, shared-random-checkpoint. XPlat emits the exact CE receiver block because its effect-specific random source begins from the same seed, but its authoritative session random source remains untouched and returns binary32 bits 3f6dfb52 instead of CE bits 3e320354 after the block's 1024 hiss draws.",
+        "functionalDivergenceCode": "audio-receiver-hiss-shared-random-checkpoint-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "audio-receiver-hiss-shared-random-checkpoint-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/audio-receiver-hiss-shared-random-checkpoint-seed-12345.json",
+      "evidence": "tests/parity/evidence/audio-receiver-hiss-shared-random-checkpoint-seed-12345.baseline.json",
       "firstGreenCommit": null
     },
     {
