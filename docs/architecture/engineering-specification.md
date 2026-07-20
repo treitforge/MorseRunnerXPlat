@@ -2739,6 +2739,25 @@ interaction (including active-QRM callsign collision suppression), RIT, or
 runtime toggling. The
 `audio.qrm-interfering-cw-stations` obligation remains partial.
 
+The incremental QRM hot-path gate uses a preallocated eight-station harness
+with the production QRM station, catalog, mixer, envelope cursor, retry, and
+release paths. After 256 warmup blocks, it measures 4096 blocks while keeping
+eight sources active. The Release gate requires zero measured managed
+allocation, p99 below 11.6 ms, and the p99.9 nearest-rank normal maximum below
+23.2 ms. It retains the raw maximum for audit and records activation, retry,
+and release counts. This scoped gate measures the QRM increment only. It does
+not replace the release-wide all-effects and 30-minute underrun gates in
+Section 21.
+
+The first retained Windows x64 capture is
+`tests/MorseRunner.Engine.Tests/PerformanceEvidence/audio-qrm-station-hot-path.windows-x64.v1.json`.
+It measures clean revision `7c4fee8e8db71f198954995df4941f7db8f850df`
+on .NET 10.0.8 and an Intel Core i9-10980XE. Across 4096 blocks it records
+zero managed allocation, 0.2692 ms p99, 0.2975 ms p99.9 normal maximum, and
+a 0.4120 ms raw maximum. The run includes 66 activations, 105 retries, and 58
+releases. This is development evidence for one Windows machine, not
+cross-platform release certification.
+
 The authored
 `audio.qrm-caller-collision-retry-limit-seed-24680` case isolates the CE
 caller retry boundary while one `K1ABC` QRM station is active. The pinned v18
