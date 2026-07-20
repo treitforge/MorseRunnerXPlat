@@ -5520,6 +5520,32 @@ class ManifestHistoryTests(unittest.TestCase):
 
 
 class ModeAndMigrationTests(unittest.TestCase):
+    def test_trusted_migration_reference_matches_reviewed_manifest(
+        self,
+    ) -> None:
+        manifest = parity.load_json(parity.MANIFEST_PATH)
+        reference = manifest["reference"]
+        for key, expected in (
+            parity.TRUSTED_V3_MIGRATION_REFERENCE.items()
+        ):
+            actual = reference[key]
+            with self.subTest(key=key):
+                if key.endswith("Sha256"):
+                    self.assertEqual(expected.lower(), actual.lower())
+                else:
+                    self.assertEqual(expected, actual)
+
+        definition_path = (
+            parity.ROOT
+            / parity.TRUSTED_V3_MIGRATION_REFERENCE["definition"]
+        )
+        self.assertEqual(
+            parity.TRUSTED_V3_MIGRATION_REFERENCE[
+                "definitionSha256"
+            ].lower(),
+            parity.sha256_file(definition_path),
+        )
+
     def trusted_base(self) -> tuple[dict[str, object], bytes]:
         result = subprocess.run(
             [

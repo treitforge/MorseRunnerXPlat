@@ -338,7 +338,7 @@ TRUSTED_V3_MIGRATION_REFERENCE = {
     ),
     "definition": "tests/parity/legacy-reference.json",
     "definitionSha256": (
-        "326B9E50981E99868F20E07A4DB5D2565B6B9E735A9BBAE4A2952DFF2DAA24B8"
+        "663ADF3BF230161ABB923CF8B6651D394AF1B99EAB05EFEAFB696CB29992DA23"
     ),
 }
 CAPABILITY_STATUSES = {"not-authored", "partial", "complete"}
