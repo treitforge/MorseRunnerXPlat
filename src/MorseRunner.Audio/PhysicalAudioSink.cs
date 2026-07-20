@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Diagnostics;
 using MiniAudioExNET;
 using MorseRunner.Domain;
@@ -23,6 +24,11 @@ public enum PhysicalAudioSinkState
     Disposed,
 }
 
+public sealed record PhysicalAudioSinkStartupFrame(
+    int LogicalRequestNumber,
+    bool IsSynchronousPrefill,
+    ImmutableArray<float> Samples);
+
 public sealed record PhysicalAudioSinkDiagnostics(
     PhysicalAudioSinkState State,
     int QueuedBlocks,
@@ -31,7 +37,8 @@ public sealed record PhysicalAudioSinkDiagnostics(
     long DroppedBlockCount,
     long CallbackFaultCount,
     long LastSimulationBlock,
-    TimeSpan TimeSinceLastCallback);
+    TimeSpan TimeSinceLastCallback,
+    ImmutableArray<PhysicalAudioSinkStartupFrame> StartupFraming);
 
 public sealed class PhysicalAudioSink :
     IAudioSink,
@@ -90,7 +97,8 @@ public sealed class PhysicalAudioSink :
             Interlocked.Read(ref _droppedBlockCount),
             Interlocked.Read(ref _callbackFaultCount),
             Interlocked.Read(ref _lastSimulationBlock),
-            elapsed);
+            elapsed,
+            ImmutableArray<PhysicalAudioSinkStartupFrame>.Empty);
     }
 
     public AudioSinkMetrics GetMetrics()

@@ -1504,6 +1504,25 @@ AGC block peaks, active RMS, and effective-versus-requested carrier
 correlations with a `1e-6` cross-runtime tolerance while retaining the exact
 legacy fixture values.
 
+The CE physical startup contract has four synchronous output-buffer prefill
+requests followed by one completion-driven refill. On a fresh run,
+`TContest.GetAudio` returns one zero `Single` for absolute requests 1 through 5;
+request 6 is the first 512-sample receiver block. The receiver swaps its
+parallel moving-average filter roles after absolute blocks 10 and 20, so logical
+DSP phase must retain the five-request offset. Physical startup and prefill
+framing belong to `PhysicalAudioSink` metadata and its device contract. Warmup
+samples must never be inserted into engine-rendered blocks, WAV output, raw
+capture, or null sinks. Runtime bandwidth changes are outside this fixed-vector
+contract. Stop/restart continuity remains separately pending because CE resets
+the block number and repeats warmup requests while preserving filter histories
+and roles, modulator phase, AGC memory, and RIT phase. The normal Run path
+clears remote stations before restarting.
+
+The fresh-start fixed vector certifies the device-independent physical framing
+contract and receiver phase. It does not certify WAV, raw, or null adapter
+exclusion; those sinks require dedicated acceptance vectors before that part of
+the contract can be promoted.
+
 Local sidetone remains separate from receiver audio until the final monitor
 boundary. The default monitor level is the legacy `0 dB`. A lower monitor level
 attenuates only local sidetone and never changes remote stations, QRM, QRN, or

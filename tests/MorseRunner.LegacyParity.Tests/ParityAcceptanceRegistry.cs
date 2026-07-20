@@ -47,6 +47,19 @@ public static class ParityAcceptanceRegistry
                         _ = SstFarnsworthTimingInput.Parse(scenario),
                     static () => new LegacyOracleTarget(),
                     static () => new XPlatSstFarnsworthTarget()),
+            [XPlatStartupWarmupFilterTimingTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatStartupWarmupFilterTimingTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatStartupWarmupFilterTimingTarget),
+                    XPlatStartupWarmupFilterTimingTarget
+                        .FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = StartupWarmupFilterTimingInput.Parse(
+                            scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () =>
+                        new XPlatStartupWarmupFilterTimingTarget()),
             ["contest.exchange-shapes"] =
                 new ParityAcceptanceRegistration(
                     "contest.exchange-shapes",

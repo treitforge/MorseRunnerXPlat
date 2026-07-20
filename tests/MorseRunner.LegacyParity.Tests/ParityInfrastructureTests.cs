@@ -66,6 +66,7 @@ public sealed class ParityInfrastructureTests
                 "audio.deterministic-random-primitives-seed-12345",
                 "audio.realistic-hiss-noise-floor",
                 "audio.sst-farnsworth-envelope-timing",
+                "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
                 "contest.exchange-shapes",
                 "ux.enter-esm-partial-call-message-selection-live",
             ],
@@ -76,6 +77,7 @@ public sealed class ParityInfrastructureTests
                 "audio.deterministic-random-primitives-seed-12345",
                 "audio.realistic-hiss-noise-floor",
                 "audio.sst-farnsworth-envelope-timing",
+                "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
                 "contest.exchange-shapes",
                 "ux.enter-esm-partial-call-message-selection-live",
             ],
@@ -98,6 +100,12 @@ public sealed class ParityInfrastructureTests
         Assert.IsType<XPlatSstFarnsworthTarget>(
             ParityAcceptanceRegistry
                 .Get("audio.sst-farnsworth-envelope-timing")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatStartupWarmupFilterTimingTarget>(
+            ParityAcceptanceRegistry
+                .Get(
+                    "audio.startup-warmup-and-filter-timing"
+                    + "-fresh-seed-12345")
                 .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatContestRulesTarget>(
             ParityAcceptanceRegistry
