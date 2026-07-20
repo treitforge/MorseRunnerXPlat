@@ -2313,24 +2313,37 @@ Current Phase 2 implementation inventory, not parity certification:
   physical-device execution remains a platform release gate.
 - The parity audit found unresolved release-blocking differences in sidetone and
   QSK ordering, RIT and bandwidth effects, QRM and QRN generation, QSB and
-  flutter ownership, Farnsworth timing, random-source ownership, pileup audio,
-  block and startup behavior, WAV conversion, recording backpressure, device
-  recovery, and real-time allocation coverage. Existing lower-level tests do
-  not certify these behaviors as CE-equivalent.
+  flutter ownership, Farnsworth session wiring, random-source ownership,
+  pileup audio, block and startup behavior, WAV conversion, recording
+  backpressure, device recovery, and real-time allocation coverage. Existing
+  lower-level tests do not certify these behaviors as CE-equivalent.
 
 The first manifest schema-v3 audio case is
 `audio.sst-farnsworth-envelope-timing`. It executes the pinned CE `TCWSST`
 send path with `TFarnsKeyer` at 11025 Hz, 512 samples per block, 15 WPM sending
 speed, 25 WPM character speed, and amplitude 300000. For `PARIS TEST` and
 `K1ABC 599 123`, it compares the true sample count, padded sample count, and
-SHA-256 of the raw `Single` envelope bytes. The retained baseline is currently
-`legacy-green-xplat-red`; its first divergence is the true sample count for
-`PARIS TEST`. This case covers only SST Farnsworth encoding, spacing, default
-ramp numerics, and block padding. It does not certify station mixing, effects,
-filtering, AGC, PCM conversion, physical playback, or the complete session
-audio path. `MorseToneRenderer` and `EngineSession` do not yet carry the
-separate SST character rate, so direct keyer parity must not be treated as
-end-to-end operator availability. The separate
+SHA-256 of the raw `Single` envelope bytes. Its retained pre-implementation
+baseline remains `legacy-green-xplat-red`; its first divergence is the true
+sample count for `PARIS TEST`. The production `MorseKeyer` now applies the CE
+`TFarnsKeyer` marker and spacing rules when a character speed is configured,
+including CE `Single` delay arithmetic, effective-speed fallback, true sample
+count, default ramp bytes, and block padding. Static `MorseKeyer.Encode`
+continues to expose the non-Farnsworth representation used by existing scoring
+and DSP consumers; the envelope path translates its contextual separator runs
+without changing that shared representation. The instance `EncodeText` path
+emits CE markers directly and preserves leading, trailing, repeated, and
+whitespace-only message pieces without the ambiguity of the shared static
+encoding. `MorseToneRenderer` uses that instance path. The unchanged XPlat
+development case must pass before this implementation is considered a local
+green regression, while the retained red evidence remains immutable.
+
+This case covers only SST Farnsworth encoding, spacing, default ramp numerics,
+and block padding. It does not certify station mixing, effects, filtering, AGC,
+PCM conversion, physical playback, or the complete session audio path.
+`MorseToneRenderer` and `EngineSession` do not yet carry the separate SST
+character rate, so direct keyer parity must not be treated as end-to-end
+operator availability. The separate
 `audio.sst-farnsworth-session-wiring` obligation remains pending until a live
 session case proves that complete path.
 

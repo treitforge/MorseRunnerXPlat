@@ -54,7 +54,7 @@ public sealed class MorseToneRenderer
 
     public void LoadMessage(string text)
     {
-        string encoded = MorseKeyer.Encode(text);
+        string encoded = _keyer.EncodeText(text);
         _envelope = _keyer.CreateEnvelope(encoded);
         _envelopePosition = 0;
     }

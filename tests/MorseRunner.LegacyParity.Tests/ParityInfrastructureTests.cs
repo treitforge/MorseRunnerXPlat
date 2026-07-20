@@ -363,7 +363,7 @@ public sealed class ParityInfrastructureTests
     [Fact]
     [Trait("Category", "ParityInfrastructure")]
     public async Task
-        SstFarnsworthTargetHasPinnedRedDivergenceAndIsDeterministic()
+        SstFarnsworthTargetMatchesPinnedCeValuesAndIsDeterministic()
     {
         string[] expectedCurrentValues =
         [
@@ -372,19 +372,19 @@ public sealed class ParityInfrastructureTests
             "message[0]=PARIS TEST",
             "timing[0]|sending-wpm=15|character-wpm=25"
             + "|amplitude=300000",
-            "true-length[0]=67087",
-            "padded-length[0]=67584",
+            "true-length[0]=71363",
+            "padded-length[0]=71680",
             "float-sha256[0]="
-            + "63b45195172fda28e42be0be2ce92e9c"
-            + "c6a1ba41b818d78c8f1204281b72e78d",
+            + "8d24e5cd0f054a2d846a01120bf57fa4"
+            + "ca6c341937c1fc93c834fa5851fb1546",
             "message[1]=K1ABC 599 123",
             "timing[1]|sending-wpm=15|character-wpm=25"
             + "|amplitude=300000",
-            "true-length[1]=162663",
-            "padded-length[1]=162816",
+            "true-length[1]=136971",
+            "padded-length[1]=137216",
             "float-sha256[1]="
-            + "5cc7e981911cb96e6f585729761ac59db"
-            + "1b3f2edb7ccfac5d49308b34a28d18f",
+            + "8e8c1b424dcd8925c46bebb8051d11d9"
+            + "cf36c57fe4950d89592a80f3ea914a9e",
         ];
         ParityCertificationCase definition =
             ParityCertificationCase.LoadForInspection(
@@ -394,21 +394,16 @@ public sealed class ParityInfrastructureTests
             definition.Scenario,
             TestContext.Current.CancellationToken);
 
-        Assert.Equal(ParityTargetOutcome.Failed, first.Outcome);
-        Assert.Equal(
-            XPlatSstFarnsworthTarget.FunctionalDivergenceCode,
-            first.FailureCode);
+        Assert.Equal(ParityTargetOutcome.Passed, first.Outcome);
+        Assert.Null(first.FailureCode);
         Assert.Equal(
             expectedCurrentValues,
             first.Values,
             StringComparer.Ordinal);
         Assert.Equal(
-            3,
-            Enumerable.Range(0, first.Values.Count)
-                .First(
-                    index => !StringComparer.Ordinal.Equals(
-                        first.Values[index],
-                        definition.Scenario.ExpectedValues[index])));
+            definition.Scenario.ExpectedValues,
+            first.Values,
+            StringComparer.Ordinal);
 
         ParityObservation second = await target.ExecuteAsync(
             definition.Scenario,

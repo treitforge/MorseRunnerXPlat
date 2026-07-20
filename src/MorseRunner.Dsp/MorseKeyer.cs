@@ -129,6 +129,49 @@ public sealed class MorseKeyer
         return result.ToString();
     }
 
+    public string EncodeText(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        if (CharacterWordsPerMinute <= 0)
+        {
+            return Encode(text);
+        }
+
+        var result = new System.Text.StringBuilder();
+        foreach (char character in text)
+        {
+            if (character is ' ' or '_')
+            {
+                if (result.Length > 0 && result[^1] == '^')
+                {
+                    result[^1] = '_';
+                }
+                else
+                {
+                    result.Append(' ');
+                }
+
+                continue;
+            }
+
+            char normalized = Char.ToUpperInvariant(character);
+            if (!MorsePatterns.TryGetValue(normalized, out string? pattern))
+            {
+                continue;
+            }
+
+            result.Append(pattern);
+            result.Append('^');
+        }
+
+        if (result.Length > 0 && result[^1] == '^')
+        {
+            result[^1] = '~';
+        }
+
+        return result.ToString();
+    }
+
     public float[] CreateEnvelope(string morseMessage)
     {
         ArgumentNullException.ThrowIfNull(morseMessage);
@@ -136,6 +179,11 @@ public sealed class MorseKeyer
         {
             throw new InvalidOperationException(
                 "Words per minute must be configured before rendering.");
+        }
+
+        if (CharacterWordsPerMinute > 0)
+        {
+            return CreateCharacterSpeedEnvelope(morseMessage);
         }
 
         int unitCount = CountUnits(morseMessage);
@@ -178,6 +226,191 @@ public sealed class MorseKeyer
         return result;
     }
 
+    private float[] CreateCharacterSpeedEnvelope(string morseMessage)
+    {
+        bool farnsworth =
+            SendingWordsPerMinute <= CharacterWordsPerMinute;
+        int characterWordsPerMinute = farnsworth
+            ? CharacterWordsPerMinute
+            : SendingWordsPerMinute;
+        int samplesPerCharacterUnit = (int)Math.Round(
+            60d * SampleRate / characterWordsPerMinute / 48d,
+            MidpointRounding.ToEven);
+        int samplesPerAdjustedUnit = farnsworth
+            ? CalculateSamplesPerAdjustedUnit()
+            : samplesPerCharacterUnit;
+
+        TrueEnvelopeLength = CountCharacterSpeedSamples(
+            morseMessage,
+            samplesPerCharacterUnit,
+            samplesPerAdjustedUnit,
+            farnsworth);
+        int paddedLength = checked(
+            (TrueEnvelopeLength + BlockSize - 1) / BlockSize * BlockSize);
+        var result = new float[paddedLength];
+        int position = 0;
+        var symbols = new FarnsworthSymbolEnumerator(morseMessage);
+
+        while (symbols.MoveNext(out char symbol))
+        {
+            switch (symbol)
+            {
+                case '.':
+                    AddMark(result, ref position, samplesPerCharacterUnit);
+                    AddOff(
+                        ref position,
+                        samplesPerCharacterUnit,
+                        _rampOff.Length);
+                    break;
+                case '-':
+                    AddMark(
+                        result,
+                        ref position,
+                        3 * samplesPerCharacterUnit);
+                    AddOff(
+                        ref position,
+                        samplesPerCharacterUnit,
+                        _rampOff.Length);
+                    break;
+                case '^':
+                    AddCharacterSpeedSpace(
+                        ref position,
+                        durationInUnits: 3,
+                        subtractPriorCharacterUnit: true,
+                        samplesPerCharacterUnit,
+                        samplesPerAdjustedUnit,
+                        farnsworth);
+                    break;
+                case '_':
+                    AddCharacterSpeedSpace(
+                        ref position,
+                        durationInUnits: 5,
+                        subtractPriorCharacterUnit: true,
+                        samplesPerCharacterUnit,
+                        samplesPerAdjustedUnit,
+                        farnsworth);
+                    break;
+                case '~':
+                    AddCharacterSpeedSpace(
+                        ref position,
+                        durationInUnits: 4,
+                        subtractPriorCharacterUnit: true,
+                        samplesPerCharacterUnit,
+                        samplesPerAdjustedUnit,
+                        farnsworth);
+                    break;
+                case ' ':
+                    AddCharacterSpeedSpace(
+                        ref position,
+                        durationInUnits: 5,
+                        subtractPriorCharacterUnit: false,
+                        samplesPerCharacterUnit,
+                        samplesPerAdjustedUnit,
+                        farnsworth);
+                    break;
+            }
+        }
+
+        if (position != TrueEnvelopeLength)
+        {
+            throw new InvalidOperationException(
+                "Morse envelope timing did not consume the expected samples.");
+        }
+
+        return result;
+    }
+
+    private int CalculateSamplesPerAdjustedUnit()
+    {
+        float delayPerWord = (float)(
+            (60d / SendingWordsPerMinute)
+            - (31d * 60d / CharacterWordsPerMinute / 48d));
+        return (int)MathF.Round(
+            delayPerWord * SampleRate / 17f,
+            MidpointRounding.ToEven);
+    }
+
+    private static int CountCharacterSpeedSamples(
+        string morseMessage,
+        int samplesPerCharacterUnit,
+        int samplesPerAdjustedUnit,
+        bool farnsworth)
+    {
+        int sampleCount = 0;
+        var symbols = new FarnsworthSymbolEnumerator(morseMessage);
+
+        while (symbols.MoveNext(out char symbol))
+        {
+            int symbolSampleCount = symbol switch
+            {
+                '.' => checked(2 * samplesPerCharacterUnit),
+                '-' => checked(4 * samplesPerCharacterUnit),
+                '^' => CalculateSpaceSampleCount(
+                    durationInUnits: 3,
+                    subtractPriorCharacterUnit: true,
+                    samplesPerCharacterUnit,
+                    samplesPerAdjustedUnit,
+                    farnsworth),
+                '_' => CalculateSpaceSampleCount(
+                    durationInUnits: 5,
+                    subtractPriorCharacterUnit: true,
+                    samplesPerCharacterUnit,
+                    samplesPerAdjustedUnit,
+                    farnsworth),
+                '~' => CalculateSpaceSampleCount(
+                    durationInUnits: 4,
+                    subtractPriorCharacterUnit: true,
+                    samplesPerCharacterUnit,
+                    samplesPerAdjustedUnit,
+                    farnsworth),
+                ' ' => CalculateSpaceSampleCount(
+                    durationInUnits: 5,
+                    subtractPriorCharacterUnit: false,
+                    samplesPerCharacterUnit,
+                    samplesPerAdjustedUnit,
+                    farnsworth),
+                _ => 0,
+            };
+            sampleCount = checked(sampleCount + symbolSampleCount);
+        }
+
+        return sampleCount;
+    }
+
+    private static void AddCharacterSpeedSpace(
+        ref int position,
+        int durationInUnits,
+        bool subtractPriorCharacterUnit,
+        int samplesPerCharacterUnit,
+        int samplesPerAdjustedUnit,
+        bool farnsworth)
+    {
+        position = checked(
+            position
+            + CalculateSpaceSampleCount(
+                durationInUnits,
+                subtractPriorCharacterUnit,
+                samplesPerCharacterUnit,
+                samplesPerAdjustedUnit,
+                farnsworth));
+    }
+
+    private static int CalculateSpaceSampleCount(
+        int durationInUnits,
+        bool subtractPriorCharacterUnit,
+        int samplesPerCharacterUnit,
+        int samplesPerAdjustedUnit,
+        bool farnsworth)
+    {
+        int samplesPerUnit = farnsworth
+            ? samplesPerAdjustedUnit
+            : samplesPerCharacterUnit;
+        int sampleCount = checked(durationInUnits * samplesPerUnit);
+        return subtractPriorCharacterUnit
+            ? checked(sampleCount - samplesPerCharacterUnit)
+            : sampleCount;
+    }
+
     private static int CountUnits(string morseMessage)
     {
         int units = 0;
@@ -194,6 +427,94 @@ public sealed class MorseKeyer
         }
 
         return units;
+    }
+
+    private struct FarnsworthSymbolEnumerator
+    {
+        private readonly string _morseMessage;
+        private readonly bool _translateEncodedSpaces;
+        private int _position;
+        private int _pendingAdditionalWordSpaces;
+        private bool _hasSeenCharacterElement;
+
+        public FarnsworthSymbolEnumerator(string morseMessage)
+        {
+            _morseMessage = morseMessage;
+            // Base Encode emits no TFarns markers and exactly one terminal
+            // message marker. Internal message markers identify a CE piece
+            // stream whose raw separator spaces must remain unchanged.
+            _translateEncodedSpaces =
+                morseMessage.IndexOf('^') < 0
+                && morseMessage.IndexOf('_') < 0
+                && morseMessage.IndexOf('~') == morseMessage.Length - 1;
+            _position = 0;
+            _pendingAdditionalWordSpaces = 0;
+            _hasSeenCharacterElement = false;
+        }
+
+        public bool MoveNext(out char symbol)
+        {
+            if (_pendingAdditionalWordSpaces > 0)
+            {
+                _pendingAdditionalWordSpaces--;
+                symbol = ' ';
+                return true;
+            }
+
+            if (_position >= _morseMessage.Length)
+            {
+                symbol = default;
+                return false;
+            }
+
+            symbol = _morseMessage[_position];
+            _position++;
+            if (!_translateEncodedSpaces || symbol != ' ')
+            {
+                if (symbol is '.' or '-')
+                {
+                    _hasSeenCharacterElement = true;
+                }
+
+                return true;
+            }
+
+            int spaceCount = 1;
+            while (_position < _morseMessage.Length
+                   && _morseMessage[_position] == ' ')
+            {
+                spaceCount++;
+                _position++;
+            }
+
+            if (!_hasSeenCharacterElement)
+            {
+                symbol = ' ';
+                _pendingAdditionalWordSpaces = spaceCount - 1;
+                return true;
+            }
+
+            // Encode replaces the last base space with '~'. A preceding run
+            // therefore represents trailing text spaces, without a CE '~'.
+            if (_position == _morseMessage.Length - 1
+                && _morseMessage[_position] == '~')
+            {
+                _position++;
+                symbol = '_';
+                _pendingAdditionalWordSpaces = spaceCount - 1;
+                return true;
+            }
+
+            if (spaceCount == 1)
+            {
+                symbol = '^';
+                return true;
+            }
+
+            symbol = '_';
+            _pendingAdditionalWordSpaces = spaceCount - 2;
+            return true;
+        }
     }
 
     private static float[] CreateBlackmanHarrisStepResponse(int length)
@@ -233,8 +554,12 @@ public sealed class MorseKeyer
         position += _rampOn.Length;
 
         int steadySampleCount = markSampleCount - _rampOn.Length;
-        destination.Slice(position, steadySampleCount).Fill(1f);
-        position += steadySampleCount;
+        if (steadySampleCount > 0)
+        {
+            destination.Slice(position, steadySampleCount).Fill(1f);
+        }
+
+        position = checked(position + steadySampleCount);
 
         _rampOff.CopyTo(destination[position..]);
         position += _rampOff.Length;
