@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "target": "XPlat",
+  "platform": "windows",
+  "operatingSystem": "Microsoft Windows 10.0.26200",
+  "architecture": "x64",
+  "runtimeIdentifier": "win-x64",
+  "revision": "9edd541e4563b109c48a72ed25015388f7b34fa3",
+  "tree": "ba5b676039a1c31cf94c1980546706942226f3cf",
+  "resultSha256": "2c4276569f48ad298533ea4724cba20853f6654c9198cf0e080072a83add442c",
+  "testReportSha256": "b71fa4614ec8dc27978d8569831c24504bd6a5c124fdb1bd7b61dced3280f61f",
+  "testProcessExitCode": 2,
+  "wrapper": {
+    "completed": true,
+    "correlationValidated": true,
+    "exitCode": 0
+  },
+  "functionalDivergences": [
+    {
+      "caseId": "audio.qrn-background-sparse-impulses-seed-12345",
+      "failureCode": "audio-qrn-background-sparse-impulses-mismatch"
+    }
+  ]
+}
