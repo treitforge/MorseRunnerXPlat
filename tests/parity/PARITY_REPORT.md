@@ -107,18 +107,18 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 
 - Manifest capabilities: 24
 - Complete capabilities: 0
-- Partially authored capabilities: 1
-- Not-authored capabilities: 23
-- Behavioral obligations: 118
-- Source-bound obligations: 1
+- Partially authored capabilities: 2
+- Not-authored capabilities: 22
+- Behavioral obligations: 119
+- Source-bound obligations: 2
 - Pending source bindings: 117
 - Complete obligations: 0
-- Partially authored obligations: 1
+- Partially authored obligations: 2
 - Not-authored obligations: 117
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 1
+- Active acceptance cases: 2
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 1
+- Legacy-green/XPlat-red cases: 2
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
@@ -135,7 +135,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `logging.scoring-rate-and-results` | Legacy logging, scoring, rate, correction, and result paths | `not-authored` | 0 | 55 | 0 | `Log.pas:147-1137` |
 | `simulation.state-models` | Legacy simulation state models and transitions | `not-authored` | 0 | 66 | 0 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
 | `simulation.runtime-routines` | Legacy contest, station, and operator routines | `not-authored` | 0 | 93 | 0 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
-| `audio-dsp.legacy-processing` | Legacy portable keying and DSP processing | `not-authored` | 0 | 131 | 0 | `VCL/Crc32.pas`<br>`VCL/FarnsKeyer.pas`<br>`VCL/Mixers.pas`<br>`VCL/MorseKey.pas`<br>`VCL/MorseTbl.pas`<br>`VCL/MovAvg.pas`<br>`VCL/QuickAvg.pas`<br>`VCL/SndTypes.pas`<br>`VCL/VolumCtl.pas` |
+| `audio-dsp.legacy-processing` | Legacy portable keying and DSP processing | `partial` | 1 | 131 | 0 | `VCL/Crc32.pas`<br>`VCL/FarnsKeyer.pas`<br>`VCL/Mixers.pas`<br>`VCL/MorseKey.pas`<br>`VCL/MorseTbl.pas`<br>`VCL/MovAvg.pas`<br>`VCL/QuickAvg.pas`<br>`VCL/SndTypes.pas`<br>`VCL/VolumCtl.pas` |
 | `audio.legacy-adapters` | Legacy sound output, buffering, and WAV adapters | `not-authored` | 0 | 85 | 0 | `VCL/BaseComp.pas`<br>`VCL/SndCustm.pas`<br>`VCL/SndOut.pas`<br>`VCL/WavFile.pas` |
 | `ux.legacy-vcl-components` | Legacy VCL-only hint and volume controls | `not-authored` | 0 | 36 | 0 | `VCL/PermHint.pas`<br>`VCL/VolmSldr.pas` |
 | `contest.legacy-implementations` | Legacy contest-specific implementations | `partial` | 1 | 215 | 0 | `ACAG.pas`<br>`ALLJA.pas`<br>`ArrlDx.pas`<br>`ArrlFd.pas`<br>`ArrlSS.pas`<br>`CqWpx.pas`<br>`CqWW.pas`<br>`CWOPS.pas`<br>`CWSST.pas`<br>`DualExchContest.pas`<br>`IaruHf.pas`<br>`NaQp.pas` |
@@ -181,7 +181,8 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `audio.flutter-fast-per-station-qsb` | `simulation.legacy-effects` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Flutter is the CE probabilistic fast per-station QSB mode rather than a global multiplier. |
 | `audio.station-level-and-pitch-distributions` | `audio-dsp.legacy-processing` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Remote station amplitude and pitch use CE distributions and deterministic draw ordering. |
 | `audio.bfo-phase-state-and-reset` | `audio-dsp.legacy-processing` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Station BFO phase advances and resets at the same CE transmission boundaries. |
-| `audio.sst-farnsworth-timing` | `audio-dsp.legacy-processing` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | SST uses independent character and spacing speeds with CE Farnsworth timing. |
+| `audio.sst-farnsworth-timing` | `audio-dsp.legacy-processing` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | The production keyer primitive used by SST supports independent character and spacing speeds with CE-equivalent marker encoding, sample counts, default ramps, and block padding. |
+| `audio.sst-farnsworth-session-wiring` | `audio-dsp.legacy-processing` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Selecting SST carries the configured sending and character speeds through settings, session state, station message sequencing, and the production renderer so operator audio uses CE Farnsworth timing. |
 | `audio.single-seeded-random-stream` | `simulation.legacy-effects` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | One seeded session random stream reproduces CE ownership and cross-feature draw order. |
 | `audio.legacy-block-size-configurations` | `audio-dsp.legacy-processing` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | CE block sizes from 128 through 2048 are supported or proven import-equivalent with matching timing. |
 | `audio.startup-warmup-and-filter-timing` | `audio-dsp.legacy-processing` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Startup warmup requests, block numbering, prefill, and alternating-filter swap timing match CE. |
@@ -279,6 +280,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 
 | Case ID | Capability | Obligations | Status | Failure code | Legacy | XPlat |
 |---|---|---|---|---|---|---|
+| `audio.sst-farnsworth-envelope-timing` | `audio-dsp.legacy-processing` | `audio.sst-farnsworth-timing` | `legacy-green-xplat-red` | `audio-sst-farnsworth-timing-mismatch` | `pass` | `fail` |
 | `contest.exchange-shapes` | `contest.legacy-implementations` | `contest.exchange-shapes-and-constructor-metadata` | `legacy-green-xplat-red` | `contest-exchange-shape-mismatch` | `pass` | `fail` |
 
 ## Retained noncertifying observations

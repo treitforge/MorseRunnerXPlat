@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "7a4033efec6f691ddead4eebdfe03699b98469da",
+      "tree": "59d9d0bd26a5e21521879e06280b636d78321f2d",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "audio.sst-farnsworth-envelope-timing"
+  ],
+  "results": [
+    {
+      "parityId": "audio.sst-farnsworth-envelope-timing",
+      "acceptanceTestName": "parity:audio.sst-farnsworth-envelope-timing()",
+      "target": "xplat",
+      "adapter": "XPlatSstFarnsworthTarget",
+      "caseDefinitionSha256": "7fa8b0b0697dda50f2cf8a7f92e1d6667f1697706dc73298aa5ddf1330ed898a",
+      "fixtureSha256": "412490c1deb21659196618e68d58be6ee712fe110bb492302bf67938269682c4",
+      "outcome": "functional-divergence",
+      "failureCode": "audio-sst-farnsworth-timing-mismatch",
+      "evidenceSource": "MorseRunner.Dsp.MorseKeyer",
+      "observedValues": [
+        "configuration|sample-rate=11025|block-size=512|amplitude=300000|sending-wpm=15|character-wpm=25",
+        "message[0]=PARIS TEST",
+        "timing[0]|sending-wpm=15|character-wpm=25|amplitude=300000",
+        "true-length[0]=67087",
+        "padded-length[0]=67584",
+        "float-sha256[0]=63b45195172fda28e42be0be2ce92e9cc6a1ba41b818d78c8f1204281b72e78d",
+        "message[1]=K1ABC 599 123",
+        "timing[1]|sending-wpm=15|character-wpm=25|amplitude=300000",
+        "true-length[1]=162663",
+        "padded-length[1]=162816",
+        "float-sha256[1]=5cc7e981911cb96e6f585729761ac59db1b3f2edb7ccfac5d49308b34a28d18f"
+      ],
+      "observedValueCount": 11,
+      "observedValuesSha256": "5512e5f3177fba1679bff044ff506dacd899303c0f92b2b3fa56862a81b146ab",
+      "firstDivergence": {
+        "index": 3,
+        "expected": "true-length[0]=71363",
+        "actual": "true-length[0]=67087"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}
