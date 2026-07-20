@@ -465,6 +465,7 @@
         "audio.qrn-background-sparse-impulses-seed-12345",
         "audio.qrn-burst-station-lifecycle-seed-1903",
         "audio.qsb-no-station-noise-invariance-seed-12345",
+        "audio.qsb-runtime-toggle-active-station-seed-12345",
         "audio.receiver-hiss-shared-random-checkpoint-seed-12345"
       ]
     },
@@ -663,7 +664,7 @@
     {"id": "audio.runtime-bandwidth-updates-filters", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Runtime bandwidth changes replace or update receiver filters at the CE-equivalent block boundary.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.qrm-interfering-cw-stations", "capabilityId": "simulation.legacy-effects", "behavior": "QRM uses CE-equivalent randomized interfering CW stations, messages, levels, pitches, speeds, retries, and lifetimes.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "StnColl.pas", "QrmStn.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.stncoll.tstations.addqrm", "legacy.sim.routine.qrmstn.tqrmstation.createstation", "legacy.sim.routine.qrmstn.tqrmstation.processevent", "legacy.sim.routine.qrmstn.tqrmstation.sendtext"], "acceptanceStatus": "partial", "caseIds": ["audio.qrm-caller-collision-retry-limit-seed-24680", "audio.qrm-first-triggered-station-seed-1843", "audio.qrm-no-trigger-invariance-seed-12345"]},
     {"id": "audio.qrn-impulses-and-burst-stations", "capabilityId": "simulation.legacy-effects", "behavior": "QRN produces CE sparse impulses and burst stations before receiver filtering and AGC.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "Station.pas", "StnColl.pas", "QrnStn.pas", "RndFunc.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.station.tstation.getblock", "legacy.sim.routine.station.tstation.tick", "legacy.sim.routine.stncoll.tstations.addqrn", "legacy.sim.routine.qrnstn.tqrnstation.createstation", "legacy.sim.routine.qrnstn.tqrnstation.processevent", "legacy.support.effect.routine.rndfunc.rndfunc.secondstoblocks"], "acceptanceStatus": "partial", "caseIds": ["audio.qrn-background-sparse-impulses-seed-12345", "audio.qrn-burst-station-lifecycle-seed-1903"]},
-    {"id": "audio.qsb-independent-per-station", "capabilityId": "simulation.legacy-effects", "behavior": "Every remote station has an independent CE-distributed QSB process without fading the receiver noise floor.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "DxStn.pas", "Qsb.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.dxstn.tdxstation.getblock", "legacy.support.effect.routine.qsb.tqsb.applyto"], "acceptanceStatus": "partial", "caseIds": ["audio.qsb-no-station-noise-invariance-seed-12345"]},
+    {"id": "audio.qsb-independent-per-station", "capabilityId": "simulation.legacy-effects", "behavior": "Every remote station has an independent CE-distributed QSB process without fading the receiver noise floor.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "DxStn.pas", "Qsb.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.dxstn.tdxstation.getblock", "legacy.support.effect.routine.qsb.tqsb.applyto"], "acceptanceStatus": "partial", "caseIds": ["audio.qsb-no-station-noise-invariance-seed-12345", "audio.qsb-runtime-toggle-active-station-seed-12345"]},
     {"id": "audio.flutter-fast-per-station-qsb", "capabilityId": "simulation.legacy-effects", "behavior": "Flutter is the CE probabilistic fast per-station QSB mode rather than a global multiplier.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "DxStn.pas", "Qsb.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.dxstn.tdxstation.createstation", "legacy.sim.routine.dxstn.tdxstation.getblock", "legacy.support.effect.routine.qsb.tqsb.applyto"], "acceptanceStatus": "partial", "caseIds": ["audio.flutter-no-station-noise-invariance-seed-12345"]},
     {"id": "audio.station-level-and-pitch-distributions", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Remote station amplitude and pitch use CE distributions and deterministic draw ordering.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.bfo-phase-state-and-reset", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Station BFO phase advances and resets at the same CE transmission boundaries.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -1589,6 +1590,78 @@
       "failureCode": "audio-qsb-no-station-noise-invariance-mismatch",
       "fixture": "tests/parity/fixtures/legacy/audio-qsb-no-station-noise-invariance-seed-12345.json",
       "evidence": "tests/parity/evidence/audio-qsb-no-station-noise-invariance-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "audio.qsb-runtime-toggle-active-station-seed-12345",
+      "capabilityId": "simulation.legacy-effects",
+      "obligationIds": [
+        "audio.qsb-independent-per-station"
+      ],
+      "behavior": "A CE station owns its QSB process for its full lifetime, but TDxStation.GetBlock reads Ini.Qsb on every rendered block. Starting with QSB disabled and enabling it after two blocks therefore leaves the first two raw station-envelope blocks unchanged, applies the existing station's independent QSB state to blocks three and four, and advances the shared random stream only for the enabled blocks.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v19",
+        "source": "tests/parity/legacy-oracle/v19/LegacyOracle.lpr",
+        "sourceSha256": "966ec78ce82b1f624ed7c352e49a2dc867c301d834ae38322a6d87278502ee95",
+        "buildRecipe": "tests/parity/legacy-oracle/v19/build-recipe.json",
+        "buildRecipeSha256": "0ce2b5b5420e6ff69c55ee2529c48a36195a089279eb8afae5f8d0349cee5130"
+      },
+      "legacySources": [
+        "DxStn.pas",
+        "Qsb.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.sim.routine.dxstn.tdxstation.getblock",
+        "legacy.support.effect.routine.qsb.tqsb.applyto"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "Two fresh CE runs use CQ WPX, rmStop, seed 12345, 11025 Hz, 512 samples per block, one scripted K1ABC TDxStation, 30 WPM, unit amplitude, zero pitch offset, and identical long Morse text. QRM, QRN, flutter, QSK, and LIDs are disabled.",
+        "TDxStation construction creates and warms its private TQsb instance even while Ini.Qsb is false, preserving CE constructor draw ownership.",
+        "The disabled run leaves Ini.Qsb false for four station-envelope blocks. The runtime-toggle run also leaves it false for blocks zero and one, then sets it true before TDxStation.GetBlock for blocks two and three without reconstructing the station.",
+        "Both runs capture the raw binary32 station envelope before receiver BFO mixing, filtering, modulation, AGC, and sink conversion, plus a terminal shared-random checkpoint.",
+        "The current XPlat station captures qsbEnabled at construction and exposes no semantic runtime QSB command, so the unchanged active station cannot begin applying its existing QSB processor at the CE block boundary."
+      ],
+      "input": {
+        "scenario": "audio.qsb-runtime-toggle-active-station-seed-12345",
+        "sampleRate": 11025,
+        "blockSize": 512,
+        "seed": 12345,
+        "comparedBlockCount": 4,
+        "toggleAfterBlockCount": 2,
+        "messageText": "K1ABC K1ABC K1ABC K1ABC K1ABC K1ABC K1ABC K1ABC",
+        "probeSampleIndexes": [
+          0,
+          1,
+          2,
+          3,
+          310,
+          511
+        ]
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatQsbRuntimeToggleTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 15,
+        "observedValuesSha256": "15c67eb36e309a1d88237761b7d6bda1953a08d4e8a5b9085d314aaea56c864b",
+        "firstDivergence": "The zero-based first mismatch is ordinal 1, disabled-block[0]. XPlat has no semantic runtime QSB control for an active session, and SimulatedStation freezes its qsbEnabled flag at construction, so the adapter reports the missing control boundary instead of synthesizing CE station-envelope output.",
+        "functionalDivergenceCode": "audio-qsb-runtime-toggle-active-station-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "audio-qsb-runtime-toggle-active-station-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/audio-qsb-runtime-toggle-active-station-seed-12345.json",
+      "evidence": "tests/parity/evidence/audio-qsb-runtime-toggle-active-station-seed-12345.baseline.json",
       "firstGreenCommit": null
     },
     {

@@ -114,6 +114,18 @@ public static class ParityAcceptanceRegistry
                     static () => new LegacyOracleTarget(),
                     static () =>
                         new XPlatQsbNoStationNoiseInvarianceTarget()),
+            [XPlatQsbRuntimeToggleTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatQsbRuntimeToggleTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatQsbRuntimeToggleTarget),
+                    XPlatQsbRuntimeToggleTarget
+                        .FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = QsbRuntimeToggleInput.Parse(scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () =>
+                        new XPlatQsbRuntimeToggleTarget()),
             [XPlatRealisticHissNoiseFloorTarget.ParityId] =
                 new ParityAcceptanceRegistration(
                     XPlatRealisticHissNoiseFloorTarget.ParityId,

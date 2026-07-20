@@ -2551,10 +2551,35 @@ divergence code `audio-qsb-no-station-noise-invariance-mismatch`. Production
 `QsbProcessor`, so enabling QSB leaves station-free receiver audio unchanged.
 The unchanged development case must pass before this correction is considered
 a local green regression, while the retained red evidence remains immutable.
-This correction does not implement or certify per-station QSB construction,
-independent envelopes, distribution parameters, random-stream ownership,
-runtime toggling, or flutter. The `audio.qsb-independent-per-station`
-obligation therefore remains partial.
+Production caller construction now creates a private `QsbProcessor` for every
+candidate and consumes the CE constructor and bandwidth draws even when QSB is
+disabled. A station applies only its own processor while sending. Exact
+positive-envelope behavior, independent multi-station evolution, runtime
+toggling, and flutter remain uncertified, so
+`audio.qsb-independent-per-station` remains partial.
+
+The authored
+`audio.qsb-runtime-toggle-active-station-seed-12345` case narrows the next QSB
+boundary to an already-active station. Two fresh CE CQ WPX `rmStop` runtimes
+construct the same scripted `K1ABC` `TDxStation` at seed 12345, force 30 WPM,
+unit amplitude, zero pitch offset, and send the same eight-call message. The
+disabled run leaves `Ini.Qsb` false for four 512-sample raw station-envelope
+blocks. The runtime-toggle run leaves it false for blocks zero and one, then
+sets it true immediately before `TDxStation.GetBlock` for blocks two and
+three. Because `TDxStation` creates and warms its private `TQsb` regardless of
+the setting and reads `Ini.Qsb` on every block, the first two block hashes are
+identical, the last two differ, and only the enabled blocks advance the shared
+random stream through `TQsb.ApplyTo`.
+
+The pinned CE v19 adapter records six binary32 probes and a raw-`Single` hash
+for every block, four transition comparisons, aggregate hashes, and terminal
+random checkpoints. Current XPlat freezes the QSB-enabled flag in
+`SimulatedStation` when the caller is constructed and exposes no semantic
+runtime QSB command. Its authored adapter therefore reports
+`audio-qsb-runtime-toggle-active-station-mismatch` at the first station block
+instead of synthesizing the missing transition. This case must retain its
+CE-green/XPlat-red evidence before the station setting becomes mutable at a
+documented simulation-block boundary.
 
 The authored
 `audio.flutter-no-station-noise-invariance-seed-12345` case narrows the first
@@ -3062,9 +3087,11 @@ Current Phase 3 implementation inventory, not parity certification:
   post-render lifetime boundary. Other burst durations, overlapping bursts,
   caller and QRM interaction, runtime QRN toggling, and RIT rotation remain
   uncertified. QSK and LID paths still use deterministic XPlat behavior rather
-  than certified CE behavior. QSB and flutter setting carriage exists, but
-  their CE per-station construction and application paths are not implemented
-  yet. Positive QRM now uses pooled CE-style station construction and
+  than certified CE behavior. Production callers now own private CE-style QSB
+  processors and construction draws, but the enabled flag is frozen at caller
+  creation. Runtime QSB changes, positive envelope certification, independent
+  multi-station evolution, and flutter remain incomplete. Positive QRM now
+  uses pooled CE-style station construction and
   same-block receiver mixing for the first-trigger boundary described above,
   while retry/lifetime, overlap, normal-caller interaction, RIT, QSK, and
   runtime toggling remain partial or uncertified. The audit found further

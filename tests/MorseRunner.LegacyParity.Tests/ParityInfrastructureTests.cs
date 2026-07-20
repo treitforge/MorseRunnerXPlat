@@ -71,6 +71,7 @@ public sealed class ParityInfrastructureTests
                 "audio.qrn-background-sparse-impulses-seed-12345",
                 "audio.qrn-burst-station-lifecycle-seed-1903",
                 "audio.qsb-no-station-noise-invariance-seed-12345",
+                "audio.qsb-runtime-toggle-active-station-seed-12345",
                 "audio.realistic-hiss-noise-floor",
                 "audio.receiver-hiss-shared-random-checkpoint-seed-12345",
                 "audio.sst-farnsworth-envelope-timing",
@@ -90,6 +91,7 @@ public sealed class ParityInfrastructureTests
                 "audio.qrn-background-sparse-impulses-seed-12345",
                 "audio.qrn-burst-station-lifecycle-seed-1903",
                 "audio.qsb-no-station-noise-invariance-seed-12345",
+                "audio.qsb-runtime-toggle-active-station-seed-12345",
                 "audio.realistic-hiss-noise-floor",
                 "audio.receiver-hiss-shared-random-checkpoint-seed-12345",
                 "audio.sst-farnsworth-envelope-timing",
@@ -141,6 +143,11 @@ public sealed class ParityInfrastructureTests
             ParityAcceptanceRegistry
                 .Get(
                     "audio.qsb-no-station-noise-invariance-seed-12345")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatQsbRuntimeToggleTarget>(
+            ParityAcceptanceRegistry
+                .Get(
+                    "audio.qsb-runtime-toggle-active-station-seed-12345")
                 .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatRealisticHissNoiseFloorTarget>(
             ParityAcceptanceRegistry
