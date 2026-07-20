@@ -2717,6 +2717,16 @@ the class and section with one separating space. Missing or malformed fields,
 other contests, numeric cutting, repeats, correction variants, LID errors, and
 random reply prefixes remain within the partial obligation.
 
+The authored `contest.sst-remote-exchange-format-seed-12345` case extends the
+same obligation through K1USN Slow Speed Test exchange composition. Its pinned
+CE v28 adapter fixes the remote operator name at `BRUCE` and location at `MA`,
+and observes the exact `BRUCE MA` exchange. Retained red evidence records
+`contest-sst-remote-exchange-format-mismatch`, where XPlat discarded the name
+and composed `5NNMA`. Production simulated SST stations now compose the name
+and location with one separating space. Missing or malformed fields, other
+contest formats, repeats, correction variants, LID errors, and random reply
+prefixes remain within the partial obligation.
+
 The authored
 `audio.flutter-no-station-noise-invariance-seed-12345` case narrows the first
 flutter acceptance boundary to station-free receiver audio. Its pinned CE

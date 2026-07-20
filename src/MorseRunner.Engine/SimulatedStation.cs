@@ -492,7 +492,7 @@ public sealed class SimulatedStation
             return $"{Identity.Exchange1}  {Identity.Exchange2}";
         }
 
-        if (_contestId.Value == "scFieldDay")
+        if (_contestId.Value is "scFieldDay" or "scSst")
         {
             return $"{Identity.Exchange1} {Identity.Exchange2}";
         }
