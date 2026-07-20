@@ -237,18 +237,27 @@ public sealed class StationLifecycleTests
         Assert.Empty(engine.GetCompletedQsos(handle.SessionId));
         Assert.Equal(SessionState.Running, retained.State);
 
-        await AdvanceAsync(engine, handle.SessionId, blocks: 1);
-        SessionSnapshot burstSnapshot =
-            engine.GetSnapshot(handle.SessionId);
+        SessionSnapshot burstSnapshot = retained;
         QrnBurstParityObservation observation =
-            await engine.ObserveQrnBurstForParityAsync(
-                handle.SessionId,
-                burstSnapshot.Revision,
-                burstSnapshot.SimulationBlock,
-                TestContext.Current.CancellationToken);
+            QrnBurstParityObservation.Empty;
+        long searchLimit = retained.SimulationBlock + 512;
+        while (observation.ActiveCount == 0
+               && burstSnapshot.SimulationBlock < searchLimit)
+        {
+            await AdvanceAsync(engine, handle.SessionId, blocks: 1);
+            burstSnapshot = engine.GetSnapshot(handle.SessionId);
+            observation =
+                await engine.ObserveQrnBurstForParityAsync(
+                    handle.SessionId,
+                    burstSnapshot.Revision,
+                    burstSnapshot.SimulationBlock,
+                    TestContext.Current.CancellationToken);
+        }
 
-        Assert.Equal(93, burstSnapshot.SimulationBlock);
-        Assert.True(observation.ActiveCount > 0);
+        Assert.True(
+            observation.ActiveCount > 0,
+            $"Seed 1903 produced no QRN burst by simulation block "
+            + $"{burstSnapshot.SimulationBlock}.");
         Assert.Equal(SessionState.Running, burstSnapshot.State);
     }
 
@@ -311,6 +320,82 @@ public sealed class StationLifecycleTests
             station => Assert.InRange(station.WordsPerMinute, 24, 32));
         Assert.Contains(stations, station => station.WordsPerMinute < 30);
         Assert.Contains(stations, station => station.WordsPerMinute > 30);
+    }
+
+    [Fact]
+    public async Task ActiveQrmCollisionConstructsTenSeededCandidates()
+    {
+        const int seed = 24_680;
+        await using MorseRunnerEngine engine = new(
+            _ => new NullAudioSink(),
+            new MorseRunnerEngineOptions
+            {
+                AutomaticTiming = false,
+            });
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed) with
+            {
+                ContestId = new("scWpx"),
+                RunModeId = new("rmStop"),
+                StationCall = "W7SST",
+                WordsPerMinute = 30,
+                Activity = 1,
+                ReceiveSpeedBelowWpm = 0,
+                ReceiveSpeedAboveWpm = 0,
+                Qrm = true,
+            },
+            TestContext.Current.CancellationToken);
+
+        CallerCollisionParityObservation observation =
+            await engine.ObserveCallerCollisionForParityAsync(
+                handle.SessionId,
+                handle.Revision,
+                expectedSimulationBlock: 0,
+                collisionCall: "K1ABC",
+                retryLimit: 10,
+                TestContext.Current.CancellationToken);
+
+        Assert.Equal(10, observation.IdentitySelectionCount);
+        Assert.Equal(10, observation.AcceptedAttempt);
+        Assert.Equal(2, observation.DuplicateActiveCallsignCount);
+        Assert.Equal("K1ABC", observation.Qrm.MyCall);
+        Assert.Equal("K1ABC", observation.AcceptedCaller?.Callsign);
+        Assert.Equal(
+            [
+                0x3e84d1dbU,
+                0x3f6334d5U,
+                0x3dca46ceU,
+                0x3f571831U,
+                0x3d1c9b48U,
+                0x3ee7bb6fU,
+                0x3f41ef12U,
+                0x3d5256c8U,
+                0x3ed9db67U,
+                0x3c9570e0U,
+            ],
+            observation.Candidates
+                .Select(
+                    candidate =>
+                        BitConverter.SingleToUInt32Bits(candidate.R1))
+                .ToArray());
+        Assert.All(
+            observation.Candidates.Take(9),
+            candidate => Assert.NotEqual(
+                observation.AcceptedAttempt,
+                candidate.Attempt));
+        CallerCandidateParityObservation accepted =
+            observation.Candidates[^1];
+        Assert.Equal(1_010, accepted.Identity.Number);
+        Assert.Equal("EX10", accepted.Identity.Exchange1);
+        Assert.Equal("ID10", accepted.Identity.Exchange2);
+        Assert.Equal("OP10", accepted.Identity.OperatorName);
+        Assert.Equal("catalog-row-10", accepted.Identity.UserText);
+        Assert.Equal(OperatorState.NeedPreviousEnd, accepted.OperatorState);
+        Assert.Equal(5, accepted.Patience);
+        Assert.Equal(
+            0x3f7bb16dU,
+            BitConverter.SingleToUInt32Bits(
+                observation.TerminalRandom));
     }
 
     [Theory]

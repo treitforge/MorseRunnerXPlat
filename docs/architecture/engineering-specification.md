@@ -2772,10 +2772,23 @@ does not appear in `IMorseRunnerClient`, snapshots, gRPC, or UX contracts.
 The retained preimplementation boundary is
 `legacy-green-xplat-red` with code
 `audio-qrm-caller-collision-retry-limit-mismatch`. The first divergence is
-the zero-based `catalog` row at ordinal two. Production currently excludes
-QRM sources from caller collision checks and constructs a caller only after
-an identity survives selection, so it accepts the first duplicate and skips
-the nine discarded full-candidate constructions required by CE.
+the zero-based `catalog` row at ordinal two. At that checkpoint, production
+excluded QRM sources from caller collision checks and constructed a caller
+only after an identity survived selection, so the retained red evidence
+records the first duplicate being accepted and the nine discarded
+full-candidate constructions being skipped.
+
+The unchanged production-backed target now passes all sixteen fixture rows.
+`SimulatedStation.CreateCandidate` performs CE construction order: station R1,
+identity and exchange selection, `SimulatedOperator` creation in
+`NeedPreviousEnd`, receive-speed selection, QSB initialization and bandwidth
+refill, amplitude, and Gaussian pitch. `EngineSession.AddCaller` constructs
+and observes a candidate before testing its callsign against both normal
+callers and active QRM sources. Attempts one through nine may be discarded,
+while attempt ten is accepted without another collision check. Only the
+accepted ordinary runtime caller transitions to `NeedQso` and its send-delay
+state. The parity probe suppresses that later arrival transition so it
+observes the same immediate post-`TStations.AddCaller` boundary as CE.
 
 The authored
 `audio.qrn-background-sparse-impulses-seed-12345` case narrows the first QRN

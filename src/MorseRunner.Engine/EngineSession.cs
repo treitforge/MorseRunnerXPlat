@@ -973,12 +973,13 @@ internal sealed class EngineSession : IAsyncDisposable
                         candidate.Identity,
                         candidate.R1,
                         candidate.WordsPerMinute,
-                        candidate.WordsPerMinute,
+                        candidate.CharacterWordsPerMinute,
                         candidate.Operator.Skills,
                         candidate.Operator.Patience,
                         candidate.Operator.State,
                         candidate.Amplitude,
-                        candidate.PitchOffsetHz)));
+                        candidate.PitchOffsetHz)),
+            prepareForArrival: false);
 
         int duplicateActiveCallsignCount =
             (qrm.MyCall == observation.CollisionCall ? 1 : 0)
@@ -1714,63 +1715,94 @@ internal sealed class EngineSession : IAsyncDisposable
     private SimulatedStation? AddCaller(
         OperatorRunMode runMode,
         Func<int, StationIdentity>? identityOverride = null,
-        Action<int, SimulatedStation>? candidateObserver = null)
+        Action<int, SimulatedStation>? candidateObserver = null,
+        bool prepareForArrival = true)
     {
-        StationIdentity? identity = null;
-        int selectedAttempt = 0;
+        SimulatedStation? station = null;
         for (int attempt = 0; attempt < 10; attempt++)
         {
-            StationIdentity candidate;
-            if (identityOverride is null)
-            {
-                int serialNumber = CreateStationSerialNumber();
-                candidate = _stationCatalog.Pick(
-                    _random,
-                    _settings.ContestId,
-                    serialNumber);
-            }
-            else
-            {
-                candidate = identityOverride(attempt + 1);
-            }
+            int attemptNumber = attempt + 1;
+            SimulatedStation candidate =
+                SimulatedStation.CreateCandidate(
+                    () =>
+                    {
+                        if (identityOverride is not null)
+                        {
+                            return identityOverride(attemptNumber);
+                        }
 
-            if (_stations.All(
-                    station => !station.Identity.Callsign.Equals(
-                        candidate.Callsign,
-                        StringComparison.Ordinal)))
+                        int serialNumber = CreateStationSerialNumber();
+                        return _stationCatalog.Pick(
+                            _random,
+                            _settings.ContestId,
+                            serialNumber);
+                    },
+                    () => CreateStationWordsPerMinute(runMode),
+                    _random,
+                    _randomEffects,
+                    runMode,
+                    _settings.Lids,
+                    sweepstakes:
+                        _settings.ContestId.Value == "scArrlSS",
+                    _settings.Qsb,
+                    _settings.Flutter);
+            candidateObserver?.Invoke(attemptNumber, candidate);
+
+            if (attemptNumber == 10
+                || !CallsignExists(candidate.Identity.Callsign))
             {
-                identity = candidate;
-                selectedAttempt = attempt + 1;
+                station = candidate;
                 break;
             }
         }
 
-        if (identity is null)
+        if (station is null)
         {
             return null;
         }
 
-        int wordsPerMinute = CreateStationWordsPerMinute(runMode);
-        int pitchRange = runMode == OperatorRunMode.SingleCall ? 50 : 300;
-        int pitchOffset = _random.Next((pitchRange * 2) + 1) - pitchRange;
-        SimulatedStation station = SimulatedStation.CreateReadyCaller(
-            identity,
-            wordsPerMinute,
-            pitchOffset,
-            _random,
-            runMode,
-            _settings.Lids,
-            sweepstakes: _settings.ContestId.Value == "scArrlSS");
-        candidateObserver?.Invoke(
-            selectedAttempt,
-            station);
+        if (prepareForArrival)
+        {
+            station.PrepareReadyCaller();
+        }
+
         ReserveReceiverCapacityForCaller();
         _stations.Add(station);
         AddReceiverSource(ReceiverSource.FromCaller(station));
         _hasCreatedStation = true;
-        _lastCaller = identity.Callsign;
-        PublishEvent(SessionEventKind.CallerJoined, identity.Callsign);
+        _lastCaller = station.Identity.Callsign;
+        PublishEvent(
+            SessionEventKind.CallerJoined,
+            station.Identity.Callsign);
         return station;
+    }
+
+    private bool CallsignExists(string callsign)
+    {
+        if (_stations.Any(
+                station => station.Identity.Callsign.Equals(
+                    callsign,
+                    StringComparison.Ordinal)))
+        {
+            return true;
+        }
+
+        for (int index = _receiverSources.Count - 1;
+             index >= 0;
+             index--)
+        {
+            QrmStation? qrm = _receiverSources[index].QrmStation;
+            if (qrm is not null
+                && qrm.IsActive
+                && StringComparer.Ordinal.Equals(
+                    qrm.MyCall,
+                    callsign))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private int CreateStationWordsPerMinute(OperatorRunMode runMode)
@@ -1792,18 +1824,12 @@ internal sealed class EngineSession : IAsyncDisposable
                     MidpointRounding.ToEven));
         }
 
-        int minimum = Math.Max(
-            10,
-            _settings.WordsPerMinute - _settings.ReceiveSpeedBelowWpm);
-        int maximum =
-            _settings.WordsPerMinute + _settings.ReceiveSpeedAboveWpm;
-        if (minimum >= maximum)
-        {
-            return minimum;
-        }
-
         return (int)Math.Round(
-            minimum + ((maximum - minimum) * _random.NextDouble()),
+            _settings.WordsPerMinute
+            - _settings.ReceiveSpeedBelowWpm
+            + ((_settings.ReceiveSpeedBelowWpm
+                + _settings.ReceiveSpeedAboveWpm)
+                * _random.NextDouble()),
             MidpointRounding.ToEven);
     }
 

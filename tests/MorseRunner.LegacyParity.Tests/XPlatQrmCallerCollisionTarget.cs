@@ -312,7 +312,9 @@ public sealed class XPlatQrmCallerCollisionTarget : IParityTarget
             .ToString("x8", CultureInfo.InvariantCulture);
 
     private static string Format(float value) =>
-        value.ToString("0.000000000", CultureInfo.InvariantCulture);
+        ((double)value).ToString(
+            "0.000000000",
+            CultureInfo.InvariantCulture);
 
     private static string Format(int value) =>
         value.ToString(CultureInfo.InvariantCulture);

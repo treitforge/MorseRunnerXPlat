@@ -7,6 +7,8 @@ namespace MorseRunner.Engine;
 public sealed class SimulatedStation
 {
     private readonly MorseToneRenderer _renderer;
+    private readonly QsbProcessor? _qsb;
+    private readonly bool _qsbEnabled;
     private readonly float[] _scratch =
         new float[CompatibilityProfile.BlockSize];
     private double _bfoPhase;
@@ -34,6 +36,9 @@ public sealed class SimulatedStation
             lids,
             sweepstakes);
         State = StationState.Copying;
+        R1 = 0f;
+        Amplitude = 36_000f;
+        CharacterWordsPerMinute = wordsPerMinute;
         _renderer = new(
             CompatibilityProfile.SampleRate,
             CompatibilityProfile.BlockSize,
@@ -50,6 +55,8 @@ public sealed class SimulatedStation
 
     public int WordsPerMinute { get; }
 
+    internal int CharacterWordsPerMinute { get; }
+
     public int PitchOffsetHz { get; }
 
     internal float R1 { get; private set; }
@@ -62,6 +69,101 @@ public sealed class SimulatedStation
 
     public bool IsComplete =>
         Operator.State is OperatorState.Done or OperatorState.Failed;
+
+    private SimulatedStation(
+        StationIdentity identity,
+        int wordsPerMinute,
+        int characterWordsPerMinute,
+        int pitchOffsetHz,
+        SimulatedOperator simulatedOperator,
+        QsbProcessor qsb,
+        bool qsbEnabled,
+        float r1,
+        float amplitude)
+    {
+        Identity = identity;
+        WordsPerMinute = wordsPerMinute;
+        CharacterWordsPerMinute = characterWordsPerMinute;
+        PitchOffsetHz = pitchOffsetHz;
+        Operator = simulatedOperator;
+        State = StationState.Copying;
+        _qsb = qsb;
+        _qsbEnabled = qsbEnabled;
+        R1 = r1;
+        Amplitude = amplitude;
+        _renderer = new(
+            CompatibilityProfile.SampleRate,
+            CompatibilityProfile.BlockSize,
+            wordsPerMinute,
+            carrierFrequency: 600f,
+            gain: 1f);
+    }
+
+    internal static SimulatedStation CreateCandidate(
+        Func<StationIdentity> identityFactory,
+        Func<int> wordsPerMinuteFactory,
+        LegacyRandom random,
+        LegacyRandomEffects randomEffects,
+        OperatorRunMode runMode,
+        bool lids,
+        bool sweepstakes,
+        bool qsbEnabled,
+        bool flutter)
+    {
+        ArgumentNullException.ThrowIfNull(identityFactory);
+        ArgumentNullException.ThrowIfNull(wordsPerMinuteFactory);
+        ArgumentNullException.ThrowIfNull(random);
+        ArgumentNullException.ThrowIfNull(randomEffects);
+
+        float r1 = random.NextSingle();
+        StationIdentity identity = identityFactory();
+        var simulatedOperator = new SimulatedOperator(
+            identity.Callsign,
+            OperatorState.NeedPreviousEnd,
+            random,
+            runMode,
+            lids,
+            sweepstakes);
+        _ = lids && random.NextDouble() < 0.1d;
+        int wordsPerMinute = wordsPerMinuteFactory();
+        if (lids && random.NextDouble() < 0.03d)
+        {
+            identity = identity with
+            {
+                Rst = (559 + (10 * random.Next(4))).ToString(
+                    CultureInfo.InvariantCulture),
+            };
+        }
+
+        var qsb = new QsbProcessor(randomEffects)
+        {
+            Bandwidth = (float)(
+                0.1d + (random.NextDouble() / 2d)),
+        };
+        if (flutter && random.NextDouble() < 0.3d)
+        {
+            qsb.Bandwidth = (float)(
+                3d + (random.NextDouble() * 30d));
+        }
+
+        float amplitude = (float)(
+            9_000f
+            + (18_000f * (1f + randomEffects.UShaped())));
+        int pitchRange = runMode == OperatorRunMode.SingleCall ? 50 : 300;
+        int pitchOffsetHz = (int)MathF.Round(
+            randomEffects.GaussianLimited(0f, pitchRange),
+            MidpointRounding.ToEven);
+        return new(
+            identity,
+            wordsPerMinute,
+            wordsPerMinute,
+            pitchOffsetHz,
+            simulatedOperator,
+            qsb,
+            qsbEnabled,
+            r1,
+            amplitude);
+    }
 
     public static SimulatedStation CreateReadyCaller(
         StationIdentity identity,
@@ -84,6 +186,13 @@ public sealed class SimulatedStation
         station.State = StationState.PreparingToSend;
         station._timeoutBlocks = station.Operator.GetSendDelay(wordsPerMinute);
         return station;
+    }
+
+    internal void PrepareReadyCaller()
+    {
+        Operator.SetState(OperatorState.NeedQso);
+        State = StationState.PreparingToSend;
+        _timeoutBlocks = Operator.GetSendDelay(WordsPerMinute);
     }
 
     public void ReceiveOperatorStarted()
@@ -158,6 +267,14 @@ public sealed class SimulatedStation
 
         bool hadAudio = _renderer.HasPendingAudio;
         _renderer.RenderEnvelope(_scratch);
+        if (_qsbEnabled)
+        {
+            (_qsb
+                ?? throw new InvalidOperationException(
+                    "The QSB-enabled station has no QSB processor."))
+                .Apply(_scratch);
+        }
+
         if (mixOutput)
         {
             double phaseStep =
@@ -165,7 +282,7 @@ public sealed class SimulatedStation
                 / CompatibilityProfile.SampleRate;
             for (int index = 0; index < receiverReal.Length; index++)
             {
-                float amplitude = _scratch[index] * 36_000f;
+                float amplitude = _scratch[index] * Amplitude;
                 receiverReal[index] +=
                     amplitude * (float)Math.Cos(_bfoPhase);
                 receiverImaginary[index] -=
