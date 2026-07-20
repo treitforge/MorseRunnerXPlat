@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "target": "legacy",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "333e61448e86ac7961f5e007cda8d8492bfb2695",
+      "tree": "72f8a1f71d0f8c1c8c396fc77eedb5d8c5153441",
+      "clean": true
+    },
+    "legacy": {
+      "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+      "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+      "clean": true
+    }
+  },
+  "expectedParityIds": [
+    "audio.flutter-no-station-noise-invariance-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "audio.flutter-no-station-noise-invariance-seed-12345",
+      "acceptanceTestName": "parity:audio.flutter-no-station-noise-invariance-seed-12345()",
+      "target": "legacy",
+      "adapter": "LegacyOracleTarget",
+      "caseDefinitionSha256": "ced35692a0e9475b7a872b22c83ddb36f1572663654aa9604391031e7972bcb4",
+      "fixtureSha256": "6df1fb2edf5927530868e8c6ebc40f71b7dccfa0443e2aad18f12c944d8a9640",
+      "outcome": "passed",
+      "failureCode": null,
+      "evidenceSource": "tests/parity/legacy-oracle/v11/LegacyOracle.lpr",
+      "observedValues": [
+        "configuration|sample-rate=11025|block-size=512|seed=12345|bandwidth-hz=500|pitch-hz=600|startup-request-count=5|compared-block-count=2|probe-sample-indexes=0,1,2,3,310,511|fresh-runs=clean,flutter|station-count=0|normalization=ce-single-div-32768-clamp-unit",
+        "clean-block[0]|sample-count=512|probe-bits=00000000,00000000,00000000,00000000,b864f231,3b26ef5d|float-sha256=6b468ab13ccc1accb6ec587b8a51d27ca23eb80b20bce034106e547ad3565378",
+        "clean-block[1]|sample-count=512|probe-bits=3b3a0bcc,399814f0,bb2e6686,bb846947,bcd26871,bc95cf84|float-sha256=6d874352696aba890974bffc8c5973fe99353bccaa4b710ec3c7e3f135066117",
+        "flutter-block[0]|sample-count=512|probe-bits=00000000,00000000,00000000,00000000,b864f231,3b26ef5d|float-sha256=6b468ab13ccc1accb6ec587b8a51d27ca23eb80b20bce034106e547ad3565378",
+        "flutter-block[1]|sample-count=512|probe-bits=3b3a0bcc,399814f0,bb2e6686,bb846947,bcd26871,bc95cf84|float-sha256=6d874352696aba890974bffc8c5973fe99353bccaa4b710ec3c7e3f135066117",
+        "output-invariance[0]|clean-float-sha256=6b468ab13ccc1accb6ec587b8a51d27ca23eb80b20bce034106e547ad3565378|flutter-float-sha256=6b468ab13ccc1accb6ec587b8a51d27ca23eb80b20bce034106e547ad3565378|exact-equal=true",
+        "output-invariance[1]|clean-float-sha256=6d874352696aba890974bffc8c5973fe99353bccaa4b710ec3c7e3f135066117|flutter-float-sha256=6d874352696aba890974bffc8c5973fe99353bccaa4b710ec3c7e3f135066117|exact-equal=true",
+        "aggregate-invariance|sample-count=1024|clean-float-sha256=19b2cc5f9d3e60b5efbd77cddaf62e91030c1d351153341ec8484b93aaa5694d|flutter-float-sha256=19b2cc5f9d3e60b5efbd77cddaf62e91030c1d351153341ec8484b93aaa5694d|exact-equal=true"
+      ],
+      "observedValueCount": 8,
+      "observedValuesSha256": "7fc8f051c3453475a30a9cdccd55886a839739338b2309d73e18d8e76c708a6d",
+      "firstDivergence": null,
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v11",
+        "source": "tests/parity/legacy-oracle/v11/LegacyOracle.lpr",
+        "sourceSha256": "43c940297889e3d84e9eeea517804e19f1d6393005c0c7ffb0248aa8991edbbf",
+        "buildRecipe": "tests/parity/legacy-oracle/v11/build-recipe.json",
+        "buildRecipeSha256": "0427b55c18ed227f1f0c9e0a18d4f008913f771492a8e6be78073899c8685e17",
+        "registrySha256": "480c4b05f1798c64d855667d6e28afc28f59841ccb62361b5e104e4162abaee3",
+        "executableSha256": "13780d7ecfaf76f307cdf6d72ebee49df7e43481910144c3b2992b5a48fe17b1",
+        "provenance": "artifacts/legacy-oracle/builds/legacy-oracle-v11/40cec1d5a1b169874d70cba9b4983131a2c202222866ecbb0a4d823d3806b012/90e1882af8184a2d835193de83ba6de8/LegacyOracle.provenance.json",
+        "provenanceSha256": "2cb5b5d00f5feec4d2491c08b4cb5930bb701711e2e2aae067d5787ba7b88a92"
+      },
+      "executionCount": 1
+    }
+  ]
+}

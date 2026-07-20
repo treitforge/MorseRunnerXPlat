@@ -22,7 +22,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Mapped legacy surfaces: 3668
 - Unmapped legacy surfaces: 0
 - Pending audit surfaces: 0
-- Overlapping case surface/platform assignments: 9
+- Overlapping case surface/platform assignments: 18
 
 | Category | Discovered surfaces |
 |---|---:|
@@ -110,15 +110,15 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Partially authored capabilities: 4
 - Not-authored capabilities: 20
 - Behavioral obligations: 119
-- Source-bound obligations: 7
-- Pending source bindings: 112
+- Source-bound obligations: 8
+- Pending source bindings: 111
 - Complete obligations: 0
-- Partially authored obligations: 7
-- Not-authored obligations: 112
+- Partially authored obligations: 8
+- Not-authored obligations: 111
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 7
+- Active acceptance cases: 8
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 7
+- Legacy-green/XPlat-red cases: 8
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
@@ -134,13 +134,13 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `logging.qso-model` | Legacy QSO record and error model | `not-authored` | 0 | 47 | 0 | `Log.pas:48-82` |
 | `logging.scoring-rate-and-results` | Legacy logging, scoring, rate, correction, and result paths | `not-authored` | 0 | 55 | 0 | `Log.pas:147-1137` |
 | `simulation.state-models` | Legacy simulation state models and transitions | `not-authored` | 0 | 66 | 0 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
-| `simulation.runtime-routines` | Legacy contest, station, and operator routines | `not-authored` | 0 | 93 | 9 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
+| `simulation.runtime-routines` | Legacy contest, station, and operator routines | `not-authored` | 0 | 93 | 15 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
 | `audio-dsp.legacy-processing` | Legacy portable keying and DSP processing | `partial` | 3 | 131 | 0 | `VCL/Crc32.pas`<br>`VCL/FarnsKeyer.pas`<br>`VCL/Mixers.pas`<br>`VCL/MorseKey.pas`<br>`VCL/MorseTbl.pas`<br>`VCL/MovAvg.pas`<br>`VCL/QuickAvg.pas`<br>`VCL/SndTypes.pas`<br>`VCL/VolumCtl.pas` |
 | `audio.legacy-adapters` | Legacy sound output, buffering, and WAV adapters | `not-authored` | 0 | 85 | 0 | `VCL/BaseComp.pas`<br>`VCL/SndCustm.pas`<br>`VCL/SndOut.pas`<br>`VCL/WavFile.pas` |
 | `ux.legacy-vcl-components` | Legacy VCL-only hint and volume controls | `not-authored` | 0 | 36 | 0 | `VCL/PermHint.pas`<br>`VCL/VolmSldr.pas` |
 | `contest.legacy-implementations` | Legacy contest-specific implementations | `partial` | 1 | 215 | 0 | `ACAG.pas`<br>`ALLJA.pas`<br>`ArrlDx.pas`<br>`ArrlFd.pas`<br>`ArrlSS.pas`<br>`CqWpx.pas`<br>`CqWW.pas`<br>`CWOPS.pas`<br>`CWSST.pas`<br>`DualExchContest.pas`<br>`IaruHf.pas`<br>`NaQp.pas` |
 | `data.legacy-parsers` | Legacy call, prefix, exchange, and serial data parsers | `not-authored` | 0 | 477 | 0 | `CallLst.pas`<br>`DXCC.pas`<br>`ExchFields.pas`<br>`SerNRGen.pas`<br>`Util/ArrlSections.pas`<br>`Util/CallsignUtils.pas`<br>`Util/Lexer.pas`<br>`Util/SSExchParser.pas`<br>`ACAG.pas`<br>`ALLJA.pas`<br>`ArrlDx.pas`<br>`ArrlFd.pas`<br>`ArrlSS.pas`<br>`CqWW.pas`<br>`CWOPS.pas`<br>`CWSST.pas`<br>`IaruHf.pas`<br>`Main.pas`<br>`NaQp.pas`<br>`Test/SSLexerTest.pas` |
-| `simulation.legacy-effects` | Legacy QSB and random effects | `partial` | 2 | 15 | 0 | `Qsb.pas`<br>`RndFunc.pas` |
+| `simulation.legacy-effects` | Legacy QSB and random effects | `partial` | 3 | 15 | 3 | `Qsb.pas`<br>`RndFunc.pas` |
 | `ux.score-dialog` | Legacy score dialog | `not-authored` | 0 | 5 | 0 | `ScoreDlg.pas` |
 | `data.files-and-operational-paths` | Legacy data files, recording, export, and failure paths | `not-authored` | 0 | 164 | 0 | `Ini.pas`<br>`Main.pas`<br>`Log.pas`<br>`Station.pas`<br>`VCL`<br>`contest and data support units`<br>`bundled data and application resource files`<br>`Lazarus/build.ps1`<br>`tools/make-install.sh`<br>`ACAG.pas`<br>`ALLJA.pas`<br>`ArrlDx.pas`<br>`ArrlFd.pas`<br>`ArrlSS.pas`<br>`CallLst.pas`<br>`CqWW.pas`<br>`CWOPS.pas`<br>`CWSST.pas`<br>`DXCC.pas`<br>`IaruHf.pas`<br>`NaQp.pas` |
 | `ux.legacy-form-definitions` | Legacy Lazarus and Delphi form definitions | `not-authored` | 0 | 410 | 0 | `Main.lfm`<br>`Main.pas`<br>`ScoreDlg.dfm`<br>`ScoreDlg.lfm`<br>`ScoreDlg.pas` |
@@ -178,7 +178,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `audio.qrm-interfering-cw-stations` | `simulation.legacy-effects` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | QRM uses CE-equivalent randomized interfering CW stations, messages, levels, pitches, speeds, retries, and lifetimes. |
 | `audio.qrn-impulses-and-burst-stations` | `simulation.legacy-effects` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | QRN produces CE sparse impulses and burst stations before receiver filtering and AGC. |
 | `audio.qsb-independent-per-station` | `simulation.legacy-effects` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | Every remote station has an independent CE-distributed QSB process without fading the receiver noise floor. |
-| `audio.flutter-fast-per-station-qsb` | `simulation.legacy-effects` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Flutter is the CE probabilistic fast per-station QSB mode rather than a global multiplier. |
+| `audio.flutter-fast-per-station-qsb` | `simulation.legacy-effects` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | Flutter is the CE probabilistic fast per-station QSB mode rather than a global multiplier. |
 | `audio.station-level-and-pitch-distributions` | `audio-dsp.legacy-processing` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Remote station amplitude and pitch use CE distributions and deterministic draw ordering. |
 | `audio.bfo-phase-state-and-reset` | `audio-dsp.legacy-processing` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Station BFO phase advances and resets at the same CE transmission boundaries. |
 | `audio.sst-farnsworth-timing` | `audio-dsp.legacy-processing` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | The production keyer primitive used by SST supports independent character and spacing speeds with CE-equivalent marker encoding, sample counts, default ramps, and block padding. |
@@ -281,6 +281,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | Case ID | Capability | Obligations | Status | Failure code | Legacy | XPlat |
 |---|---|---|---|---|---|---|
 | `audio.deterministic-random-primitives-seed-12345` | `simulation.legacy-effects` | `audio.deterministic-random-primitives` | `legacy-green-xplat-red` | `audio-deterministic-random-primitives-mismatch` | `pass` | `fail` |
+| `audio.flutter-no-station-noise-invariance-seed-12345` | `simulation.legacy-effects` | `audio.flutter-fast-per-station-qsb` | `legacy-green-xplat-red` | `audio-flutter-no-station-noise-invariance-mismatch` | `pass` | `fail` |
 | `audio.qsb-no-station-noise-invariance-seed-12345` | `simulation.legacy-effects` | `audio.qsb-independent-per-station` | `legacy-green-xplat-red` | `audio-qsb-no-station-noise-invariance-mismatch` | `pass` | `fail` |
 | `audio.realistic-hiss-noise-floor` | `audio-dsp.legacy-processing` | `audio.realistic-hiss-and-noise-floor` | `legacy-green-xplat-red` | `audio-realistic-hiss-noise-floor-mismatch` | `pass` | `fail` |
 | `audio.sst-farnsworth-envelope-timing` | `audio-dsp.legacy-processing` | `audio.sst-farnsworth-timing` | `legacy-green-xplat-red` | `audio-sst-farnsworth-timing-mismatch` | `pass` | `fail` |

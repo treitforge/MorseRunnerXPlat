@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "333e61448e86ac7961f5e007cda8d8492bfb2695",
+      "tree": "72f8a1f71d0f8c1c8c396fc77eedb5d8c5153441",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "audio.flutter-no-station-noise-invariance-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "audio.flutter-no-station-noise-invariance-seed-12345",
+      "acceptanceTestName": "parity:audio.flutter-no-station-noise-invariance-seed-12345()",
+      "target": "xplat",
+      "adapter": "XPlatFlutterNoStationNoiseInvarianceTarget",
+      "caseDefinitionSha256": "ced35692a0e9475b7a872b22c83ddb36f1572663654aa9604391031e7972bcb4",
+      "fixtureSha256": "6df1fb2edf5927530868e8c6ebc40f71b7dccfa0443e2aad18f12c944d8a9640",
+      "outcome": "functional-divergence",
+      "failureCode": "audio-flutter-no-station-noise-invariance-mismatch",
+      "evidenceSource": "MorseRunner.Engine.MorseRunnerEngine\u002BMorseRunner.Engine.EngineSession\u002BMorseRunner.Engine.IAudioSink.WriteAsync",
+      "observedValues": [
+        "configuration|sample-rate=11025|block-size=512|seed=12345|bandwidth-hz=500|pitch-hz=600|startup-request-count=5|compared-block-count=2|probe-sample-indexes=0,1,2,3,310,511|fresh-runs=clean,flutter|station-count=0|normalization=ce-single-div-32768-clamp-unit",
+        "clean-block[0]|sample-count=512|probe-bits=00000000,00000000,00000000,00000000,b864f231,3b26ef5d|float-sha256=6b468ab13ccc1accb6ec587b8a51d27ca23eb80b20bce034106e547ad3565378",
+        "clean-block[1]|sample-count=512|probe-bits=3b3a0bcc,399814f0,bb2e6686,bb846947,bcd26871,bc95cf84|float-sha256=6d874352696aba890974bffc8c5973fe99353bccaa4b710ec3c7e3f135066117",
+        "flutter-block[0]|sample-count=512|probe-bits=00000000,00000000,00000000,00000000,b862bf3b,3b0e1e9e|float-sha256=d89fbb32bdefc292992ed79bccaaa0911e9f0b02cce5f4520323b11c3234abb1",
+        "flutter-block[1]|sample-count=512|probe-bits=3b1e3a10,39813541,bb14046d,bb608758,bc9a4eee,bc838e2f|float-sha256=f6f9f077ee2136a2f9a436ab96e96fdfc0bd7d0627a396f789673649e05c1365",
+        "output-invariance[0]|clean-float-sha256=6b468ab13ccc1accb6ec587b8a51d27ca23eb80b20bce034106e547ad3565378|flutter-float-sha256=d89fbb32bdefc292992ed79bccaaa0911e9f0b02cce5f4520323b11c3234abb1|exact-equal=false",
+        "output-invariance[1]|clean-float-sha256=6d874352696aba890974bffc8c5973fe99353bccaa4b710ec3c7e3f135066117|flutter-float-sha256=f6f9f077ee2136a2f9a436ab96e96fdfc0bd7d0627a396f789673649e05c1365|exact-equal=false",
+        "aggregate-invariance|sample-count=1024|clean-float-sha256=19b2cc5f9d3e60b5efbd77cddaf62e91030c1d351153341ec8484b93aaa5694d|flutter-float-sha256=e42ee7460abb0745224a3009361f1d941c3988ec2a8fa5ab8591f7f471d12ea7|exact-equal=false"
+      ],
+      "observedValueCount": 8,
+      "observedValuesSha256": "d7534be943cad60b3fe6310e67ff5a816c86d06b4976f0ed893d4ffcb19f33b6",
+      "firstDivergence": {
+        "index": 3,
+        "expected": "flutter-block[0]|sample-count=512|probe-bits=00000000,00000000,00000000,00000000,b864f231,3b26ef5d|float-sha256=6b468ab13ccc1accb6ec587b8a51d27ca23eb80b20bce034106e547ad3565378",
+        "actual": "flutter-block[0]|sample-count=512|probe-bits=00000000,00000000,00000000,00000000,b862bf3b,3b0e1e9e|float-sha256=d89fbb32bdefc292992ed79bccaaa0911e9f0b02cce5f4520323b11c3234abb1"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}

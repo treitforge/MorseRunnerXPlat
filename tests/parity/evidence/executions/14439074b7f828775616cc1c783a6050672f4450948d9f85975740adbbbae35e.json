@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "target": "XPlat",
+  "platform": "windows",
+  "operatingSystem": "Microsoft Windows 10.0.26200",
+  "architecture": "x64",
+  "runtimeIdentifier": "win-x64",
+  "revision": "333e61448e86ac7961f5e007cda8d8492bfb2695",
+  "tree": "72f8a1f71d0f8c1c8c396fc77eedb5d8c5153441",
+  "resultSha256": "c0706929ae3cc52ca24399773ddd6f9067690f3a3a8dd19af9b0167c10ded542",
+  "testReportSha256": "84ccb833de10eb3738df865fb585172ae344236186a326879f1d831318bba12f",
+  "testProcessExitCode": 2,
+  "wrapper": {
+    "completed": true,
+    "correlationValidated": true,
+    "exitCode": 0
+  },
+  "functionalDivergences": [
+    {
+      "caseId": "audio.flutter-no-station-noise-invariance-seed-12345",
+      "failureCode": "audio-flutter-no-station-noise-invariance-mismatch"
+    }
+  ]
+}

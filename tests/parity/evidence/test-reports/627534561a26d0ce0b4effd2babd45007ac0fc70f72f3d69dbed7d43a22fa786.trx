@@ -1,0 +1,23 @@
+<TestRun id="d22e02f2-bc0d-4f15-bfc4-aa5f398fa91f" name="randy@TREIT-XIDAX 2026-07-20T02:23:56.0811434-07:00" runUser="randy" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-07-20T02:23:56.0811434-07:00" queuing="2026-07-20T02:23:56.0811434-07:00" start="2026-07-20T02:23:56.0811434-07:00" finish="2026-07-20T09:23:57.4673789+00:00" />
+  <TestSettings name="default" id="6c4d5628-128d-4c3b-a1a4-ab366a4594ad" />
+  <Results>
+    <UnitTestResult testName="parity:audio.flutter-no-station-noise-invariance-seed-12345()" outcome="Passed" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" testId="b166c54f-b837-4063-a021-9a53d8110ecf" executionId="b166c54f-b837-4063-a021-9a53d8110ecf" computerName="TREIT-XIDAX" duration="00:00:01.2962716" startTime="2026-07-20T09:23:56.1590794+00:00" endTime="2026-07-20T09:23:57.4673789+00:00" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="parity:audio.flutter-no-station-noise-invariance-seed-12345()" id="b166c54f-b837-4063-a021-9a53d8110ecf" storage="C:\Users\randy\Git\MorseRunnerXPlat\tests\MorseRunner.LegacyParity.Tests\bin\Release\net10.0\MorseRunner.LegacyParity.Tests.dll">
+      <Execution id="b166c54f-b837-4063-a021-9a53d8110ecf" />
+      <TestMethod codeBase="C:\Users\randy\Git\MorseRunnerXPlat\tests\MorseRunner.LegacyParity.Tests\bin\Release\net10.0\MorseRunner.LegacyParity.Tests.dll" className="MorseRunner.LegacyParity.Tests.LegacyOracleParityTests" name="ManifestCaseMatchesSelectedTarget" adapterTypeName="executor://d22e02f2-bc0d-4f15-bfc4-aa5f398fa91f/xunit.v3/3.2.2" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" testId="b166c54f-b837-4063-a021-9a53d8110ecf" executionId="b166c54f-b837-4063-a021-9a53d8110ecf" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="1" executed="1" passed="1" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+  </ResultSummary>
+</TestRun>
