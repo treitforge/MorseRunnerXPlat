@@ -65,6 +65,7 @@ public sealed class ParityInfrastructureTests
             [
                 "audio.deterministic-random-primitives-seed-12345",
                 "audio.flutter-no-station-noise-invariance-seed-12345",
+                "audio.qrm-no-trigger-invariance-seed-12345",
                 "audio.qsb-no-station-noise-invariance-seed-12345",
                 "audio.realistic-hiss-noise-floor",
                 "audio.sst-farnsworth-envelope-timing",
@@ -78,6 +79,7 @@ public sealed class ParityInfrastructureTests
             [
                 "audio.deterministic-random-primitives-seed-12345",
                 "audio.flutter-no-station-noise-invariance-seed-12345",
+                "audio.qrm-no-trigger-invariance-seed-12345",
                 "audio.qsb-no-station-noise-invariance-seed-12345",
                 "audio.realistic-hiss-noise-floor",
                 "audio.sst-farnsworth-envelope-timing",
@@ -101,6 +103,10 @@ public sealed class ParityInfrastructureTests
             ParityAcceptanceRegistry
                 .Get(
                     "audio.flutter-no-station-noise-invariance-seed-12345")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatQrmNoTriggerInvarianceTarget>(
+            ParityAcceptanceRegistry
+                .Get("audio.qrm-no-trigger-invariance-seed-12345")
                 .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatQsbNoStationNoiseInvarianceTarget>(
             ParityAcceptanceRegistry

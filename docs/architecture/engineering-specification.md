@@ -2520,6 +2520,42 @@ ownership, QSB gating, the 30 percent fast-mode selection, bandwidth
 distribution, draw order, independent envelopes, or runtime toggling. The
 `audio.flutter-fast-per-station-qsb` obligation therefore remains partial.
 
+The authored
+`audio.qrm-no-trigger-invariance-seed-12345` case narrows the first QRM
+acceptance boundary to a station-free block in which no interferer is created.
+Its pinned v12 CE adapter creates two fresh actual `TContest.GetAudio` runtimes
+for CQ WPX in `rmStop` with seed 12345, 11025 Hz audio, 512-sample blocks,
+500 Hz bandwidth, 600 Hz pitch, no normal DX stations or operator
+transmission, and QSB, flutter, QRN, QSK, and LIDs disabled. The runs differ
+only in `Ini.Qrm`. Each run executes the real handleless `MainForm.SetBw` path,
+resets `RandSeed` immediately before audio framing, verifies five real
+one-`Single` zero startup requests, and requests exactly one complete block.
+
+With QRN disabled, that complete block consumes 1024 shared random values for
+its complex hiss before QRM evaluates random ordinal 1024. For seed 12345 the
+trigger value is approximately 0.17384081427007914, which is greater than the
+0.0002 construction threshold. The adapter requires the actual production
+`Tst.Stations` collection to remain empty in both runs and records the actual
+counts. The clean and QRM-enabled normalized binary32 blocks, probe bits, and
+raw-`Single` hashes must be bit-for-bit identical. The case deliberately does
+not compare a second block because the enabled run consumed the otherwise
+absent trigger draw and therefore begins its next block at a different
+shared-stream position.
+
+The XPlat adapter performs the paired capture through two fresh actual
+`MorseRunnerEngine` and `EngineSession` sessions and the production
+`IAudioSink` port. It starts and immediately aborts each `rmStop` session,
+proves no audio was written before one explicit block advance, and requires
+zero active stations. The current unconditional post-receiver QRM sine changes
+the QRM-enabled block, so the case remains `legacy-green-xplat-red` with first
+divergence at the `qrm-block[0]` row and code
+`audio-qrm-no-trigger-invariance-mismatch`.
+
+This case does not certify positive QRM construction, construction probability
+and draw ownership, a shared-random sentinel, message selection, levels,
+pitch, WPM, same-block audibility, retries, or station lifetime. Those require
+separate live cases, so `audio.qrm-interfering-cw-stations` remains partial.
+
 The `audio.deterministic-random-primitives-seed-12345` case executes the pinned CE
 `RndFunc.pas` routines and the XPlat production `LegacyRandom` and
 `LegacyRandomEffects` primitives with seed 12345. Each primitive group starts
