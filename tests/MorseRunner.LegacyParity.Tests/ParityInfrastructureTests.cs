@@ -587,7 +587,13 @@ public sealed class ParityInfrastructureTests
                         TestContext.Current.CancellationToken);
                 }));
 
-        using FileStream stream = File.OpenRead(path);
+        byte[] resultBytes = await File.ReadAllBytesAsync(
+            path,
+            TestContext.Current.CancellationToken);
+        Assert.Contains((byte)'\n', resultBytes);
+        Assert.DoesNotContain((byte)'\r', resultBytes);
+
+        using MemoryStream stream = new(resultBytes);
         using JsonDocument document = JsonDocument.Parse(stream);
         Assert.Equal(
             "xplat",

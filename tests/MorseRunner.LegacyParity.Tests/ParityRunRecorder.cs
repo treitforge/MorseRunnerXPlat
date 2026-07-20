@@ -12,6 +12,7 @@ internal static class ParityRunRecorder
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
         WriteIndented = true,
+        NewLine = "\n",
         UnmappedMemberHandling =
             JsonUnmappedMemberHandling.Disallow,
     };
