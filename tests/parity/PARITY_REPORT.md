@@ -110,15 +110,15 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Partially authored capabilities: 3
 - Not-authored capabilities: 21
 - Behavioral obligations: 119
-- Source-bound obligations: 3
-- Pending source bindings: 116
+- Source-bound obligations: 4
+- Pending source bindings: 115
 - Complete obligations: 0
-- Partially authored obligations: 3
-- Not-authored obligations: 116
+- Partially authored obligations: 4
+- Not-authored obligations: 115
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 3
+- Active acceptance cases: 4
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 3
+- Legacy-green/XPlat-red cases: 4
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
@@ -135,7 +135,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `logging.scoring-rate-and-results` | Legacy logging, scoring, rate, correction, and result paths | `not-authored` | 0 | 55 | 0 | `Log.pas:147-1137` |
 | `simulation.state-models` | Legacy simulation state models and transitions | `not-authored` | 0 | 66 | 0 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
 | `simulation.runtime-routines` | Legacy contest, station, and operator routines | `not-authored` | 0 | 93 | 0 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
-| `audio-dsp.legacy-processing` | Legacy portable keying and DSP processing | `partial` | 1 | 131 | 0 | `VCL/Crc32.pas`<br>`VCL/FarnsKeyer.pas`<br>`VCL/Mixers.pas`<br>`VCL/MorseKey.pas`<br>`VCL/MorseTbl.pas`<br>`VCL/MovAvg.pas`<br>`VCL/QuickAvg.pas`<br>`VCL/SndTypes.pas`<br>`VCL/VolumCtl.pas` |
+| `audio-dsp.legacy-processing` | Legacy portable keying and DSP processing | `partial` | 2 | 131 | 0 | `VCL/Crc32.pas`<br>`VCL/FarnsKeyer.pas`<br>`VCL/Mixers.pas`<br>`VCL/MorseKey.pas`<br>`VCL/MorseTbl.pas`<br>`VCL/MovAvg.pas`<br>`VCL/QuickAvg.pas`<br>`VCL/SndTypes.pas`<br>`VCL/VolumCtl.pas` |
 | `audio.legacy-adapters` | Legacy sound output, buffering, and WAV adapters | `not-authored` | 0 | 85 | 0 | `VCL/BaseComp.pas`<br>`VCL/SndCustm.pas`<br>`VCL/SndOut.pas`<br>`VCL/WavFile.pas` |
 | `ux.legacy-vcl-components` | Legacy VCL-only hint and volume controls | `not-authored` | 0 | 36 | 0 | `VCL/PermHint.pas`<br>`VCL/VolmSldr.pas` |
 | `contest.legacy-implementations` | Legacy contest-specific implementations | `partial` | 1 | 215 | 0 | `ACAG.pas`<br>`ALLJA.pas`<br>`ArrlDx.pas`<br>`ArrlFd.pas`<br>`ArrlSS.pas`<br>`CqWpx.pas`<br>`CqWW.pas`<br>`CWOPS.pas`<br>`CWSST.pas`<br>`DualExchContest.pas`<br>`IaruHf.pas`<br>`NaQp.pas` |
@@ -186,7 +186,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `audio.single-seeded-random-stream` | `simulation.legacy-effects` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | One seeded session random stream reproduces CE ownership and cross-feature draw order. |
 | `audio.legacy-block-size-configurations` | `audio-dsp.legacy-processing` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | CE block sizes from 128 through 2048 are supported or proven import-equivalent with matching timing. |
 | `audio.startup-warmup-and-filter-timing` | `audio-dsp.legacy-processing` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Startup warmup requests, block numbering, prefill, and alternating-filter swap timing match CE. |
-| `audio.realistic-hiss-and-noise-floor` | `audio-dsp.legacy-processing` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Base complex hiss and receiver noise floor match CE level, spectrum, random draws, and processing order. |
+| `audio.realistic-hiss-and-noise-floor` | `audio-dsp.legacy-processing` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | Base complex hiss and receiver noise floor match CE level, spectrum, random draws, and processing order. |
 | `audio.wav-pcm-bit-exact` | `audio.legacy-adapters` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | WAV headers, PCM scaling, rounding, clipping, negative full scale, and sample bytes match CE vectors. |
 | `audio.recording-failure-and-backpressure-isolation` | `audio.legacy-adapters` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Recording failure and queue backpressure stop recording without faulting or allocating in the contest render path. |
 | `audio.sink-preconversion-block-equivalence` | `audio.legacy-adapters` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Raw capture, WAV, null, and physical playback receive identical ordered pre-conversion audio blocks. |
@@ -280,6 +280,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 
 | Case ID | Capability | Obligations | Status | Failure code | Legacy | XPlat |
 |---|---|---|---|---|---|---|
+| `audio.realistic-hiss-noise-floor` | `audio-dsp.legacy-processing` | `audio.realistic-hiss-and-noise-floor` | `legacy-green-xplat-red` | `audio-realistic-hiss-noise-floor-mismatch` | `pass` | `fail` |
 | `audio.sst-farnsworth-envelope-timing` | `audio-dsp.legacy-processing` | `audio.sst-farnsworth-timing` | `legacy-green-xplat-red` | `audio-sst-farnsworth-timing-mismatch` | `pass` | `fail` |
 | `contest.exchange-shapes` | `contest.legacy-implementations` | `contest.exchange-shapes-and-constructor-metadata` | `legacy-green-xplat-red` | `contest-exchange-shape-mismatch` | `pass` | `fail` |
 | `ux.enter-esm-partial-call-message-selection-live` | `ux.keyboard-workflows` | `ux.enter-esm-partial-call-message-selection` | `legacy-green-xplat-red` | `ux-enter-esm-partial-call-message-selection-mismatch` | `pass` | `fail` |
