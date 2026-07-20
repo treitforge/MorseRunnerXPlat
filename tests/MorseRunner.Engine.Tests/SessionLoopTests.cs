@@ -61,6 +61,60 @@ public sealed class SessionLoopTests
     }
 
     [Fact]
+    public async Task ParityRandomCheckpointUsesTheSessionWorkerAndGuardsPosition()
+    {
+        await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 12_345),
+            TestContext.Current.CancellationToken);
+        SessionSnapshot snapshot = engine.GetSnapshot(handle.SessionId);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => engine.TakeNextSessionRandomSingleForParityAsync(
+                handle.SessionId,
+                snapshot.Revision + 1,
+                snapshot.SimulationBlock,
+                TestContext.Current.CancellationToken));
+        float first = await engine
+            .TakeNextSessionRandomSingleForParityAsync(
+                handle.SessionId,
+                snapshot.Revision,
+                snapshot.SimulationBlock,
+                TestContext.Current.CancellationToken);
+        float second = await engine
+            .TakeNextSessionRandomSingleForParityAsync(
+                handle.SessionId,
+                snapshot.Revision,
+                snapshot.SimulationBlock,
+                TestContext.Current.CancellationToken);
+
+        Assert.Equal(0x3F6D_FB52U, BitConverter.SingleToUInt32Bits(first));
+        Assert.Equal(0x3F63_E12EU, BitConverter.SingleToUInt32Bits(second));
+    }
+
+    [Fact]
+    public async Task ParityRandomCheckpointRejectsAutomaticTiming()
+    {
+        await using MorseRunnerEngine engine = new(
+            _ => new NullAudioSink(),
+            new MorseRunnerEngineOptions
+            {
+                AutomaticTiming = true,
+            });
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 12_345),
+            TestContext.Current.CancellationToken);
+        SessionSnapshot snapshot = engine.GetSnapshot(handle.SessionId);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => engine.TakeNextSessionRandomSingleForParityAsync(
+                handle.SessionId,
+                snapshot.Revision,
+                snapshot.SimulationBlock,
+                TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task SameSeedProducesTheSameObservableCallerSequence()
     {
         string? first = await RunSeededScenarioAsync(8675309);

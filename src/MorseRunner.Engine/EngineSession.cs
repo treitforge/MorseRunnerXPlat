@@ -338,6 +338,55 @@ internal sealed class EngineSession : IAsyncDisposable
         await completion.Task.WaitAsync(cancellationToken);
     }
 
+    internal async Task<float> TakeNextRandomSingleForParityAsync(
+        long expectedRevision,
+        long expectedSimulationBlock,
+        CancellationToken cancellationToken)
+    {
+        if (_automaticTiming)
+        {
+            throw new InvalidOperationException(
+                "Parity random checkpoints require manual timing.");
+        }
+
+        ArgumentOutOfRangeException.ThrowIfNegative(expectedRevision);
+        ArgumentOutOfRangeException.ThrowIfNegative(
+            expectedSimulationBlock);
+
+        TaskCompletionSource<float> completion =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        if (!_commands.Writer.TryWrite(
+                new RandomCheckpointWorkItem(
+                    expectedRevision,
+                    expectedSimulationBlock,
+                    completion)))
+        {
+            throw new InvalidOperationException(
+                "Could not enqueue the parity random checkpoint.");
+        }
+
+        Task completed = await Task.WhenAny(
+                completion.Task,
+                _worker)
+            .WaitAsync(cancellationToken);
+        if (completion.Task.IsCompleted)
+        {
+            return await completion.Task;
+        }
+
+        if (completed == _worker && _worker.IsFaulted)
+        {
+            throw new InvalidOperationException(
+                "The session faulted before the parity random "
+                + "checkpoint was observed.",
+                _worker.Exception);
+        }
+
+        throw new InvalidOperationException(
+            "The session stopped before the parity random checkpoint "
+            + "was observed.");
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
@@ -447,6 +496,9 @@ internal sealed class EngineSession : IAsyncDisposable
             case CommandWorkItem command:
                 await ApplyCommandAsync(command.Record);
                 return true;
+            case RandomCheckpointWorkItem checkpoint:
+                ApplyRandomCheckpoint(checkpoint);
+                return true;
             case CloseWorkItem close:
                 ApplyClose(close.Completion);
                 return false;
@@ -509,6 +561,23 @@ internal sealed class EngineSession : IAsyncDisposable
         }
 
         request.Completion.TrySetResult(result);
+    }
+
+    private void ApplyRandomCheckpoint(
+        RandomCheckpointWorkItem checkpoint)
+    {
+        if (_revision != checkpoint.ExpectedRevision
+            || _simulationBlock != checkpoint.ExpectedSimulationBlock)
+        {
+            checkpoint.Completion.TrySetException(
+                new InvalidOperationException(
+                    "The parity random checkpoint did not match the "
+                    + "expected session revision and simulation "
+                    + "block."));
+            return;
+        }
+
+        checkpoint.Completion.TrySetResult(_random.NextSingle());
     }
 
     private CommandResult ApplyStart()
@@ -1698,6 +1767,11 @@ internal sealed class EngineSession : IAsyncDisposable
     private abstract record WorkItem;
 
     private sealed record CommandWorkItem(RequestRecord Record) : WorkItem;
+
+    private sealed record RandomCheckpointWorkItem(
+        long ExpectedRevision,
+        long ExpectedSimulationBlock,
+        TaskCompletionSource<float> Completion) : WorkItem;
 
     private sealed record CloseWorkItem(
         TaskCompletionSource<bool> Completion) : WorkItem;

@@ -146,6 +146,20 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
                 snapshot.ElapsedSimulationTime));
     }
 
+    internal Task<float> TakeNextSessionRandomSingleForParityAsync(
+        SessionId sessionId,
+        long expectedRevision,
+        long expectedSimulationBlock,
+        CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        return GetSession(sessionId)
+            .TakeNextRandomSingleForParityAsync(
+                expectedRevision,
+                expectedSimulationBlock,
+                cancellationToken);
+    }
+
     public async Task CloseSessionAsync(
         SessionId sessionId,
         CancellationToken cancellationToken)
