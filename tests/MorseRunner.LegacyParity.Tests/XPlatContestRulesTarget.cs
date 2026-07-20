@@ -55,12 +55,12 @@ public sealed class XPlatContestRulesTarget : IParityTarget
             values.Add($"contest[{index}].my-call={call.IsValid}|{call.Error}");
             values.Add(
                 $"contest[{index}].sent-types="
-                + $"{(int)rules.SentExchangeTypes.First},"
-                + $"{(int)rules.SentExchangeTypes.Second}");
+                + $"{(int)rules.BaselineSentExchangeTypes.First},"
+                + $"{(int)rules.BaselineSentExchangeTypes.Second}");
             values.Add(
                 $"contest[{index}].recv-types="
-                + $"{(int)rules.ReceivedExchangeTypes.First},"
-                + $"{(int)rules.ReceivedExchangeTypes.Second}");
+                + $"{(int)rules.BaselineReceivedExchangeTypes.First},"
+                + $"{(int)rules.BaselineReceivedExchangeTypes.Second}");
             values.Add(
                 $"contest[{index}].my-exchange={exchange.IsValid}|{exchange.Error}");
             values.Add($"contest[{index}].farnsworth={rules.AllowsFarnsworth}");
@@ -84,10 +84,11 @@ public sealed class XPlatContestRulesTarget : IParityTarget
                     ContestValidation exchange = rules.ValidateMyExchange(
                         definition.ExchangeDefault);
                     return $"{rules.Id.Value}"
-                        + $"|sent={(int)rules.SentExchangeTypes.First},"
-                        + $"{(int)rules.SentExchangeTypes.Second}"
-                        + $"|recv={(int)rules.ReceivedExchangeTypes.First},"
-                        + $"{(int)rules.ReceivedExchangeTypes.Second}"
+                        + $"|sent={(int)rules.BaselineSentExchangeTypes.First},"
+                        + $"{(int)rules.BaselineSentExchangeTypes.Second}"
+                        + $"|recv="
+                        + $"{(int)rules.BaselineReceivedExchangeTypes.First},"
+                        + $"{(int)rules.BaselineReceivedExchangeTypes.Second}"
                         + $"|default-valid={exchange.IsValid}"
                         + $"|farnsworth={rules.AllowsFarnsworth}";
                 }),

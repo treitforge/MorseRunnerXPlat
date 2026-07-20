@@ -1260,6 +1260,37 @@ Exchange values must use typed project-owned models rather than anonymous
 string arrays. Raw operator text may be retained for display and diagnostics,
 but validation and scoring use normalized values.
 
+The first schema-v3 contest metadata baseline uses operator call `W7SST` and
+remote call `F6ABC`. For that exact scenario, the authoritative sent and
+received exchange metadata is:
+
+| Contest | Exchange field one | Exchange field two | Farnsworth |
+|---|---|---|---|
+| CQ WPX | RST | Serial number | No |
+| CWT | Operator name | Generic field | No |
+| ARRL Field Day | Field Day class | ARRL section | No |
+| NAQP | Operator name | NAQP second field | No |
+| HST | RST | Serial number | No |
+| CQ WW | RST | CQ zone | No |
+| ARRL DX | RST | State/province | No |
+| K1USN SST | Operator name | Generic field | Yes |
+| JARL ALL JA | RST | Japan prefecture | No |
+| JARL ACAG | RST | Japan city | No |
+| IARU HF | RST | Generic field | No |
+| ARRL Sweepstakes | Number/precedence | Check/section | No |
+
+Each contest uses the same exchange pair for sent and received metadata in this
+baseline scenario. These rows are not universal static exchange rules. ARRL DX
+selects its state/province or power exchange from operator locality, station
+kind, and send/receive direction. NAQP selects its local or non-North-American
+second field from station locality. Those dynamic paths remain governed by the
+separate `contest.arrldx-naqp-home-filtering-and-location` obligation and
+require their own live CE vectors before implementation.
+
+A contest's configured default own exchange must pass that contest's normal
+own-exchange validator. The catalog must not bypass contest-specific validation
+with a blanket default-valid flag.
+
 ### 13.4 Extensibility
 
 New built-in contests register through a catalog. Runtime plug-in loading is

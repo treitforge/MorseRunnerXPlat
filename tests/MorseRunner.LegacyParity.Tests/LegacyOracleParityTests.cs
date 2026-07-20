@@ -87,11 +87,17 @@ public sealed class LegacyOracleParityTests
 
     [Fact]
     [Trait("Category", "LegacyV1Noncertifying")]
-    public Task ContestRuleVectorsMatchSelectedTarget()
+    public void ContestRuleVectorRemainsRetainedForProvenance()
     {
-        return AssertLegacyV1InventoryVectorAsync(
-            "contest.legacy-implementations",
-            static () => new XPlatContestRulesTarget());
+        const string parityId = "contest.legacy-implementations";
+        OracleFixture fixture = LoadFixture(
+            GetLegacyV1FixturePath(parityId),
+            parityId);
+
+        // Schema-v1 records are immutable provenance, not current behavior
+        // expectations. The live schema-v3 case owns contest shape parity.
+        Assert.Equal(72, fixture.Values.Count);
+        AssertEvidenceExists(GetLegacyV1EvidencePath(parityId));
     }
 
     [Theory]
