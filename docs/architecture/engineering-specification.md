@@ -1043,6 +1043,19 @@ Caret placement, selection, and focus remain UX responsibilities. Explicit
 function-key messages such as F3 `TU` and F7 `?` do not invoke ESM or log a
 QSO.
 
+The live `ux.enter-esm-partial-call-message-selection-live` case drives the
+handleless CE `MainForm.FormKeyDown(VK_RETURN)` path and drains the send queue
+through `GetBlock`. Across reset and continuation actions, it compares message
+selection, normalized semantic message sequence, focus, question-mark
+selection, entry fields, and QSO count. The XPlat side drives the real
+headless Avalonia `MainWindow` Enter
+route, observes actual control focus and selection, and validates only the
+semantic messages synchronously accepted into the engine queue. It does not
+advance simulation blocks. Its retained baseline is
+`legacy-green-xplat-red`. This narrow case does not certify renderer or
+envelope completion, emitted PCM, completion callbacks, caller notification,
+or broader native UX behavior.
+
 #### Runtime control
 
 - Set RIT.

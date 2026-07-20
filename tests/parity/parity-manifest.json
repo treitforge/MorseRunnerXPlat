@@ -196,8 +196,10 @@
         "linux",
         "macos"
       ],
-      "acceptanceStatus": "not-authored",
-      "caseIds": []
+      "acceptanceStatus": "partial",
+      "caseIds": [
+        "ux.enter-esm-partial-call-message-selection-live"
+      ]
     },
     {
       "id": "logging.qso-model",
@@ -734,7 +736,61 @@
     {"id": "release.platform-complete-publication-gate", "capabilityId": "build.legacy-project-metadata", "behavior": "Every supported platform must be complete before release promotion or artifact publication.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "release.zero-skips-live-final-certification", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "Final certification executes every obligation live with zero skipped, waived, quarantined, expected-failure, or fixture-only cases.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "release.experienced-user-ab-listening", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "Structured CE and XPlat A/B sessions cover contests, audio conditions, corrections, logging, history, and migration with experienced users.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "ux.enter-esm-partial-call-message-selection", "capabilityId": "ux.keyboard-workflows", "behavior": "Enter with an empty, partial, corrected, or complete call selects and sends the same ESM message and state transition as CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {
+      "id": "ux.enter-esm-partial-call-message-selection",
+      "capabilityId": "ux.keyboard-workflows",
+      "behavior": "Enter with an empty, partial, corrected, or complete call selects and sends the same ESM message and state transition as CE.",
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "sourceBindingStatus": "bound",
+      "legacySources": [
+        "Main.lfm",
+        "Main.pas",
+        "Contest.pas",
+        "MyStn.pas",
+        "Station.pas",
+        "CqWpx.pas",
+        "Log.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.form.lfm.main.event-binding.mainform.onkeydown",
+        "legacy.form.lfm.main.event-binding.edit1.onchange",
+        "legacy.form.lfm.main.event-binding.edit1.onenter",
+        "legacy.main.handler.formkeydown",
+        "legacy.main.shortcut.code.formkeydown.vk-return",
+        "legacy.main.handler.edit1change",
+        "legacy.main.handler.edit1enter",
+        "legacy.sim.enum.station.tstationmessage.msgcq",
+        "legacy.sim.enum.station.tstationmessage.msghiscall",
+        "legacy.sim.enum.station.tstationmessage.msgnr",
+        "legacy.sim.enum.station.tstationmessage.msgqm",
+        "legacy.sim.routine.contest.tcontest.checkenteredcalllength",
+        "legacy.sim.routine.contest.tcontest.getrecvexchtypes",
+        "legacy.sim.routine.contest.tcontest.onexchangeeditcomplete",
+        "legacy.sim.routine.contest.tcontest.sethiscall",
+        "legacy.sim.routine.contest.tcontest.sendmsg",
+        "legacy.sim.routine.contest.tcontest.sendtext",
+        "legacy.sim.routine.mystn.tmystation.addtopieces",
+        "legacy.sim.routine.mystn.tmystation.sendtext",
+        "legacy.sim.routine.mystn.tmystation.sendnextpiece",
+        "legacy.sim.routine.mystn.tmystation.getblock",
+        "legacy.sim.routine.mystn.tmystation.updatecallinmessage",
+        "legacy.sim.routine.station.tstation.sendmsg",
+        "legacy.sim.routine.station.tstation.sendtext",
+        "legacy.sim.routine.station.tstation.sendmorse",
+        "legacy.sim.routine.station.tstation.getblock",
+        "legacy.sim.routine.station.tstation.nrastext",
+        "legacy.support.contest.type.cqwpx.tcqwpx",
+        "legacy.support.contest.routine.cqwpx.tcqwpx.getstationinfo"
+      ],
+      "acceptanceStatus": "partial",
+      "caseIds": [
+        "ux.enter-esm-partial-call-message-selection-live"
+      ]
+    },
     {"id": "ux.log-selection-updates-callsign-information", "capabilityId": "ux.main-form-events", "behavior": "Selecting a historical QSO updates the callsign-information region to the selected call as CE does.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "ux.semantic-duration-not-simulation-blocks", "capabilityId": "ux.main-form-events", "behavior": "The UX sends semantic duration and never owns sample-rate or simulation-block conversion policy.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "ux.help-about-readme-community-actions", "capabilityId": "ux.main-menu-commands", "behavior": "Help, About, readme, website, and community actions match CE availability, targets, errors, keyboard access, and focus return.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -904,6 +960,131 @@
       "failureCode": "contest-exchange-shape-mismatch",
       "fixture": "tests/parity/fixtures/legacy/contest-exchange-shapes.json",
       "evidence": "tests/parity/evidence/contest-exchange-shapes.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "ux.enter-esm-partial-call-message-selection-live",
+      "capabilityId": "ux.keyboard-workflows",
+      "obligationIds": [
+        "ux.enter-esm-partial-call-message-selection"
+      ],
+      "behavior": "For fixed empty, short-partial, uncertain, corrected, repeated, and complete call actions, the live CE Enter path and the real headless XPlat MainWindow path select the same semantic messages and expose the same focus, question-mark selection, entry-field, call-retention, and QSO-count state. The XPlat observation stops at messages synchronously accepted into the engine queue and does not claim rendered or emitted audio.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v6",
+        "source": "tests/parity/legacy-oracle/v6/LegacyOracle.lpr",
+        "sourceSha256": "34719bc50176578df3679acbfbf3c6fb33543f52d698f35826168be4ccdd8c64",
+        "buildRecipe": "tests/parity/legacy-oracle/v6/build-recipe.json",
+        "buildRecipeSha256": "41143c0cd2e63897ae58efc76722b64dca63c515285f11231d0e3f68133503ab"
+      },
+      "legacySources": [
+        "Main.lfm",
+        "Main.pas",
+        "Contest.pas",
+        "MyStn.pas",
+        "Station.pas",
+        "CqWpx.pas",
+        "Log.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.form.lfm.main.event-binding.mainform.onkeydown",
+        "legacy.form.lfm.main.event-binding.edit1.onchange",
+        "legacy.form.lfm.main.event-binding.edit1.onenter",
+        "legacy.main.handler.formkeydown",
+        "legacy.main.shortcut.code.formkeydown.vk-return",
+        "legacy.main.handler.edit1change",
+        "legacy.main.handler.edit1enter",
+        "legacy.sim.enum.station.tstationmessage.msgcq",
+        "legacy.sim.enum.station.tstationmessage.msghiscall",
+        "legacy.sim.enum.station.tstationmessage.msgnr",
+        "legacy.sim.enum.station.tstationmessage.msgqm",
+        "legacy.sim.routine.contest.tcontest.checkenteredcalllength",
+        "legacy.sim.routine.contest.tcontest.getrecvexchtypes",
+        "legacy.sim.routine.contest.tcontest.onexchangeeditcomplete",
+        "legacy.sim.routine.contest.tcontest.sethiscall",
+        "legacy.sim.routine.contest.tcontest.sendmsg",
+        "legacy.sim.routine.contest.tcontest.sendtext",
+        "legacy.sim.routine.mystn.tmystation.addtopieces",
+        "legacy.sim.routine.mystn.tmystation.sendtext",
+        "legacy.sim.routine.mystn.tmystation.sendnextpiece",
+        "legacy.sim.routine.mystn.tmystation.getblock",
+        "legacy.sim.routine.mystn.tmystation.updatecallinmessage",
+        "legacy.sim.routine.station.tstation.sendmsg",
+        "legacy.sim.routine.station.tstation.sendtext",
+        "legacy.sim.routine.station.tstation.sendmorse",
+        "legacy.sim.routine.station.tstation.getblock",
+        "legacy.sim.routine.station.tstation.nrastext",
+        "legacy.support.contest.type.cqwpx.tcqwpx",
+        "legacy.support.contest.routine.cqwpx.tcqwpx.getstationinfo"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The CE side invokes the handleless MainForm.FormKeyDown VK_RETURN path and drains the queued station transmission through GetBlock.",
+        "The XPlat side invokes the real headless Avalonia MainWindow Enter route, observes actual TextBox focus and selection, and validates EnterSendMessageResult queued semantic messages without advancing simulation blocks.",
+        "Every reset action creates a fresh CQ WPX pileup runtime; corrected and same-call-repeat actions continue the preceding runtime.",
+        "No remote caller station is created, so the observation isolates operator Enter and ESM behavior."
+      ],
+      "input": {
+        "scenario": "ux.enter-esm-partial-call-message-selection-live",
+        "contestId": "scWpx",
+        "runModeId": "rmPileup",
+        "stationCall": "W7SST",
+        "seed": 12345,
+        "actions": [
+          {
+            "id": "empty",
+            "reset": true,
+            "call": ""
+          },
+          {
+            "id": "short-partial",
+            "reset": true,
+            "call": "K1"
+          },
+          {
+            "id": "uncertain",
+            "reset": true,
+            "call": "K1A?"
+          },
+          {
+            "id": "corrected",
+            "reset": false,
+            "call": "K1ABC"
+          },
+          {
+            "id": "same-call-repeat",
+            "reset": false,
+            "call": "K1ABC"
+          },
+          {
+            "id": "complete",
+            "reset": true,
+            "call": "K2XYZ"
+          }
+        ]
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatEnterEsmTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 7,
+        "observedValuesSha256": "a09fd377cb5ca6136fd88e1eec6458a14896f37fc6cb3fc0b88d10f832a0fca4",
+        "firstDivergence": "The zero-based first ordinal mismatch between fixture and observed string arrays, with null expected or actual only when one array ends first.",
+        "functionalDivergenceCode": "ux-enter-esm-partial-call-message-selection-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "ux-enter-esm-partial-call-message-selection-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/ux-enter-esm-partial-call-message-selection-live.json",
+      "evidence": "tests/parity/evidence/ux-enter-esm-partial-call-message-selection-live.baseline.json",
       "firstGreenCommit": null
     }
   ]

@@ -65,6 +65,7 @@ public sealed class ParityInfrastructureTests
             [
                 "audio.sst-farnsworth-envelope-timing",
                 "contest.exchange-shapes",
+                "ux.enter-esm-partial-call-message-selection-live",
             ],
             ParityAcceptanceRegistry.AllIds,
             StringComparer.Ordinal);
@@ -72,6 +73,7 @@ public sealed class ParityInfrastructureTests
             [
                 "audio.sst-farnsworth-envelope-timing",
                 "contest.exchange-shapes",
+                "ux.enter-esm-partial-call-message-selection-live",
             ],
             ParityAcceptanceRegistry.ActiveIds,
             StringComparer.Ordinal);
@@ -88,6 +90,10 @@ public sealed class ParityInfrastructureTests
         Assert.IsType<XPlatContestRulesTarget>(
             ParityAcceptanceRegistry
                 .Get("contest.exchange-shapes")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatEnterEsmTarget>(
+            ParityAcceptanceRegistry
+                .Get("ux.enter-esm-partial-call-message-selection-live")
                 .CreateTarget(ParityTargetKind.XPlat)());
     }
 

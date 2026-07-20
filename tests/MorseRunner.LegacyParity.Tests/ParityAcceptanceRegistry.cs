@@ -33,6 +33,16 @@ public static class ParityAcceptanceRegistry
                         _ = ContestExchangeShapesInput.Parse(scenario),
                     static () => new LegacyOracleTarget(),
                     static () => new XPlatContestRulesTarget()),
+            [XPlatEnterEsmTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatEnterEsmTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatEnterEsmTarget),
+                    XPlatEnterEsmTarget.FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = EnterEsmScenarioInput.Parse(scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () => new XPlatEnterEsmTarget()),
         };
 
     public static IReadOnlyList<string> AllIds { get; } =
