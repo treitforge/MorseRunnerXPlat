@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "target": "XPlat",
+  "platform": "windows",
+  "operatingSystem": "Microsoft Windows 10.0.26200",
+  "architecture": "x64",
+  "runtimeIdentifier": "win-x64",
+  "revision": "3d0d21fd1be3b553903495660f4cc8a3c0123dd4",
+  "tree": "493631dd707704af3200ae5eb6ae4f6fcc285fb7",
+  "resultSha256": "ecbd230c413b9a1bcca0fc2242040da374b72ce4aeabb66741595da39e379d14",
+  "testReportSha256": "f13ada6a38728bb99c1f629d704f7432e38a050722aa5d7149f85e80f50d3371",
+  "testProcessExitCode": 2,
+  "wrapper": {
+    "completed": true,
+    "correlationValidated": true,
+    "exitCode": 0
+  },
+  "functionalDivergences": [
+    {
+      "caseId": "contest.fieldday-remote-exchange-format-seed-12345",
+      "failureCode": "contest-fieldday-remote-exchange-format-mismatch"
+    }
+  ]
+}
