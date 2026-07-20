@@ -2419,14 +2419,13 @@ observable.
 
 The same case includes the FPC `System.Random(LongInt)` overload with bounds
 0, 1, 2, 3, 10, 1000, 65536, and 2147483647. FPC consumes one MT19937 draw and
-returns zero for `Random(0)`. The current XPlat `LegacyRandom.Next(0)` throws
-`ArgumentOutOfRangeException` before consuming a draw, so the authored case is
-a real functional red at the zero-bound row and its later integer values and
-sentinel expose the shifted stream. `System.Random(LongInt)` is owned by the
-pinned FPC toolchain rather than a CE repository unit, so it has no
-`RndFunc.pas` inventory selector. Its behavior is bound by the exact compiler
-and toolchain fingerprint in the versioned oracle recipe; the distribution
-routines remain bound to their exact `RndFunc` inventory selectors.
+returns zero for `Random(0)`. XPlat `LegacyRandom.Next(0)` has the same result
+and consumes the same one draw. Negative bounds also follow FPC's pre-increment
+rule and consume one draw. `System.Random(LongInt)` is owned by the pinned FPC
+toolchain rather than a CE repository unit, so it has no `RndFunc.pas`
+inventory selector. Its behavior is bound by the exact compiler and toolchain
+fingerprint in the versioned oracle recipe; the distribution routines remain
+bound to their exact `RndFunc` inventory selectors.
 
 This primitive case does not certify session-wide stream ownership, reset
 timing, cross-feature draw order, or QSB, QRM, QRN, flutter, station, and

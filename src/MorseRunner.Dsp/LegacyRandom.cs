@@ -30,7 +30,11 @@ public sealed class LegacyRandom
 
     public int Next(int exclusiveMaximum)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(exclusiveMaximum);
+        if (exclusiveMaximum < 0)
+        {
+            exclusiveMaximum++;
+        }
+
         return (int)(NextUInt32() * (long)exclusiveMaximum >> 32);
     }
 

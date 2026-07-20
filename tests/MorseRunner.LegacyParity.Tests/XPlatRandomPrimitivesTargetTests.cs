@@ -47,8 +47,7 @@ public sealed class XPlatRandomPrimitivesTargetTests
 
     [Fact]
     [Trait("Category", "ParityInfrastructure")]
-    public async Task
-        CurrentXPlatRowsPinTheFirstCeFunctionalDivergence()
+    public async Task CurrentXPlatRowsMatchThePinnedCeFixture()
     {
         ParityCertificationCase definition =
             ParityCertificationCase.LoadForInspection(
@@ -59,27 +58,17 @@ public sealed class XPlatRandomPrimitivesTargetTests
                 definition.Scenario,
                 TestContext.Current.CancellationToken);
 
-        Assert.Equal(ParityTargetOutcome.Failed, observation.Outcome);
-        Assert.Equal(
-            XPlatRandomPrimitivesTarget.FunctionalDivergenceCode,
-            observation.FailureCode);
+        Assert.Equal(ParityTargetOutcome.Passed, observation.Outcome);
+        Assert.Null(observation.FailureCode);
         Assert.Equal(
             XPlatRandomPrimitivesTarget.EvidenceSource,
             observation.EvidenceSource);
         Assert.Equal(
-            11,
-            FindFirstDivergence(
-                definition.Scenario.ExpectedValues,
-                observation.Values));
+            definition.Scenario.ExpectedValues,
+            observation.Values,
+            StringComparer.Ordinal);
         Assert.Equal(
-            "raw-random-int[0]|bound=0|value=0",
-            definition.Scenario.ExpectedValues[11]);
-        Assert.Equal(
-            "raw-random-int[0]|bound=0"
-            + "|error=ArgumentOutOfRangeException",
-            observation.Values[11]);
-        Assert.Equal(
-            "64bf5a795969de5bc2c9aa9269433db0d66f330584ba59a746f6cb44acd74995",
+            "51e95b1ef37b187db282b114527a12c479ccc20a9b0480d6976aef210b3bc5be",
             ParityObservedValuesDigest.Compute(observation.Values));
     }
 
@@ -217,23 +206,5 @@ public sealed class XPlatRandomPrimitivesTargetTests
             definition.Scenario.Capability,
             definition.Scenario.ExpectedValues,
             input.Deserialize<System.Text.Json.JsonElement>());
-    }
-
-    private static int FindFirstDivergence(
-        IReadOnlyList<string> expected,
-        IReadOnlyList<string> actual)
-    {
-        int shared = Math.Min(expected.Count, actual.Count);
-        for (int index = 0; index < shared; index++)
-        {
-            if (!StringComparer.Ordinal.Equals(
-                    expected[index],
-                    actual[index]))
-            {
-                return index;
-            }
-        }
-
-        return expected.Count == actual.Count ? -1 : shared;
     }
 }
