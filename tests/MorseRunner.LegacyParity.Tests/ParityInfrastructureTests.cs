@@ -78,6 +78,7 @@ public sealed class ParityInfrastructureTests
                 "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
                 "contest.cwt-remote-exchange-format-seed-12345",
                 "contest.exchange-shapes",
+                "contest.naqp-remote-exchange-format-seed-12345",
                 "engine.contest-specific-cq-tu-station-id-seed-12345",
                 "engine.start-silent-empty-enter-cq-seed-12345",
                 "ux.enter-esm-partial-call-message-selection-live",
@@ -101,6 +102,7 @@ public sealed class ParityInfrastructureTests
                 "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
                 "contest.cwt-remote-exchange-format-seed-12345",
                 "contest.exchange-shapes",
+                "contest.naqp-remote-exchange-format-seed-12345",
                 "engine.contest-specific-cq-tu-station-id-seed-12345",
                 "engine.start-silent-empty-enter-cq-seed-12345",
                 "ux.enter-esm-partial-call-message-selection-live",
@@ -182,6 +184,10 @@ public sealed class ParityInfrastructureTests
         Assert.IsType<XPlatCwtRemoteExchangeFormatTarget>(
             ParityAcceptanceRegistry
                 .Get("contest.cwt-remote-exchange-format-seed-12345")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatNaqpRemoteExchangeFormatTarget>(
+            ParityAcceptanceRegistry
+                .Get("contest.naqp-remote-exchange-format-seed-12345")
                 .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatStartSilentEmptyEnterCqTarget>(
             ParityAcceptanceRegistry
