@@ -76,6 +76,7 @@ public sealed class ParityInfrastructureTests
                 "audio.receiver-hiss-shared-random-checkpoint-seed-12345",
                 "audio.sst-farnsworth-envelope-timing",
                 "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
+                "contest.cwt-remote-exchange-format-seed-12345",
                 "contest.exchange-shapes",
                 "engine.contest-specific-cq-tu-station-id-seed-12345",
                 "engine.start-silent-empty-enter-cq-seed-12345",
@@ -98,6 +99,7 @@ public sealed class ParityInfrastructureTests
                 "audio.receiver-hiss-shared-random-checkpoint-seed-12345",
                 "audio.sst-farnsworth-envelope-timing",
                 "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
+                "contest.cwt-remote-exchange-format-seed-12345",
                 "contest.exchange-shapes",
                 "engine.contest-specific-cq-tu-station-id-seed-12345",
                 "engine.start-silent-empty-enter-cq-seed-12345",
@@ -176,6 +178,10 @@ public sealed class ParityInfrastructureTests
         Assert.IsType<XPlatContestRulesTarget>(
             ParityAcceptanceRegistry
                 .Get("contest.exchange-shapes")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatCwtRemoteExchangeFormatTarget>(
+            ParityAcceptanceRegistry
+                .Get("contest.cwt-remote-exchange-format-seed-12345")
                 .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatStartSilentEmptyEnterCqTarget>(
             ParityAcceptanceRegistry

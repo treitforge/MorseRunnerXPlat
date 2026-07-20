@@ -398,6 +398,7 @@
       ],
       "acceptanceStatus": "partial",
       "caseIds": [
+        "contest.cwt-remote-exchange-format-seed-12345",
         "contest.exchange-shapes",
         "engine.contest-specific-cq-tu-station-id-seed-12345"
       ]
@@ -686,7 +687,7 @@
     {"id": "engine.event-driven-poisson-caller-arrivals", "capabilityId": "simulation.runtime-routines", "behavior": "Caller creation follows completed CQ, TU, and MyCall events with CE Poisson and no-stop rules.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "engine.start-silent-empty-enter-cq", "capabilityId": "simulation.runtime-routines", "behavior": "Start is silent and an empty Enter initiates the appropriate CE contest CQ.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.pas", "Contest.pas", "MyStn.pas"], "legacySurfaceSelectors": ["legacy.integration.command-line-path.main-pas.tmainform.run", "legacy.sim.routine.contest.tcontest.sendmsg", "legacy.sim.routine.mystn.tmystation.sendtext"], "acceptanceStatus": "partial", "caseIds": ["engine.start-silent-empty-enter-cq-seed-12345"]},
     {"id": "engine.contest-specific-cq-tu-and-station-id", "capabilityId": "contest.legacy-implementations", "behavior": "CQ, TU, operator call insertion, and periodic station-ID messages match each CE contest.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Contest.pas", "MyStn.pas", "CWOPS.pas", "ArrlFd.pas", "CWSST.pas", "ArrlSS.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.settings.stationidrate", "legacy.sim.routine.contest.tcontest.sendmsg", "legacy.sim.routine.contest.tcontest.onmefinishedsending", "legacy.sim.routine.contest.tcontest.onsaveqsocomplete", "legacy.sim.routine.contest.tcontest.onstationidsent", "legacy.sim.routine.mystn.tmystation.sendtext", "legacy.support.contest.routine.cwops.tcwops.sendmsg", "legacy.support.contest.routine.arrlfd.tarrlfieldday.sendmsg", "legacy.support.contest.routine.cwsst.tcwsst.sendmsg", "legacy.support.contest.routine.arrlss.tsweepstakes.sendmsg"], "acceptanceStatus": "partial", "caseIds": ["engine.contest-specific-cq-tu-station-id-seed-12345"]},
-    {"id": "contest.full-remote-exchange-formatting", "capabilityId": "contest.legacy-implementations", "behavior": "Remote exchanges retain and format every CE contest identity field, cut number, repeat, and correction variant.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "contest.full-remote-exchange-formatting", "capabilityId": "contest.legacy-implementations", "behavior": "Remote exchanges retain and format every CE contest identity field, cut number, repeat, and correction variant.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "Station.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getexchangetypes", "legacy.sim.routine.contest.tcontest.getsentexchtypes", "legacy.sim.routine.station.tstation.nrastext"], "acceptanceStatus": "partial", "caseIds": ["contest.cwt-remote-exchange-format-seed-12345"]},
     {"id": "contest.required-exchange-fields-all-contests", "capabilityId": "contest.legacy-implementations", "behavior": "CWT, SST, Field Day, NAQP, Sweepstakes, WPX, HST, and all other contests include every required CE exchange field.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.allja-acag-truth-column-mapping", "capabilityId": "contest.legacy-implementations", "behavior": "ALLJA and ACAG station truth use the correct CE data columns without serial fallback.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.sweepstakes-complete-truth-model", "capabilityId": "contest.legacy-implementations", "behavior": "Sweepstakes models serial, weighted precedence, own call, check, section, copied values, truth, and errors.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -2125,6 +2126,72 @@
       "failureCode": "audio-startup-warmup-and-filter-timing-mismatch",
       "fixture": "tests/parity/fixtures/legacy/audio-startup-warmup-and-filter-timing-fresh-seed-12345.json",
       "evidence": "tests/parity/evidence/audio-startup-warmup-and-filter-timing-fresh-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "contest.cwt-remote-exchange-format-seed-12345",
+      "capabilityId": "contest.legacy-implementations",
+      "obligationIds": [
+        "contest.full-remote-exchange-formatting"
+      ],
+      "behavior": "For a fixed CWT remote station, the CE TStation.NrAsText path formats the operator name and member number as the exact two-field exchange DAVID, two spaces, 123. The vector isolates contest exchange composition before reply prefixes, repeats, LID errors, cut-number substitutions, or CW rendering.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v22",
+        "source": "tests/parity/legacy-oracle/v22/LegacyOracle.lpr",
+        "sourceSha256": "b32af6e6a9542f712290ba50eae1254dce344f61f1e3e55ad6669b30a4932c11",
+        "buildRecipe": "tests/parity/legacy-oracle/v22/build-recipe.json",
+        "buildRecipeSha256": "7aa3b189be7953b13d62a4ab816cb622bf554d1a00df3b46b2053512b13d158c"
+      },
+      "legacySources": [
+        "Contest.pas",
+        "Station.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.sim.routine.contest.tcontest.getexchangetypes",
+        "legacy.sim.routine.contest.tcontest.getsentexchtypes",
+        "legacy.sim.routine.station.tstation.nrastext"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The handleless CE runtime selects scCwt and rmPileup with local station W7SST, remote station K1ABC, seed 12345, RST 599, exchange field one DAVID, and exchange field two 123.",
+        "A parity-only TStation subclass exposes the protected NrAsText result without selecting a StationMessage, applying the TCWOPS reply-prefix probability, encoding CW, or allocating a control handle.",
+        "The XPlat adapter observes the production SimulatedStation exchange formatter through an internal parity-only seam after passing the same contest identity and StationIdentity fields.",
+        "This first vector covers only the CWT name and member-number composition branch. Other contests, numeric cutting, leading-zero width, repeats, correction text, LID errors, and random reply prefixes remain pending, so the obligation remains partial."
+      ],
+      "input": {
+        "scenario": "contest.cwt-remote-exchange-format-seed-12345",
+        "contestId": "scCwt",
+        "runModeId": "rmPileup",
+        "stationCall": "W7SST",
+        "remoteCall": "K1ABC",
+        "rst": 599,
+        "exchange1": "DAVID",
+        "exchange2": "123",
+        "seed": 12345
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatCwtRemoteExchangeFormatTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 2,
+        "observedValuesSha256": "dc61bcced503e42af12b8153b8542c853608513aab23fa380983de6bc5d54d4d",
+        "firstDivergence": "The zero-based first mismatch is ordinal 1, remote-exchange. CE formats DAVID, two spaces, 123, while XPlat ignores contest identity and exchange field one and formats 5NN123.",
+        "functionalDivergenceCode": "contest-cwt-remote-exchange-format-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "contest-cwt-remote-exchange-format-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/contest-cwt-remote-exchange-format-seed-12345.json",
+      "evidence": "tests/parity/evidence/contest-cwt-remote-exchange-format-seed-12345.baseline.json",
       "firstGreenCommit": null
     },
     {

@@ -7,6 +7,7 @@ namespace MorseRunner.Engine;
 public sealed class SimulatedStation
 {
     private readonly MorseToneRenderer _renderer;
+    private readonly ContestId _contestId;
     private readonly QsbProcessor? _qsb;
     private readonly float[] _scratch =
         new float[CompatibilityProfile.BlockSize];
@@ -22,9 +23,11 @@ public sealed class SimulatedStation
         OperatorRunMode runMode,
         bool lids = false,
         bool sweepstakes = false,
-        OperatorState initialOperatorState = OperatorState.NeedPreviousEnd)
+        OperatorState initialOperatorState = OperatorState.NeedPreviousEnd,
+        ContestId? contestId = null)
     {
         Identity = identity ?? throw new ArgumentNullException(nameof(identity));
+        _contestId = contestId ?? new("scWpx");
         WordsPerMinute = wordsPerMinute;
         PitchOffsetHz = pitchOffsetHz;
         Operator = new(
@@ -77,9 +80,11 @@ public sealed class SimulatedStation
         SimulatedOperator simulatedOperator,
         QsbProcessor qsb,
         float r1,
-        float amplitude)
+        float amplitude,
+        ContestId contestId)
     {
         Identity = identity;
+        _contestId = contestId;
         WordsPerMinute = wordsPerMinute;
         CharacterWordsPerMinute = characterWordsPerMinute;
         PitchOffsetHz = pitchOffsetHz;
@@ -104,7 +109,8 @@ public sealed class SimulatedStation
         OperatorRunMode runMode,
         bool lids,
         bool sweepstakes,
-        bool flutter)
+        bool flutter,
+        ContestId contestId)
     {
         ArgumentNullException.ThrowIfNull(identityFactory);
         ArgumentNullException.ThrowIfNull(wordsPerMinuteFactory);
@@ -157,7 +163,8 @@ public sealed class SimulatedStation
             simulatedOperator,
             qsb,
             r1,
-            amplitude);
+            amplitude,
+            contestId);
     }
 
     public static SimulatedStation CreateReadyCaller(
@@ -167,7 +174,8 @@ public sealed class SimulatedStation
         LegacyRandom random,
         OperatorRunMode runMode,
         bool lids,
-        bool sweepstakes)
+        bool sweepstakes,
+        ContestId? contestId = null)
     {
         var station = new SimulatedStation(
             identity,
@@ -177,7 +185,8 @@ public sealed class SimulatedStation
             runMode,
             lids,
             sweepstakes,
-            OperatorState.NeedQso);
+            OperatorState.NeedQso,
+            contestId);
         station.State = StationState.PreparingToSend;
         station._timeoutBlocks = station.Operator.GetSendDelay(wordsPerMinute);
         return station;
@@ -460,6 +469,12 @@ public sealed class SimulatedStation
         return string.IsNullOrWhiteSpace(exchange)
             ? rst
             : rst + exchange;
+    }
+
+    internal string ObserveExchangeForParity()
+    {
+        _ = _contestId;
+        return FormatExchange();
     }
 
     private static string ToCutNumbers(string value) =>
