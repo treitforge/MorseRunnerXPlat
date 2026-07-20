@@ -2648,6 +2648,17 @@ for every remote reply that consumes the station exchange formatter. Numeric
 cutting, leading-zero width, other contests, repeat and correction variants,
 and LID errors remain within the partial obligation.
 
+The authored `contest.naqp-remote-exchange-format-seed-12345` case extends
+that obligation through the nonempty NAQP name and location branch. Its pinned
+CE v23 adapter uses the same protected `TStation.NrAsText` observation boundary
+for `DAVID` and `CO`, producing the exact string `DAVID CO`. Retained red
+evidence records `contest-naqp-remote-exchange-format-mismatch`, where XPlat
+discarded the name and composed `5NNCO`. Production simulated stations now
+compose NAQP name and location with one separating space, or emit only the
+name when the location is empty, matching both CE branches. Numeric cutting,
+leading-zero width, other contests, repeat and correction variants, and LID
+errors remain within the partial obligation.
+
 The authored
 `audio.flutter-no-station-noise-invariance-seed-12345` case narrows the first
 flutter acceptance boundary to station-free receiver audio. Its pinned CE

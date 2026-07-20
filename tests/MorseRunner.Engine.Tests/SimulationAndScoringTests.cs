@@ -76,6 +76,29 @@ public sealed class SimulationAndScoringTests
         Assert.Equal("DAVID  123", station.ObserveExchangeForParity());
     }
 
+    [Theory]
+    [InlineData("CO", "DAVID CO")]
+    [InlineData("", "DAVID")]
+    public void NaqpRemoteExchangeIncludesNameAndOptionalLocation(
+        string location,
+        string expected)
+    {
+        var station = new SimulatedStation(
+            new StationIdentity(
+                "K1ABC",
+                "599",
+                Number: 0,
+                "DAVID",
+                location),
+            wordsPerMinute: 25,
+            pitchOffsetHz: 0,
+            new LegacyRandom(12_345),
+            OperatorRunMode.Pileup,
+            contestId: new("scNaQp"));
+
+        Assert.Equal(expected, station.ObserveExchangeForParity());
+    }
+
     [Fact]
     public void QsoColumnErrorsUseAllThirtyTwoBits()
     {

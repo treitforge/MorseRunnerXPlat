@@ -463,6 +463,13 @@ public sealed class SimulatedStation
             return $"{Identity.Exchange1}  {Identity.Exchange2}";
         }
 
+        if (_contestId.Value == "scNaQp")
+        {
+            return string.IsNullOrWhiteSpace(Identity.Exchange2)
+                ? Identity.Exchange1
+                : $"{Identity.Exchange1} {Identity.Exchange2}";
+        }
+
         string rst = ToCutNumbers(Identity.Rst);
         string exchange = Identity.Exchange2;
         if (int.TryParse(exchange, out int number))
