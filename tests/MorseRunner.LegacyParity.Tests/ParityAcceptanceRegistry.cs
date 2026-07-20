@@ -38,6 +38,19 @@ public static class ParityAcceptanceRegistry
                     static () => new LegacyOracleTarget(),
                     static () =>
                         new XPlatFlutterNoStationNoiseInvarianceTarget()),
+            [XPlatQrmFirstTriggeredStationTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatQrmFirstTriggeredStationTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatQrmFirstTriggeredStationTarget),
+                    XPlatQrmFirstTriggeredStationTarget
+                        .FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = QrmFirstTriggeredStationInput.Parse(
+                            scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () =>
+                        new XPlatQrmFirstTriggeredStationTarget()),
             [XPlatQrmNoTriggerInvarianceTarget.ParityId] =
                 new ParityAcceptanceRegistration(
                     XPlatQrmNoTriggerInvarianceTarget.ParityId,

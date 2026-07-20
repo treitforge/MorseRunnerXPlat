@@ -2606,6 +2606,73 @@ and draw ownership, a shared-random sentinel, message selection, levels,
 pitch, WPM, same-block audibility, retries, or station lifetime. Those require
 separate live cases, so `audio.qrm-interfering-cw-stations` remains partial.
 
+The authored `audio.qrm-first-triggered-station-seed-1843` case adds the first
+positive QRM construction boundary. Its pinned v16 CE adapter creates fresh
+clean and QRM-enabled CQ WPX `rmStop` runtimes with seed 1843, 11025 Hz audio,
+512-sample blocks, 500 Hz bandwidth, 600 Hz pitch, station call `W7SST`, no
+normal DX stations or operator transmission, and every other optional effect
+disabled. Both runtimes execute the real handleless `MainForm.SetBw` path,
+reset `RandSeed` immediately before audio framing, verify five actual
+one-`Single` startup requests, and capture one complete receiver block.
+
+That block consumes 1024 complex-hiss draws before the QRM trigger at ordinal
+1024. Its binary32 bits are `38e1bf40`, so it satisfies CE's 0.0002
+construction threshold. The eager `TQrmStation` constructor then consumes R1
+ordinal 1025, patience ordinal 1026, call ordinal 1027, amplitude ordinal
+1028, Gaussian pitch ordinals 1029 and 1030, WPM ordinal 1031, and message
+ordinal 1032. The next shared-stream value is ordinal 1033 with bits
+`3f519e01`. A content-bound production `LegacyRandom` and
+`LegacyRandomEffects` replay pins the complete ten-draw binary32 sequence and
+the bounded-integer decisions without substituting those decisions for the
+engine execution.
+
+The catalog input is the pinned 1,239,476-byte `MASTER.DTA` with SHA-256
+`acf37090e7c9c0f2146a2b08608295cb243c8bfe649a421d1c528a59656097aa`.
+It contains 46,039 calls, and ordinal 1027 selects index 23,903, `LU5MT`.
+The live station has patience 2, R1 bits `3f03301e`, amplitude
+19583.306640625 with bits `4698fe9d`, pitch offset -124 Hz, and sending and
+character speeds of 31 WPM. Message choice 2 selects `[msgQrl2]` and text
+`QRL?   QRL?`. The eager message encoder produces 53,248 samples, or 104
+complete blocks. The trigger block consumes the first 512 samples and leaves
+the station `stSending` at send position 512 with 103 blocks remaining.
+
+The clean normalized receiver block hash is
+`3ba44162f2959aeeaa6599059e97033d942258e3a2e0dc33cbb07defbb12a4c5`.
+The QRM block hash is
+`72f7618e7e055db7fefd472c47f0488046087905d5810b1e1aa97b88187f643d`,
+and its first final-output divergence from clean is sample 310. These hashes
+cover same-block QRM mixing through receiver filtering, modulation, AGC,
+normalization, and clamping.
+
+The XPlat adapter executes independent clean and QRM-enabled production
+`MorseRunnerEngine` sessions with automatic timing disabled. It starts and
+immediately aborts each session, advances one block, captures the actual
+`IAudioSink` output, and verifies public `ActiveStations`, `LastCaller`, and
+caller events remain empty. QRM is internal audio interference, not a contest
+caller. The internal parity-only
+`EngineSession.ObserveQrmStationForParityAsync` seam is therefore guarded by
+session ID at the engine wrapper plus exact revision and simulation block. It
+rejects automatic timing and stale boundaries, runs on the session worker,
+does not advance simulation or consume random values, and is absent from
+`IMorseRunnerClient`, snapshots, gRPC, and UX contracts. Before QRM production
+exists it returns an explicit empty observation.
+
+The authored fixture is intentionally XPlat-red at row three, `station`, with
+code `audio-qrm-first-triggered-station-mismatch`. The constructor replay and
+clean receiver row match CE, but the empty internal observation reports no
+station. The QRM-enabled block consequently remains equal to clean and the
+authoritative random stream does not consume constructor ordinals 1025 through
+1032. The unchanged target is the red-to-green acceptance boundary for the
+future implementation.
+
+This case certifies one successful first-block trigger, eager constructor draw
+order, one catalog selection, one level, pitch, speed, message, envelope
+length, same-block audibility, and terminal checkpoint. It does not certify
+trigger-rate statistics, other messages or distributions, retry and timeout
+behavior, complete lifetime, overlapping QRM stations, normal-station
+interaction, RIT, or runtime toggling. The
+`audio.qrm-interfering-cw-stations` obligation remains partial.
+
 The authored
 `audio.qrn-background-sparse-impulses-seed-12345` case narrows the first QRN
 boundary to one station-free complete receiver block. Its pinned v14 CE

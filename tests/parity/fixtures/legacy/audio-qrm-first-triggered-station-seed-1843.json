@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 2,
+  "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+  "parityId": "audio.qrm-first-triggered-station-seed-1843",
+  "referenceDefinitionSha256": "663adf3bf230161abb923cf8b6651d394af1b99eab05efeafb696cb29992da23",
+  "oracle": "tests/parity/legacy-oracle/v16/LegacyOracle.lpr",
+  "legacyOracleVersionId": "legacy-oracle-v16",
+  "oracleSourceSha256": "cf609ed9e8ba3fabc0a62d8fed5a1ccf57911f6735ae6b0a94742f0389c11c86",
+  "oracleBuildRecipeSha256": "c567cfb127e166b4563ebf01b7554f2002cdf7d5063c70f1e0d47b8455ed43c7",
+  "oracleExecutableSha256": "e8e2965968799f3bfa5372f6d8e2590298ca63ecb3b6c0b737eab9100f56bbdd",
+  "toolchain": {
+    "lazarus": "4.6",
+    "fpc": "3.2.2",
+    "target": "x86_64-win64",
+    "compilerSha256": "8ba500bbb84bd7100c169f151082b1461e9241e4491e0f6f38f2376bec49c319",
+    "backendCompilerSha256": "1f33c43b890e2d02e6b07c88401fc47cfcac48e003a29bb58b2e1220ac6a3e22",
+    "lazbuildSha256": "9554983fff43cfe5b5cef9a8374a37ff8a152e2de9c40c5750e723501f6edfd1",
+    "fingerprintSha256": "3eb50f2aac396bac975d8f628ad44421318d05179c81a98524802bcf04c8afee"
+  },
+  "values": [
+    "contract=ce-live-qrm-first-trigger-v1|fresh-runs=clean,qrm|run-mode=rmStop|seed=1843|sample-rate=11025|block-size=512|startup-requests=5|absolute-block=6|bandwidth-hz=500|pitch-hz=600|station-call=W7SST|qrn=false|qsb=false|flutter=false|qsk=false|lids=false",
+    "catalog|path=MASTER.DTA|bytes=1239476|sha256=acf37090e7c9c0f2146a2b08608295cb243c8bfe649a421d1c528a59656097aa|count=46039|selected-index=23903|selected-call=LU5MT",
+    "random|trigger-ordinal=1024|trigger-value=0.000107645|trigger-single-bits=38e1bf40|draw-single-bits=38e1bf40,3f03301e,3eac999c,3f04e9ec,3f155543,3e293bc8,3f2dadc6,3da2d42c,3e9941cd,3f519e01|r1-ordinal=1025|r1-single-bits=3f03301e|patience-ordinal=1026|patience=2|call-ordinal=1027|call-index=23903|amplitude-ordinal=1028|amplitude=19583.306640625|amplitude-single-bits=4698fe9d|gaussian-ordinals=1029,1030|pitch-offset-hz=-124|wpm-ordinal=1031|wpm=31|message-ordinal=1032|message-choice=2",
+    "station|count=1|class=TQrmStation|state=stSending|my-call=LU5MT|his-call=W7SST|r1-single-bits=3f03301e|amplitude=19583.306640625|amplitude-single-bits=4698fe9d|pitch-offset-hz=-124|wpm-s=31|wpm-c=31",
+    "message|set=[msgQrl2]|text=QRL?   QRL?|envelope-samples=53248|envelope-blocks=104|send-position=512|remaining-blocks=103",
+    "probes|sample-indexes=0,1,2,148,149,150,255,310,384,509,510,511",
+    "clean-block[0]|probe-bits=00000000,00000000,00000000,00000000,00000000,00000000,00000000,b872a3f3,bbd71d89,bca8eae3,bcc4e706,bcc30643|peak=0.060759358|rms=0.016228244|float-sha256=3ba44162f2959aeeaa6599059e97033d942258e3a2e0dc33cbb07defbb12a4c5",
+    "qrm-block[0]|probe-bits=00000000,00000000,00000000,00000000,00000000,00000000,00000000,b83226a8,3baaf78e,3db87ddf,3e29dff0,3e6bb9e3|peak=0.339334816|rms=0.097105800|float-sha256=72f7618e7e055db7fefd472c47f0488046087905d5810b1e1aa97b88187f643d",
+    "comparison|exact-equal=false|first-divergence=310|clean-float-sha256=3ba44162f2959aeeaa6599059e97033d942258e3a2e0dc33cbb07defbb12a4c5|qrm-float-sha256=72f7618e7e055db7fefd472c47f0488046087905d5810b1e1aa97b88187f643d|station-counts=0,1|pick-station-calls=0,1|get-call-calls=0,1",
+    "terminal-random|clean-ordinal=1024|clean-value=0.000107645|clean-single-bits=38e1bf40|qrm-ordinal=1033|qrm-value=0.818817198|qrm-single-bits=3f519e01"
+  ]
+}

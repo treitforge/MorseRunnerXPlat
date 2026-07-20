@@ -459,6 +459,7 @@
       "caseIds": [
         "audio.deterministic-random-primitives-seed-12345",
         "audio.flutter-no-station-noise-invariance-seed-12345",
+        "audio.qrm-first-triggered-station-seed-1843",
         "audio.qrm-no-trigger-invariance-seed-12345",
         "audio.qrn-background-sparse-impulses-seed-12345",
         "audio.qrn-burst-station-lifecycle-seed-1903",
@@ -659,7 +660,7 @@
     {"id": "audio.qsk-receiver-ducking-and-recovery", "capabilityId": "audio-dsp.legacy-processing", "behavior": "QSK applies CE-equivalent receiver ducking and recovery around local transmissions.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.rit-affects-rendered-stations", "capabilityId": "audio-dsp.legacy-processing", "behavior": "RIT changes each station's audible offset using CE range, steps, and block-boundary timing.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.runtime-bandwidth-updates-filters", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Runtime bandwidth changes replace or update receiver filters at the CE-equivalent block boundary.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "audio.qrm-interfering-cw-stations", "capabilityId": "simulation.legacy-effects", "behavior": "QRM uses CE-equivalent randomized interfering CW stations, messages, levels, pitches, speeds, retries, and lifetimes.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "StnColl.pas", "QrmStn.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.stncoll.tstations.addqrm", "legacy.sim.routine.qrmstn.tqrmstation.createstation", "legacy.sim.routine.qrmstn.tqrmstation.processevent", "legacy.sim.routine.qrmstn.tqrmstation.sendtext"], "acceptanceStatus": "partial", "caseIds": ["audio.qrm-no-trigger-invariance-seed-12345"]},
+    {"id": "audio.qrm-interfering-cw-stations", "capabilityId": "simulation.legacy-effects", "behavior": "QRM uses CE-equivalent randomized interfering CW stations, messages, levels, pitches, speeds, retries, and lifetimes.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "StnColl.pas", "QrmStn.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.stncoll.tstations.addqrm", "legacy.sim.routine.qrmstn.tqrmstation.createstation", "legacy.sim.routine.qrmstn.tqrmstation.processevent", "legacy.sim.routine.qrmstn.tqrmstation.sendtext"], "acceptanceStatus": "partial", "caseIds": ["audio.qrm-first-triggered-station-seed-1843", "audio.qrm-no-trigger-invariance-seed-12345"]},
     {"id": "audio.qrn-impulses-and-burst-stations", "capabilityId": "simulation.legacy-effects", "behavior": "QRN produces CE sparse impulses and burst stations before receiver filtering and AGC.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "Station.pas", "StnColl.pas", "QrnStn.pas", "RndFunc.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.station.tstation.getblock", "legacy.sim.routine.station.tstation.tick", "legacy.sim.routine.stncoll.tstations.addqrn", "legacy.sim.routine.qrnstn.tqrnstation.createstation", "legacy.sim.routine.qrnstn.tqrnstation.processevent", "legacy.support.effect.routine.rndfunc.rndfunc.secondstoblocks"], "acceptanceStatus": "partial", "caseIds": ["audio.qrn-background-sparse-impulses-seed-12345", "audio.qrn-burst-station-lifecycle-seed-1903"]},
     {"id": "audio.qsb-independent-per-station", "capabilityId": "simulation.legacy-effects", "behavior": "Every remote station has an independent CE-distributed QSB process without fading the receiver noise floor.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "DxStn.pas", "Qsb.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.dxstn.tdxstation.getblock", "legacy.support.effect.routine.qsb.tqsb.applyto"], "acceptanceStatus": "partial", "caseIds": ["audio.qsb-no-station-noise-invariance-seed-12345"]},
     {"id": "audio.flutter-fast-per-station-qsb", "capabilityId": "simulation.legacy-effects", "behavior": "Flutter is the CE probabilistic fast per-station QSB mode rather than a global multiplier.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "DxStn.pas", "Qsb.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.dxstn.tdxstation.createstation", "legacy.sim.routine.dxstn.tdxstation.getblock", "legacy.support.effect.routine.qsb.tqsb.applyto"], "acceptanceStatus": "partial", "caseIds": ["audio.flutter-no-station-noise-invariance-seed-12345"]},
@@ -965,6 +966,102 @@
       "failureCode": "audio-flutter-no-station-noise-invariance-mismatch",
       "fixture": "tests/parity/fixtures/legacy/audio-flutter-no-station-noise-invariance-seed-12345.json",
       "evidence": "tests/parity/evidence/audio-flutter-no-station-noise-invariance-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "audio.qrm-first-triggered-station-seed-1843",
+      "capabilityId": "simulation.legacy-effects",
+      "obligationIds": [
+        "audio.qrm-interfering-cw-stations"
+      ],
+      "behavior": "At the fixed seed-1843 compatibility vector, the first live CE receiver block satisfies the QRM trigger and eagerly creates exactly one internal TQrmStation. The constructor consumes the shared random stream through message selection, selects LU5MT from the content-bound MASTER.DTA catalog, sends QRL?   QRL? at 31 WPM with the pinned amplitude and pitch, contributes the first 512 samples of its 53248-sample envelope to the same receiver block, and remains stSending. The XPlat production engine must reproduce the source-order random ownership, internal station metadata, message, same-block receiver output, and terminal checkpoint without exposing QRM as a public caller.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v16",
+        "source": "tests/parity/legacy-oracle/v16/LegacyOracle.lpr",
+        "sourceSha256": "cf609ed9e8ba3fabc0a62d8fed5a1ccf57911f6735ae6b0a94742f0389c11c86",
+        "buildRecipe": "tests/parity/legacy-oracle/v16/build-recipe.json",
+        "buildRecipeSha256": "c567cfb127e166b4563ebf01b7554f2002cdf7d5063c70f1e0d47b8455ed43c7"
+      },
+      "legacySources": [
+        "Contest.pas",
+        "StnColl.pas",
+        "QrmStn.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.sim.routine.contest.tcontest.getaudio",
+        "legacy.sim.routine.stncoll.tstations.addqrm",
+        "legacy.sim.routine.qrmstn.tqrmstation.createstation",
+        "legacy.sim.routine.qrmstn.tqrmstation.processevent",
+        "legacy.sim.routine.qrmstn.tqrmstation.sendtext"
+      ],
+      "preconditions": [
+        "The pinned CE oracle, toolchain fingerprint, and content-bound MASTER.DTA catalog are available.",
+        "Each fresh CE runtime uses CQ WPX, rmStop, seed 1843, 11025 Hz, 512 samples per complete block, 500 Hz bandwidth, 600 Hz pitch, station call W7SST, no normal DX stations, no operator transmission, and QRN, QSB, flutter, QSK, and LIDs disabled.",
+        "After contest construction, each CE run executes the real MainForm.SetBw path with handleless controls, resets RandSeed to 1843 immediately before audio framing, verifies five real one-Single zero startup requests, and captures exactly one complete receiver block.",
+        "The fresh CE runs differ only in Ini.Qrm. The complete block consumes 1024 complex-hiss draws before the QRM trigger at ordinal 1024. Seed 1843 yields binary32 bits 38e1bf40, which satisfies the 0.0002 creation threshold.",
+        "The live constructor consumes R1 ordinal 1025, patience ordinal 1026, catalog ordinal 1027, amplitude ordinal 1028, Gaussian pitch ordinals 1029 and 1030, WPM ordinal 1031, and message ordinal 1032. The next shared-stream checkpoint is ordinal 1033.",
+        "The content-bound MASTER.DTA is 1239476 bytes with SHA-256 acf37090e7c9c0f2146a2b08608295cb243c8bfe649a421d1c528a59656097aa and 46039 calls. Catalog index 23903 selects LU5MT.",
+        "The live TQrmStation has patience 2, R1 bits 3f03301e, amplitude 19583.306640625 with bits 4698fe9d, pitch offset -124 Hz, WpmS and WpmC 31, and message choice 2 selecting [msgQrl2] with text QRL?   QRL?.",
+        "The message encoder eagerly creates a 53248-sample, 104-block envelope. Station.GetBlock contributes its first 512 samples in the trigger block, advances SendPos to 512, leaves 103 complete blocks, and retains the station in stSending.",
+        "The clean normalized block hash is 3ba44162f2959aeeaa6599059e97033d942258e3a2e0dc33cbb07defbb12a4c5. The QRM block hash is 72f7618e7e055db7fefd472c47f0488046087905d5810b1e1aa97b88187f643d, with first final-output divergence at sample 310.",
+        "The XPlat adapter creates independent clean and QRM-enabled production MorseRunnerEngine sessions with automatic timing disabled, starts and immediately aborts each rmStop session, advances exactly one block, captures actual IAudioSink output, validates public caller snapshots and events remain empty, obtains one guarded internal QRM observation, and then reads the authoritative terminal random checkpoint.",
+        "The QRM observation seam is internal and parity-only. It requires manual timing plus exact session revision and simulation block, runs on the session worker, consumes no random value, advances no simulation state, and is absent from IMorseRunnerClient, public snapshots, gRPC, and UX surfaces. Before QRM production exists it returns an explicit empty observation.",
+        "This case certifies one first-block successful trigger, eager constructor draw order, one catalog selection, one level, pitch, speed, message, envelope length, same-block audibility, and terminal checkpoint. It does not certify trigger-rate statistics, other message branches or distributions, retries, timeout Gaussian behavior, complete lifetime, overlaps, normal-station interaction, RIT, or runtime toggling, so audio.qrm-interfering-cw-stations remains partial."
+      ],
+      "input": {
+        "scenario": "audio.qrm-first-triggered-station-seed-1843",
+        "sampleRate": 11025,
+        "blockSize": 512,
+        "seed": 1843,
+        "bandwidthHz": 500,
+        "pitchHz": 600,
+        "startupRequestCount": 5,
+        "comparedBlockCount": 1,
+        "qrmTriggerRandomOrdinal": 1024,
+        "cleanTerminalRandomOrdinal": 1024,
+        "qrmTerminalRandomOrdinal": 1033,
+        "callCatalogCount": 46039,
+        "selectedCallIndex": 23903,
+        "masterDataSha256": "acf37090e7c9c0f2146a2b08608295cb243c8bfe649a421d1c528a59656097aa",
+        "stationCall": "W7SST",
+        "probeSampleIndexes": [
+          0,
+          1,
+          2,
+          148,
+          149,
+          150,
+          255,
+          310,
+          384,
+          509,
+          510,
+          511
+        ]
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatQrmFirstTriggeredStationTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 10,
+        "observedValuesSha256": "b08ba365056aba1885437b23426f6b5caf400ec1267420e628f82ecade3d8e06",
+        "firstDivergence": "The zero-based first mismatch is ordinal 3, station. XPlat replays the content-bound CE constructor decisions and captures the exact clean receiver path, but production does not yet create an internal QRM station when ordinal 1024 satisfies the trigger, so the guarded parity observation reports zero instead of one TQrmStation. The QRM block consequently remains equal to clean rather than first diverging at final-output sample 310, and the shared stream does not advance through constructor ordinal 1032.",
+        "functionalDivergenceCode": "audio-qrm-first-triggered-station-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "audio-qrm-first-triggered-station-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/audio-qrm-first-triggered-station-seed-1843.json",
+      "evidence": "tests/parity/evidence/audio-qrm-first-triggered-station-seed-1843.baseline.json",
       "firstGreenCommit": null
     },
     {

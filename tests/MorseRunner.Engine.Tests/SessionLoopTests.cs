@@ -201,6 +201,107 @@ public sealed class SessionLoopTests
     }
 
     [Fact]
+    public async Task QrmStationParityObservationUsesTheSessionWorker()
+    {
+        await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 12_345),
+            TestContext.Current.CancellationToken);
+        SessionSnapshot snapshot = engine.GetSnapshot(handle.SessionId);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => engine.ObserveQrmStationForParityAsync(
+                handle.SessionId,
+                snapshot.Revision + 1,
+                snapshot.SimulationBlock,
+                TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => engine.ObserveQrmStationForParityAsync(
+                handle.SessionId,
+                snapshot.Revision,
+                snapshot.SimulationBlock + 1,
+                TestContext.Current.CancellationToken));
+        QrmStationParityObservation observation =
+            await engine.ObserveQrmStationForParityAsync(
+                handle.SessionId,
+                snapshot.Revision,
+                snapshot.SimulationBlock,
+                TestContext.Current.CancellationToken);
+
+        Assert.Equal(QrmStationParityObservation.Empty, observation);
+        Assert.Equal(snapshot, engine.GetSnapshot(handle.SessionId));
+        Assert.Empty(snapshot.ActiveStations ?? []);
+    }
+
+    [Fact]
+    public async Task QrmStationParityObservationConsumesNoRandomValue()
+    {
+        await using MorseRunnerEngine observed =
+            new(_ => new NullAudioSink());
+        await using MorseRunnerEngine control =
+            new(_ => new NullAudioSink());
+        SessionSettings settings =
+            SessionSettings.CreateDefault(seed: 1_843);
+        SessionHandle observedHandle = await observed.CreateSessionAsync(
+            settings,
+            TestContext.Current.CancellationToken);
+        SessionHandle controlHandle = await control.CreateSessionAsync(
+            settings,
+            TestContext.Current.CancellationToken);
+        SessionSnapshot observedSnapshot =
+            observed.GetSnapshot(observedHandle.SessionId);
+        SessionSnapshot controlSnapshot =
+            control.GetSnapshot(controlHandle.SessionId);
+
+        _ = await observed.ObserveQrmStationForParityAsync(
+            observedHandle.SessionId,
+            observedSnapshot.Revision,
+            observedSnapshot.SimulationBlock,
+            TestContext.Current.CancellationToken);
+        float afterObservation =
+            await observed.TakeNextSessionRandomSingleForParityAsync(
+                observedHandle.SessionId,
+                observedSnapshot.Revision,
+                observedSnapshot.SimulationBlock,
+                TestContext.Current.CancellationToken);
+        float controlValue =
+            await control.TakeNextSessionRandomSingleForParityAsync(
+                controlHandle.SessionId,
+                controlSnapshot.Revision,
+                controlSnapshot.SimulationBlock,
+                TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            BitConverter.SingleToUInt32Bits(controlValue),
+            BitConverter.SingleToUInt32Bits(afterObservation));
+        Assert.Equal(
+            observedSnapshot,
+            observed.GetSnapshot(observedHandle.SessionId));
+    }
+
+    [Fact]
+    public async Task QrmStationParityObservationRejectsAutomaticTiming()
+    {
+        await using MorseRunnerEngine engine = new(
+            _ => new NullAudioSink(),
+            new MorseRunnerEngineOptions
+            {
+                AutomaticTiming = true,
+            });
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 12_345),
+            TestContext.Current.CancellationToken);
+        SessionSnapshot snapshot = engine.GetSnapshot(handle.SessionId);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => engine.ObserveQrmStationForParityAsync(
+                handle.SessionId,
+                snapshot.Revision,
+                snapshot.SimulationBlock,
+                TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task SameSeedProducesTheSameObservableCallerSequence()
     {
         string? first = await RunSeededScenarioAsync(8675309);

@@ -446,6 +446,56 @@ internal sealed class EngineSession : IAsyncDisposable
             + "observation completed.");
     }
 
+    internal async Task<QrmStationParityObservation>
+        ObserveQrmStationForParityAsync(
+            long expectedRevision,
+            long expectedSimulationBlock,
+            CancellationToken cancellationToken)
+    {
+        if (_automaticTiming)
+        {
+            throw new InvalidOperationException(
+                "QRM station parity observations require manual timing.");
+        }
+
+        ArgumentOutOfRangeException.ThrowIfNegative(expectedRevision);
+        ArgumentOutOfRangeException.ThrowIfNegative(
+            expectedSimulationBlock);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        TaskCompletionSource<QrmStationParityObservation> completion =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        if (!_commands.Writer.TryWrite(
+                new QrmStationObservationWorkItem(
+                    expectedRevision,
+                    expectedSimulationBlock,
+                    completion)))
+        {
+            throw new InvalidOperationException(
+                "Could not enqueue the QRM station parity observation.");
+        }
+
+        Task completed = await Task.WhenAny(
+                completion.Task,
+                _worker);
+        if (completion.Task.IsCompleted)
+        {
+            return await completion.Task;
+        }
+
+        if (completed == _worker && _worker.IsFaulted)
+        {
+            throw new InvalidOperationException(
+                "The session faulted before the QRM station parity "
+                + "observation completed.",
+                _worker.Exception);
+        }
+
+        throw new InvalidOperationException(
+            "The session stopped before the QRM station parity "
+            + "observation completed.");
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
@@ -560,6 +610,9 @@ internal sealed class EngineSession : IAsyncDisposable
                 return true;
             case QrnBurstObservationWorkItem observation:
                 ApplyQrnBurstObservation(observation);
+                return true;
+            case QrmStationObservationWorkItem observation:
+                ApplyQrmStationObservation(observation);
                 return true;
             case CloseWorkItem close:
                 ApplyClose(close.Completion);
@@ -689,6 +742,25 @@ internal sealed class EngineSession : IAsyncDisposable
                     activeCount,
                     observedBurst!.IsSending,
                     observedBurst!.EnvelopeSampleCount));
+    }
+
+    private void ApplyQrmStationObservation(
+        QrmStationObservationWorkItem observation)
+    {
+        if (_revision != observation.ExpectedRevision
+            || _simulationBlock
+                != observation.ExpectedSimulationBlock)
+        {
+            observation.Completion.TrySetException(
+                new InvalidOperationException(
+                    "The QRM station parity observation did not match "
+                    + "the expected session revision and simulation "
+                    + "block."));
+            return;
+        }
+
+        observation.Completion.TrySetResult(
+            QrmStationParityObservation.Empty);
     }
 
     private CommandResult ApplyStart()
@@ -2002,6 +2074,12 @@ internal sealed class EngineSession : IAsyncDisposable
         long ExpectedRevision,
         long ExpectedSimulationBlock,
         TaskCompletionSource<QrnBurstParityObservation> Completion)
+        : WorkItem;
+
+    private sealed record QrmStationObservationWorkItem(
+        long ExpectedRevision,
+        long ExpectedSimulationBlock,
+        TaskCompletionSource<QrmStationParityObservation> Completion)
         : WorkItem;
 
     private sealed record CloseWorkItem(
