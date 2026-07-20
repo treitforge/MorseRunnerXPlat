@@ -2388,6 +2388,12 @@ comparison covers normalized binary32 probe bits, per-block raw-`Single`
 hashes, aggregate peak and RMS values, and the aggregate raw-`Single` hash
 after the production receiver filter, modulator, and AGC path.
 
+The XPlat receiver/effects MT19937 stream is seeded directly from the session
+seed for this path. Base hiss consumes two binary64 uniform values per complex
+sample and casts to binary32 only after applying CE's 18000 scale and offset.
+The AGC preserves CE `Single` rounding for the compression ratio before `Ln`
+and for the exponent argument before `Exp`.
+
 This case certifies only the fixed-vector base receiver hiss and noise-floor
 path. The discarded CE startup requests are capture alignment and do not
 certify startup framing, block warmup behavior, or filter-swap phase in
@@ -2395,7 +2401,9 @@ isolation. It also does not certify standalone filter, modulator, or AGC
 components; station and operator mixing; QRM, QRN, QSB, flutter, QSK, or RIT;
 runtime bandwidth changes; PCM or WAV conversion; recording; physical
 devices; or audio-sink failure behavior. Those obligations remain pending
-until separate live cases prove them.
+until separate live cases prove them. Session-wide shared random-stream
+ownership and cross-feature draw order also remain pending under
+`audio.single-seeded-random-stream`.
 
 ### Phase 3: core simulation and data
 

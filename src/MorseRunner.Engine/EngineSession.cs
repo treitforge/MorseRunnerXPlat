@@ -153,7 +153,7 @@ internal sealed class EngineSession : IAsyncDisposable
         _blockPeriod = options.BlockPeriod;
         _random = new(settings.Seed);
         _stationCatalog = StationReferenceCatalog.Load(settings.ContestId);
-        _effectRandom = new(unchecked(settings.Seed ^ 0x51B5_4A32));
+        _effectRandom = new(settings.Seed);
         _qsbProcessor = settings.Qsb
             ? new QsbProcessor(
                 new LegacyRandomEffects(
@@ -680,13 +680,13 @@ internal sealed class EngineSession : IAsyncDisposable
 
     private void PrepareReceiverInput()
     {
-        const float noiseAmplitude = 18_000f;
+        const double noiseAmplitude = 18_000d;
         for (int index = 0; index < _receiverReal.Length; index++)
         {
-            _receiverReal[index] =
-                noiseAmplitude * (_effectRandom.NextSingle() - 0.5f);
-            _receiverImaginary[index] =
-                noiseAmplitude * (_effectRandom.NextSingle() - 0.5f);
+            _receiverReal[index] = (float)(
+                noiseAmplitude * (_effectRandom.NextDouble() - 0.5d));
+            _receiverImaginary[index] = (float)(
+                noiseAmplitude * (_effectRandom.NextDouble() - 0.5d));
         }
     }
 
