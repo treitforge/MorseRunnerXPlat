@@ -402,6 +402,7 @@
         "contest.hst-remote-exchange-format-seed-12345",
         "contest.naqp-remote-exchange-format-seed-12345",
         "contest.fieldday-remote-exchange-format-seed-12345",
+        "contest.wpx-custom-range-remote-exchange-format-seed-12345",
         "contest.wpx-midcontest-remote-exchange-format-seed-12345",
         "contest.exchange-shapes",
         "engine.contest-specific-cq-tu-station-id-seed-12345"
@@ -696,7 +697,7 @@
     {"id": "contest.allja-acag-truth-column-mapping", "capabilityId": "contest.legacy-implementations", "behavior": "ALLJA and ACAG station truth use the correct CE data columns without serial fallback.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.sweepstakes-complete-truth-model", "capabilityId": "contest.legacy-implementations", "behavior": "Sweepstakes models serial, weighted precedence, own call, check, section, copied values, truth, and errors.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.arrldx-naqp-home-filtering-and-location", "capabilityId": "contest.legacy-implementations", "behavior": "ARRL DX and NAQP apply CE home-call filtering and dynamic location or exchange derivation.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "contest.wpx-hst-station-serial-generation", "capabilityId": "contest.legacy-implementations", "behavior": "WPX and HST station serials use CE elapsed-time, skill, and random behavior.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "contest.wpx-hst-station-serial-generation", "capabilityId": "contest.legacy-implementations", "behavior": "WPX and HST station serials use CE elapsed-time, skill, and random behavior.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Station.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.station.serialnrcustomrange", "legacy.sim.routine.station.tstation.nrastext"], "acceptanceStatus": "partial", "caseIds": ["contest.wpx-custom-range-remote-exchange-format-seed-12345"]},
     {"id": "session.hst-wpx-start-constraints", "capabilityId": "session.run-mode-enumeration", "behavior": "HST and WPX start constraints, forced settings, activity, bandwidth, duration, and valid serial rules match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "engine.station-delay-lifetime-and-call-pool-rules", "capabilityId": "simulation.state-models", "behavior": "Single-call delay, caller lifetime, patience, retry, Gaussian WPM, calls-from-keyer, station-ID rate, and HST call-pool removal match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "engine.midmessage-append-correction-and-abort", "capabilityId": "simulation.runtime-routines", "behavior": "Mid-message append, unsent callsign correction, and abort completion preserve CE timing and station notification.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -2394,6 +2395,72 @@
       "failureCode": "contest-fieldday-remote-exchange-format-mismatch",
       "fixture": "tests/parity/fixtures/legacy/contest-fieldday-remote-exchange-format-seed-12345.json",
       "evidence": "tests/parity/evidence/contest-fieldday-remote-exchange-format-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "contest.wpx-custom-range-remote-exchange-format-seed-12345",
+      "capabilityId": "contest.legacy-implementations",
+      "obligationIds": [
+        "contest.wpx-hst-station-serial-generation"
+      ],
+      "behavior": "For a fixed WPX remote station with serial 7 and custom range text 01-99, the CE range parser preserves the two-character minimum width and TStation.NrAsText formats the exact cut exchange 5NNT7. The vector isolates custom leading-zero intent before reply prefixes, repeats, LID errors, or CW rendering.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v27",
+        "source": "tests/parity/legacy-oracle/v27/LegacyOracle.lpr",
+        "sourceSha256": "704740623111dac4bd21133a4296e94c6eaa223d72226f47539114949c5b336e",
+        "buildRecipe": "tests/parity/legacy-oracle/v27/build-recipe.json",
+        "buildRecipeSha256": "8e36b5e5797c8c6c9fd202678745c0ae015f82ca250ce4af3e0a866e60f48965"
+      },
+      "legacySources": [
+        "Ini.pas",
+        "Station.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.ini.setting.station.serialnrcustomrange",
+        "legacy.sim.routine.station.tstation.nrastext"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The handleless CE runtime selects scWpx, rmWpx, and snCustomRange with local station W7SST, remote station K1ABC, seed 12345, RST 599, serial 7, and exact custom range text 01-99.",
+        "The CE adapter parses 01-99 through TSerialNRSettings.ParseSerialNR, verifies that custom mode is active, and fixes the station's public R1 width selector below 0.5 before exposing the protected NrAsText result.",
+        "The XPlat adapter observes the production SimulatedStation exchange formatter through an internal parity-only seam after passing the same contest identity, WPX run mode, station serial, and custom serial-range mode.",
+        "This vector covers custom minimum-width preservation and the existing leading-zero cut path only. Custom maximum width, alternate R1 width selection, arbitrary range validation, persistence migration, repeats, correction text, LID errors, and random reply prefixes remain pending, so the obligation remains partial."
+      ],
+      "input": {
+        "scenario": "contest.wpx-custom-range-remote-exchange-format-seed-12345",
+        "contestId": "scWpx",
+        "runModeId": "rmWpx",
+        "customRange": "01-99",
+        "stationCall": "W7SST",
+        "remoteCall": "K1ABC",
+        "rst": 599,
+        "exchange1": "599",
+        "exchange2": "7",
+        "seed": 12345
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatWpxCustomRangeRemoteExchangeFormatTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 2,
+        "observedValuesSha256": "3f166e5d20f5a35c79ca92a322b20c069f97508ebacaf0f413427c6bf15235c2",
+        "firstDivergence": "The zero-based first mismatch is ordinal 1, remote-exchange. CE preserves the custom range's two-character minimum and formats 5NNT7, while XPlat loses the textual width and forces three digits to produce 5NNTT7.",
+        "functionalDivergenceCode": "contest-wpx-custom-range-remote-exchange-format-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "contest-wpx-custom-range-remote-exchange-format-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/contest-wpx-custom-range-remote-exchange-format-seed-12345.json",
+      "evidence": "tests/parity/evidence/contest-wpx-custom-range-remote-exchange-format-seed-12345.baseline.json",
       "firstGreenCommit": null
     },
     {
