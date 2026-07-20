@@ -107,18 +107,18 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 
 - Manifest capabilities: 24
 - Complete capabilities: 0
-- Partially authored capabilities: 3
-- Not-authored capabilities: 21
+- Partially authored capabilities: 4
+- Not-authored capabilities: 20
 - Behavioral obligations: 119
-- Source-bound obligations: 4
-- Pending source bindings: 115
+- Source-bound obligations: 5
+- Pending source bindings: 114
 - Complete obligations: 0
-- Partially authored obligations: 4
-- Not-authored obligations: 115
+- Partially authored obligations: 5
+- Not-authored obligations: 114
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 4
+- Active acceptance cases: 5
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 4
+- Legacy-green/XPlat-red cases: 5
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
@@ -140,7 +140,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `ux.legacy-vcl-components` | Legacy VCL-only hint and volume controls | `not-authored` | 0 | 36 | 0 | `VCL/PermHint.pas`<br>`VCL/VolmSldr.pas` |
 | `contest.legacy-implementations` | Legacy contest-specific implementations | `partial` | 1 | 215 | 0 | `ACAG.pas`<br>`ALLJA.pas`<br>`ArrlDx.pas`<br>`ArrlFd.pas`<br>`ArrlSS.pas`<br>`CqWpx.pas`<br>`CqWW.pas`<br>`CWOPS.pas`<br>`CWSST.pas`<br>`DualExchContest.pas`<br>`IaruHf.pas`<br>`NaQp.pas` |
 | `data.legacy-parsers` | Legacy call, prefix, exchange, and serial data parsers | `not-authored` | 0 | 477 | 0 | `CallLst.pas`<br>`DXCC.pas`<br>`ExchFields.pas`<br>`SerNRGen.pas`<br>`Util/ArrlSections.pas`<br>`Util/CallsignUtils.pas`<br>`Util/Lexer.pas`<br>`Util/SSExchParser.pas`<br>`ACAG.pas`<br>`ALLJA.pas`<br>`ArrlDx.pas`<br>`ArrlFd.pas`<br>`ArrlSS.pas`<br>`CqWW.pas`<br>`CWOPS.pas`<br>`CWSST.pas`<br>`IaruHf.pas`<br>`Main.pas`<br>`NaQp.pas`<br>`Test/SSLexerTest.pas` |
-| `simulation.legacy-effects` | Legacy QSB and random effects | `not-authored` | 0 | 15 | 0 | `Qsb.pas`<br>`RndFunc.pas` |
+| `simulation.legacy-effects` | Legacy QSB and random effects | `partial` | 1 | 15 | 0 | `Qsb.pas`<br>`RndFunc.pas` |
 | `ux.score-dialog` | Legacy score dialog | `not-authored` | 0 | 5 | 0 | `ScoreDlg.pas` |
 | `data.files-and-operational-paths` | Legacy data files, recording, export, and failure paths | `not-authored` | 0 | 164 | 0 | `Ini.pas`<br>`Main.pas`<br>`Log.pas`<br>`Station.pas`<br>`VCL`<br>`contest and data support units`<br>`bundled data and application resource files`<br>`Lazarus/build.ps1`<br>`tools/make-install.sh`<br>`ACAG.pas`<br>`ALLJA.pas`<br>`ArrlDx.pas`<br>`ArrlFd.pas`<br>`ArrlSS.pas`<br>`CallLst.pas`<br>`CqWW.pas`<br>`CWOPS.pas`<br>`CWSST.pas`<br>`DXCC.pas`<br>`IaruHf.pas`<br>`NaQp.pas` |
 | `ux.legacy-form-definitions` | Legacy Lazarus and Delphi form definitions | `not-authored` | 0 | 410 | 0 | `Main.lfm`<br>`Main.pas`<br>`ScoreDlg.dfm`<br>`ScoreDlg.lfm`<br>`ScoreDlg.pas` |
@@ -171,7 +171,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `audio.complex-station-mixing-signs-order-and-normalization` | `audio-dsp.legacy-processing` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Complex remote-station BFO mixing uses CE-equivalent signs, channel order, phase application, accumulation order, and output normalization. |
 | `audio.default-compatibility-output-profile` | `audio.legacy-adapters` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | The default CE compatibility output contract is 11025 Hz mono, 512 samples per block, and identical sample totals. |
 | `audio.physical-queue-depth-and-order` | `audio.legacy-adapters` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | The physical audio queue preserves CE-equivalent default depth, FIFO block order, startup fill order, and exact sample continuity. |
-| `audio.deterministic-random-primitives` | `simulation.legacy-effects` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | MT19937 output and every CE random distribution primitive produce deterministic numeric vectors for reviewed seeds. |
+| `audio.deterministic-random-primitives` | `simulation.legacy-effects` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | MT19937 output and every CE random distribution primitive produce deterministic numeric vectors for reviewed seeds. |
 | `audio.qsk-receiver-ducking-and-recovery` | `audio-dsp.legacy-processing` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | QSK applies CE-equivalent receiver ducking and recovery around local transmissions. |
 | `audio.rit-affects-rendered-stations` | `audio-dsp.legacy-processing` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | RIT changes each station's audible offset using CE range, steps, and block-boundary timing. |
 | `audio.runtime-bandwidth-updates-filters` | `audio-dsp.legacy-processing` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Runtime bandwidth changes replace or update receiver filters at the CE-equivalent block boundary. |
@@ -280,6 +280,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 
 | Case ID | Capability | Obligations | Status | Failure code | Legacy | XPlat |
 |---|---|---|---|---|---|---|
+| `audio.deterministic-random-primitives-seed-12345` | `simulation.legacy-effects` | `audio.deterministic-random-primitives` | `legacy-green-xplat-red` | `audio-deterministic-random-primitives-mismatch` | `pass` | `fail` |
 | `audio.realistic-hiss-noise-floor` | `audio-dsp.legacy-processing` | `audio.realistic-hiss-and-noise-floor` | `legacy-green-xplat-red` | `audio-realistic-hiss-noise-floor-mismatch` | `pass` | `fail` |
 | `audio.sst-farnsworth-envelope-timing` | `audio-dsp.legacy-processing` | `audio.sst-farnsworth-timing` | `legacy-green-xplat-red` | `audio-sst-farnsworth-timing-mismatch` | `pass` | `fail` |
 | `contest.exchange-shapes` | `contest.legacy-implementations` | `contest.exchange-shapes-and-constructor-metadata` | `legacy-green-xplat-red` | `contest-exchange-shape-mismatch` | `pass` | `fail` |

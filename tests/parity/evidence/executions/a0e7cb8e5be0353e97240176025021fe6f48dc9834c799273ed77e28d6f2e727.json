@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "target": "XPlat",
+  "platform": "windows",
+  "operatingSystem": "Microsoft Windows 10.0.26200",
+  "architecture": "x64",
+  "runtimeIdentifier": "win-x64",
+  "revision": "23d5a0e23dec07862feafddc128ecbb9b183d5e5",
+  "tree": "1c7b884587f6e66852745ae40f552df6b49c8e97",
+  "resultSha256": "fecf4035d37005e75da6e51b4300c3663db97f7ddd48248dedea7515767e29ac",
+  "testReportSha256": "beff9687f57f1731a2c9714beb00d82152891c70b1c0981611e2d241546876a2",
+  "testProcessExitCode": 2,
+  "wrapper": {
+    "completed": true,
+    "correlationValidated": true,
+    "exitCode": 0
+  },
+  "functionalDivergences": [
+    {
+      "caseId": "audio.deterministic-random-primitives-seed-12345",
+      "failureCode": "audio-deterministic-random-primitives-mismatch"
+    }
+  ]
+}
