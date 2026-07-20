@@ -143,6 +143,7 @@ internal sealed class EngineSession : IAsyncDisposable
     private Qso[] _completedQsos = [];
     private string? _lastLoggedCall;
     private bool _parityRandomCheckpointTaken;
+    private bool _callerCollisionParityProbeTaken;
     private int _disposed;
 
     public EngineSession(
@@ -538,6 +539,62 @@ internal sealed class EngineSession : IAsyncDisposable
             + "observation completed.");
     }
 
+    internal async Task<CallerCollisionParityObservation>
+        ObserveCallerCollisionForParityAsync(
+            long expectedRevision,
+            long expectedSimulationBlock,
+            string collisionCall,
+            int retryLimit,
+            CancellationToken cancellationToken)
+    {
+        if (_automaticTiming)
+        {
+            throw new InvalidOperationException(
+                "Caller collision parity observations require manual "
+                + "timing.");
+        }
+
+        ArgumentOutOfRangeException.ThrowIfNegative(expectedRevision);
+        ArgumentOutOfRangeException.ThrowIfNegative(
+            expectedSimulationBlock);
+        ArgumentException.ThrowIfNullOrWhiteSpace(collisionCall);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(retryLimit);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        TaskCompletionSource<CallerCollisionParityObservation> completion =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        if (!_commands.Writer.TryWrite(
+                new CallerCollisionObservationWorkItem(
+                    expectedRevision,
+                    expectedSimulationBlock,
+                    collisionCall,
+                    retryLimit,
+                    completion)))
+        {
+            throw new InvalidOperationException(
+                "Could not enqueue the caller collision parity "
+                + "observation.");
+        }
+
+        Task completed = await Task.WhenAny(completion.Task, _worker);
+        if (completion.Task.IsCompleted)
+        {
+            return await completion.Task;
+        }
+
+        if (completed == _worker && _worker.IsFaulted)
+        {
+            throw new InvalidOperationException(
+                "The session faulted before the caller collision "
+                + "parity observation completed.",
+                _worker.Exception);
+        }
+
+        throw new InvalidOperationException(
+            "The session stopped before the caller collision parity "
+            + "observation completed.");
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
@@ -655,6 +712,9 @@ internal sealed class EngineSession : IAsyncDisposable
                 return true;
             case QrmStationObservationWorkItem observation:
                 ApplyQrmStationObservation(observation);
+                return true;
+            case CallerCollisionObservationWorkItem observation:
+                ApplyCallerCollisionObservation(observation);
                 return true;
             case CloseWorkItem close:
                 ApplyClose(close.Completion);
@@ -833,6 +893,124 @@ internal sealed class EngineSession : IAsyncDisposable
                     observedStation.MessageText,
                     observedStation.EnvelopeSampleCount,
                     observedStation.SendPosition));
+    }
+
+    private void ApplyCallerCollisionObservation(
+        CallerCollisionObservationWorkItem observation)
+    {
+        if (_revision != observation.ExpectedRevision
+            || _simulationBlock
+                != observation.ExpectedSimulationBlock)
+        {
+            observation.Completion.TrySetException(
+                new InvalidOperationException(
+                    "The caller collision parity observation did not "
+                    + "match the expected session revision and "
+                    + "simulation block."));
+            return;
+        }
+
+        if (_callerCollisionParityProbeTaken)
+        {
+            observation.Completion.TrySetException(
+                new InvalidOperationException(
+                    "The caller collision parity observation was "
+                    + "already executed for this session."));
+            return;
+        }
+
+        if (!_settings.Qrm || _qrmStationPool.Length == 0)
+        {
+            observation.Completion.TrySetException(
+                new InvalidOperationException(
+                    "The caller collision parity observation requires "
+                    + "QRM."));
+            return;
+        }
+
+        if (observation.RetryLimit != 10)
+        {
+            observation.Completion.TrySetException(
+                new InvalidOperationException(
+                    "The caller collision parity observation requires "
+                    + "the CE retry limit of 10."));
+            return;
+        }
+
+        _callerCollisionParityProbeTaken = true;
+        QrmStation qrm = _qrmStationPool[0];
+        qrm.Activate(
+            _random,
+            _randomEffects,
+            _stationCatalog,
+            _settings.ContestId,
+            _settings.RunModeId,
+            _settings.StationCall,
+            () => observation.CollisionCall);
+        AddReceiverSource(ReceiverSource.FromQrmStation(qrm));
+
+        var candidates = new List<CallerCandidateParityObservation>(
+            observation.RetryLimit);
+        int identitySelectionCount = 0;
+        SimulatedStation? accepted = AddCaller(
+            ToOperatorRunMode(_settings.RunModeId),
+            attempt =>
+            {
+                identitySelectionCount++;
+                return new(
+                    observation.CollisionCall,
+                    "599",
+                    1000 + attempt,
+                    $"EX{attempt:00}",
+                    $"ID{attempt}",
+                    OperatorName: $"OP{attempt}",
+                    UserText: $"catalog-row-{attempt}");
+            },
+            (attempt, candidate) =>
+                candidates.Add(
+                    new(
+                        attempt,
+                        candidate.Identity,
+                        candidate.R1,
+                        candidate.WordsPerMinute,
+                        candidate.WordsPerMinute,
+                        candidate.Operator.Skills,
+                        candidate.Operator.Patience,
+                        candidate.Operator.State,
+                        candidate.Amplitude,
+                        candidate.PitchOffsetHz)));
+
+        int duplicateActiveCallsignCount =
+            (qrm.MyCall == observation.CollisionCall ? 1 : 0)
+            + _stations.Count(
+                station => station.Identity.Callsign.Equals(
+                    observation.CollisionCall,
+                    StringComparison.Ordinal));
+        QrmStationParityObservation qrmObservation = new(
+            1,
+            qrm.IsSending,
+            qrm.MyCall,
+            qrm.HisCall,
+            qrm.R1,
+            qrm.Amplitude,
+            qrm.PitchOffsetHz,
+            qrm.SendingWordsPerMinute,
+            qrm.CharacterWordsPerMinute,
+            qrm.MessageSet,
+            qrm.MessageText,
+            qrm.EnvelopeSampleCount,
+            qrm.SendPosition);
+        observation.Completion.TrySetResult(
+            new(
+                qrmObservation,
+                candidates,
+                identitySelectionCount,
+                candidates.Count == 0 ? 0 : candidates[^1].Attempt,
+                accepted?.CreateSnapshot(),
+                accepted?.Identity.OperatorName ?? string.Empty,
+                accepted?.Identity.UserText ?? string.Empty,
+                duplicateActiveCallsignCount,
+                _random.NextSingle()));
     }
 
     private CommandResult ApplyStart()
@@ -1533,29 +1711,43 @@ internal sealed class EngineSession : IAsyncDisposable
         }
     }
 
-    private void AddCaller(OperatorRunMode runMode)
+    private SimulatedStation? AddCaller(
+        OperatorRunMode runMode,
+        Func<int, StationIdentity>? identityOverride = null,
+        Action<int, SimulatedStation>? candidateObserver = null)
     {
         StationIdentity? identity = null;
+        int selectedAttempt = 0;
         for (int attempt = 0; attempt < 10; attempt++)
         {
-            int serialNumber = CreateStationSerialNumber();
-            StationIdentity candidate = _stationCatalog.Pick(
-                _random,
-                _settings.ContestId,
-                serialNumber);
+            StationIdentity candidate;
+            if (identityOverride is null)
+            {
+                int serialNumber = CreateStationSerialNumber();
+                candidate = _stationCatalog.Pick(
+                    _random,
+                    _settings.ContestId,
+                    serialNumber);
+            }
+            else
+            {
+                candidate = identityOverride(attempt + 1);
+            }
+
             if (_stations.All(
                     station => !station.Identity.Callsign.Equals(
                         candidate.Callsign,
                         StringComparison.Ordinal)))
             {
                 identity = candidate;
+                selectedAttempt = attempt + 1;
                 break;
             }
         }
 
         if (identity is null)
         {
-            return;
+            return null;
         }
 
         int wordsPerMinute = CreateStationWordsPerMinute(runMode);
@@ -1569,12 +1761,16 @@ internal sealed class EngineSession : IAsyncDisposable
             runMode,
             _settings.Lids,
             sweepstakes: _settings.ContestId.Value == "scArrlSS");
+        candidateObserver?.Invoke(
+            selectedAttempt,
+            station);
         ReserveReceiverCapacityForCaller();
         _stations.Add(station);
         AddReceiverSource(ReceiverSource.FromCaller(station));
         _hasCreatedStation = true;
         _lastCaller = identity.Callsign;
         PublishEvent(SessionEventKind.CallerJoined, identity.Callsign);
+        return station;
     }
 
     private int CreateStationWordsPerMinute(OperatorRunMode runMode)
@@ -2228,6 +2424,14 @@ internal sealed class EngineSession : IAsyncDisposable
         long ExpectedRevision,
         long ExpectedSimulationBlock,
         TaskCompletionSource<QrmStationParityObservation> Completion)
+        : WorkItem;
+
+    private sealed record CallerCollisionObservationWorkItem(
+        long ExpectedRevision,
+        long ExpectedSimulationBlock,
+        string CollisionCall,
+        int RetryLimit,
+        TaskCompletionSource<CallerCollisionParityObservation> Completion)
         : WorkItem;
 
     private sealed record CloseWorkItem(

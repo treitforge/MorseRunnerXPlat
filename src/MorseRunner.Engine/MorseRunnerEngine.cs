@@ -190,6 +190,25 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
                 cancellationToken);
     }
 
+    internal Task<CallerCollisionParityObservation>
+        ObserveCallerCollisionForParityAsync(
+            SessionId sessionId,
+            long expectedRevision,
+            long expectedSimulationBlock,
+            string collisionCall,
+            int retryLimit,
+            CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        return GetSession(sessionId)
+            .ObserveCallerCollisionForParityAsync(
+                expectedRevision,
+                expectedSimulationBlock,
+                collisionCall,
+                retryLimit,
+                cancellationToken);
+    }
+
     public async Task CloseSessionAsync(
         SessionId sessionId,
         CancellationToken cancellationToken)

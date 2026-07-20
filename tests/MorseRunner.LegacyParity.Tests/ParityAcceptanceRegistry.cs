@@ -51,6 +51,18 @@ public static class ParityAcceptanceRegistry
                     static () => new LegacyOracleTarget(),
                     static () =>
                         new XPlatQrmFirstTriggeredStationTarget()),
+            [XPlatQrmCallerCollisionTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatQrmCallerCollisionTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatQrmCallerCollisionTarget),
+                    XPlatQrmCallerCollisionTarget
+                        .FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = QrmCallerCollisionInput.Parse(scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () =>
+                        new XPlatQrmCallerCollisionTarget()),
             [XPlatQrmNoTriggerInvarianceTarget.ParityId] =
                 new ParityAcceptanceRegistration(
                     XPlatQrmNoTriggerInvarianceTarget.ParityId,

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 2,
+  "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+  "parityId": "audio.qrm-caller-collision-retry-limit-seed-24680",
+  "referenceDefinitionSha256": "663adf3bf230161abb923cf8b6651d394af1b99eab05efeafb696cb29992da23",
+  "oracle": "tests/parity/legacy-oracle/v18/LegacyOracle.lpr",
+  "legacyOracleVersionId": "legacy-oracle-v18",
+  "oracleSourceSha256": "230c0cf302280ae280e8c00c5d22ec95bff83cc18be6b06fdad8765e778a8e69",
+  "oracleBuildRecipeSha256": "451543aa96992127762563a90f0ece92bd6235f731414725736b0d702db429b5",
+  "oracleExecutableSha256": "f06ea390595447a4216c4f45196d7901884a857eee3efed14ab905d5b9941722",
+  "toolchain": {
+    "lazarus": "4.6",
+    "fpc": "3.2.2",
+    "target": "x86_64-win64",
+    "compilerSha256": "8ba500bbb84bd7100c169f151082b1461e9241e4491e0f6f38f2376bec49c319",
+    "backendCompilerSha256": "1f33c43b890e2d02e6b07c88401fc47cfcac48e003a29bb58b2e1220ac6a3e22",
+    "lazbuildSha256": "9554983fff43cfe5b5cef9a8374a37ff8a152e2de9c40c5750e723501f6edfd1",
+    "fingerprintSha256": "3eb50f2aac396bac975d8f628ad44421318d05179c81a98524802bcf04c8afee"
+  },
+  "values": [
+    "contract=ce-live-qrm-caller-collision-v1|seed=24680|sample-rate=11025|block-size=512|run-mode=rmStop|contest=scWpx|station-call=W7SST|qrm=true|qrn=false|qsb=false|flutter=false|qsk=false|lids=false",
+    "qrm|class=TQrmStation|state=stSending|call=K1ABC|his-call=W7SST|r1-single-bits=3eacff6b|amplitude-single-bits=4659f839|pitch-offset-hz=-194|wpm-s=44|wpm-c=44|message-set=[msgQrl2]|message-text=QRL?   QRL?",
+    "catalog|pick-station-calls=11|get-call-calls=11|get-exchange-calls=10|drop-station-calls=0|qrm-id=9000|caller-ids=1,2,3,4,5,6,7,8,9,10|all-calls=K1ABC",
+    "attempt[1]|id=1|call=K1ABC|r1-random-ordinal=7|r1-single-bits=3e84d1db|wpm-s=30|wpm-c=30|skills=1|patience=5|operator-state=osNeedPrevEnd|collision-checked=True|outcome=discarded",
+    "attempt[2]|id=2|call=K1ABC|r1-random-ordinal=2569|r1-single-bits=3f6334d5|wpm-s=30|wpm-c=30|skills=2|patience=5|operator-state=osNeedPrevEnd|collision-checked=True|outcome=discarded",
+    "attempt[3]|id=3|call=K1ABC|r1-random-ordinal=4843|r1-single-bits=3dca46ce|wpm-s=30|wpm-c=30|skills=2|patience=5|operator-state=osNeedPrevEnd|collision-checked=True|outcome=discarded",
+    "attempt[4]|id=4|call=K1ABC|r1-random-ordinal=7107|r1-single-bits=3f571831|wpm-s=30|wpm-c=30|skills=1|patience=5|operator-state=osNeedPrevEnd|collision-checked=True|outcome=discarded",
+    "attempt[5]|id=5|call=K1ABC|r1-random-ordinal=9633|r1-single-bits=3d1c9b48|wpm-s=30|wpm-c=30|skills=2|patience=5|operator-state=osNeedPrevEnd|collision-checked=True|outcome=discarded",
+    "attempt[6]|id=6|call=K1ABC|r1-random-ordinal=12363|r1-single-bits=3ee7bb6f|wpm-s=30|wpm-c=30|skills=3|patience=5|operator-state=osNeedPrevEnd|collision-checked=True|outcome=discarded",
+    "attempt[7]|id=7|call=K1ABC|r1-random-ordinal=14739|r1-single-bits=3f41ef12|wpm-s=30|wpm-c=30|skills=2|patience=5|operator-state=osNeedPrevEnd|collision-checked=True|outcome=discarded",
+    "attempt[8]|id=8|call=K1ABC|r1-random-ordinal=17619|r1-single-bits=3d5256c8|wpm-s=30|wpm-c=30|skills=3|patience=5|operator-state=osNeedPrevEnd|collision-checked=True|outcome=discarded",
+    "attempt[9]|id=9|call=K1ABC|r1-random-ordinal=20333|r1-single-bits=3ed9db67|wpm-s=30|wpm-c=30|skills=3|patience=5|operator-state=osNeedPrevEnd|collision-checked=True|outcome=discarded",
+    "attempt[10]|id=10|call=K1ABC|r1-random-ordinal=22841|r1-single-bits=3c9570e0|wpm-s=30|wpm-c=30|skills=2|patience=5|operator-state=osNeedPrevEnd|collision-checked=False|outcome=accepted-unconditionally",
+    "collision-outcome|retry-limit=10|checked-attempts=1,2,3,4,5,6,7,8,9|discarded-attempts=1,2,3,4,5,6,7,8,9|unchecked-attempt=10|accepted-attempt=10|station-count=2|duplicate-active-calls=2|qrm-retained=true",
+    "accepted-caller|class=TDxStation|call=K1ABC|oper-id=10|state=stCopying|operator-state=osNeedPrevEnd|operator-patience=5|operator-skills=2|r1-single-bits=3c9570e0|amplitude-single-bits=46a646f0|pitch-offset-hz=51|wpm-s=30|wpm-c=30|rst=599|nr=1010|exch1=EX10|exch2=ID10|op-name=OP10|user-text=catalog-row-10",
+    "terminal-random|ordinal=25373|value=0.983176053|single-bits=3f7bb16d"
+  ]
+}

@@ -52,6 +52,10 @@ public sealed class SimulatedStation
 
     public int PitchOffsetHz { get; }
 
+    internal float R1 { get; private set; }
+
+    internal float Amplitude { get; private set; }
+
     public StationReply LastReply { get; private set; }
 
     public string? LastReplyText { get; private set; }
@@ -336,4 +340,6 @@ public sealed record StationIdentity(
     string Exchange2,
     string Precedence = "",
     int Check = 0,
-    string Section = "");
+    string Section = "",
+    string OperatorName = "",
+    string UserText = "");

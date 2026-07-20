@@ -65,6 +65,7 @@ public sealed class ParityInfrastructureTests
             [
                 "audio.deterministic-random-primitives-seed-12345",
                 "audio.flutter-no-station-noise-invariance-seed-12345",
+                "audio.qrm-caller-collision-retry-limit-seed-24680",
                 "audio.qrm-first-triggered-station-seed-1843",
                 "audio.qrm-no-trigger-invariance-seed-12345",
                 "audio.qrn-background-sparse-impulses-seed-12345",
@@ -83,6 +84,7 @@ public sealed class ParityInfrastructureTests
             [
                 "audio.deterministic-random-primitives-seed-12345",
                 "audio.flutter-no-station-noise-invariance-seed-12345",
+                "audio.qrm-caller-collision-retry-limit-seed-24680",
                 "audio.qrm-first-triggered-station-seed-1843",
                 "audio.qrm-no-trigger-invariance-seed-12345",
                 "audio.qrn-background-sparse-impulses-seed-12345",
@@ -115,6 +117,11 @@ public sealed class ParityInfrastructureTests
         Assert.IsType<XPlatQrmNoTriggerInvarianceTarget>(
             ParityAcceptanceRegistry
                 .Get("audio.qrm-no-trigger-invariance-seed-12345")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatQrmCallerCollisionTarget>(
+            ParityAcceptanceRegistry
+                .Get(
+                    "audio.qrm-caller-collision-retry-limit-seed-24680")
                 .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatQrmFirstTriggeredStationTarget>(
             ParityAcceptanceRegistry

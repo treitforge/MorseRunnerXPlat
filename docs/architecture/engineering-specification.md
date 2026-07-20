@@ -2740,6 +2740,44 @@ runtime toggling. The
 `audio.qrm-interfering-cw-stations` obligation remains partial.
 
 The authored
+`audio.qrm-caller-collision-retry-limit-seed-24680` case isolates the CE
+caller retry boundary while one `K1ABC` QRM station is active. The pinned v18
+oracle scripts ten `K1ABC` caller rows. `TStations.AddCaller` constructs a
+complete `TDxStation` before each collision check, discards attempts one
+through nine, and accepts attempt ten without another check because the
+retry counter has reached zero. Each discarded candidate still constructs
+its operator and QSB state, consumes the receive-speed, amplitude, and pitch
+draws, and loads its exchange. The tenth caller retains `EX10`, `ID10`, and
+catalog metadata, while the terminal random checkpoint is ordinal 25373
+with bits `3f7bb16d`.
+
+The v18 oracle source has SHA-256
+`230c0cf302280ae280e8c00c5d22ec95bff83cc18be6b06fdad8765e778a8e69`.
+Its build recipe has SHA-256
+`451543aa96992127762563a90f0ece92bd6235f731414725736b0d702db429b5`,
+and the reviewed executable has SHA-256
+`f06ea390595447a4216c4f45196d7901884a857eee3efed14ab905d5b9941722`.
+All sixteen fixture rows are exact and the oracle self-check rejects any
+change to them.
+
+The internal
+`EngineSession.ObserveCallerCollisionForParityAsync` probe is available only
+through the engine assembly's parity test friendship. It requires manual
+timing, exact revision and simulation block, QRM enabled, and one fresh
+execution per session. The work runs on the session worker, creates the live
+QRM source, invokes production `AddCaller` with a scripted identity selector,
+and reports every candidate construction plus the terminal random value. It
+does not appear in `IMorseRunnerClient`, snapshots, gRPC, or UX contracts.
+
+The retained preimplementation boundary is
+`legacy-green-xplat-red` with code
+`audio-qrm-caller-collision-retry-limit-mismatch`. The first divergence is
+the zero-based `catalog` row at ordinal two. Production currently excludes
+QRM sources from caller collision checks and constructs a caller only after
+an identity survives selection, so it accepts the first duplicate and skips
+the nine discarded full-candidate constructions required by CE.
+
+The authored
 `audio.qrn-background-sparse-impulses-seed-12345` case narrows the first QRN
 boundary to one station-free complete receiver block. Its pinned v14 CE
 adapter creates two fresh actual `TContest.GetAudio` runtimes for CQ WPX in

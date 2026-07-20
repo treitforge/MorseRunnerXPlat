@@ -72,7 +72,8 @@ internal sealed class QrmStation
         StationReferenceCatalog stationCatalog,
         ContestId contestId,
         RunModeId runModeId,
-        string stationCall)
+        string stationCall,
+        Func<string>? callsignOverride = null)
     {
         ArgumentNullException.ThrowIfNull(random);
         ArgumentNullException.ThrowIfNull(randomEffects);
@@ -86,7 +87,9 @@ internal sealed class QrmStation
 
         R1 = random.NextSingle();
         Patience = 1 + random.Next(MaximumTransmissionCount);
-        MyCall = stationCatalog.PickCallsignForQrm(random, runModeId);
+        MyCall = callsignOverride is null
+            ? stationCatalog.PickCallsignForQrm(random, runModeId)
+            : callsignOverride();
         HisCall = stationCall;
         Amplitude = (float)(
             MinimumAmplitude
