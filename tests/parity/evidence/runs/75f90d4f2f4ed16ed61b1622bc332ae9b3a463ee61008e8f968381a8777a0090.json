@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "6c6b7687b26e518796b679228a83897dbfab631c",
+      "tree": "adaadb671d92e91abe13786ea6d29fc6054dded1",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "audio.receiver-hiss-shared-random-checkpoint-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "audio.receiver-hiss-shared-random-checkpoint-seed-12345",
+      "acceptanceTestName": "parity:audio.receiver-hiss-shared-random-checkpoint-seed-12345()",
+      "target": "xplat",
+      "adapter": "XPlatReceiverHissSharedRandomCheckpointTarget",
+      "caseDefinitionSha256": "0e567f7af9e00b6b6d2ca381a04177c48bd400eadda16ed089eca226f2af3f4a",
+      "fixtureSha256": "3e18adafd5636249bec4f61ef7b6aefe80e84e0df310c6ff2212527c9719463b",
+      "outcome": "functional-divergence",
+      "failureCode": "audio-receiver-hiss-shared-random-checkpoint-mismatch",
+      "evidenceSource": "MorseRunner.Engine.MorseRunnerEngine\u002BMorseRunner.Engine.EngineSession\u002BMorseRunner.Engine.IAudioSink.WriteAsync\u002BMorseRunner.Engine.MorseRunnerEngine.TakeNextSessionRandomSingleForParityAsync",
+      "observedValues": [
+        "configuration|sample-rate=11025|block-size=512|seed=12345|bandwidth-hz=500|pitch-hz=600|startup-request-count=5|complete-block-count=1|hiss-random-draw-count=1024|random-checkpoint-ordinal=1024|probe-sample-indexes=0,1,2,3,310,511|run-mode=rmStop|qsb=false|flutter=false|qrm=false|qrn=false|qsk=false|lids=false|operator-transmission=false|normal-dx-stations=false|normalization=ce-single-div-32768-clamp-unit",
+        "receiver-block[0]|sample-count=512|probe-bits=00000000,00000000,00000000,00000000,b864f231,3b26ef5d|float-sha256=6b468ab13ccc1accb6ec587b8a51d27ca23eb80b20bce034106e547ad3565378",
+        "shared-random-checkpoint|draw-count-before-checkpoint=1024|ordinal=1024|single-bits=3f6dfb52"
+      ],
+      "observedValueCount": 3,
+      "observedValuesSha256": "aeb163bf9f1e789ec08402edab2afc0cfec497442afa3f36770b169617a266c2",
+      "firstDivergence": {
+        "index": 2,
+        "expected": "shared-random-checkpoint|draw-count-before-checkpoint=1024|ordinal=1024|single-bits=3e320354",
+        "actual": "shared-random-checkpoint|draw-count-before-checkpoint=1024|ordinal=1024|single-bits=3f6dfb52"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}
