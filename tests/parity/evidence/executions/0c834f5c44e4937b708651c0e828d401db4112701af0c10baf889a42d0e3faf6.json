@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "target": "Legacy",
+  "platform": "windows",
+  "operatingSystem": "Microsoft Windows 10.0.26200",
+  "architecture": "x64",
+  "runtimeIdentifier": "win-x64",
+  "revision": "f1295a88dbf38b8d45ca7a24f373d34c07511d54",
+  "tree": "acb2d55e09594f8056194f944f34c9fb0b74a9c3",
+  "resultSha256": "d8225f1b53cc914abe56bbba5b7dd4dcc484a582ce68b71432b022b2ae7d41ef",
+  "testReportSha256": "5fa83e05c84f04a82b3dcb2bad821c9b7a44727d0bfecb60d8611057a7fdf8ac",
+  "testProcessExitCode": 0,
+  "wrapper": {
+    "completed": true,
+    "correlationValidated": true,
+    "exitCode": 0
+  },
+  "functionalDivergences": []
+}

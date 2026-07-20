@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "f1295a88dbf38b8d45ca7a24f373d34c07511d54",
+      "tree": "acb2d55e09594f8056194f944f34c9fb0b74a9c3",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "contest.naqp-remote-exchange-format-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "contest.naqp-remote-exchange-format-seed-12345",
+      "acceptanceTestName": "parity:contest.naqp-remote-exchange-format-seed-12345()",
+      "target": "xplat",
+      "adapter": "XPlatNaqpRemoteExchangeFormatTarget",
+      "caseDefinitionSha256": "516af097d0f7c745337ac6d3cc01b10a5b407a4fcd2ab9495c11c22ffe780a57",
+      "fixtureSha256": "517b51035f19726738917b45685ebf38dfc5ec72f0800abcc59ff9290cedd5c4",
+      "outcome": "functional-divergence",
+      "failureCode": "contest-naqp-remote-exchange-format-mismatch",
+      "evidenceSource": "MorseRunner.Engine.SimulatedStation.ObserveExchangeForParity",
+      "observedValues": [
+        "configuration|scenario=contest.naqp-remote-exchange-format-seed-12345|station=W7SST|seed=12345|contest=scNaQp|run-mode=rmPileup",
+        "remote-exchange|call=K1ABC|rst=599|exchange1=DAVID|exchange2=CO|formatted=5NNCO"
+      ],
+      "observedValueCount": 2,
+      "observedValuesSha256": "039c2deb35ed131e6d9de12e2a9e10b37ca82ebf4ee217644cc208e4057ca4b0",
+      "firstDivergence": {
+        "index": 1,
+        "expected": "remote-exchange|call=K1ABC|rst=599|exchange1=DAVID|exchange2=CO|formatted=DAVID CO",
+        "actual": "remote-exchange|call=K1ABC|rst=599|exchange1=DAVID|exchange2=CO|formatted=5NNCO"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}
