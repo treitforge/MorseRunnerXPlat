@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "target": "XPlat",
+  "platform": "windows",
+  "operatingSystem": "Microsoft Windows 10.0.26200",
+  "architecture": "x64",
+  "runtimeIdentifier": "win-x64",
+  "revision": "510caef862fc9be87eeb321e23688b8e9ed4f0a2",
+  "tree": "8aafd447790872f27a7ab704080f15f6a9f145c3",
+  "resultSha256": "760bc7f84c7cbb9c9701e3740528a50e8565e24c89440029040035cd17740fdb",
+  "testReportSha256": "111f12c06aaabd6170e1a4057955b473bb7bfbc74ed92bf3045f946a938ee8de",
+  "testProcessExitCode": 2,
+  "wrapper": {
+    "completed": true,
+    "correlationValidated": true,
+    "exitCode": 0
+  },
+  "functionalDivergences": [
+    {
+      "caseId": "audio.qrm-no-trigger-invariance-seed-12345",
+      "failureCode": "audio-qrm-no-trigger-invariance-mismatch"
+    }
+  ]
+}
