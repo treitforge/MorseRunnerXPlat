@@ -1364,9 +1364,13 @@ class ParityValidationTests(unittest.TestCase):
                 "PARITY_FUNCTIONAL_DIVERGENCE|"
                 f"{result['parityId']}|{result['failureCode']}"
             )
+            message = (
+                f"{parity.FUNCTIONAL_DIVERGENCE_TRX_EXCEPTION_TYPE} : "
+                f"{marker}"
+            )
             error = (
                 "<Output><ErrorInfo>"
-                f"<Message>{marker}</Message>"
+                f"<Message>{message}</Message>"
                 "<StackTrace>test stack</StackTrace>"
                 "</ErrorInfo></Output>"
             )
@@ -3044,6 +3048,85 @@ class ParityValidationTests(unittest.TestCase):
                 xplat_execution_path=self.xplat_execution_path,
                 root=self.root,
             )
+
+    def test_test_report_accepts_canonical_divergence_message(
+        self,
+    ) -> None:
+        _, xplat, _ = self.make_live_artifacts()
+        run = parity.load_json(xplat)
+
+        parity.validate_test_report(
+            self.xplat_test_report_path,
+            run,
+            "xplat",
+            root=self.root,
+        )
+
+    def test_test_report_rejects_inexact_divergence_messages(
+        self,
+    ) -> None:
+        _, xplat, _ = self.make_live_artifacts()
+        run = parity.load_json(xplat)
+        marker = (
+            "PARITY_FUNCTIONAL_DIVERGENCE|"
+            f"{self.parity_id}|behavior-diverged"
+        )
+        exact_message = (
+            f"{parity.FUNCTIONAL_DIVERGENCE_TRX_EXCEPTION_TYPE} : "
+            f"{marker}"
+        )
+        original = self.xplat_test_report_path.read_bytes()
+        encoded_exact = exact_message.encode("utf-8")
+        self.assertEqual(1, original.count(encoded_exact))
+        candidates = (
+            marker,
+            f"ParityFunctionalDivergenceException : {marker}",
+            f"System.Exception : {marker}",
+            (
+                "MorseRunner.LegacyParity."
+                f"ParityFunctionalDivergenceException : {marker}"
+            ),
+            (
+                f"{parity.FUNCTIONAL_DIVERGENCE_TRX_EXCEPTION_TYPE}:"
+                f"{marker}"
+            ),
+            (
+                f"{parity.FUNCTIONAL_DIVERGENCE_TRX_EXCEPTION_TYPE}  : "
+                f"{marker}"
+            ),
+            f" {exact_message}",
+            f"{exact_message} ",
+            f"{exact_message}\n",
+            f"prefix {exact_message}",
+            f"{exact_message} suffix",
+            exact_message.replace(
+                self.parity_id,
+                "wrong.case",
+            ),
+            exact_message.replace(
+                "behavior-diverged",
+                "wrong-code",
+            ),
+        )
+
+        for candidate in candidates:
+            with self.subTest(candidate=candidate):
+                self.xplat_test_report_path.write_bytes(
+                    original.replace(
+                        encoded_exact,
+                        candidate.encode("utf-8"),
+                    )
+                )
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "exact functional-divergence exception marker",
+                ):
+                    parity.validate_test_report(
+                        self.xplat_test_report_path,
+                        run,
+                        "xplat",
+                        root=self.root,
+                    )
 
     def test_green_promotion_is_monotonic_by_platform(self) -> None:
         platforms = ["windows", "linux", "macos"]

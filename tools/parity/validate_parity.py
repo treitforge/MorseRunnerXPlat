@@ -36,6 +36,10 @@ REPORT_PATH = ROOT / "tests" / "parity" / "PARITY_REPORT.md"
 LEGACY_REFERENCE_PATH = (
     ROOT / "tests" / "parity" / "legacy-reference.json"
 )
+FUNCTIONAL_DIVERGENCE_TRX_EXCEPTION_TYPE = (
+    "MorseRunner.LegacyParity.Tests."
+    "ParityFunctionalDivergenceException"
+)
 MANIFEST_SCHEMA_VERSION = 3
 TRUSTED_V1_MANIFEST_SHA256 = (
     "8b042faa574223dd4a3ac623bc508c3bad97c72313cbfd5f87aa373a80a080ad"
@@ -8405,6 +8409,19 @@ def direct_xml_children(
     ]
 
 
+def functional_divergence_trx_message(
+    parity_id: str,
+    failure_code: str,
+) -> str:
+    marker = (
+        "PARITY_FUNCTIONAL_DIVERGENCE|"
+        f"{parity_id}|{failure_code}"
+    )
+    return (
+        f"{FUNCTIONAL_DIVERGENCE_TRX_EXCEPTION_TYPE} : {marker}"
+    )
+
+
 def validate_test_report(
     report_path: Path,
     run_document: dict[str, Any],
@@ -8579,9 +8596,9 @@ def validate_test_report(
                 structured.get("failureCode"),
                 f"{target} {parity_id} functional divergence code",
             )
-            expected_message = (
-                "PARITY_FUNCTIONAL_DIVERGENCE|"
-                f"{parity_id}|{failure_code}"
+            expected_message = functional_divergence_trx_message(
+                parity_id,
+                failure_code,
             )
             actual_message = (
                 messages[0].text if len(messages) == 1 else None
