@@ -457,7 +457,8 @@
       ],
       "acceptanceStatus": "partial",
       "caseIds": [
-        "audio.deterministic-random-primitives-seed-12345"
+        "audio.deterministic-random-primitives-seed-12345",
+        "audio.qsb-no-station-noise-invariance-seed-12345"
       ]
     },
     {
@@ -655,7 +656,7 @@
     {"id": "audio.runtime-bandwidth-updates-filters", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Runtime bandwidth changes replace or update receiver filters at the CE-equivalent block boundary.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.qrm-interfering-cw-stations", "capabilityId": "simulation.legacy-effects", "behavior": "QRM uses CE-equivalent randomized interfering CW stations, messages, levels, pitches, speeds, retries, and lifetimes.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.qrn-impulses-and-burst-stations", "capabilityId": "simulation.legacy-effects", "behavior": "QRN produces CE sparse impulses and burst stations before receiver filtering and AGC.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "audio.qsb-independent-per-station", "capabilityId": "simulation.legacy-effects", "behavior": "Every remote station has an independent CE-distributed QSB process without fading the receiver noise floor.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.qsb-independent-per-station", "capabilityId": "simulation.legacy-effects", "behavior": "Every remote station has an independent CE-distributed QSB process without fading the receiver noise floor.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "DxStn.pas", "Qsb.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.dxstn.tdxstation.getblock", "legacy.support.effect.routine.qsb.tqsb.applyto"], "acceptanceStatus": "partial", "caseIds": ["audio.qsb-no-station-noise-invariance-seed-12345"]},
     {"id": "audio.flutter-fast-per-station-qsb", "capabilityId": "simulation.legacy-effects", "behavior": "Flutter is the CE probabilistic fast per-station QSB mode rather than a global multiplier.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.station-level-and-pitch-distributions", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Remote station amplitude and pitch use CE distributions and deterministic draw ordering.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.bfo-phase-state-and-reset", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Station BFO phase advances and resets at the same CE transmission boundaries.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -882,6 +883,82 @@
       "failureCode": "audio-deterministic-random-primitives-mismatch",
       "fixture": "tests/parity/fixtures/legacy/audio-deterministic-random-primitives-seed-12345.json",
       "evidence": "tests/parity/evidence/audio-deterministic-random-primitives-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "audio.qsb-no-station-noise-invariance-seed-12345",
+      "capabilityId": "simulation.legacy-effects",
+      "obligationIds": [
+        "audio.qsb-independent-per-station"
+      ],
+      "behavior": "For two fresh station-free CE receiver runs at the fixed compatibility vector, enabling QSB changes neither of the first two normalized full audio blocks because CE applies QSB only inside each remote station's GetBlock path. The XPlat production engine must preserve the same exact receiver hiss and noise floor when QSB is enabled with no remote stations.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v10",
+        "source": "tests/parity/legacy-oracle/v10/LegacyOracle.lpr",
+        "sourceSha256": "dc7a28b6d0920f813baa7b4a3d4a579a52882b560295cbda33132542d30c0b73",
+        "buildRecipe": "tests/parity/legacy-oracle/v10/build-recipe.json",
+        "buildRecipeSha256": "6f32a3fc5a4b822f28592aaf9110b98d13a854a7a4a757b106d3298ee9f7d3e7"
+      },
+      "legacySources": [
+        "Contest.pas",
+        "DxStn.pas",
+        "Qsb.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.sim.routine.contest.tcontest.getaudio",
+        "legacy.sim.routine.dxstn.tdxstation.getblock",
+        "legacy.support.effect.routine.qsb.tqsb.applyto"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "Each fresh CE runtime uses CQ WPX, rmStop, seed 12345, 11025 Hz, 512 samples per full block, 500 Hz bandwidth, 600 Hz pitch, no remote stations, no operator transmission, and QRM, QRN, flutter, and QSK disabled.",
+        "After contest construction, each CE run executes the real MainForm.SetBw path with handleless controls and resets RandSeed to 12345 immediately before its first GetAudio request.",
+        "Each CE run executes and verifies five real one-Single zero startup requests through TContest.GetAudio without resetting RandSeed before the two complete receiver blocks.",
+        "The two fresh CE runs differ only in Ini.Qsb. With zero remote stations, TContest.GetAudio never reaches TDxStation.GetBlock or TQsb.ApplyTo, so both normalized binary32 block sequences and their aggregate must remain bit-for-bit identical.",
+        "The XPlat adapter creates two fresh production engine sessions that differ only in SessionSettings.Qsb, starts and immediately aborts each session, verifies no audio before explicit advancement and zero active stations, then captures two complete blocks through IAudioSink.",
+        "This narrow case proves only that QSB does not fade station-free receiver hiss. Per-station QSB construction, independent envelopes, distribution parameters, draw ownership, runtime toggling, and flutter remain uncovered, so audio.qsb-independent-per-station remains partial."
+      ],
+      "input": {
+        "scenario": "audio.qsb-no-station-noise-invariance-seed-12345",
+        "sampleRate": 11025,
+        "blockSize": 512,
+        "seed": 12345,
+        "bandwidthHz": 500,
+        "pitchHz": 600,
+        "startupRequestCount": 5,
+        "comparedBlockCount": 2,
+        "probeSampleIndexes": [
+          0,
+          1,
+          2,
+          3,
+          310,
+          511
+        ]
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatQsbNoStationNoiseInvarianceTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 8,
+        "observedValuesSha256": "99e62b99e4a17575a73f9fff75600c7530b87dcb28634930d5198ceb2fe709b5",
+        "firstDivergence": "The zero-based first mismatch is ordinal 3, qsb-block[0]. XPlat's session-global post-receiver QsbProcessor changes the station-free receiver block while CE leaves it identical to clean audio because CE QSB is owned by remote stations.",
+        "functionalDivergenceCode": "audio-qsb-no-station-noise-invariance-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "audio-qsb-no-station-noise-invariance-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/audio-qsb-no-station-noise-invariance-seed-12345.json",
+      "evidence": "tests/parity/evidence/audio-qsb-no-station-noise-invariance-seed-12345.baseline.json",
       "firstGreenCommit": null
     },
     {

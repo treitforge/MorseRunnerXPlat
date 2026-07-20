@@ -2459,6 +2459,27 @@ until separate live cases prove them. Session-wide shared random-stream
 ownership and cross-feature draw order also remain pending under
 `audio.single-seeded-random-stream`.
 
+The authored
+`audio.qsb-no-station-noise-invariance-seed-12345` case narrows the first QSB
+acceptance boundary to station-free receiver audio. Its pinned CE adapter
+creates two fresh `TContest.GetAudio` runtimes with seed 12345, normal 500 Hz
+`SetBw` configuration, five verified startup requests, two complete
+512-sample blocks, and no remote or operator transmission. The runs differ
+only in `Ini.Qsb`. CE reaches `TQsb.ApplyTo` only from
+`TDxStation.GetBlock`, so enabling QSB with no remote stations leaves both
+normalized blocks and their aggregate raw-`Single` hash bit-for-bit
+identical. The XPlat adapter performs the same paired capture through two
+fresh production engine sessions and `IAudioSink`.
+
+The current XPlat session-global post-receiver `QsbProcessor` changes the
+station-free hiss, so the authored case remains
+`legacy-green-xplat-red` with divergence code
+`audio-qsb-no-station-noise-invariance-mismatch` until red evidence is
+retained and production QSB ownership is corrected. This case does not
+certify per-station QSB construction, independent envelopes, distribution
+parameters, random-stream ownership, runtime toggling, or flutter. The
+`audio.qsb-independent-per-station` obligation therefore remains partial.
+
 The `audio.deterministic-random-primitives-seed-12345` case executes the pinned CE
 `RndFunc.pas` routines and the XPlat production `LegacyRandom` and
 `LegacyRandomEffects` primitives with seed 12345. Each primitive group starts
