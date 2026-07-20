@@ -134,7 +134,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private int _activeCallerCount;
     private string _lastSent = "None";
     private string _callEntry = string.Empty;
-    private string _rstEntry = "5NN";
+    private string _rstEntry = string.Empty;
     private string _exchange1Entry = string.Empty;
     private string _exchange2Entry = string.Empty;
     private string _stationCall = "W7SST";
@@ -1140,6 +1140,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             return;
         }
 
+        if (CallEntry.Length > 0
+            && RstEntry.Length == 0
+            && result.Accepted
+            && enter.SentMessages.Count > 0
+            && String.Equals(
+                ContestCatalog.Get(SelectedContest.Id).ExchangeType1,
+                "etRST",
+                StringComparison.Ordinal))
+        {
+            RstEntry = "599";
+        }
+
         string loggedCall = CallEntry.ToUpperInvariant();
         Status = enter.Outcome switch
         {
@@ -1233,7 +1245,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private void ClearEntryFields()
     {
         CallEntry = string.Empty;
-        RstEntry = "5NN";
+        RstEntry = string.Empty;
         Exchange1Entry = string.Empty;
         Exchange2Entry = string.Empty;
     }

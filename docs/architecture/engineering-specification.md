@@ -1043,6 +1043,19 @@ Caret placement, selection, and focus remain UX responsibilities. Explicit
 function-key messages such as F3 `TU` and F7 `?` do not invoke ESM or log a
 QSO.
 
+The desktop entry starts and resets with a blank displayed RST. Empty Enter
+leaves it blank. The engine evaluates a nonempty Enter snapshot before the
+desktop applies CE's post-send field advance. After a message is accepted for
+transmission in a contest whose first received exchange type is RST, that
+advance fills a still-blank displayed RST with the CE literal `599`. It must
+not make an incomplete pre-send snapshot appear complete to the engine.
+
+In the certified CQ WPX route, a nonempty call containing `?` returns focus to
+Call and selects the first question mark. Any other nonempty CQ WPX call,
+including a too-short call that sends only the entered call, advances to the
+serial-number exchange field. Broader contest-specific focus and partially
+populated-field behavior require their own CE-first vectors.
+
 The live `ux.enter-esm-partial-call-message-selection-live` case drives the
 handleless CE `MainForm.FormKeyDown(VK_RETURN)` path and drains the send queue
 through `GetBlock`. Across reset and continuation actions, it compares message

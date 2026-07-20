@@ -22,13 +22,51 @@ public sealed class EnterSendMessageTests
         Assert.Equal(0, session.Snapshot.QsoCount);
     }
 
+    [Fact]
+    public async Task ShortCqWpxCallSendsOnlyCallAndFocusesSerialExchange()
+    {
+        await using var session = await StartedSession.CreateAsync();
+
+        CommandResult result = await session.EnterAsync("KC", "5NN", "", "");
+
+        Assert.True(result.Accepted);
+        Assert.Equal(
+            EnterSendMessageOutcome.SendEnteredCall,
+            result.EnterSendMessage?.Outcome);
+        Assert.Equal(["KC"], result.EnterSendMessage?.SentMessages);
+        Assert.Equal(
+            EntryFocusTarget.Exchange1,
+            result.EnterSendMessage?.FocusTarget);
+        Assert.False(result.EnterSendMessage?.SelectQuestionMark);
+        Assert.False(result.EnterSendMessage?.ClearEntry);
+        Assert.Equal("KC", session.Snapshot.LastOperatorMessage);
+        Assert.Equal(0, session.Snapshot.QsoCount);
+    }
+
+    [Fact]
+    public async Task ShortCallOutsideCertifiedWpxRouteRetainsCallFocus()
+    {
+        await using var session = await StartedSession.CreateAsync(
+            new("scCwt"));
+
+        CommandResult result = await session.EnterAsync("KC", "", "", "");
+
+        Assert.True(result.Accepted);
+        Assert.Equal(
+            EnterSendMessageOutcome.SendEnteredCall,
+            result.EnterSendMessage?.Outcome);
+        Assert.Equal(["KC"], result.EnterSendMessage?.SentMessages);
+        Assert.Equal(
+            EntryFocusTarget.Call,
+            result.EnterSendMessage?.FocusTarget);
+        Assert.False(result.EnterSendMessage?.SelectQuestionMark);
+    }
+
     [Theory]
-    [InlineData("KC", false)]
-    [InlineData("KC?", true)]
-    [InlineData("KC7?", true)]
-    public async Task PartialOrUncertainCallSendsOnlyEnteredCall(
-        string call,
-        bool selectQuestionMark)
+    [InlineData("KC?")]
+    [InlineData("KC7?")]
+    public async Task UncertainCallSendsOnlyEnteredCallAndSelectsQuestionMark(
+        string call)
     {
         await using var session = await StartedSession.CreateAsync();
 
@@ -40,9 +78,7 @@ public sealed class EnterSendMessageTests
             result.EnterSendMessage?.Outcome);
         Assert.Equal([call], result.EnterSendMessage?.SentMessages);
         Assert.Equal(EntryFocusTarget.Call, result.EnterSendMessage?.FocusTarget);
-        Assert.Equal(
-            selectQuestionMark,
-            result.EnterSendMessage?.SelectQuestionMark);
+        Assert.True(result.EnterSendMessage?.SelectQuestionMark);
         Assert.False(result.EnterSendMessage?.ClearEntry);
         Assert.Equal(call, session.Snapshot.LastOperatorMessage);
         Assert.Equal(0, session.Snapshot.QsoCount);
@@ -64,6 +100,26 @@ public sealed class EnterSendMessageTests
             result.EnterSendMessage?.SentMessages);
         Assert.Equal("KC7AVA 5NN 001", session.Snapshot.LastOperatorMessage);
         Assert.Equal(0, session.Snapshot.QsoCount);
+    }
+
+    [Fact]
+    public async Task CqWpxCallWithBlankRstStillFocusesSerialExchange()
+    {
+        await using var session = await StartedSession.CreateAsync();
+
+        CommandResult result = await session.EnterAsync(
+            "KC7AVA",
+            "",
+            "",
+            "");
+
+        Assert.True(result.Accepted);
+        Assert.Equal(
+            EnterSendMessageOutcome.SendCallAndExchange,
+            result.EnterSendMessage?.Outcome);
+        Assert.Equal(
+            EntryFocusTarget.Exchange1,
+            result.EnterSendMessage?.FocusTarget);
     }
 
     [Fact]

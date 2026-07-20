@@ -58,6 +58,7 @@ public sealed class CrossUxWorkflowTests
             InProcessMorseRunnerClient.CreateDefault());
         await avalonia.StartCommand.ExecuteAsync(null);
         avalonia.CallEntry = "K1ABC";
+        avalonia.RstEntry = "599";
         avalonia.Exchange1Entry = "123";
         avalonia.Exchange2Entry = "OR";
         await avalonia.CompleteQsoCommand.ExecuteAsync(null);
@@ -75,6 +76,7 @@ public sealed class CrossUxWorkflowTests
                 CancellationToken.None);
         }
 
+        tui.State.Rst = "599";
         tui.State.Exchange1 = "123";
         tui.State.Exchange2 = "OR";
         await tui.HandleAsync(
@@ -133,11 +135,13 @@ public sealed class CrossUxWorkflowTests
         for (int index = 0; index < calls.Length; index++)
         {
             avalonia.CallEntry = calls[index];
+            avalonia.RstEntry = "599";
             avalonia.Exchange1Entry = (index + 1).ToString(
                 System.Globalization.CultureInfo.InvariantCulture);
             await avalonia.CompleteQsoCommand.ExecuteAsync(null);
 
             tui.State.Call = calls[index];
+            tui.State.Rst = "599";
             tui.State.Exchange1 = (index + 1).ToString(
                 System.Globalization.CultureInfo.InvariantCulture);
             await tui.HandleAsync(
@@ -166,6 +170,7 @@ public sealed class CrossUxWorkflowTests
             InProcessMorseRunnerClient.CreateDefault());
         await avalonia.StartCommand.ExecuteAsync(null);
         avalonia.CallEntry = "K1ABC";
+        avalonia.RstEntry = "599";
         avalonia.Exchange1Entry = "123";
         await avalonia.CompleteQsoCommand.ExecuteAsync(null);
         await avalonia.StopCommand.ExecuteAsync(null);
@@ -177,6 +182,7 @@ public sealed class CrossUxWorkflowTests
             new(TuiActionKind.StartPileup),
             CancellationToken.None);
         tui.State.Call = "K1ABC";
+        tui.State.Rst = "599";
         tui.State.Exchange1 = "123";
         await tui.HandleAsync(
             new(TuiActionKind.LogQso),

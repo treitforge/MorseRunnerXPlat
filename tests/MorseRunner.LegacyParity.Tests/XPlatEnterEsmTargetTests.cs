@@ -34,39 +34,40 @@ public sealed class XPlatEnterEsmTargetTests
         + "|exchange1=|call-retained=true|qso-count=0",
     ];
 
-    private static readonly string[] CurrentXPlatRows =
-    [
-        "configuration|scenario=ux.enter-esm-partial-call-message-selection-live"
-        + "|contest=scWpx|run-mode=rmPileup|station=W7SST|seed=12345"
-        + "|action-count=6",
-        "action[0]|id=empty|input=|messages=cq|focus=call"
-        + "|question-start=-1|question-length=0|call=|rst=5NN"
-        + "|exchange1=|call-retained=true|qso-count=0",
-        "action[1]|id=short-partial|input=K1|messages=his-call:K1"
-        + "|focus=call|question-start=-1|question-length=0|call=K1"
-        + "|rst=5NN|exchange1=|call-retained=true|qso-count=0",
-        "action[2]|id=uncertain|input=K1A?|messages=his-call:K1A?"
-        + "|focus=call|question-start=3|question-length=1|call=K1A?"
-        + "|rst=5NN|exchange1=|call-retained=true|qso-count=0",
-        "action[3]|id=corrected|input=K1ABC"
-        + "|messages=his-call:K1ABC,exchange|focus=exchange1"
-        + "|question-start=-1|question-length=0|call=K1ABC|rst=5NN"
-        + "|exchange1=|call-retained=true|qso-count=0",
-        "action[4]|id=same-call-repeat|input=K1ABC|messages=question"
-        + "|focus=exchange1|question-start=-1|question-length=0"
-        + "|call=K1ABC|rst=5NN|exchange1=|call-retained=true"
-        + "|qso-count=0",
-        "action[5]|id=complete|input=K2XYZ"
-        + "|messages=his-call:K2XYZ,exchange|focus=exchange1"
-        + "|question-start=-1|question-length=0|call=K2XYZ|rst=5NN"
-        + "|exchange1=|call-retained=true|qso-count=0",
-    ];
+    [Fact]
+    [Trait("Category", "ParityInfrastructure")]
+    public async Task CurrentXPlatRowsMatchLegacyFixture()
+    {
+        ParityScenario scenario = CreateScenario(LegacyExpectedRows);
+
+        ParityObservation observation =
+            await new XPlatEnterEsmTarget().ExecuteAsync(
+                scenario,
+                TestContext.Current.CancellationToken);
+
+        Assert.Equal(ParityTargetOutcome.Passed, observation.Outcome);
+        Assert.Null(observation.FailureCode);
+        Assert.Equal(
+            XPlatEnterEsmTarget.EvidenceSource,
+            observation.EvidenceSource);
+        Assert.Equal(
+            LegacyExpectedRows,
+            observation.Values,
+            StringComparer.Ordinal);
+        Assert.Equal(
+            -1,
+            FindFirstDivergence(
+                LegacyExpectedRows,
+                observation.Values));
+    }
 
     [Fact]
     [Trait("Category", "ParityInfrastructure")]
-    public async Task CurrentXPlatRowsPinFirstFunctionalDivergence()
+    public async Task TargetReportsFunctionalDivergenceForChangedExpectation()
     {
-        ParityScenario scenario = CreateScenario(LegacyExpectedRows);
+        string[] changedExpectedRows = [.. LegacyExpectedRows];
+        changedExpectedRows[1] += "|unexpected=true";
+        ParityScenario scenario = CreateScenario(changedExpectedRows);
 
         ParityObservation observation =
             await new XPlatEnterEsmTarget().ExecuteAsync(
@@ -78,34 +79,7 @@ public sealed class XPlatEnterEsmTargetTests
             XPlatEnterEsmTarget.FunctionalDivergenceCode,
             observation.FailureCode);
         Assert.Equal(
-            XPlatEnterEsmTarget.EvidenceSource,
-            observation.EvidenceSource);
-        Assert.Equal(
-            CurrentXPlatRows,
-            observation.Values,
-            StringComparer.Ordinal);
-        Assert.Equal(
-            1,
-            FindFirstDivergence(
-                LegacyExpectedRows,
-                observation.Values));
-    }
-
-    [Fact]
-    [Trait("Category", "ParityInfrastructure")]
-    public async Task TargetPassesWheneverObservedRowsEqualExpectedRows()
-    {
-        ParityScenario scenario = CreateScenario(CurrentXPlatRows);
-
-        ParityObservation observation =
-            await new XPlatEnterEsmTarget().ExecuteAsync(
-                scenario,
-                TestContext.Current.CancellationToken);
-
-        Assert.Equal(ParityTargetOutcome.Passed, observation.Outcome);
-        Assert.Null(observation.FailureCode);
-        Assert.Equal(
-            CurrentXPlatRows,
+            LegacyExpectedRows,
             observation.Values,
             StringComparer.Ordinal);
     }
@@ -116,7 +90,7 @@ public sealed class XPlatEnterEsmTargetTests
     {
         ParityObservation observation =
             await new XPlatEnterEsmTarget().ExecuteAsync(
-                CreateScenario(CurrentXPlatRows),
+                CreateScenario(LegacyExpectedRows),
                 TestContext.Current.CancellationToken);
 
         Assert.Contains(

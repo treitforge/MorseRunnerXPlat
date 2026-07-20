@@ -8,6 +8,27 @@ namespace MorseRunner.App.Tests;
 public sealed class MainWindowViewModelTests
 {
     [Fact]
+    public async Task RstEntryStartsEmptyAndWipeRestoresEmptyEntryFields()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+
+        Assert.Empty(viewModel.RstEntry);
+
+        viewModel.CallEntry = "K1ABC";
+        viewModel.RstEntry = "579";
+        viewModel.Exchange1Entry = "123";
+        viewModel.Exchange2Entry = "OR";
+
+        await viewModel.WipeCommand.ExecuteAsync(null);
+
+        Assert.Empty(viewModel.CallEntry);
+        Assert.Empty(viewModel.RstEntry);
+        Assert.Empty(viewModel.Exchange1Entry);
+        Assert.Empty(viewModel.Exchange2Entry);
+    }
+
+    [Fact]
     public async Task CommandsDriveTheSessionThroughTheClientBoundary()
     {
         await using var viewModel = new MainWindowViewModel(
@@ -48,6 +69,7 @@ public sealed class MainWindowViewModelTests
             InProcessMorseRunnerClient.CreateDefault());
         await viewModel.StartCommand.ExecuteAsync(null);
         viewModel.CallEntry = "K1ABC";
+        viewModel.RstEntry = "5NN";
         viewModel.Exchange1Entry = "123";
         viewModel.Exchange2Entry = "OR";
 
@@ -82,6 +104,61 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task EmptyEnterLeavesRstEntryEmpty()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+        await viewModel.StartCommand.ExecuteAsync(null);
+
+        await viewModel.EnterSendMessageCommand.ExecuteAsync(null);
+
+        Assert.Empty(viewModel.RstEntry);
+    }
+
+    [Fact]
+    public async Task NonemptyEnterDefaultsRstEntryTo599ForRstContest()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+        await viewModel.StartCommand.ExecuteAsync(null);
+        viewModel.CallEntry = "K1ABC";
+
+        await viewModel.EnterSendMessageCommand.ExecuteAsync(null);
+
+        Assert.Equal("599", viewModel.RstEntry);
+    }
+
+    [Fact]
+    public async Task NonemptyEnterPreservesExplicitRst()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+        await viewModel.StartCommand.ExecuteAsync(null);
+        viewModel.CallEntry = "K1ABC";
+        viewModel.RstEntry = "579";
+
+        await viewModel.EnterSendMessageCommand.ExecuteAsync(null);
+
+        Assert.Equal("579", viewModel.RstEntry);
+    }
+
+    [Fact]
+    public async Task NonemptyEnterLeavesRstBlankWhenContestDoesNotReceiveRst()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+        viewModel.SelectedContest = Assert.Single(
+            viewModel.Contests,
+            contest => contest.Id == new ContestId("scCwt"));
+        await viewModel.StartCommand.ExecuteAsync(null);
+        viewModel.CallEntry = "K1ABC";
+
+        await viewModel.EnterSendMessageCommand.ExecuteAsync(null);
+
+        Assert.Empty(viewModel.RstEntry);
+    }
+
+    [Fact]
     public async Task EnterClearsFieldsOnlyAfterValidatedCompletion()
     {
         await using var viewModel = new MainWindowViewModel(
@@ -95,12 +172,35 @@ public sealed class MainWindowViewModelTests
         Assert.Equal(0, viewModel.QsoCount);
         Assert.Equal("K1ABC 5NN 001", viewModel.LastSent);
         Assert.Equal("K1ABC", viewModel.CallEntry);
+        Assert.Equal("599", viewModel.RstEntry);
 
         await viewModel.EnterSendMessageCommand.ExecuteAsync(null);
 
         Assert.Equal(1, viewModel.QsoCount);
         Assert.Equal("TU", viewModel.LastSent);
         Assert.Empty(viewModel.CallEntry);
+        Assert.Empty(viewModel.RstEntry);
+    }
+
+    [Fact]
+    public async Task BlankRstIsNotDefaultedUntilAfterRepeatDecision()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+        await viewModel.StartCommand.ExecuteAsync(null);
+        viewModel.CallEntry = "K1ABC";
+
+        await viewModel.EnterSendMessageCommand.ExecuteAsync(null);
+
+        viewModel.RstEntry = string.Empty;
+        viewModel.Exchange1Entry = "123";
+        await viewModel.EnterSendMessageCommand.ExecuteAsync(null);
+
+        Assert.Equal("?", viewModel.LastSent);
+        Assert.Equal(0, viewModel.QsoCount);
+        Assert.Equal("K1ABC", viewModel.CallEntry);
+        Assert.Equal("599", viewModel.RstEntry);
+        Assert.Equal("123", viewModel.Exchange1Entry);
     }
 
     [Fact]

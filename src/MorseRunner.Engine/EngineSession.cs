@@ -926,13 +926,18 @@ internal sealed class EngineSession : IAsyncDisposable
                     item => item.Intent == OperatorIntent.Exchange)
                     ? EnterSendMessageOutcome.SendCallAndExchange
                     : EnterSendMessageOutcome.SendEnteredCall;
+        EntryFocusTarget focusTarget = entry.Call.Contains('?')
+            ? EntryFocusTarget.Call
+            : _settings.ContestId.Value == "scWpx"
+                ? EntryFocusTarget.Exchange1
+                : validCall
+                    ? received.MissingFocusTarget
+                    : EntryFocusTarget.Call;
         return AcceptedResult(
             CreateEnterResult(
                 outcome,
                 messages.Select(item => item.Message).ToArray(),
-                validCall
-                    ? received.MissingFocusTarget
-                    : EntryFocusTarget.Call,
+                focusTarget,
                 selectQuestionMark:
                     entry.Call.Contains('?')));
     }
