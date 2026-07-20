@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "target": "XPlat",
+  "platform": "windows",
+  "operatingSystem": "Microsoft Windows 10.0.26200",
+  "architecture": "x64",
+  "runtimeIdentifier": "win-x64",
+  "revision": "7f5ed8a33c68d4843493acd5a06eddb868b05274",
+  "tree": "2a84ee0d43db716cf8666845e3f7ed21f96b2ed8",
+  "resultSha256": "1d07f361d50272a5705e788432b3694d3802e1fdefdfcfd1391acb12a87b011b",
+  "testReportSha256": "e8bf90e090b2cdf846097de275b6015abccf6d209baadb2efe165e718817ae4a",
+  "testProcessExitCode": 2,
+  "wrapper": {
+    "completed": true,
+    "correlationValidated": true,
+    "exitCode": 0
+  },
+  "functionalDivergences": [
+    {
+      "caseId": "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
+      "failureCode": "audio-startup-warmup-and-filter-timing-mismatch"
+    }
+  ]
+}
