@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "7ef46808e198fcc9d2601512b91657371ad1736a",
+      "tree": "bc35641468e9c141a56c41362ca744a9266a883e",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "contest.exchange-shapes"
+  ],
+  "results": [
+    {
+      "parityId": "contest.exchange-shapes",
+      "acceptanceTestName": "parity:contest.exchange-shapes()",
+      "target": "xplat",
+      "adapter": "XPlatContestRulesTarget",
+      "caseDefinitionSha256": "e03a81bb1712fc11b8f9c2ef4162b51271d7b5900718da2f0662138305a632f9",
+      "fixtureSha256": "4e654cedffd6921aed26c446ece99572217abc9486aac81a5cf426b25eccbbb3",
+      "outcome": "functional-divergence",
+      "failureCode": "contest-exchange-shape-mismatch",
+      "evidenceSource": "MorseRunner.Engine",
+      "observedValues": [
+        "scWpx|sent=0,0|recv=0,0|default-valid=True|farnsworth=False",
+        "scCwt|sent=0,0|recv=0,0|default-valid=False|farnsworth=False",
+        "scFieldDay|sent=0,0|recv=0,0|default-valid=False|farnsworth=False",
+        "scNaQp|sent=1,10|recv=1,10|default-valid=True|farnsworth=False",
+        "scHst|sent=0,0|recv=0,0|default-valid=True|farnsworth=False",
+        "scCQWW|sent=0,0|recv=0,0|default-valid=True|farnsworth=False",
+        "scArrlDx|sent=0,3|recv=0,3|default-valid=True|farnsworth=False",
+        "scSst|sent=0,0|recv=0,0|default-valid=False|farnsworth=True",
+        "scAllJa|sent=0,0|recv=0,0|default-valid=False|farnsworth=False",
+        "scAcag|sent=0,0|recv=0,0|default-valid=False|farnsworth=False",
+        "scIaruHf|sent=0,0|recv=0,0|default-valid=True|farnsworth=False",
+        "scArrlSS|sent=0,0|recv=0,0|default-valid=True|farnsworth=False"
+      ],
+      "observedValueCount": 12,
+      "observedValuesSha256": "828b8879eee0d70589e48c40701a83bfdf765df37f84f79e6311a65b918544fc",
+      "firstDivergence": {
+        "index": 1,
+        "expected": "scCwt|sent=1,1|recv=1,1|default-valid=True|farnsworth=False",
+        "actual": "scCwt|sent=0,0|recv=0,0|default-valid=False|farnsworth=False"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}
