@@ -13,6 +13,18 @@ public static class ParityAcceptanceRegistry
         new Dictionary<string, ParityAcceptanceRegistration>(
             StringComparer.Ordinal)
         {
+            [XPlatRealisticHissNoiseFloorTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatRealisticHissNoiseFloorTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatRealisticHissNoiseFloorTarget),
+                    XPlatRealisticHissNoiseFloorTarget
+                        .FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = RealisticHissNoiseFloorInput.Parse(scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () =>
+                        new XPlatRealisticHissNoiseFloorTarget()),
             [XPlatSstFarnsworthTarget.ParityId] =
                 new ParityAcceptanceRegistration(
                     XPlatSstFarnsworthTarget.ParityId,

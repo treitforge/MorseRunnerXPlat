@@ -2373,6 +2373,28 @@ operator availability. The separate
 `audio.sst-farnsworth-session-wiring` obligation remains pending until a live
 session case proves that complete path.
 
+The `audio.realistic-hiss-noise-floor` case executes the pinned CE
+`TContest.GetAudio` pure receiver path and the XPlat production engine at
+11025 Hz with 512-sample blocks, seed 12345, 500 Hz bandwidth, and 600 Hz
+pitch. The CE adapter verifies and discards its first five one-`Single`
+startup requests only to align the first complete receiver block, resets the
+seed immediately before capture, and records 12 consecutive blocks. The XPlat
+adapter starts and immediately aborts a session, proves that no audio is
+written before explicit advancement, and captures the same number of blocks
+through `IAudioSink`. The exact comparison covers normalized binary32 probe
+bits, per-block raw-`Single` hashes, aggregate peak and RMS values, and the
+aggregate raw-`Single` hash after the production receiver filter, modulator,
+and AGC path.
+
+This case certifies only the fixed-vector base receiver hiss and noise-floor
+path. The discarded CE startup requests are capture alignment and do not
+certify startup framing, block warmup behavior, or filter-swap phase in
+isolation. It also does not certify standalone filter, modulator, or AGC
+components; station and operator mixing; QRM, QRN, QSB, flutter, QSK, or RIT;
+runtime bandwidth changes; PCM or WAV conversion; recording; physical
+devices; or audio-sink failure behavior. Those obligations remain pending
+until separate live cases prove them.
+
 ### Phase 3: core simulation and data
 
 Deliver:

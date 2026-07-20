@@ -63,6 +63,7 @@ public sealed class ParityInfrastructureTests
     {
         Assert.Equal(
             [
+                "audio.realistic-hiss-noise-floor",
                 "audio.sst-farnsworth-envelope-timing",
                 "contest.exchange-shapes",
                 "ux.enter-esm-partial-call-message-selection-live",
@@ -71,6 +72,7 @@ public sealed class ParityInfrastructureTests
             StringComparer.Ordinal);
         Assert.Equal(
             [
+                "audio.realistic-hiss-noise-floor",
                 "audio.sst-farnsworth-envelope-timing",
                 "contest.exchange-shapes",
                 "ux.enter-esm-partial-call-message-selection-live",
@@ -83,6 +85,10 @@ public sealed class ParityInfrastructureTests
     [Trait("Category", "ParityInfrastructure")]
     public void CaseIdSelectsItsExactXPlatAdapter()
     {
+        Assert.IsType<XPlatRealisticHissNoiseFloorTarget>(
+            ParityAcceptanceRegistry
+                .Get("audio.realistic-hiss-noise-floor")
+                .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatSstFarnsworthTarget>(
             ParityAcceptanceRegistry
                 .Get("audio.sst-farnsworth-envelope-timing")
