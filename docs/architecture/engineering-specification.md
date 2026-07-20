@@ -2666,11 +2666,73 @@ the next required QRN tranche.
 
 This case covers first-block background trigger probability, replacement
 semantics, source-order draw ownership, final receiver output, the no-burst
-station count, and terminal sentinels. It does not certify a triggered
-`TQrnStation`, duration and amplitude distributions, burst-envelope impulses,
-same-block audibility, station ticking and destruction, later blocks, or
-runtime toggling. The `audio.qrn-impulses-and-burst-stations` obligation
-therefore remains partial.
+station count, and terminal sentinels. The separate triggered vector below
+certifies one two-block burst. Other seeds, duration boundaries, overlapping
+bursts, interactions with normal stations, and runtime toggling remain
+uncovered.
+
+The authored `audio.qrn-burst-station-lifecycle-seed-1903` case binds the
+first successful QRN burst trigger to the pinned v15 CE oracle. Two fresh live
+CQ WPX `rmStop` runtimes use seed 1903, 11025 Hz audio, 512-sample blocks,
+500 Hz bandwidth, 600 Hz pitch, QRN enabled, no normal DX stations or
+operator transmission, and every other optional effect disabled. Both
+execute the real handleless `MainForm.SetBw` path and five actual one-`Single`
+startup requests. One runtime stops after its first complete block for an
+uncontaminated shared-random checkpoint. The other advances continuously
+through two complete blocks.
+
+The content-bound source-order replay records eight block-one background
+replacements before the successful burst trigger at ordinal 1544. The actual
+`TQrnStation` eager constructor then consumes duration ordinal 1545, whose
+binary32 bits are `3dc788c6`, and amplitude ordinal 1546. It creates a
+two-block, 1024-sample envelope with amplitude bits `48e976cf`. Direct
+inspection of the live CE object and the replay agree that its only nonzero
+envelope indexes are 359, 411, 848, 907, and 990, with respective binary32
+bits `47c46069`, `4849d6e3`, `c7e5b614`, `476e2c1c`, and `c75e86f2`.
+Every other envelope sample is positive zero.
+
+The live CE station collection contains exactly one `TQrnStation` in
+`stSending` after block one, with the full 1024-sample envelope still
+retained after its first `GetBlock` call. During block two, `GetBlock`
+consumes the remaining half, clears the envelope, and `Tick` routes
+`evMsgSent` to `TQrnStation.ProcessEvent`, which frees the station. The
+collection is empty after block two. The normalized block hashes are
+`41096894caafa0890ea1f5d18545aa14b644ed1e9f20aff31f9f8fcec75d960e`
+and
+`44ae49f68a99e7688200685231b9cbf6c84414ae8a6b1b4736b78cce1d7d4637`;
+their aggregate hash is
+`bec466358e35bf3720c074c9fee0ea8e7ef8f656164b6dd48d5758da66c41f61`.
+The fresh one-block next value at ordinal 2576 has bits `3f58ce2d`. The
+continuous two-block next value at ordinal 4117 has bits `3e9fed0d`.
+
+QRN burst stations are internal audio interference, not contest callers.
+They must never appear in public `SessionSnapshot.ActiveStations`, change
+`LastCaller`, participate in best-call matching, or emit caller and station
+events. The parity adapter therefore requires public active-station snapshots
+to remain empty at both block boundaries. The internal parity-only
+`EngineSession.ObserveQrnBurstForParityAsync` seam reports burst count,
+sending state, and retained envelope length. It accepts session ID at the
+engine wrapper plus expected revision and expected simulation block, rejects
+automatic timing and stale or mismatched boundaries, and neither advances
+simulation nor consumes random values. It is not part of
+`IMorseRunnerClient`, snapshots, gRPC, or any production UX contract.
+
+Before burst production exists, the guarded internal seam returns an explicit
+empty observation. Rows zero through two still reproduce CE's background and
+eager-constructor source-order replay. The first functional divergence is row
+three, `station-lifecycle`, with code
+`audio-qrn-burst-station-lifecycle-mismatch`. Later rows expose the missing
+same-block burst audio, skipped constructor draws, wrong block-two stream
+position, and terminal checkpoints. No retained evidence is created during
+authoring. Evidence capture and promotion are separate reviewed steps.
+
+This vector certifies one successful eager construction, exact sparse
+envelope, same-block audibility, two-block lifetime, destruction, and
+continuous shared-stream order. It does not cover other seeds, the full
+duration and amplitude distributions, zero- or long-duration boundaries,
+overlapping QRN bursts, interactions with normal or QRM stations, or runtime
+QRN toggling. The `audio.qrn-impulses-and-burst-stations` obligation remains
+partial.
 
 The `audio.deterministic-random-primitives-seed-12345` case executes the pinned CE
 `RndFunc.pas` routines and the XPlat production `LegacyRandom` and

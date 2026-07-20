@@ -67,6 +67,7 @@ public sealed class ParityInfrastructureTests
                 "audio.flutter-no-station-noise-invariance-seed-12345",
                 "audio.qrm-no-trigger-invariance-seed-12345",
                 "audio.qrn-background-sparse-impulses-seed-12345",
+                "audio.qrn-burst-station-lifecycle-seed-1903",
                 "audio.qsb-no-station-noise-invariance-seed-12345",
                 "audio.realistic-hiss-noise-floor",
                 "audio.receiver-hiss-shared-random-checkpoint-seed-12345",
@@ -83,6 +84,7 @@ public sealed class ParityInfrastructureTests
                 "audio.flutter-no-station-noise-invariance-seed-12345",
                 "audio.qrm-no-trigger-invariance-seed-12345",
                 "audio.qrn-background-sparse-impulses-seed-12345",
+                "audio.qrn-burst-station-lifecycle-seed-1903",
                 "audio.qsb-no-station-noise-invariance-seed-12345",
                 "audio.realistic-hiss-noise-floor",
                 "audio.receiver-hiss-shared-random-checkpoint-seed-12345",
@@ -116,6 +118,11 @@ public sealed class ParityInfrastructureTests
             ParityAcceptanceRegistry
                 .Get(
                     "audio.qrn-background-sparse-impulses-seed-12345")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatQrnBurstStationLifecycleTarget>(
+            ParityAcceptanceRegistry
+                .Get(
+                    "audio.qrn-burst-station-lifecycle-seed-1903")
                 .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatQsbNoStationNoiseInvarianceTarget>(
             ParityAcceptanceRegistry

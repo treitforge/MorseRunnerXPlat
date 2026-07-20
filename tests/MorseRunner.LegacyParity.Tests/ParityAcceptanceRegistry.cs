@@ -63,6 +63,19 @@ public static class ParityAcceptanceRegistry
                     static () => new LegacyOracleTarget(),
                     static () =>
                         new XPlatQrnBackgroundSparseImpulsesTarget()),
+            [XPlatQrnBurstStationLifecycleTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatQrnBurstStationLifecycleTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatQrnBurstStationLifecycleTarget),
+                    XPlatQrnBurstStationLifecycleTarget
+                        .FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = QrnBurstStationLifecycleInput.Parse(
+                            scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () =>
+                        new XPlatQrnBurstStationLifecycleTarget()),
             [XPlatQsbNoStationNoiseInvarianceTarget.ParityId] =
                 new ParityAcceptanceRegistration(
                     XPlatQsbNoStationNoiseInvarianceTarget.ParityId,

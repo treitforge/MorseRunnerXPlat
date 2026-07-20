@@ -160,6 +160,21 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
                 cancellationToken);
     }
 
+    internal Task<QrnBurstParityObservation>
+        ObserveQrnBurstForParityAsync(
+            SessionId sessionId,
+            long expectedRevision,
+            long expectedSimulationBlock,
+            CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        return GetSession(sessionId)
+            .ObserveQrnBurstForParityAsync(
+                expectedRevision,
+                expectedSimulationBlock,
+                cancellationToken);
+    }
+
     public async Task CloseSessionAsync(
         SessionId sessionId,
         CancellationToken cancellationToken)
