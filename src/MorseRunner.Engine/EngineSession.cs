@@ -1980,7 +1980,8 @@ internal sealed class EngineSession : IAsyncDisposable
                     sweepstakes:
                         _settings.ContestId.Value == "scArrlSS",
                     _settings.Flutter,
-                    _settings.ContestId);
+                    _settings.ContestId,
+                    _settings.SerialNumberRange);
             candidateObserver?.Invoke(attemptNumber, candidate);
 
             if (attemptNumber == 10

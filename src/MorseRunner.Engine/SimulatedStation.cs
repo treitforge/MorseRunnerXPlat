@@ -8,6 +8,7 @@ public sealed class SimulatedStation
 {
     private readonly MorseToneRenderer _renderer;
     private readonly ContestId _contestId;
+    private readonly SerialNumberRangeMode _serialNumberRange;
     private readonly QsbProcessor? _qsb;
     private readonly float[] _scratch =
         new float[CompatibilityProfile.BlockSize];
@@ -24,10 +25,13 @@ public sealed class SimulatedStation
         bool lids = false,
         bool sweepstakes = false,
         OperatorState initialOperatorState = OperatorState.NeedPreviousEnd,
-        ContestId? contestId = null)
+        ContestId? contestId = null,
+        SerialNumberRangeMode serialNumberRange =
+            SerialNumberRangeMode.StartOfContest)
     {
         Identity = identity ?? throw new ArgumentNullException(nameof(identity));
         _contestId = contestId ?? new("scWpx");
+        _serialNumberRange = serialNumberRange;
         WordsPerMinute = wordsPerMinute;
         PitchOffsetHz = pitchOffsetHz;
         Operator = new(
@@ -81,10 +85,12 @@ public sealed class SimulatedStation
         QsbProcessor qsb,
         float r1,
         float amplitude,
-        ContestId contestId)
+        ContestId contestId,
+        SerialNumberRangeMode serialNumberRange)
     {
         Identity = identity;
         _contestId = contestId;
+        _serialNumberRange = serialNumberRange;
         WordsPerMinute = wordsPerMinute;
         CharacterWordsPerMinute = characterWordsPerMinute;
         PitchOffsetHz = pitchOffsetHz;
@@ -110,7 +116,8 @@ public sealed class SimulatedStation
         bool lids,
         bool sweepstakes,
         bool flutter,
-        ContestId contestId)
+        ContestId contestId,
+        SerialNumberRangeMode serialNumberRange)
     {
         ArgumentNullException.ThrowIfNull(identityFactory);
         ArgumentNullException.ThrowIfNull(wordsPerMinuteFactory);
@@ -164,7 +171,8 @@ public sealed class SimulatedStation
             qsb,
             r1,
             amplitude,
-            contestId);
+            contestId,
+            serialNumberRange);
     }
 
     public static SimulatedStation CreateReadyCaller(
@@ -175,7 +183,9 @@ public sealed class SimulatedStation
         OperatorRunMode runMode,
         bool lids,
         bool sweepstakes,
-        ContestId? contestId = null)
+        ContestId? contestId = null,
+        SerialNumberRangeMode serialNumberRange =
+            SerialNumberRangeMode.StartOfContest)
     {
         var station = new SimulatedStation(
             identity,
@@ -186,7 +196,8 @@ public sealed class SimulatedStation
             lids,
             sweepstakes,
             OperatorState.NeedQso,
-            contestId);
+            contestId,
+            serialNumberRange);
         station.State = StationState.PreparingToSend;
         station._timeoutBlocks = station.Operator.GetSendDelay(wordsPerMinute);
         return station;
@@ -491,6 +502,7 @@ public sealed class SimulatedStation
 
     internal string ObserveExchangeForParity()
     {
+        _ = _serialNumberRange;
         return FormatExchange();
     }
 
