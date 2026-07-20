@@ -124,6 +124,26 @@ public sealed class SimulationAndScoringTests
     }
 
     [Fact]
+    public void WpxMidContestRemoteExchangeUsesTwoDigitMinimumSerial()
+    {
+        var station = new SimulatedStation(
+            new StationIdentity(
+                "K1ABC",
+                "599",
+                Number: 57,
+                "599",
+                "57"),
+            wordsPerMinute: 25,
+            pitchOffsetHz: 0,
+            new LegacyRandom(12_345),
+            OperatorRunMode.Wpx,
+            contestId: new("scWpx"),
+            serialNumberRange: SerialNumberRangeMode.MidContest);
+
+        Assert.Equal("5NN57", station.ObserveExchangeForParity());
+    }
+
+    [Fact]
     public void QsoColumnErrorsUseAllThirtyTwoBits()
     {
         Qso value = new Qso()

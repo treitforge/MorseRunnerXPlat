@@ -2672,6 +2672,19 @@ repeats, correction variants, and LID errors remain within the partial
 obligation.
 
 The authored
+`contest.wpx-midcontest-remote-exchange-format-seed-12345` case extends the
+same obligation through WPX serial-range width. Its pinned CE v25 adapter
+selects `snMidContest`, fixes the remote serial at 57, and observes the exact
+`5NN57` exchange. Retained red evidence records
+`contest-wpx-midcontest-remote-exchange-format-mismatch`, where XPlat forced a
+three-digit serial and cut the synthetic leading zero to produce `5NNT57`.
+The session now carries its serial-number range into every simulated station,
+and production WPX mid-contest formatting applies CE's two-digit minimum before
+the existing numeric cutting stage. Start, end, and custom range acceptance,
+custom leading-zero intent, probabilistic cut variants, repeats, correction
+variants, and LID errors remain within the partial obligation.
+
+The authored
 `audio.flutter-no-station-noise-invariance-seed-12345` case narrows the first
 flutter acceptance boundary to station-free receiver audio. Its pinned CE
 adapter creates two fresh `TContest.GetAudio` runtimes with the same seed,

@@ -487,6 +487,16 @@ public sealed class SimulatedStation
                 + Identity.Number.ToString("000", CultureInfo.InvariantCulture);
         }
 
+        if (_contestId.Value == "scWpx"
+            && _serialNumberRange == SerialNumberRangeMode.MidContest)
+        {
+            return ToCutNumbers(Identity.Rst)
+                + ToCutNumbers(
+                    Identity.Number.ToString(
+                        "00",
+                        CultureInfo.InvariantCulture));
+        }
+
         string rst = ToCutNumbers(Identity.Rst);
         string exchange = Identity.Exchange2;
         if (int.TryParse(exchange, out int number))
@@ -502,7 +512,6 @@ public sealed class SimulatedStation
 
     internal string ObserveExchangeForParity()
     {
-        _ = _serialNumberRange;
         return FormatExchange();
     }
 
