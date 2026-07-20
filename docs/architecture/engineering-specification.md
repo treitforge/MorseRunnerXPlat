@@ -1409,7 +1409,8 @@ The compatibility pipeline is conceptually:
 1. Generate complex background noise.
 2. Add QRN background and bursts.
 3. Add QRM stations.
-4. Render active simulated stations.
+4. Render each active simulated station and apply that station's enabled QSB
+   envelope to its mono waveform.
 5. Apply per-station BFO and RIT phase.
 6. Render operator sidetone and QSK behavior.
 7. Apply filtering.
@@ -1423,6 +1424,11 @@ The compatibility pipeline is conceptually:
 The exact order must be verified against `TContest.GetAudio` and preserved.
 An internal refactoring may differ only when shared parity tests demonstrate
 identical functional and audio outcomes.
+
+QSB is owned by each remote station. It must never be applied to the aggregate
+receiver buffer, receiver hiss, QRN, QRM, or local sidetone. XPlat currently
+enforces this aggregate-path invariant, but the positive per-station QSB step
+remains pending its own retained acceptance coverage and implementation.
 
 ### 14.3 Renderer ownership
 
@@ -2471,14 +2477,16 @@ normalized blocks and their aggregate raw-`Single` hash bit-for-bit
 identical. The XPlat adapter performs the same paired capture through two
 fresh production engine sessions and `IAudioSink`.
 
-The current XPlat session-global post-receiver `QsbProcessor` changes the
-station-free hiss, so the authored case remains
-`legacy-green-xplat-red` with divergence code
-`audio-qsb-no-station-noise-invariance-mismatch` until red evidence is
-retained and production QSB ownership is corrected. This case does not
-certify per-station QSB construction, independent envelopes, distribution
-parameters, random-stream ownership, runtime toggling, or flutter. The
-`audio.qsb-independent-per-station` obligation therefore remains partial.
+The retained pre-implementation baseline remains `legacy-green-xplat-red` with
+divergence code `audio-qsb-no-station-noise-invariance-mismatch`. Production
+`EngineSession` no longer constructs or applies a session-global post-receiver
+`QsbProcessor`, so enabling QSB leaves station-free receiver audio unchanged.
+The unchanged development case must pass before this correction is considered
+a local green regression, while the retained red evidence remains immutable.
+This correction does not implement or certify per-station QSB construction,
+independent envelopes, distribution parameters, random-stream ownership,
+runtime toggling, or flutter. The `audio.qsb-independent-per-station`
+obligation therefore remains partial.
 
 The `audio.deterministic-random-primitives-seed-12345` case executes the pinned CE
 `RndFunc.pas` routines and the XPlat production `LegacyRandom` and
@@ -2556,9 +2564,12 @@ Current Phase 3 implementation inventory, not parity certification:
   ordered session events with revision and simulation-block metadata. Seeded
   tests verify caller sets, station event traces, true-exchange logging, NIL
   outcomes, and deterministic audio hashes.
-- QSK, QSB, QRM, QRN, flutter, and LID paths exist and use deterministic XPlat
-  state. The audit found differences in audio ordering, signal models, and
-  random-source ownership, so these paths are not CE-equivalent yet.
+- QSK, QRM, QRN, flutter, and LID paths exist and use deterministic XPlat
+  state. QSB setting carriage exists, but the incorrect session-global
+  receiver application has been removed and the CE per-station application is
+  not implemented yet. The audit found further differences in audio ordering,
+  signal models, and random-source ownership, so these paths are not
+  CE-equivalent yet.
 - Immutable QSO records, score and multiplier behavior, radio controls,
   versioned settings, one-way INI import, atomic persistence, and
   platform-specific application paths are implemented.

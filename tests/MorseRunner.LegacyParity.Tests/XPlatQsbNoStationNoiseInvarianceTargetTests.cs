@@ -6,8 +6,7 @@ public sealed class XPlatQsbNoStationNoiseInvarianceTargetTests
 {
     [Fact]
     [Trait("Category", "ParityInfrastructure")]
-    public async Task
-        CurrentProductionFailsAtFirstQsbBlockWithPinnedCode()
+    public async Task PublicEngineCaptureMatchesPinnedCeFixture()
     {
         ParityCertificationCase definition =
             ParityCertificationCase.LoadForInspection(
@@ -19,35 +18,15 @@ public sealed class XPlatQsbNoStationNoiseInvarianceTargetTests
                     definition.Scenario,
                     TestContext.Current.CancellationToken);
 
-        Assert.Equal(ParityTargetOutcome.Failed, observation.Outcome);
-        Assert.Equal(
-            XPlatQsbNoStationNoiseInvarianceTarget
-                .FunctionalDivergenceCode,
-            observation.FailureCode);
+        Assert.Equal(ParityTargetOutcome.Passed, observation.Outcome);
+        Assert.Null(observation.FailureCode);
         Assert.Equal(
             XPlatQsbNoStationNoiseInvarianceTarget.EvidenceSource,
             observation.EvidenceSource);
         Assert.Equal(
-            definition.Scenario.ExpectedValues.Take(3),
-            observation.Values.Take(3),
+            definition.Scenario.ExpectedValues,
+            observation.Values,
             StringComparer.Ordinal);
-        Assert.Equal(
-            3,
-            FindFirstDivergence(
-                definition.Scenario.ExpectedValues,
-                observation.Values));
-        Assert.StartsWith(
-            "qsb-block[0]|",
-            observation.Values[3],
-            StringComparison.Ordinal);
-        Assert.EndsWith(
-            "|exact-equal=false",
-            observation.Values[5],
-            StringComparison.Ordinal);
-        Assert.EndsWith(
-            "|exact-equal=false",
-            observation.Values[^1],
-            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -122,17 +101,21 @@ public sealed class XPlatQsbNoStationNoiseInvarianceTargetTests
             QsbNoStationNoiseInvarianceInput.ExpectedValueCount,
             first.Length);
         Assert.Equal(
-            "415513bda77b51b5b91ef6c3b5415578"
-                + "7e58161f2a92c28cf429395b77ace903",
+            "99e62b99e4a17575a73f9fff75600c75"
+                + "30b87dcb28634930d5198ceb2fe709b5",
             ParityObservedValuesDigest.Compute(first));
         Assert.Equal(
             "6b468ab13ccc1accb6ec587b8a51d27c"
                 + "a23eb80b20bce034106e547ad3565378",
             ExtractHash(first[1]));
-        Assert.NotEqual(ExtractHash(first[1]), ExtractHash(first[3]));
+        Assert.Equal(ExtractHash(first[1]), ExtractHash(first[3]));
         Assert.EndsWith(
-            "|exact-equal=false",
+            "|exact-equal=true",
             first[5],
+            StringComparison.Ordinal);
+        Assert.EndsWith(
+            "|exact-equal=true",
+            first[^1],
             StringComparison.Ordinal);
     }
 
@@ -354,24 +337,6 @@ public sealed class XPlatQsbNoStationNoiseInvarianceTargetTests
                 input,
                 clean,
                 qsb));
-    }
-
-    private static int FindFirstDivergence(
-        IReadOnlyList<string> expected,
-        IReadOnlyList<string> actual)
-    {
-        int commonCount = Math.Min(expected.Count, actual.Count);
-        for (int index = 0; index < commonCount; index++)
-        {
-            if (!StringComparer.Ordinal.Equals(
-                    expected[index],
-                    actual[index]))
-            {
-                return index;
-            }
-        }
-
-        return expected.Count == actual.Count ? -1 : commonCount;
     }
 
     private static string ExtractHash(string row)

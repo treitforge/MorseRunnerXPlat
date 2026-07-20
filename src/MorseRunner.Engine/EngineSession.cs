@@ -101,7 +101,6 @@ internal sealed class EngineSession : IAsyncDisposable
     private readonly MorseToneRenderer _toneRenderer;
     private readonly LegacyReceiverPipeline _receiverPipeline;
     private readonly LegacyRandom _effectRandom;
-    private readonly QsbProcessor? _qsbProcessor;
     private readonly float _monitorGain;
     private readonly bool _automaticTiming;
     private readonly TimeSpan _blockPeriod;
@@ -154,11 +153,6 @@ internal sealed class EngineSession : IAsyncDisposable
         _random = new(settings.Seed);
         _stationCatalog = StationReferenceCatalog.Load(settings.ContestId);
         _effectRandom = new(settings.Seed);
-        _qsbProcessor = settings.Qsb
-            ? new QsbProcessor(
-                new LegacyRandomEffects(
-                    new LegacyRandom(unchecked(settings.Seed ^ 0x71C3_90EF))))
-            : null;
         _monitorGain = MathF.Pow(10F, (float)settings.MonitorLevelDb / 20F);
         _currentWordsPerMinute = settings.WordsPerMinute;
         _currentBandwidthHz = settings.BandwidthHz;
@@ -693,7 +687,6 @@ internal sealed class EngineSession : IAsyncDisposable
 
     private void ApplyAudioEffects(bool operatorIsSending)
     {
-        _qsbProcessor?.Apply(_renderBuffer);
         float qrmIncrement =
             2F * MathF.PI * (_settings.PitchHz + 170F)
             / CompatibilityProfile.SampleRate;

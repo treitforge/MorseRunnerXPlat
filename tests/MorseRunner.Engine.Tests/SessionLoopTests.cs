@@ -351,7 +351,7 @@ public sealed class SessionLoopTests
     }
 
     [Fact]
-    public async Task BandConditionsAreDeterministicAndChangeRenderedAudio()
+    public async Task QrmQrnAndFlutterAreDeterministicAndChangeRenderedAudio()
     {
         SessionSettings cleanSettings =
             SessionSettings.CreateDefault(seed: 12345) with
@@ -361,7 +361,6 @@ public sealed class SessionLoopTests
             };
         SessionSettings conditionSettings = cleanSettings with
         {
-            Qsb = true,
             Qrm = true,
             Qrn = true,
             Flutter = true,
@@ -373,6 +372,15 @@ public sealed class SessionLoopTests
 
         Assert.NotEqual(clean, first);
         Assert.Equal(first, second);
+    }
+
+    [Fact]
+    public async Task QsbDoesNotChangeStationFreeReceiverAudio()
+    {
+        byte[] clean = await RenderStationFreeHashAsync(qsbEnabled: false);
+        byte[] qsb = await RenderStationFreeHashAsync(qsbEnabled: true);
+
+        Assert.Equal(clean, qsb);
     }
 
     [Fact]
@@ -428,6 +436,68 @@ public sealed class SessionLoopTests
                 TestClient,
                 BlockCount: 6),
             TestContext.Current.CancellationToken);
+        return sink.GetHash();
+    }
+
+    private static async Task<byte[]> RenderStationFreeHashAsync(
+        bool qsbEnabled)
+    {
+        var sink = new HashingAudioSink();
+        await using MorseRunnerEngine engine = new(_ => sink);
+        SessionSettings settings = new(
+            Seed: 12_345,
+            new ContestId("scWpx"),
+            new RunModeId("rmStop"),
+            DurationBlocks: 0)
+        {
+            StationCall = "W7SST",
+            WordsPerMinute = 30,
+            PitchHz = 600,
+            BandwidthHz = 500,
+            Activity = 1,
+            Qsk = false,
+            Qsb = qsbEnabled,
+            Qrm = false,
+            Qrn = false,
+            Flutter = false,
+            Lids = false,
+            MonitorLevelDb = 0d,
+        };
+        SessionHandle handle = await engine.CreateSessionAsync(
+            settings,
+            TestContext.Current.CancellationToken);
+        CommandResult start = await engine.ExecuteAsync(
+            new StartSessionCommand(
+                RequestId.New(),
+                handle.SessionId,
+                TestClient),
+            TestContext.Current.CancellationToken);
+        CommandResult abort = await engine.ExecuteAsync(
+            new SendOperatorIntentCommand(
+                RequestId.New(),
+                handle.SessionId,
+                TestClient,
+                OperatorIntent.Abort,
+                Call: string.Empty,
+                Rst: string.Empty,
+                Exchange1: string.Empty,
+                Exchange2: string.Empty),
+            TestContext.Current.CancellationToken);
+        CommandResult advance = await engine.ExecuteAsync(
+            new AdvanceSimulationCommand(
+                RequestId.New(),
+                handle.SessionId,
+                TestClient,
+                BlockCount: 2),
+            TestContext.Current.CancellationToken);
+        SessionSnapshot snapshot = engine.GetSnapshot(handle.SessionId);
+
+        Assert.True(start.Accepted);
+        Assert.True(abort.Accepted);
+        Assert.True(advance.Accepted);
+        Assert.Equal(2, snapshot.SimulationBlock);
+        Assert.NotNull(snapshot.ActiveStations);
+        Assert.Empty(snapshot.ActiveStations);
         return sink.GetHash();
     }
 
