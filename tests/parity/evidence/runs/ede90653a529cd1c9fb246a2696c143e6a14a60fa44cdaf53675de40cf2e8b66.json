@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "4efba649ccad3c99f2969bb66bca951fa65028e3",
+      "tree": "d52a9f26a7739a93f4f89cc391d4bd166748372e",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "audio.qrm-caller-collision-retry-limit-seed-24680"
+  ],
+  "results": [
+    {
+      "parityId": "audio.qrm-caller-collision-retry-limit-seed-24680",
+      "acceptanceTestName": "parity:audio.qrm-caller-collision-retry-limit-seed-24680()",
+      "target": "xplat",
+      "adapter": "XPlatQrmCallerCollisionTarget",
+      "caseDefinitionSha256": "ecc6d9a9762e5a745b62a2c936e8da31431d80f208c24661aeb6b4cf2173fb76",
+      "fixtureSha256": "4cb295ecdfc1e7a24c8f4cd104cc88429571ad3304db96e23a860440c837c2f4",
+      "outcome": "functional-divergence",
+      "failureCode": "audio-qrm-caller-collision-retry-limit-mismatch",
+      "evidenceSource": "MorseRunner.Engine.MorseRunnerEngine\u002BMorseRunner.Engine.EngineSession.ObserveCallerCollisionForParityAsync\u002BMorseRunner.Engine.EngineSession.AddCaller\u002BMorseRunner.Engine.QrmStation.Activate\u002BMorseRunner.Engine.SimulatedStation\u002BMorseRunner.Engine.SimulatedOperator\u002BMorseRunner.Dsp.QsbProcessor\u002BMorseRunner.Dsp.LegacyRandom",
+      "observedValues": [
+        "contract=ce-live-qrm-caller-collision-v1|seed=24680|sample-rate=11025|block-size=512|run-mode=rmStop|contest=scWpx|station-call=W7SST|qrm=true|qrn=false|qsb=false|flutter=false|qsk=false|lids=false",
+        "qrm|class=TQrmStation|state=stSending|call=K1ABC|his-call=W7SST|r1-single-bits=3eacff6b|amplitude-single-bits=4659f839|pitch-offset-hz=-194|wpm-s=44|wpm-c=44|message-set=[msgQrl2]|message-text=QRL?   QRL?",
+        "catalog|pick-station-calls=2|get-call-calls=2|get-exchange-calls=1|drop-station-calls=0|qrm-id=9000|caller-ids=1|all-calls=K1ABC",
+        "attempt[1]|id=1|call=K1ABC|r1-random-ordinal=-1|r1-single-bits=00000000|wpm-s=30|wpm-c=30|skills=1|patience=8|operator-state=osNeedQso|collision-checked=True|outcome=accepted-early",
+        "attempt[2]|missing=true",
+        "attempt[3]|missing=true",
+        "attempt[4]|missing=true",
+        "attempt[5]|missing=true",
+        "attempt[6]|missing=true",
+        "attempt[7]|missing=true",
+        "attempt[8]|missing=true",
+        "attempt[9]|missing=true",
+        "attempt[10]|missing=true",
+        "collision-outcome|retry-limit=10|checked-attempts=1,2,3,4,5,6,7,8,9|discarded-attempts=|unchecked-attempt=10|accepted-attempt=1|station-count=2|duplicate-active-calls=2|qrm-retained=true",
+        "accepted-caller|class=TDxStation|call=K1ABC|oper-id=1|state=stPreparingToSend|operator-state=osNeedQso|operator-patience=8|operator-skills=1|r1-single-bits=00000000|amplitude-single-bits=00000000|pitch-offset-hz=-145|wpm-s=30|wpm-c=30|rst=599|nr=1001|exch1=EX01|exch2=ID1|op-name=OP1|user-text=catalog-row-1",
+        "terminal-random|ordinal=14|value=0.120333800|single-bits=3df67191"
+      ],
+      "observedValueCount": 16,
+      "observedValuesSha256": "9967d515b69a37a96ff871347c2703d1eeb7cec38db023a6808978d987973a7f",
+      "firstDivergence": {
+        "index": 2,
+        "expected": "catalog|pick-station-calls=11|get-call-calls=11|get-exchange-calls=10|drop-station-calls=0|qrm-id=9000|caller-ids=1,2,3,4,5,6,7,8,9,10|all-calls=K1ABC",
+        "actual": "catalog|pick-station-calls=2|get-call-calls=2|get-exchange-calls=1|drop-station-calls=0|qrm-id=9000|caller-ids=1|all-calls=K1ABC"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}
