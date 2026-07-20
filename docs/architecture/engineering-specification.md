@@ -2761,6 +2761,14 @@ the measured region. This scoped gate measures the QRN increment only. It
 does not replace the pending release-wide all-effects and 30-minute underrun
 gates in Section 21.
 
+The first retained Windows x64 capture is
+`tests/MorseRunner.Engine.Tests/PerformanceEvidence/audio-qrn-burst-hot-path.windows-x64.v1.json`.
+It measures clean revision `223eceb7cd47732f093c244cd8b0b4eb0701b545`
+on .NET 10.0.8 and an Intel Core i9-10980XE. Across 4096 blocks it records
+zero managed allocation, 0.3532 ms p99, 0.3832 ms p99.9 normal maximum, and
+a 5.7338 ms raw maximum. This is development evidence for one Windows
+machine, not cross-platform release certification.
+
 This vector certifies one successful eager construction, exact sparse
 envelope, same-block audibility, two-block lifetime, destruction, and
 continuous shared-stream order. It does not cover other seeds, the full
