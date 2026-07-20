@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "target": "XPlat",
+  "platform": "windows",
+  "operatingSystem": "Microsoft Windows 10.0.26200",
+  "architecture": "x64",
+  "runtimeIdentifier": "win-x64",
+  "revision": "399d479304fbf40b42b4211f72f7b6544bc7af1c",
+  "tree": "a9c3b6276662c6a7835bd2b3e0dcdbb30917df9a",
+  "resultSha256": "e4a81e94b9d995e84ba0b8182552f162d99885ad6365122a5c2be94e0a15b75f",
+  "testReportSha256": "02d36450f5de446be098f26cdf71d62e65818cb6a8c126ea21d7d2de82443d06",
+  "testProcessExitCode": 2,
+  "wrapper": {
+    "completed": true,
+    "correlationValidated": true,
+    "exitCode": 0
+  },
+  "functionalDivergences": [
+    {
+      "caseId": "audio.qsb-no-station-noise-invariance-seed-12345",
+      "failureCode": "audio-qsb-no-station-noise-invariance-mismatch"
+    }
+  ]
+}

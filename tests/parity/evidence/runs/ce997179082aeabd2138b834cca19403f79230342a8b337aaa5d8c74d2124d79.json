@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "target": "legacy",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "399d479304fbf40b42b4211f72f7b6544bc7af1c",
+      "tree": "a9c3b6276662c6a7835bd2b3e0dcdbb30917df9a",
+      "clean": true
+    },
+    "legacy": {
+      "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+      "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+      "clean": true
+    }
+  },
+  "expectedParityIds": [
+    "audio.qsb-no-station-noise-invariance-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "audio.qsb-no-station-noise-invariance-seed-12345",
+      "acceptanceTestName": "parity:audio.qsb-no-station-noise-invariance-seed-12345()",
+      "target": "legacy",
+      "adapter": "LegacyOracleTarget",
+      "caseDefinitionSha256": "ffb99ea6d897ee3512bebeee5c677cf9869b5e2cd003004824b13493540401e9",
+      "fixtureSha256": "1a8c1ca18e03eff71138a98b2f71456c7c072f0966a51cd99381999016bd61bd",
+      "outcome": "passed",
+      "failureCode": null,
+      "evidenceSource": "tests/parity/legacy-oracle/v10/LegacyOracle.lpr",
+      "observedValues": [
+        "configuration|sample-rate=11025|block-size=512|seed=12345|bandwidth-hz=500|pitch-hz=600|startup-request-count=5|compared-block-count=2|probe-sample-indexes=0,1,2,3,310,511|fresh-runs=clean,qsb|station-count=0|normalization=ce-single-div-32768-clamp-unit",
+        "clean-block[0]|sample-count=512|probe-bits=00000000,00000000,00000000,00000000,b864f231,3b26ef5d|float-sha256=6b468ab13ccc1accb6ec587b8a51d27ca23eb80b20bce034106e547ad3565378",
+        "clean-block[1]|sample-count=512|probe-bits=3b3a0bcc,399814f0,bb2e6686,bb846947,bcd26871,bc95cf84|float-sha256=6d874352696aba890974bffc8c5973fe99353bccaa4b710ec3c7e3f135066117",
+        "qsb-block[0]|sample-count=512|probe-bits=00000000,00000000,00000000,00000000,b864f231,3b26ef5d|float-sha256=6b468ab13ccc1accb6ec587b8a51d27ca23eb80b20bce034106e547ad3565378",
+        "qsb-block[1]|sample-count=512|probe-bits=3b3a0bcc,399814f0,bb2e6686,bb846947,bcd26871,bc95cf84|float-sha256=6d874352696aba890974bffc8c5973fe99353bccaa4b710ec3c7e3f135066117",
+        "output-invariance[0]|clean-float-sha256=6b468ab13ccc1accb6ec587b8a51d27ca23eb80b20bce034106e547ad3565378|qsb-float-sha256=6b468ab13ccc1accb6ec587b8a51d27ca23eb80b20bce034106e547ad3565378|exact-equal=true",
+        "output-invariance[1]|clean-float-sha256=6d874352696aba890974bffc8c5973fe99353bccaa4b710ec3c7e3f135066117|qsb-float-sha256=6d874352696aba890974bffc8c5973fe99353bccaa4b710ec3c7e3f135066117|exact-equal=true",
+        "aggregate-invariance|sample-count=1024|clean-float-sha256=19b2cc5f9d3e60b5efbd77cddaf62e91030c1d351153341ec8484b93aaa5694d|qsb-float-sha256=19b2cc5f9d3e60b5efbd77cddaf62e91030c1d351153341ec8484b93aaa5694d|exact-equal=true"
+      ],
+      "observedValueCount": 8,
+      "observedValuesSha256": "99e62b99e4a17575a73f9fff75600c7530b87dcb28634930d5198ceb2fe709b5",
+      "firstDivergence": null,
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v10",
+        "source": "tests/parity/legacy-oracle/v10/LegacyOracle.lpr",
+        "sourceSha256": "dc7a28b6d0920f813baa7b4a3d4a579a52882b560295cbda33132542d30c0b73",
+        "buildRecipe": "tests/parity/legacy-oracle/v10/build-recipe.json",
+        "buildRecipeSha256": "6f32a3fc5a4b822f28592aaf9110b98d13a854a7a4a757b106d3298ee9f7d3e7",
+        "registrySha256": "2e78c4d6ddc27f5e47a20c9503cf1841117bd0533488feda55036b17f35028b9",
+        "executableSha256": "e13066aac523134360e5ca2b5c0133900a6c711b0d5c9d3099a45d3b1ef683b0",
+        "provenance": "artifacts/legacy-oracle/builds/legacy-oracle-v10/45816ae38921e877739ac9f741fbadf2a21f9be9fdf92df1a03682a4ee301389/68f49067acec4c349b11d96e3f7c5634/LegacyOracle.provenance.json",
+        "provenanceSha256": "a528d7cf4e42da4aa36297cfc97f2a3b86a598bf5ee84b6f9d32a5bad31d50d8"
+      },
+      "executionCount": 1
+    }
+  ]
+}
