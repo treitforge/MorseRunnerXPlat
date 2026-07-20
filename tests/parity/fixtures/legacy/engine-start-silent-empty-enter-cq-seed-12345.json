@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+  "parityId": "engine.start-silent-empty-enter-cq-seed-12345",
+  "referenceDefinitionSha256": "663adf3bf230161abb923cf8b6651d394af1b99eab05efeafb696cb29992da23",
+  "oracle": "tests/parity/legacy-oracle/v20/LegacyOracle.lpr",
+  "legacyOracleVersionId": "legacy-oracle-v20",
+  "oracleSourceSha256": "622dafafc46f4dec0dbce27150ee2da3a50d1823b96de89582ca66b2c96dfe3b",
+  "oracleBuildRecipeSha256": "c6ac9c001caa687df7d53aa097e35bc89d1baa2413f502c73f4b12272af59860",
+  "oracleExecutableSha256": "1d3ba6a7c2ddf502c7d101d69fa3967942114c548e569e9b14846c5dbaeb7047",
+  "toolchain": {
+    "lazarus": "4.6",
+    "fpc": "3.2.2",
+    "target": "x86_64-win64",
+    "compilerSha256": "8ba500bbb84bd7100c169f151082b1461e9241e4491e0f6f38f2376bec49c319",
+    "backendCompilerSha256": "1f33c43b890e2d02e6b07c88401fc47cfcac48e003a29bb58b2e1220ac6a3e22",
+    "lazbuildSha256": "9554983fff43cfe5b5cef9a8374a37ff8a152e2de9c40c5750e723501f6edfd1",
+    "fingerprintSha256": "3eb50f2aac396bac975d8f628ad44421318d05179c81a98524802bcf04c8afee"
+  },
+  "values": [
+    "configuration|scenario=engine.start-silent-empty-enter-cq-seed-12345|contest=scWpx|run-mode=rmPileup|station=W7SST|seed=12345",
+    "start-boundary|operator-state=stListening|message-set=none|message-text=|envelope-sample-count=0|qso-count=0",
+    "empty-enter|operator-state=stSending|message-set=cq|message-text=CQ W7SST TEST|envelope-sample-count-positive=true|qso-count=0"
+  ]
+}

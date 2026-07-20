@@ -291,8 +291,10 @@
         "linux",
         "macos"
       ],
-      "acceptanceStatus": "not-authored",
-      "caseIds": []
+      "acceptanceStatus": "partial",
+      "caseIds": [
+        "engine.start-silent-empty-enter-cq-seed-12345"
+      ]
     },
     {
       "id": "audio-dsp.legacy-processing",
@@ -681,7 +683,7 @@
     {"id": "audio.all-effects-performance", "capabilityId": "audio.legacy-adapters", "behavior": "All-effects rendering retains allocation, latency, queue-depth, underrun, drop, and GC evidence representative of sustained play.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "engine.operator-message-completion-timing", "capabilityId": "simulation.runtime-routines", "behavior": "Operator transmission completion and remote interpretation occur only after the rendered CW envelope completes.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "engine.event-driven-poisson-caller-arrivals", "capabilityId": "simulation.runtime-routines", "behavior": "Caller creation follows completed CQ, TU, and MyCall events with CE Poisson and no-stop rules.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "engine.start-silent-empty-enter-cq", "capabilityId": "simulation.runtime-routines", "behavior": "Start is silent and an empty Enter initiates the appropriate CE contest CQ.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "engine.start-silent-empty-enter-cq", "capabilityId": "simulation.runtime-routines", "behavior": "Start is silent and an empty Enter initiates the appropriate CE contest CQ.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.pas", "Contest.pas", "MyStn.pas"], "legacySurfaceSelectors": ["legacy.integration.command-line-path.main-pas.tmainform.run", "legacy.sim.routine.contest.tcontest.sendmsg", "legacy.sim.routine.mystn.tmystation.sendtext"], "acceptanceStatus": "partial", "caseIds": ["engine.start-silent-empty-enter-cq-seed-12345"]},
     {"id": "engine.contest-specific-cq-tu-and-station-id", "capabilityId": "contest.legacy-implementations", "behavior": "CQ, TU, operator call insertion, and periodic station-ID messages match each CE contest.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.full-remote-exchange-formatting", "capabilityId": "contest.legacy-implementations", "behavior": "Remote exchanges retain and format every CE contest identity field, cut number, repeat, and correction variant.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.required-exchange-fields-all-contests", "capabilityId": "contest.legacy-implementations", "behavior": "CWT, SST, Field Day, NAQP, Sweepstakes, WPX, HST, and all other contests include every required CE exchange field.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -1662,6 +1664,69 @@
       "failureCode": "audio-qsb-runtime-toggle-active-station-mismatch",
       "fixture": "tests/parity/fixtures/legacy/audio-qsb-runtime-toggle-active-station-seed-12345.json",
       "evidence": "tests/parity/evidence/audio-qsb-runtime-toggle-active-station-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "engine.start-silent-empty-enter-cq-seed-12345",
+      "capabilityId": "simulation.runtime-routines",
+      "obligationIds": [
+        "engine.start-silent-empty-enter-cq"
+      ],
+      "behavior": "For a fixed CQ WPX pileup session, CE enters the running boundary with the local operator listening and no queued envelope. The first empty Enter then consumes the key and queues the exact contest CQ text CQ W7SST TEST.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v20",
+        "source": "tests/parity/legacy-oracle/v20/LegacyOracle.lpr",
+        "sourceSha256": "622dafafc46f4dec0dbce27150ee2da3a50d1823b96de89582ca66b2c96dfe3b",
+        "buildRecipe": "tests/parity/legacy-oracle/v20/build-recipe.json",
+        "buildRecipeSha256": "c6ac9c001caa687df7d53aa097e35bc89d1baa2413f502c73f4b12272af59860"
+      },
+      "legacySources": [
+        "Main.pas",
+        "Contest.pas",
+        "MyStn.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.integration.command-line-path.main-pas.tmainform.run",
+        "legacy.sim.routine.contest.tcontest.sendmsg",
+        "legacy.sim.routine.mystn.tmystation.sendtext"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The fresh CE runtime uses CQ WPX, rmPileup, station call W7SST, seed 12345, 25 WPM, 11025 Hz, and 512 samples per block.",
+        "The CE post-start boundary is observed before any operator key input, with no remote stations and no prior QSO.",
+        "An empty VK_RETURN is driven through the handleless CE TMainForm.FormKeyDown path and its complete local message envelope is drained.",
+        "The current XPlat StartSessionCommand queues CQ TEST immediately, and its empty-Enter command also sends CQ TEST without inserting the configured station call."
+      ],
+      "input": {
+        "scenario": "engine.start-silent-empty-enter-cq-seed-12345",
+        "contestId": "scWpx",
+        "runModeId": "rmPileup",
+        "stationCall": "W7SST",
+        "seed": 12345
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatStartSilentEmptyEnterCqTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 3,
+        "observedValuesSha256": "18a0a51990b24d318a7f98018ef6ae4d61352616e97248737b8e82e46c895013",
+        "firstDivergence": "The zero-based first mismatch is ordinal 1, start-boundary. XPlat queues CQ TEST in ApplyStart, so its first explicit audio block differs from an otherwise identical start followed by Abort. CE starts with no local message or envelope.",
+        "functionalDivergenceCode": "engine-start-silent-empty-enter-cq-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "engine-start-silent-empty-enter-cq-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/engine-start-silent-empty-enter-cq-seed-12345.json",
+      "evidence": "tests/parity/evidence/engine-start-silent-empty-enter-cq-seed-12345.baseline.json",
       "firstGreenCommit": null
     },
     {
