@@ -67,7 +67,8 @@ Once the .NET solution exists, use:
 dotnet restore MorseRunnerXPlat.slnx
 dotnet format MorseRunnerXPlat.slnx --verify-no-changes
 dotnet build MorseRunnerXPlat.slnx --no-restore
-dotnet test --solution MorseRunnerXPlat.slnx --no-build
+dotnet test --solution MorseRunnerXPlat.slnx --no-build -- --filter-not-trait Category=ParityAcceptance --filter-not-trait Category=LegacyOracleBuildIntegration
+.\tests\parity\Run-Parity.ps1 -Target Both -Mode Development
 ```
 
 Once the Phase 0 parity harness exists, use:
@@ -76,6 +77,11 @@ Once the Phase 0 parity harness exists, use:
 .\tests\parity\Test-ParityCompleteness.ps1
 .\tests\parity\Run-Parity.ps1 -Target Both -Mode Development
 ```
+
+Certifying `ParityAcceptance` tests and the mandatory fresh-oracle build
+integration test run only through `Run-Parity.ps1`. Outstanding XPlat gaps
+deliberately fail those product tests while the parity runner validates and
+retains the exact functional-red result.
 
 When `proto\` and `buf.yaml` exist, also use:
 

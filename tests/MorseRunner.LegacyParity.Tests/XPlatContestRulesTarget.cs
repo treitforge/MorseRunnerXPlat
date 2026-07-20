@@ -14,6 +14,10 @@ public sealed class XPlatContestRulesTarget : IParityTarget
         string[] values = scenario.Id switch
         {
             "contest.legacy-implementations" => Observe(),
+            "contest.exchange-shapes" =>
+                ObserveExchangeShapes(
+                    ContestExchangeShapesInput.Parse(
+                        scenario).ContestIds),
             "contest.cq-wpx-scoring" =>
                 await ObserveCqWpxScoringAsync(cancellationToken),
             "contest.cwt-scoring" =>
@@ -28,7 +32,11 @@ public sealed class XPlatContestRulesTarget : IParityTarget
         return new ParityObservation(
             matches ? ParityTargetOutcome.Passed : ParityTargetOutcome.Failed,
             values,
-            matches ? null : DomainErrorCodes.UnsupportedCapability,
+            matches
+                ? null
+                : scenario.Id == "contest.exchange-shapes"
+                    ? "contest-exchange-shape-mismatch"
+                    : DomainErrorCodes.UnsupportedCapability,
             "MorseRunner.Engine");
     }
 
@@ -59,6 +67,31 @@ public sealed class XPlatContestRulesTarget : IParityTarget
         }
 
         return [.. values];
+    }
+
+    private static string[] ObserveExchangeShapes(
+        IReadOnlyList<string> contestIds)
+    {
+        return
+        [
+            .. contestIds.Select(
+                contestId =>
+                {
+                    ContestRules rules = ContestRulesCatalog.Get(
+                        new ContestId(contestId));
+                    ContestDefinition definition = ContestCatalog.Get(
+                        rules.Id);
+                    ContestValidation exchange = rules.ValidateMyExchange(
+                        definition.ExchangeDefault);
+                    return $"{rules.Id.Value}"
+                        + $"|sent={(int)rules.SentExchangeTypes.First},"
+                        + $"{(int)rules.SentExchangeTypes.Second}"
+                        + $"|recv={(int)rules.ReceivedExchangeTypes.First},"
+                        + $"{(int)rules.ReceivedExchangeTypes.Second}"
+                        + $"|default-valid={exchange.IsValid}"
+                        + $"|farnsworth={rules.AllowsFarnsworth}";
+                }),
+        ];
     }
 
     private static async Task<string[]> ObserveCqWpxScoringAsync(

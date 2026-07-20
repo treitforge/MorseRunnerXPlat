@@ -2,8 +2,8 @@
 
 Status: Draft for implementation
 
-Version: 0.1
-Date: 2026-07-17
+Version: 0.2
+Date: 2026-07-19
 
 ## 1. Purpose and authority
 
@@ -76,11 +76,23 @@ must not copy:
 Every golden compatibility fixture must record:
 
 - Legacy Git revision.
+- Legacy Git tree.
 - Legacy source location or scenario description.
+- Pinned reference-definition hash.
+- Oracle source, executable, and provenance hashes.
+- Compiler identity, executable hashes, and the complete consumed-toolchain
+  fingerprint.
+- Exact compiler invocation, including ordered options, unit, tool, and library
+  search paths, output paths, source, and executable.
 - Settings and input sequence.
 - Seed or captured random decisions.
 - Expected state, events, score, QSO records, or audio data.
 - Any normalization applied during comparison.
+- A content hash for the canonical observed-value sequence.
+
+Golden fixtures are offline caches. They must identify themselves as fixture
+observations and must never satisfy a requirement to execute the live legacy
+target.
 
 ### 2.1 Full-parity requirement
 
@@ -131,20 +143,31 @@ the user manual alone. At minimum, inspect:
 - Every recording, export, high-score, and failure path.
 - Existing unit tests and known regression cases.
 
-Each manifest item must contain:
+Manifest schema version 3 separates inventory grouping from executable proof:
 
-- Stable parity ID.
-- Category and feature name.
-- User-visible behavior.
-- Legacy source references.
-- Preconditions and input vector.
-- Required target adapters.
-- Assertions and allowed numeric tolerances.
-- Required platform coverage.
-- Legacy test status.
-- XPlat test status.
-- Evidence or fixture references.
-- First commit where the XPlat test became green.
+- A capability groups related legacy surfaces. It contains a stable capability
+  ID, category, feature, user-visible behavior, legacy source references,
+  stable legacy-surface selectors, required platforms, acceptance status, and
+  its case IDs.
+- A case is one narrow executable behavior vector. It contains a stable case
+  ID and owning capability, behavior, legacy source references, platforms,
+  preconditions, input, target adapters, assertions and tolerances, live Legacy
+  and XPlat statuses, functional status and failure code, fixture and evidence
+  paths, and the first green XPlat commit when applicable.
+
+Capability acceptance status is one of:
+
+- `not-authored`: no release-certifying case coverage exists.
+- `partial`: one or more cases exist, but the capability does not yet have
+  both-green case coverage for every mapped surface on every declared
+  platform.
+- `complete`: every mapped surface and declared platform assignment is covered
+  by retained both-green case evidence.
+
+A broad case pass must never promote its entire owning capability by inference.
+Completeness is computed over the Cartesian product of mapped legacy surfaces
+and required capability platforms. Case overlap is visible in the report and
+does not compensate for an uncovered surface-platform assignment.
 
 A human-readable parity report must be generated from the manifest. The
 generated report is not the source of truth.
@@ -153,8 +176,18 @@ Completeness tooling may also commit deterministic extracted inventories, such
 as `tests/parity/legacy-surface-inventory.json`, as audit inputs. Every
 discovered surface has a stable ID and source reference and must map to exactly
 one manifest capability. Extracted inventories are regenerated from the pinned
-legacy revision and checked for staleness. The manifest remains the source of
-truth for capability grouping, acceptance status, fixtures, and evidence.
+legacy revision and checked for staleness. Extraction, parsing, byte lengths,
+and content hashes use exact Git blob bytes from the pinned revision, never
+checkout bytes that can vary with line-ending conversion across operating
+systems. The manifest remains the source of truth for capability grouping,
+acceptance status, fixtures, and evidence.
+
+The current pinned inventory classifies all 143 tracked CE files. It inventories
+131 application, data, resource, project, integration, and test inputs and
+records 12 narrow exclusions for nonfunctional repository, legal, community, or
+developer documentation. It extracts 3,668 stable surfaces, all mapped to 24
+broad capabilities. These counts establish inventory coverage only. They do not
+establish behavioral parity.
 
 ### 2.3 Dual-runner acceptance harness
 
@@ -191,31 +224,125 @@ The legacy adapter may combine:
 The XPlat adapter must prefer the in-process client so transport behavior does
 not obscure functional parity. Separate tests cover gRPC equivalence.
 
+A live `Both` run must start separate test processes with explicit target
+selection. One process selects `Legacy`; the other selects `XPlat`. A test must
+not select a target based on which executable or fixture happens to be
+available. The live Legacy adapter has no fixture fallback.
+
 The reference revision and executable or build provenance must be pinned. A
 release parity run must not depend on an unknown locally installed binary.
 
-The Phase 0 legacy adapter builds `tests/parity/legacy-oracle/LegacyOracle.lpr`
-with Lazarus 4.6 and Free Pascal 3.2.2 against legacy revision
-`55bbd019c29d8cf693184ea420a17a253f16fe1e`. Its scenario output, generated
-fixtures, executable hash, compiler version, and source revision are retained
-as provenance. UI automation remains available only for workflows that cannot
-be exercised through the Pascal oracle or file outputs.
+The first Phase 0 legacy adapter builds
+`tests/parity/legacy-oracle/v1/LegacyOracle.lpr` with Lazarus 4.6 and Free
+Pascal 3.2.2 against legacy revision
+`55bbd019c29d8cf693184ea420a17a253f16fe1e` and tree
+`a44212bfee5b1eebfd0129459d476736775adf36`. The public base revision and the
+additional pinned commits are represented by
+`tests/parity/legacy-reference.json` and
+`tests/parity/legacy-reference.bundle`.
+
+Every active case binds an immutable legacy adapter descriptor containing its
+adapter ID, version ID, source path and hash, build-recipe path and hash. A
+successful build writes a content-addressed registry entry that binds that
+descriptor to the exact executable and provenance hashes. The Legacy runner
+must resolve the case through that registry. A process-wide executable path,
+an unregistered binary, or a build from a different adapter version cannot
+satisfy the case. A descriptor version ending in `-vN` must bind both source
+and recipe under the exact `tests/parity/legacy-oracle/vN/` directory. The
+unversioned source retained for historical schema-v1 fixtures is never an
+active build or runtime candidate.
+
+Descriptor paths are canonical repository-relative `/`-separated strings.
+Absolute paths, backslashes, empty segments, `.`, `..`, aliases, and a
+version-directory mismatch are rejected identically by every language layer.
+Multiple cases may share one version ID only when their complete adapter
+descriptors are identical. The build registry then contains one version entry,
+and its provenance binds the exact sorted case IDs executed by that build.
+A repeated version ID with any descriptor difference is invalid.
+
+`Prepare-LegacyReference.ps1` constructs a detached, clean worktree at the
+exact revision and verifies the complete Git tree. `Build-LegacyOracle.ps1`
+performs a full rebuild with the pinned compiler, validates every supported
+oracle scenario, and writes machine-readable provenance containing the legacy
+revision and tree, oracle source and executable hashes, full toolchain
+fingerprint, exact build invocation, XPlat build context, and content-addressed
+observations.
+
+Scenario input and output use one cross-language canonical JSON contract. The
+hash input is the exact UTF-8 byte sequence, without a byte-order mark or
+newline. Object keys use ordinal UTF-16 ordering, strings preserve their
+original Unicode scalar sequence, required escapes are deterministic, numbers
+are signed 64-bit integers, and floating-point values are rejected. Pascal,
+.NET, PowerShell, and Python must pass the same adversarial canonicalization
+vectors before a result can certify parity.
+
+The toolchain fingerprint covers all 14,553 files in the consumed Free Pascal
+3.2.2 tree, Lazarus LCL and supporting unit roots, and `lazbuild.exe`. Its
+canonical record includes the ordered relative roots, per-file paths, lengths,
+and hashes, plus aggregate file count, byte count, and SHA-256. The toolchain is
+verified before and after the oracle build. Verification must reject a
+mismatched installation and must not silently repair or replace an unrelated
+user installation.
+
+The compiler invocation is recorded structurally, not accepted through a
+substring check. Provenance contains the compiler, ordered compiler options,
+ordered unit, tool, and library search paths, unit and executable output paths,
+output executable, and source. The build script, reference definition, bundle,
+oracle source, oracle executable, provenance document, and scenario
+observations are SHA-256 addressed.
+
+Every live result includes platform, process architecture, runtime identifier,
+framework, and a run context. The XPlat context records revision, tree, and
+cleanliness. A Legacy result additionally records the clean CE revision and
+tree plus fresh oracle and provenance hashes supplied by the build that
+immediately preceded the run. Release validation requires both worktrees to be
+clean and every recorded hash to recompute.
+
+The acceptance-test identity is exactly `parity:<case-id>()`. The result file
+and TRX must contain that same name once and only once. Every target process
+also writes a content-addressed execution envelope that binds the raw result
+file hash, raw TRX hash, target, exact selected case IDs, platform, process
+architecture, runtime identifier, revision, tree, cleanliness, exact process
+exit code, and wrapper-correlation completion. Legacy success and XPlat green
+use exit code 0. A retained XPlat functional-divergence run uses test-process
+exit code 2 and the case-specific
+`PARITY_FUNCTIONAL_DIVERGENCE|<case-id>|<failure-code>` exception. A command
+line error, host failure, missing test, generic assertion, unexpected extra
+test, skipped test, or incomplete envelope is infrastructure failure.
+
+A live legacy adapter must reject a dirty tree, an unknown executable, a stale
+fresh-build hash anchor, missing provenance, a provenance mismatch, a changed
+toolchain, an inexact build invocation, or a fixture substituted for an
+executable.
+
+UI automation remains available only for workflows that cannot be exercised
+through the Pascal oracle or file outputs.
 
 ### 2.4 Mandatory red-green porting sequence
 
 Every ported feature follows this order:
 
-1. Add or select its parity-manifest entry.
+1. Select its owning capability and add one narrow parity-manifest case.
 2. Write the shared acceptance case.
 3. Run it against the pinned legacy target.
 4. Confirm the legacy target passes.
 5. Run the unchanged case against XPlat.
 6. Confirm XPlat fails for the expected missing or divergent behavior.
-7. Record the red proof in manifest evidence.
+7. Record content-addressed red proof in manifest evidence, including the first
+   divergent value and the exact functional-divergence code.
 8. Implement the feature in production code.
 9. Run the unchanged case until XPlat passes.
 10. Run the complete legacy and XPlat suites to prevent regression.
-11. Mark the manifest item both-green only after evidence is retained.
+11. Capture XPlat green for the unchanged case at one clean first-green commit
+    on Windows, Linux, and macOS.
+12. Promote only that case to `both-green` after the original red proof and all
+    current green proofs are retained and the first-green commit is verified.
+    Promotion validates the entire candidate manifest, history, evidence, and
+    report before a single rollback-safe transaction. Retained red evidence and
+    existing content-addressed artifacts are immutable and must never be
+    overwritten.
+13. Promote the owning capability only when all of its surface-platform
+    assignments have both-green case coverage.
 
 A case that accidentally passes XPlat before implementation is not accepted as
 proof. It must be examined for a weak assertion, an already implemented shared
@@ -225,12 +352,52 @@ Production implementation must not precede the parity test except for the
 minimal testability seams needed to run the XPlat adapter. Those seams must not
 implement the feature under test.
 
+Changing an assertion, fixture, case definition, or expected observation
+changes its content hash and requires the red-green sequence to be repeated.
+Retained schema-v1 observations and other pre-schema-v3 aggregate fixtures are
+historical provenance only. They cannot supply the red proof, current green
+proof, first-green commit, or capability coverage required by this sequence.
+
+A Baseline capture may select an exact, sorted subset of registered applicable
+case IDs so a newly fixed case can produce an exit-0 green run while unrelated
+authored cases remain red. The selected IDs must drive discovery, the recorder,
+the TRX, and the execution envelope identically. Duplicate, unknown, empty, or
+nonapplicable selections fail closed. Development, pull-request, and release
+modes reject selection and always execute the complete applicable suite.
+A no-mutation green-capture operation may validate selected green artifacts
+before promotion, but it cannot update the manifest, evidence, history, or
+report.
+
+Selected capture does not replace regression execution. At the same clean
+first-green revision, every capture platform must retain a complete XPlat
+Development run, and Windows must retain a complete `Both` run. Promotion
+verifies those full-suite execution envelopes before accepting the narrower
+selected-case green artifacts. A regression in an existing both-green case, an
+unexecuted applicable case, or a full-suite revision mismatch blocks promotion.
+The Windows full-suite artifact must also retain its content-addressed Legacy
+oracle registry and every registry-referenced executable and provenance file at
+their repository-relative paths. Green promotion accepts that exact registry
+and its declared hash as an external input and validates the complete artifact
+closure. A locally rebuilt registry cannot substitute for the registry bound to
+the retained Windows Legacy result. The uploaded package retains a
+repository-relative `artifacts/...` tree inside its archive. Consumers extract
+it below `artifacts/parity-imports/<package-index-sha256>/`, never into the live
+parity results root. A content-addressed package index binds every retained file
+by package-relative path and raw SHA-256 and supports the same closure check
+both before upload and after download.
+The package also retains a content-addressed execution envelope for the
+dedicated Legacy oracle build-integration test process. That envelope binds the
+actual process exit code, exact test identity, TRX hash, registry hash,
+registry-provenance case IDs, XPlat revision and tree, and Windows runtime
+identity. Re-parsing a passing TRX with an assumed exit code is not sufficient.
+
 ### 2.5 Parity metrics and gates
 
 Every parity run reports:
 
-- Total manifest items.
-- Acceptance tests authored.
+- Total capabilities and capability status counts.
+- Total active cases and acceptance tests executed.
+- Total required and covered surface-platform assignments.
 - Legacy passed, failed, and not runnable.
 - XPlat passed, failed, and not runnable.
 - Both-green count.
@@ -245,15 +412,33 @@ After Phase 0, each authored manifest case is in one of two active states:
   passes, and XPlat fails for the recorded functional gap.
 - `both-green`: both targets pass the unchanged functional case.
 
-During Phase 0, a discovered capability may temporarily use `inventory-only`
-while its shared acceptance case and evidence are being authored. This state is
-not an active test, skip, waiver, quarantine, or expected failure. It blocks
-Phase 0 completion and every release gate until replaced by an active state.
+During Phase 0, a discovered capability uses `not-authored` until a
+release-certifying shared case exists, then `partial` until all required
+surface-platform assignments are covered. These capability states are not
+active tests, skips, waivers, quarantines, or expected failures. They block
+Phase 0 completion and every release gate.
 
 The red state is not a skipped test, framework expected-failure, quarantine, or
 waiver. The runner executes the case, records the divergence, and counts it as a
 functional gap. Once a case becomes both-green, any regression fails pull
 request validation.
+
+Target execution outcomes are distinct from case status:
+
+- `passed` means the adapter completed and the exact observed-value sequence
+  matched the case.
+- `functional-divergence` means the adapter completed, produced a different
+  functional observation, and returned the case-specific allowed divergence
+  code. This is valid red proof for XPlat only when Legacy passed.
+- `not-runnable` means the adapter, reference, provenance, environment, or
+  recorder could not produce a valid functional observation. It is
+  infrastructure failure and can never be counted as red parity evidence.
+
+A mismatch without an observed-value difference, a missing or unexpected
+failure code, an incomplete adapter, stale provenance, or a missing result is
+`not-runnable`, not a functional gap. Baseline and Development modes may retain
+known functional divergence while reporting a failing convergence result.
+Release mode rejects both functional divergence and not-runnable outcomes.
 
 During development, the XPlat pass percentage is expected to rise from near zero
 to 100 percent. The legacy pass percentage must remain 100 percent once a test
@@ -264,14 +449,24 @@ Release gates are:
 ```text
 legacy pass rate           = 100%
 XPlat pass rate            = 100%
+complete capabilities      = all 24
+covered surface-platforms  = every required assignment
 functional gap count       = 0
 unmapped legacy features   = 0
 skipped or waived cases    = 0
+not-runnable outcomes      = 0
 ```
 
 ### 2.6 Completeness audits
 
 Tests prove inventoried behavior. They do not prove the inventory is complete.
+
+The inventory audit must obtain the complete tracked-file list from the pinned
+CE revision and classify every path exactly once as inventoried or narrowly
+excluded. A newly tracked, omitted, multiply classified, or invented path fails
+the audit. Runtime, compiler, package, test, data, resource, and external
+integration inputs cannot be excluded merely because an extractor does not yet
+understand them.
 
 The team must also run recurring audits that compare the manifest against:
 
@@ -284,8 +479,9 @@ The team must also run recurring audits that compare the manifest against:
 - State-machine events.
 - DSP effects and runtime toggles.
 
-Any unmapped legacy surface fails the completeness audit and creates required
-manifest entries before related implementation continues.
+Any unmapped legacy surface or uncovered required surface-platform assignment
+fails the completeness audit and creates required manifest capability or case
+work before related implementation continues.
 
 ## 3. Product goals
 
@@ -360,8 +556,15 @@ The root `global.json` must select `Microsoft.Testing.Platform` as the .NET test
 runner. With the .NET 10 command-line interface, solution tests use:
 
 ```powershell
-dotnet test --solution MorseRunnerXPlat.slnx --no-build
+dotnet test --solution MorseRunnerXPlat.slnx --no-build -- --filter-not-trait Category=ParityAcceptance --filter-not-trait Category=LegacyOracleBuildIntegration
 ```
+
+The ordinary solution run excludes `Category=ParityAcceptance` and the
+mandatory fresh-build `Category=LegacyOracleBuildIntegration` test.
+`tests\parity\Run-Parity.ps1` executes the build integration and every
+certifying acceptance case exactly once, then retains and validates the target
+result, run context, TRX, execution envelope, and expected functional-red
+process exit when a gap remains.
 
 NativeAOT is not a release requirement. Libraries should avoid unnecessary
 reflection and dynamic loading so future trimming and AOT experiments remain
@@ -1722,9 +1925,14 @@ adapters.
 Every active case must:
 
 1. Pass the pinned legacy target.
-2. Have historical evidence that it failed XPlat for the expected gap before
-   implementation.
-3. Pass the current XPlat target.
+2. While red, execute XPlat and retain the case-specific
+   `functional-divergence` observation.
+3. Before promotion to both-green, retain that historical red evidence and
+   pass the unchanged case against the current XPlat target.
+4. Bind the case definition, fixture, canonical observed values, run results,
+   and live provenance by recomputable SHA-256.
+5. Cover explicit legacy surfaces and platforms without promoting unrelated
+   capability scope.
 
 The suite may use a purpose-built Pascal oracle for logic below the UI. It must
 also use legacy UI automation for functional workflows that cannot be proven
@@ -1734,9 +1942,24 @@ Golden fixtures are caches of legacy evidence, not substitutes for validating
 the reference implementation. The full release run executes the pinned legacy
 target as well as XPlat.
 
-Normal XPlat-only CI may consume pinned golden evidence for speed. A required
-scheduled or release parity workflow must run both implementations and fail if
-legacy behavior, fixture provenance, or XPlat behavior diverges.
+Normal cross-platform XPlat-only CI may consume pinned golden evidence for
+speed, but it must select the XPlat target explicitly. Fixture-backed tests
+must select an offline-fixture adapter explicitly. The live legacy adapter has
+no fallback path.
+
+Each target executes in a separate test process. A `Both` run means one
+process selected as `Legacy` and one process selected as `XPlat`; it does not
+mean that a test silently chooses whichever adapter is available. A required
+Windows parity or release workflow must run both implementations and fail if
+legacy behavior, provenance, recorded fixture provenance, or XPlat behavior
+diverges.
+
+The result recorder distinguishes `functional-divergence` from
+`not-runnable`. Only an executed XPlat value mismatch with the case-specific
+allowed failure code is red functional evidence. Missing prerequisites,
+process failure without a complete recorded observation, stale hashes, dirty
+or unknown source, recorder failure, and adapter failure are not runnable and
+fail the run.
 
 No required test may be skipped because the legacy harness is inconvenient.
 The harness must be extended until the behavior is observable.
@@ -1792,9 +2015,18 @@ Build and test the solution on:
 Platform audio integration tests may require labeled hardware or manual release
 gates. Null and WAV sink tests run everywhere.
 
+The live CE oracle is a pinned Win64 build, so the release parity workflow runs
+the live Legacy and XPlat processes on Windows. That Windows result does not
+claim Linux or macOS case coverage by implication. Each required
+surface-platform assignment must also be supported by native XPlat evidence on
+Windows, Linux, and macOS as declared by its capability. Platform-neutral
+numeric evidence may be reused only when the case definition explicitly
+permits it and the native jobs verify the relevant XPlat adapter on their own
+platform.
+
 ### 22.9 Parity CI
 
-Parity CI has three modes:
+Parity CI has four modes:
 
 The canonical local commands are:
 
@@ -1806,8 +2038,11 @@ The canonical local commands are:
 Runner modes are:
 
 - `Baseline`: establish and record Phase 0 legacy-green/XPlat-red evidence.
+  Successful evidence validation records the gap; it does not mean parity or
+  release readiness passed.
 - `PullRequest`: fail legacy regressions, both-green regressions, invalid
-  manifest state, and new unmapped features while reporting remaining red gaps.
+  manifest transitions, new unmapped features, uncovered regression scope, and
+  any divergence not already represented by the base manifest.
 - `Development`: execute the complete suite and report convergence without
   treating already-recorded red gaps as a successful parity result.
 - `Release`: require the full zero-gap production gate and return failure for
@@ -1816,26 +2051,43 @@ Runner modes are:
 #### Fast pull-request mode
 
 - Validate manifest schema and completeness mappings.
-- Run XPlat against pinned legacy observations.
-- Run affected shared acceptance cases when a legacy runner is available.
-- Prevent a both-green item from regressing.
+- Compare the manifest with the merge-base version and allow only monotonic
+  evidence-backed case and capability promotion.
+- Run ordinary cross-platform tests with the XPlat target selected explicitly.
+- Use pinned fixture observations only in tests named as offline fixture tests.
+- Run the live `Both` suite in the Windows parity-quality workflow.
+- Prevent a both-green case from regressing.
 
 #### Scheduled full mode
 
-- Build or obtain the pinned legacy target.
+- Prepare a clean legacy worktree and build the pinned legacy target.
+- Verify both Git run contexts, the oracle source and executable hashes, the
+  full 14,553-file toolchain fingerprint, the exact build invocation, fresh
+  oracle and provenance hashes, and content-addressed observations before
+  executing acceptance cases.
 - Run every active case against legacy and XPlat.
 - Publish the complete parity metrics and first divergences.
-- Fail on legacy failure, XPlat failure, missing evidence, or unmapped feature.
+- Fail on Legacy failure, not-runnable outcome, unexpected XPlat divergence,
+  missing evidence, or unmapped feature. A recorded expected XPlat functional
+  divergence remains a reported gap and never counts as release readiness.
 
 #### Release mode
 
-- Run the full suite on the pinned reference revision.
-- Require every manifest item both-green.
+- Prepare and rebuild the full suite on the pinned reference revision.
+- Require `-Target Both`; an XPlat-only run cannot satisfy the release gate.
+- Require clean Legacy and XPlat run contexts from separate processes.
+- Require every active case both-green and every manifest capability complete.
+- Require every mapped surface-platform assignment covered by both-green
+  evidence.
 - Require zero skip, waiver, quarantine, disable, expected-failure, and
-  unimplemented counts.
+  unimplemented counts, plus zero not-runnable outcomes.
 - Require the completeness audit to find zero unmapped legacy features.
-- Archive the manifest, observations, tool versions, and reference revisions as
-  release evidence.
+- Archive the manifest, fixtures, run documents, content hashes, exact build
+  provenance, toolchain fingerprint, and reference revisions as release
+  evidence.
+- Require native XPlat evidence on every declared platform after the live
+  Windows `Both` gate. Native XPlat evidence supplements the live Legacy run;
+  it never replaces it.
 
 ## 23. Security requirements
 
@@ -1899,7 +2151,8 @@ Deliver:
 - Completeness-audit tooling.
 - Pinned legacy build or executable provenance.
 - Legacy and XPlat target adapters.
-- Shared acceptance scenarios for every manifest item.
+- Shared acceptance scenarios sufficient to cover every capability
+  surface-platform assignment.
 - Compatibility fixture format.
 - Baseline parity dashboard.
 
@@ -1908,21 +2161,48 @@ Exit criteria:
 - Every observable legacy feature is mapped to at least one acceptance case.
 - Every acceptance case passes the pinned legacy target.
 - Every not-yet-implemented behavior fails XPlat for the expected reason.
-- Red evidence is retained for every unimplemented XPlat manifest item.
+- Red evidence is retained for every authored case whose XPlat behavior remains
+  unimplemented.
 - Accidental XPlat passes have been audited for weak assertions or pre-existing
   shared behavior.
 - The completeness audit finds zero unmapped legacy features.
 - No production implementation exists beyond testability seams.
 - All minimal projects build and dependency tests enforce forbidden references.
 
-Recorded Phase 0 baseline:
+Current Phase 0 trust baseline:
 
-- 1,501 discovered legacy surfaces, all mapped exactly once.
-- 20 active shared acceptance cases.
-- Legacy passed 20, XPlat passed 0, and functional gaps totaled 20 before
-  production implementation.
-- No inventory-only, skipped, waived, quarantined, disabled, or
-  expected-failure cases remained.
+- The pinned CE revision has 143 tracked files. All are classified exactly
+  once: 131 are inventoried and 12 narrowly excluded nonfunctional repository
+  or documentation files have explicit rationales.
+- The deterministic inventory contains 3,668 stable legacy surfaces mapped to
+  24 broad capabilities with zero unmapped surfaces.
+- Manifest schema version 3 separates broad capabilities from narrow
+  executable cases. Capability completeness is calculated over mapped surface
+  and required platform assignments.
+- The 24 broad capabilities were reset to `not-authored` or `partial`. None is
+  release-certified merely by a structural fixture or aggregate observation.
+- Twenty-five schema-v1 records are retained as noncertifying historical
+  provenance. They cannot count as active cases, surface-platform coverage,
+  red proof, green proof, or release evidence.
+- `contest.exchange-shapes` is the first authored schema-v3 case. Its current
+  status is `legacy-green-xplat-red`, pending retained certifying evidence and
+  the production correction. It must not be described as green before the
+  unchanged case passes XPlat.
+- The clean live runner prepares the exact CE revision, fingerprints all 14,553
+  consumed toolchain files, records the exact compiler invocation, and executes
+  Legacy and XPlat in separate processes with content-addressed run contexts
+  and evidence.
+
+Invalidated historical baseline:
+
+- The former inventory reported 1,501 surfaces and the former manifest reported
+  20 broad cases as both-green.
+- That report omitted tracked forms, projects, resources, integrations, data
+  paths, and legacy tests, used aggregate structural assertions and fixture
+  fallback, and did not provide the trust chain required by schema version 3.
+- The 1,501 and 20/20 figures are retained only to explain prior project
+  history. They are not current progress metrics and cannot support any release
+  claim.
 
 ### Phase 1: architectural vertical slice
 
@@ -1949,7 +2229,7 @@ canonical 512-sample blocks only while the session is running. Production
 physical audio later drives the same block loop. The command does not create a
 second clock or simulation implementation.
 
-Recorded Phase 1 implementation:
+Current Phase 1 implementation inventory, not parity certification:
 
 - The session loop is the sole owner of mutable session state and applies
   bounded-channel commands at exact block boundaries.
@@ -1960,8 +2240,9 @@ Recorded Phase 1 implementation:
   directly for the embedded path.
 - The seeded headless and Avalonia view-model scenario exercises
   start, advance, pause, resume, and stop through `IMorseRunnerClient`.
-- The three catalog acceptance cases are both-green. Remaining behavior stays
-  red until its owning phase.
+- Pre-schema-v3 catalog observations exist, but they are among the retained
+  noncertifying records. Catalog behavior remains unverified until narrow live
+  cases complete the required red-green sequence.
 
 ### Phase 2: DSP and physical audio proof
 
@@ -1981,12 +2262,12 @@ Exit criteria:
 - Performance gates pass on reference hardware.
 - Backend selection is recorded.
 
-Recorded Phase 2 implementation:
+Current Phase 2 implementation inventory, not parity certification:
 
-- Legacy Morse envelope, down-mixer, and cascaded quick-average vectors are
-  both-green at a numeric tolerance of `1e-6`.
-- Mono PCM16 WAV adapter vectors are both-green and retain the original red
-  evidence.
+- Legacy Morse envelope, down-mixer, cascaded quick-average, and mono PCM16 WAV
+  vectors exist as pre-schema-v3 observations. They are noncertifying and must
+  be replaced by narrow live cases with content-addressed evidence before they
+  contribute to audio parity.
 - The deterministic 600 Hz keyed tone renderer preserves state across blocks
   and has a retained SHA-256 reference vector.
 - The Release renderer gate measures zero steady-state managed allocation and
@@ -1999,6 +2280,12 @@ Recorded Phase 2 implementation:
   deterministically.
 - Linux and macOS native assets are packaged by the selected dependency;
   physical-device execution remains a platform release gate.
+- The parity audit found unresolved release-blocking differences in sidetone and
+  QSK ordering, RIT and bandwidth effects, QRM and QRN generation, QSB and
+  flutter ownership, Farnsworth timing, random-source ownership, pileup audio,
+  block and startup behavior, WAV conversion, recording backpressure, device
+  recovery, and real-time allocation coverage. Existing lower-level tests do
+  not certify these behaviors as CE-equivalent.
 
 ### Phase 3: core simulation and data
 
@@ -2016,7 +2303,7 @@ Exit criteria:
 - Seeded scenario suite covers core pileup behavior.
 - Required data is case-safe and validated at session creation.
 
-Recorded Phase 3 implementation:
+Current Phase 3 implementation inventory, not parity certification:
 
 - The infrastructure project embeds all 13 canonical legacy data files with
   exact casing and verified SHA-256 hashes.
@@ -2024,17 +2311,18 @@ Recorded Phase 3 implementation:
   Domain. General DXCC and legacy INI parsing remain in Infrastructure. The
   engine links the same canonical packaged DXCC data into a private immutable
   scoring lookup rather than referencing Infrastructure or duplicating a
-  service boundary. All are implemented with pinned Pascal observations as
-  acceptance fixtures.
-- The exact Free Pascal MT19937 numeric behavior, legacy distribution helpers,
-  serial-number selection, QSB processing, and operator state transitions are
-  deterministic for a fixed seed.
+  service boundary. Pre-schema-v3 Pascal fixtures exist for portions of this
+  behavior but do not certify parser, data, or failure-path completeness.
+- MT19937, distribution helpers, serial-number selection, QSB processing, and
+  operator transitions are deterministic for a fixed seed in XPlat. Exact CE
+  behavior remains subject to narrow live cases.
 - The session loop directly owns the active `SimulatedStation` collection.
   Each station owns its operator, reply timeout, CW renderer, callsign, and true
   exchange. Listening, copying, preparation, and sending transitions use
-  simulation blocks. Full calls, partial calls, repeats, corrections, ghosting,
-  completion, and pileup best-confidence selection follow pinned Pascal
-  observations. No station repository or station-service abstraction sits
+  simulation blocks. The implementation has paths for full calls, partial
+  calls, repeats, corrections, ghosting, completion, and pileup confidence
+  selection. Their timing and functional outcomes are not yet certified
+  against CE. No station repository or station-service abstraction sits
   between the session and this state.
 - Live station calls and contest exchanges are selected deterministically from
   the same 12 packaged call-history sources used by the data adapter, including
@@ -2049,14 +2337,18 @@ Recorded Phase 3 implementation:
   ordered session events with revision and simulation-block metadata. Seeded
   tests verify caller sets, station event traces, true-exchange logging, NIL
   outcomes, and deterministic audio hashes.
-- QSK controls whether callers are audible while the local operator is
-  transmitting. QSB, QRM, QRN, flutter, and LID decisions remain seeded and
-  deterministic when mixed with active station audio.
+- QSK, QSB, QRM, QRN, flutter, and LID paths exist and use deterministic XPlat
+  state. The audit found differences in audio ordering, signal models, and
+  random-source ownership, so these paths are not CE-equivalent yet.
 - Immutable QSO records, score and multiplier behavior, radio controls,
   versioned settings, one-way INI import, atomic persistence, and
   platform-specific application paths are implemented.
 - The retained event history and every external subscriber queue are bounded.
   A subscriber outside retained history receives `resync-required`.
+- These implementation claims are subject to narrow schema-v3 acceptance
+  coverage. The audit found unresolved station-state, operator-message,
+  logging, correction, condition, persistence, and results behavior. Retained
+  schema-v1 fixtures do not certify the session paths as CE-equivalent.
 
 ### Phase 4: contest parity
 
@@ -2070,36 +2362,32 @@ Deliver every legacy contest and run mode with:
 
 Exit criteria:
 
-- Every contest and run-mode manifest item is both-green.
+- Every contest and run-mode capability is complete and every owning case is
+  both-green.
 - All contest acceptance cases pass unchanged against legacy and XPlat.
 - Contest functional gap count is zero.
 
-Recorded Phase 4 implementation:
+Current Phase 4 status:
 
-- All 12 legacy contest definitions have catalog and structural rule adapters.
-- CQ WPX, CWT, and the remaining ten contests have live session-loop
-  validation, points, multipliers, totals, corrected-retry behavior, and
-  duplicate feedback. Supplemental pinned-oracle vectors cover 74 contest
-  scoring, validation, multiplier, and duplicate observations plus four
-  rolling-rate observations. Direct engine workflow tests exercise invalid,
-  corrected, and duplicate attempts for every contest.
-- Station-derived truth now supplies callsign, RST, serial, precedence, check,
-  section, and contest exchange fields to completed QSO records. Missing
-  completed stations produce `NIL`; incorrect copied fields produce the
-  corresponding log error; only verified non-duplicate QSOs affect score.
-  Direct explicit-log scenarios remain available for headless scoring vectors
-  that intentionally do not start live simulation.
-- All five run modes are available through the shared session model.
-- Contest, simulation, data, configuration, logging, and result acceptance
-  cases pass unchanged against the pinned legacy oracle and XPlat.
-- The complete manifest reports 20/20 both-green, 1,501/1,501 mapped surfaces,
-  and zero functional gaps.
+- XPlat contains catalog and rule structures for all 12 legacy contests and all
+  five run-mode values. Existing unit and pre-schema-v3 fixture vectors are
+  implementation inventory, not live parity certification.
+- The audit found incorrect contest exchange shapes and default validation
+  behavior. `contest.exchange-shapes` is the first narrow schema-v3 acceptance
+  case and is currently `legacy-green-xplat-red`. Its recorded divergence is a
+  release blocker until the unchanged case passes XPlat.
+- Contest validation, message composition, multipliers, points, duplicates,
+  correction paths, live station truth, score, rate, and results still require
+  decomposed live Legacy and XPlat cases across their mapped surfaces and
+  platforms.
+- No contest capability is complete, and no zero-gap contest claim is valid at
+  this stage.
 
-The fixture-level capabilities and 1,501 surface mappings are structural
-coverage evidence. They do not supersede end-to-end workflow evidence. The
-behavioral and UX audit in `docs/ux/legacy-compatibility-matrix.md` is the
-release-status source for legacy workflows that require live engine, audio, or
-UI behavior.
+The former 20/20 both-green and 1,501/1,501 mapped statements are invalidated
+historical scaffold results. They are not current evidence. The generated
+schema-v3 parity report is the machine-derived status source. The behavioral
+and UX audit in `docs/ux/legacy-compatibility-matrix.md` records workflows and
+gaps that still require executable cases.
 
 ### Phase 5: Avalonia product UX
 
@@ -2113,19 +2401,22 @@ Deliver:
 
 Exit criteria:
 
-- Every legacy workflow and keyboard-function manifest item is both-green.
+- Every legacy workflow and keyboard-function capability is complete and every
+  owning case is both-green.
 - Primary legacy workflows are usable without a pointer.
 - Cross-platform visual and interaction review passes.
 
-Recorded Phase 5 implementation:
+Current Phase 5 implementation inventory, not parity certification:
 
 - The Avalonia application provides the keyboard-first operator dashboard,
   station and radio controls, band conditions, QSO entry and a live QSO log,
   score, contest and run-mode selection, duration, message keys, and score
   dialog.
-- F1 through F12 workflows, modifier variants, entry-field character mappings,
-  abort, wipe, complete-QSO, RIT, bandwidth, and speed controls map to semantic
-  client commands.
+- The desktop exposes F1 through F12, modifier, entry-field, abort, wipe,
+  complete-QSO, RIT, bandwidth, and speed command paths. The audit found that
+  several mappings, focus transitions, partial-call Enter behavior, exchange
+  edits, correction paths, validation outcomes, and shortcut semantics do not
+  yet match CE.
 - Physical sessions advance in real time on the engine session loop. Avalonia
   consumes bounded live updates through `IMorseRunnerClient`.
 - The operator status row exposes both the selected caller state and the active
@@ -2159,9 +2450,10 @@ Recorded Phase 5 implementation:
   personal high score. JSON and Cabrillo exports are written atomically to the
   platform results directory, and the gRPC Results service reuses the same
   formatter.
-- The TUI persists the same legacy-compatible station, contest, run-mode,
-  duration, condition, receive-speed, serial-range, HST operator, monitor, and
-  recording keys as Avalonia. Its advanced settings view changes immutable
+- The TUI persists the same XPlat station, contest, run-mode, duration,
+  condition, receive-speed, serial-range, HST operator, monitor, and recording
+  keys as Avalonia. Whether their defaults, ranges, mutation rules, and effects
+  match CE remains unverified. Its advanced settings view changes immutable
   session inputs before creation and sends no widget state into the engine.
 - Completed TUI sessions show engine-owned score, QSO count, five-minute rate,
   elapsed time, and the shared per-contest personal high score. JSON and
@@ -2179,14 +2471,17 @@ Recorded Phase 5 implementation:
   layer; terminal command and subscription failures become explicit textual
   recovery states.
 - QSB, QRM, QRN, flutter, activity, LIDs, monitor level, and QSK settings cross
-  the semantic and gRPC session contract. Implemented audio and station
-  interactions are seeded and deterministic.
+  the semantic and gRPC session contract. Contract carriage does not establish
+  that the associated station or DSP behavior matches CE.
 - Compiled bindings and `x:DataType` are enabled. View-model tests, a headless
   window-open and focus test, and live Windows visual and interaction checks
   cover the primary path.
 - Native Linux and macOS visual and physical-audio review, plus optional
   external score services, remain release checklist items in
   `docs/ux/legacy-compatibility-matrix.md`.
+- No operator-workflow capability is complete. Keyboard, accessibility,
+  lifecycle, settings, score, high-score, recording, and result claims require
+  narrow live cases and native platform evidence before release.
 
 ### Phase 6: optional gRPC host
 
@@ -2206,7 +2501,7 @@ Exit criteria:
 - Hosted mode has a real TUI, automation, or debugging consumer.
 - Embedded mode remains fully supported.
 
-Recorded Phase 6 implementation:
+Current Phase 6 implementation inventory, not parity certification:
 
 - `morserunner.v1` defines cohesive Engine, Catalog, Session, and Results
   services with unique request and response envelopes and explicit command and
@@ -2234,6 +2529,9 @@ Recorded Phase 6 implementation:
 - The CLI `host-info` and `hosted-scenario` commands are real external
   debugging and automation consumers. A process-boundary Windows smoke test
   passed through discovery and authentication.
+- Transport tests establish adapter behavior only. They do not promote any CE
+  capability unless the same semantic case is bound to live schema-v3 parity
+  evidence.
 
 ### Phase 7: packaging and release hardening
 
@@ -2253,7 +2551,7 @@ Exit criteria:
 - Skip, waiver, quarantine, disable, expected-failure, and unimplemented counts
   are zero.
 
-Recorded Phase 7 initial implementation:
+Current Phase 7 implementation inventory, not release certification:
 
 - `Publish-Release.ps1` creates self-contained Avalonia, CLI, and engine-host
   payloads and archives for `win-x64`, `linux-x64`, `osx-x64`, and
@@ -2284,16 +2582,21 @@ Recorded Phase 7 initial implementation:
   Missing runner hardware remains an explicit incomplete result.
 - The release checklist records clean-machine, physical audio, recording,
   keyboard, persistence, long-run, signing, notarization, and packaging-format
-  verification. Hardware, signing, and notarization remain release operations,
-  not missing runtime implementation.
+  verification. Missing hardware evidence is an incomplete release result, not
+  proof of a runtime defect and not a waiver. Signing, notarization, and
+  packaging decisions remain unresolved release operations.
+- Packaging workflows and published artifacts do not establish a releasable
+  port. Release remains blocked while any capability is not-authored or
+  partial, any active case is red or not runnable, any surface-platform
+  assignment is uncovered, or any native platform evidence is incomplete.
 
 ## 26. Definition of done
 
 A feature is complete only when:
 
 1. Observable acceptance criteria are met.
-2. Its manifest entry and shared acceptance case were authored before production
-   implementation.
+2. Its owning manifest capability and narrow shared acceptance case were
+   authored before production implementation.
 3. The acceptance case passes the pinned legacy target.
 4. Historical evidence shows the unimplemented XPlat target failed the same
    case for the expected reason.
@@ -2307,16 +2610,21 @@ A feature is complete only when:
 12. Avalonia changes include interaction and visual evidence when tooling
     exists.
 13. Documentation, manifest evidence, and this specification are updated.
-14. No known quality gate is left failing.
+14. Every claimed surface-platform assignment is covered by the case evidence.
+15. No known quality gate is left failing.
 
 ### 26.1 Parity-release definition of done
 
 A parity release is complete only when:
 
 - The exhaustive manifest has no unmapped legacy surface.
+- Every tracked CE file is classified exactly once as inventoried or narrowly
+  excluded.
 - The pinned legacy target passes every acceptance case.
 - XPlat passes every acceptance case.
-- Both-green count equals total manifest count.
+- Every active case is both-green.
+- Every manifest capability is complete.
+- Every required surface-platform assignment is covered by both-green evidence.
 - Functional gap count is zero.
 - Missing-feature count is zero.
 - Divergent-behavior count is zero.
@@ -2326,8 +2634,12 @@ A parity release is complete only when:
 - Disabled count is zero.
 - Expected-failure count is zero.
 - Unimplemented count is zero.
-- Release evidence records both revisions, platforms, tools, manifest, and
-  observations.
+- Not-runnable count is zero.
+- Release evidence records clean Legacy and XPlat revisions and trees, native
+  platforms, the complete toolchain fingerprint, exact build invocation,
+  manifest, fixtures, runs, provenance, and recomputable content hashes.
+- A live Windows `Both` run and native XPlat evidence for every required
+  platform are retained.
 
 ## 27. Initial architecture acceptance tests
 

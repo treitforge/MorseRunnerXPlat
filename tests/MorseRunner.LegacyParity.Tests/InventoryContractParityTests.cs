@@ -17,119 +17,77 @@ public sealed class InventoryContractParityTests
         };
 
     [Theory]
+    [Trait("Category", "LegacyV1Noncertifying")]
     [MemberData(nameof(ParityIds))]
-    public async Task UxInventoryContractIsBothGreen(string parityId)
+    public Task UxInventoryContractMatchesSelectedTarget(string parityId)
+    {
+        return AssertInventoryVectorAsync(
+            parityId,
+            static () => new XPlatUxContractTarget());
+    }
+
+    [Fact]
+    [Trait("Category", "LegacyV1Noncertifying")]
+    public Task DataAndOperationalPathsMatchSelectedTarget()
+    {
+        return AssertInventoryVectorAsync(
+            "data.files-and-operational-paths",
+            static () => new XPlatDataOperationsTarget());
+    }
+
+    [Fact]
+    [Trait("Category", "LegacyV1Noncertifying")]
+    public Task SettingsContractMatchesSelectedTarget()
+    {
+        return AssertInventoryVectorAsync(
+            "configuration.persisted-settings",
+            static () => new XPlatSettingsContractTarget());
+    }
+
+    [Fact]
+    [Trait("Category", "LegacyV1Noncertifying")]
+    public Task QsoContractMatchesSelectedTarget()
+    {
+        return AssertInventoryVectorAsync(
+            "logging.qso-model",
+            static () => new XPlatLoggingTarget());
+    }
+
+    private static async Task AssertInventoryVectorAsync(
+        string parityId,
+        Func<IParityTarget> createXPlat)
     {
         ManifestItem item = LoadManifestItem(parityId);
-        InventoryFixture fixture = LoadFixture(item.Fixture);
+        InventoryFixture fixture = LoadFixture(
+            GetLegacyV1FixturePath(parityId));
         Assert.Equal(parityId, fixture.ParityId);
         Assert.Equal(
-            "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+            LegacyOracleProvenance.PinnedLegacyRevision,
             fixture.Revision);
 
         ParityScenario scenario = new(
             parityId,
             item.Category,
             fixture.Values);
-        LegacySurfaceContractTarget legacyTarget = new(fixture.SurfacePrefixes);
-        XPlatUxContractTarget xplatTarget = new();
-        ParityObservation legacy = await legacyTarget.ExecuteAsync(
-            scenario,
-            TestContext.Current.CancellationToken);
-        ParityObservation xplat = await xplatTarget.ExecuteAsync(
-            scenario,
-            TestContext.Current.CancellationToken);
+        SelectedParityObservation selected =
+            await ParityRegressionRunner.ExecuteSelectedAsync(
+                scenario,
+                () => new LegacySurfaceContractTarget(
+                    fixture.SurfacePrefixes),
+                createXPlat,
+                TestContext.Current.CancellationToken);
 
-        Assert.Equal(ParityTargetOutcome.Passed, legacy.Outcome);
-        Assert.Equal(fixture.Values, legacy.Values);
-        Assert.Equal(fixture.Values, xplat.Values);
-        Assert.Equal(ParityTargetOutcome.Passed, xplat.Outcome);
         Assert.Equal(
-            ParityAssessment.BothGreen,
-            ParityAssessmentClassifier.Classify(legacy, xplat));
+            ParityTargetOutcome.Passed,
+            selected.Observation.Outcome);
+        Assert.Equal(fixture.Values, selected.Observation.Values);
+        string evidencePath = GetLegacyV1EvidencePath(parityId);
         Assert.True(
-            File.Exists(Path.Combine(RepositoryPaths.Root, item.Evidence)),
-            $"Evidence not found: {item.Evidence}");
+            File.Exists(Path.Combine(RepositoryPaths.Root, evidencePath)),
+            $"Evidence not found: {evidencePath}");
     }
 
-    [Fact]
-    public async Task DataAndOperationalPathsAreBothGreen()
-    {
-        const string parityId = "data.files-and-operational-paths";
-        ManifestItem item = LoadManifestItem(parityId, "both-green");
-        InventoryFixture fixture = LoadFixture(item.Fixture);
-        ParityScenario scenario = new(parityId, item.Category, fixture.Values);
-        LegacySurfaceContractTarget legacyTarget = new(fixture.SurfacePrefixes);
-        XPlatDataOperationsTarget xplatTarget = new();
-
-        ParityObservation legacy = await legacyTarget.ExecuteAsync(
-            scenario,
-            TestContext.Current.CancellationToken);
-        ParityObservation xplat = await xplatTarget.ExecuteAsync(
-            scenario,
-            TestContext.Current.CancellationToken);
-
-        Assert.Equal(ParityTargetOutcome.Passed, legacy.Outcome);
-        Assert.Equal(fixture.Values, xplat.Values);
-        Assert.Equal(ParityTargetOutcome.Passed, xplat.Outcome);
-        Assert.Equal(
-            ParityAssessment.BothGreen,
-            ParityAssessmentClassifier.Classify(legacy, xplat));
-    }
-
-    [Fact]
-    public async Task SettingsContractIsBothGreen()
-    {
-        const string parityId = "configuration.persisted-settings";
-        ManifestItem item = LoadManifestItem(parityId, "both-green");
-        InventoryFixture fixture = LoadFixture(item.Fixture);
-        ParityScenario scenario = new(parityId, item.Category, fixture.Values);
-        LegacySurfaceContractTarget legacyTarget = new(fixture.SurfacePrefixes);
-        XPlatSettingsContractTarget xplatTarget = new();
-
-        ParityObservation legacy = await legacyTarget.ExecuteAsync(
-            scenario,
-            TestContext.Current.CancellationToken);
-        ParityObservation xplat = await xplatTarget.ExecuteAsync(
-            scenario,
-            TestContext.Current.CancellationToken);
-
-        Assert.Equal(ParityTargetOutcome.Passed, legacy.Outcome);
-        Assert.Equal(fixture.Values, xplat.Values);
-        Assert.Equal(ParityTargetOutcome.Passed, xplat.Outcome);
-        Assert.Equal(
-            ParityAssessment.BothGreen,
-            ParityAssessmentClassifier.Classify(legacy, xplat));
-    }
-
-    [Fact]
-    public async Task QsoContractIsBothGreen()
-    {
-        const string parityId = "logging.qso-model";
-        ManifestItem item = LoadManifestItem(parityId, "both-green");
-        InventoryFixture fixture = LoadFixture(item.Fixture);
-        ParityScenario scenario = new(parityId, item.Category, fixture.Values);
-        LegacySurfaceContractTarget legacyTarget = new(fixture.SurfacePrefixes);
-        XPlatLoggingTarget xplatTarget = new();
-
-        ParityObservation legacy = await legacyTarget.ExecuteAsync(
-            scenario,
-            TestContext.Current.CancellationToken);
-        ParityObservation xplat = await xplatTarget.ExecuteAsync(
-            scenario,
-            TestContext.Current.CancellationToken);
-
-        Assert.Equal(ParityTargetOutcome.Passed, legacy.Outcome);
-        Assert.Equal(fixture.Values, xplat.Values);
-        Assert.Equal(ParityTargetOutcome.Passed, xplat.Outcome);
-        Assert.Equal(
-            ParityAssessment.BothGreen,
-            ParityAssessmentClassifier.Classify(legacy, xplat));
-    }
-
-    private static ManifestItem LoadManifestItem(
-        string parityId,
-        string expectedStatus = "both-green")
+    private static ManifestItem LoadManifestItem(string parityId)
     {
         string path = Path.Combine(
             RepositoryPaths.Root,
@@ -143,15 +101,19 @@ public sealed class InventoryContractParityTests
             .EnumerateArray()
             .Single(item => item.GetProperty("id").GetString() == parityId);
 
-        Assert.Equal(
-            expectedStatus,
-            element.GetProperty("status").GetString());
-        Assert.Equal("pass", element.GetProperty("legacyTestStatus").GetString());
-        Assert.Equal(
-            expectedStatus == "both-green" ? "pass" : "fail",
-            element.GetProperty("xplatTestStatus").GetString());
-
         return JsonSerializer.Deserialize<ManifestItem>(element.GetRawText())!;
+    }
+
+    private static string GetLegacyV1FixturePath(string parityId)
+    {
+        return $"tests/parity/fixtures/legacy/"
+            + $"{parityId.Replace('.', '-')}.json";
+    }
+
+    private static string GetLegacyV1EvidencePath(string parityId)
+    {
+        return $"tests/parity/evidence/"
+            + $"{parityId.Replace('.', '-')}.baseline.json";
     }
 
     private static InventoryFixture LoadFixture(string relativePath)
@@ -162,10 +124,7 @@ public sealed class InventoryContractParityTests
     }
 
     private sealed record ManifestItem(
-        [property: JsonPropertyName("category")] string Category,
-        [property: JsonPropertyName("failureCode")] string? FailureCode,
-        [property: JsonPropertyName("fixture")] string Fixture,
-        [property: JsonPropertyName("evidence")] string Evidence);
+        [property: JsonPropertyName("category")] string Category);
 
     private sealed record InventoryFixture(
         [property: JsonPropertyName("revision")] string Revision,

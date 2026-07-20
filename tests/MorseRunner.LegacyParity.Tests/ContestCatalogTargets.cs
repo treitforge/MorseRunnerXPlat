@@ -1,5 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
 namespace MorseRunner.LegacyParity.Tests;
@@ -12,46 +10,34 @@ public sealed partial class LegacyContestCatalogTarget : IParityTarget
     {
         string iniPath = Path.Combine(RepositoryPaths.LegacyRoot, "Ini.pas");
 
-        if (File.Exists(iniPath))
+        if (!File.Exists(iniPath))
         {
-            string source = await File.ReadAllTextAsync(iniPath, cancellationToken);
-            Match match = ContestEnumerationRegex().Match(source);
-
-            if (!match.Success)
-            {
-                return new ParityObservation(
-                    ParityTargetOutcome.Failed,
-                    [],
-                    "legacy-contest-enumeration-not-found",
-                    iniPath);
-            }
-
-            string[] values = match.Groups["values"].Value
-                .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-
-            return Observe(scenario, values, iniPath);
-        }
-
-        string fixturePath = Path.Combine(
-            RepositoryPaths.Root,
-            "tests",
-            "parity",
-            "fixtures",
-            "legacy",
-            "catalog-contest-enumeration.json");
-        await using FileStream stream = File.OpenRead(fixturePath);
-        LegacyContestCatalogFixture? fixture =
-            await JsonSerializer.DeserializeAsync<LegacyContestCatalogFixture>(
-                stream,
-                cancellationToken: cancellationToken);
-
-        return fixture is null
-            ? new ParityObservation(
+            return new ParityObservation(
                 ParityTargetOutcome.Failed,
                 [],
-                "invalid-legacy-fixture",
-                fixturePath)
-            : Observe(scenario, fixture.Values, fixturePath);
+                "legacy-source-not-found",
+                iniPath);
+        }
+
+        string source = await File.ReadAllTextAsync(iniPath, cancellationToken);
+        Match match = ContestEnumerationRegex().Match(source);
+
+        if (!match.Success)
+        {
+            return new ParityObservation(
+                ParityTargetOutcome.Failed,
+                [],
+                "legacy-contest-enumeration-not-found",
+                iniPath);
+        }
+
+        string[] values = match.Groups["values"].Value
+            .Split(
+                ',',
+                StringSplitOptions.TrimEntries
+                | StringSplitOptions.RemoveEmptyEntries);
+
+        return Observe(scenario, values, iniPath);
     }
 
     private static ParityObservation Observe(
@@ -75,9 +61,6 @@ public sealed partial class LegacyContestCatalogTarget : IParityTarget
         RegexOptions.Singleline | RegexOptions.CultureInvariant)]
     private static partial Regex ContestEnumerationRegex();
 
-    private sealed record LegacyContestCatalogFixture(
-        [property: JsonPropertyName("revision")] string Revision,
-        [property: JsonPropertyName("values")] IReadOnlyList<string> Values);
 }
 
 public sealed class MissingXPlatContestCatalogTarget : IParityTarget

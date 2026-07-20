@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/w7sst/MorseRunner.git",
+  "publicBaseRevision": "2dd6f5cfd8a96e00f472d189adae594823ae5b61",
+  "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+  "bundle": "tests/parity/legacy-reference.bundle",
+  "bundleSha256": "1d9fcafb3adb0227aba360bc1884b5c32d2c1e8210448e646a4104f142b07772",
+  "toolchain": {
+    "lazarusVersion": "4.6",
+    "fpcVersion": "3.2.2",
+    "targetCpu": "x86_64",
+    "targetOs": "win64",
+    "installer": "https://sourceforge.net/projects/lazarus/files/Lazarus%20Windows%2064%20bits/Lazarus%204.6/lazarus-4.6-fpc-3.2.2-win64.exe/download",
+    "installerSha256": "e53ef697644bfa9588cee833edd2c76af42f79331fff2eb9f730fef86fbda00f",
+    "compilerSha256": "8ba500bbb84bd7100c169f151082b1461e9241e4491e0f6f38f2376bec49c319",
+    "backendCompilerSha256": "1f33c43b890e2d02e6b07c88401fc47cfcac48e003a29bb58b2e1220ac6a3e22",
+    "lazbuildSha256": "9554983fff43cfe5b5cef9a8374a37ff8a152e2de9c40c5750e723501f6edfd1",
+    "fingerprint": {
+      "schemaVersion": 1,
+      "canonicalization": "utf8-lf-nul-lowercase-relative-path-v1",
+      "roots": [
+        "components/freetype/lib/x86_64-win64",
+        "components/lazutils/lib/x86_64-win64",
+        "fpc/3.2.2",
+        "lazbuild.exe",
+        "lcl/units/x86_64-win64",
+        "packager/units/x86_64-win64"
+      ],
+      "aggregateSha256": "3eb50f2aac396bac975d8f628ad44421318d05179c81a98524802bcf04c8afee",
+      "fileCount": 14553,
+      "byteCount": 786527370
+    }
+  }
+}

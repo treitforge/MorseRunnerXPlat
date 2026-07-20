@@ -5,13 +5,163 @@ import hashlib
 import json
 import re
 import subprocess
+import tempfile
 from collections import defaultdict
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUTPUT = ROOT / "tests" / "parity" / "legacy-surface-inventory.json"
+
+PROTECTED_FUNCTIONAL_INPUT_SUFFIXES = {
+    ".a",
+    ".adi",
+    ".bin",
+    ".bmp",
+    ".c",
+    ".cfg",
+    ".cmds",
+    ".conf",
+    ".cnt",
+    ".csv",
+    ".deployproj",
+    ".dcr",
+    ".dfm",
+    ".dll",
+    ".dpk",
+    ".dpr",
+    ".dproj",
+    ".dta",
+    ".dylib",
+    ".exe",
+    ".groupproj",
+    ".h",
+    ".hlp",
+    ".ico",
+    ".inc",
+    ".ini",
+    ".json",
+    ".lfm",
+    ".lib",
+    ".log",
+    ".lpi",
+    ".lpr",
+    ".list",
+    ".lst",
+    ".mak",
+    ".manifest",
+    ".o",
+    ".obj",
+    ".otares",
+    ".pas",
+    ".pdf",
+    ".ps1",
+    ".rc",
+    ".res",
+    ".sh",
+    ".so",
+    ".txt",
+    ".toml",
+    ".wav",
+    ".xml",
+    ".yaml",
+    ".yml",
+    ".zip",
+}
+PROTECTED_FUNCTIONAL_INPUT_NAMES = {
+    ".gitattributes",
+    "dockerfile",
+    "makefile",
+}
+
+NONFUNCTIONAL_TRACKED_FILE_EXCLUSIONS = {
+    ".github/CODE_OF_CONDUCT.md": {
+        "kind": "community-documentation",
+        "rationale": (
+            "Repository conduct policy is not read by the application, "
+            "compiler, tests, or packaging tools."
+        ),
+    },
+    ".github/CONTRIBUTING.md": {
+        "kind": "community-documentation",
+        "rationale": (
+            "Contributor guidance is not read by the application, compiler, "
+            "tests, or packaging tools."
+        ),
+    },
+    ".github/DEVELOPERS.md": {
+        "kind": "developer-documentation",
+        "rationale": (
+            "Human developer notes are not read by the application, "
+            "compiler, tests, or packaging tools."
+        ),
+    },
+    ".github/ISSUE_TEMPLATE/bug-report.md": {
+        "kind": "repository-template",
+        "rationale": (
+            "GitHub issue form prose is not read by the application, "
+            "compiler, tests, or packaging tools."
+        ),
+    },
+    ".github/ISSUE_TEMPLATE/contest-request.md": {
+        "kind": "repository-template",
+        "rationale": (
+            "GitHub issue form prose is not read by the application, "
+            "compiler, tests, or packaging tools."
+        ),
+    },
+    ".github/ISSUE_TEMPLATE/feature-request.md": {
+        "kind": "repository-template",
+        "rationale": (
+            "GitHub issue form prose is not read by the application, "
+            "compiler, tests, or packaging tools."
+        ),
+    },
+    ".github/ISSUE_TEMPLATE/feedback.md": {
+        "kind": "repository-template",
+        "rationale": (
+            "GitHub issue form prose is not read by the application, "
+            "compiler, tests, or packaging tools."
+        ),
+    },
+    ".github/ISSUE_TEMPLATE/question-support.md": {
+        "kind": "repository-template",
+        "rationale": (
+            "GitHub issue form prose is not read by the application, "
+            "compiler, tests, or packaging tools."
+        ),
+    },
+    ".gitignore": {
+        "kind": "repository-metadata",
+        "rationale": (
+            "Git ignore rules affect only untracked-file presentation and "
+            "are not read by the application, compiler, tests, or packaging "
+            "tools."
+        ),
+    },
+    "Lazarus/README.md": {
+        "kind": "developer-documentation",
+        "rationale": (
+            "Human Lazarus build notes are not consumed by the build script "
+            "or any shipped runtime."
+        ),
+    },
+    "LICENSE.md": {
+        "kind": "legal-documentation",
+        "rationale": (
+            "The legal license text is not read by the application, "
+            "compiler, tests, or packaging tools."
+        ),
+    },
+    "README.md": {
+        "kind": "repository-documentation",
+        "rationale": (
+            "Repository landing-page prose is not read by the application, "
+            "compiler, tests, or packaging tools."
+        ),
+    },
+}
 
 
 def mask_pascal_comments(source: str) -> str:
@@ -486,6 +636,158 @@ def parse_main_dfm(
             )
 
     return object_surfaces, event_surfaces, shortcut_surfaces, handlers
+
+
+def parse_form_resource(
+    source: str,
+    source_name: str,
+) -> list[dict[str, Any]]:
+    object_pattern = re.compile(
+        r"^(?P<indent>\s*)(?:object|inherited|inline)\s+"
+        r"(?P<name>[A-Za-z0-9_]+)\s*:\s*(?P<type>[A-Za-z0-9_.]+)",
+        flags=re.MULTILINE,
+    )
+    property_pattern = re.compile(
+        r"^(?P<indent>\s*)(?P<name>[A-Za-z][A-Za-z0-9_]*)\s*=\s*(?P<value>.+)$"
+    )
+    lines = source.splitlines()
+    objects: list[dict[str, Any]] = []
+    stack: list[dict[str, Any]] = []
+
+    for line_index, line in enumerate(lines, start=1):
+        object_match = object_pattern.match(line)
+        if object_match is not None:
+            indent = len(object_match.group("indent"))
+            while stack and stack[-1]["indent"] >= indent:
+                stack.pop()
+            entry: dict[str, Any] = {
+                "name": object_match.group("name"),
+                "type": object_match.group("type"),
+                "line": line_index,
+                "indent": indent,
+                "parent": stack[-1]["name"] if stack else None,
+                "properties": {},
+                "propertyLines": {},
+            }
+            objects.append(entry)
+            stack.append(entry)
+            continue
+
+        property_match = property_pattern.match(line)
+        if property_match is None or not stack:
+            continue
+        indent = len(property_match.group("indent"))
+        while stack and stack[-1]["indent"] >= indent:
+            stack.pop()
+        if not stack:
+            continue
+        owner = stack[-1]
+        if indent != owner["indent"] + 2:
+            continue
+        property_name = property_match.group("name")
+        owner["properties"][property_name] = property_match.group("value").strip()
+        owner["propertyLines"][property_name] = line_index
+
+    resource_path = Path(source_name)
+    resource_format = resource_path.suffix.lower().lstrip(".")
+    resource_slug = slug(resource_path.with_suffix("").as_posix())
+    id_root = f"legacy.form.{resource_format}.{resource_slug}"
+    root_name = objects[0]["name"] if objects else resource_path.stem
+    surfaces: list[dict[str, Any]] = []
+
+    for entry in objects:
+        properties = entry["properties"]
+        details: dict[str, Any] = {
+            "form": root_name,
+            "resource": source_name,
+            "resourceFormat": resource_format,
+            "objectName": entry["name"],
+            "objectType": entry["type"],
+            "parent": entry["parent"],
+        }
+        for property_name in (
+            "Caption",
+            "Hint",
+            "TabOrder",
+            "TabStop",
+            "Visible",
+            "Enabled",
+            "ReadOnly",
+            "Default",
+            "ModalResult",
+            "Tag",
+        ):
+            if property_name not in properties:
+                continue
+            raw_value = properties[property_name]
+            details[property_name[0].lower() + property_name[1:]] = (
+                dfm_string(raw_value)
+                if property_name in {"Caption", "Hint"}
+                else raw_value
+            )
+
+        object_name = entry["name"]
+        surfaces.append(
+            {
+                "id": f"{id_root}.object.{slug(object_name)}",
+                "category": "form-object",
+                "name": details.get("caption") or object_name,
+                "source": f"{source_name}:{entry['line']}",
+                "details": details,
+            }
+        )
+
+        for property_name, raw_value in properties.items():
+            if not re.fullmatch(r"On[A-Za-z0-9_]+", property_name):
+                continue
+            surfaces.append(
+                {
+                    "id": (
+                        f"{id_root}.event-binding.{slug(object_name)}."
+                        f"{slug(property_name)}"
+                    ),
+                    "category": "form-event-binding",
+                    "name": f"{object_name}.{property_name}",
+                    "source": (
+                        f"{source_name}:"
+                        f"{entry['propertyLines'][property_name]}"
+                    ),
+                    "details": {
+                        "form": root_name,
+                        "resource": source_name,
+                        "resourceFormat": resource_format,
+                        "objectName": object_name,
+                        "event": property_name,
+                        "handler": raw_value.strip(),
+                    },
+                }
+            )
+
+        if "ShortCut" in properties:
+            raw_shortcut = properties["ShortCut"]
+            surfaces.append(
+                {
+                    "id": f"{id_root}.shortcut.{slug(object_name)}",
+                    "category": "form-keyboard-shortcut",
+                    "name": (
+                        f"{object_name}: {decode_shortcut(raw_shortcut)}"
+                    ),
+                    "source": (
+                        f"{source_name}:"
+                        f"{entry['propertyLines']['ShortCut']}"
+                    ),
+                    "details": {
+                        "form": root_name,
+                        "resource": source_name,
+                        "resourceFormat": resource_format,
+                        "objectName": object_name,
+                        "rawValue": raw_shortcut,
+                        "display": decode_shortcut(raw_shortcut),
+                    },
+                }
+            )
+
+    return surfaces
 
 
 def decode_shortcut(raw_value: str) -> str:
@@ -1258,6 +1560,148 @@ def parse_support_units(
     return surfaces, sources, source_texts
 
 
+def parse_interface_type_declarations(
+    source: str,
+    source_name: str,
+    id_root: str,
+    category: str,
+) -> list[dict[str, Any]]:
+    implementation_match = re.search(
+        r"^implementation\s*$",
+        source,
+        flags=re.MULTILINE | re.IGNORECASE,
+    )
+    interface_source = (
+        source[: implementation_match.start()]
+        if implementation_match is not None
+        else source
+    )
+    type_section_pattern = re.compile(
+        r"^type\s*$"
+        r"(?P<body>.*?)"
+        r"(?=^(?:const|var|threadvar|resourcestring|procedure|function|"
+        r"implementation)\b|\Z)",
+        flags=re.MULTILINE | re.DOTALL | re.IGNORECASE,
+    )
+    declaration_pattern = re.compile(
+        r"^\s*(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*=\s*"
+        r"(?P<definition>[^\r\n]+)",
+        flags=re.MULTILINE,
+    )
+    grouped: dict[str, list[dict[str, str]]] = defaultdict(list)
+    for section in type_section_pattern.finditer(interface_source):
+        for match in declaration_pattern.finditer(section.group("body")):
+            absolute_start = section.start("body") + match.start()
+            grouped[match.group("name")].append(
+                {
+                    "source": (
+                        f"{source_name}:"
+                        f"{line_number(interface_source, absolute_start)}"
+                    ),
+                    "definition": " ".join(
+                        match.group("definition").split()
+                    ),
+                }
+            )
+
+    surfaces: list[dict[str, Any]] = []
+    source_slug = slug(source_name)
+    for type_name, declarations in sorted(
+        grouped.items(),
+        key=lambda item: item[0].casefold(),
+    ):
+        surfaces.append(
+            {
+                "id": (
+                    f"{id_root}.type.{source_slug}.{slug(type_name)}"
+                ),
+                "category": category,
+                "name": f"{Path(source_name).stem}.{type_name}",
+                "source": declarations[0]["source"],
+                "details": {
+                    "unit": Path(source_name).stem,
+                    "type": type_name,
+                    "declarations": declarations,
+                },
+            }
+        )
+    return surfaces
+
+
+def parse_regex_units(
+    legacy_root: Path,
+    tracked_files: list[str],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    regex_units = {
+        "Lazarus/PerlRegEx.pas": "lazarus-wrapper",
+        "PerlRegEx/PerlRegEx.pas": "delphi-wrapper",
+        "PerlRegEx/pcre.pas": "pcre-binding",
+    }
+    tracked_lookup = {
+        name.replace("\\", "/").casefold(): name
+        for name in tracked_files
+    }
+    surfaces: list[dict[str, Any]] = []
+    sources: list[str] = []
+    for expected_name, concern in regex_units.items():
+        source_name = tracked_lookup.get(expected_name.casefold())
+        if source_name is None:
+            raise ValueError(
+                f"legacy regular-expression source not tracked: {expected_name}"
+            )
+        path = legacy_root / Path(source_name)
+        source = mask_pascal_comments(
+            path.read_text(encoding="utf-8-sig")
+        )
+        id_root = f"legacy.data.parser.regex.{concern}"
+        surfaces.extend(
+            parse_interface_type_declarations(
+                source,
+                source_name,
+                id_root,
+                "third-party-regex-type",
+            )
+        )
+        surfaces.extend(
+            surface
+            for surface in parse_unit_declarations(
+                source,
+                source_name,
+                id_root,
+                "third-party-regex",
+            )
+            if surface["category"] != "third-party-regex-type"
+        )
+        surfaces.extend(
+            parse_all_unit_enums(
+                source,
+                source_name,
+                f"{id_root}.enum",
+                "third-party-regex-enum",
+            )
+        )
+        routines_by_id: dict[str, dict[str, Any]] = {}
+        for routine_surface in parse_unit_routines(
+            source,
+            source_name,
+            id_root,
+            "third-party-regex",
+        ):
+            existing = routines_by_id.get(routine_surface["id"])
+            if existing is None:
+                routines_by_id[routine_surface["id"]] = routine_surface
+                continue
+            existing["details"]["declarations"].extend(
+                routine_surface["details"]["declarations"]
+            )
+        surfaces.extend(
+            routines_by_id[surface_id]
+            for surface_id in sorted(routines_by_id, key=str.casefold)
+        )
+        sources.append(source_name)
+    return surfaces, sources
+
+
 def parse_data_references(
     legacy_root: Path,
     source_texts: dict[str, str],
@@ -1366,7 +1810,1636 @@ def parse_operational_paths(
     return surfaces
 
 
-def build_inventory(legacy_root: Path) -> dict[str, Any]:
+def list_tracked_files(
+    legacy_root: Path,
+    revision: str = "HEAD",
+) -> list[str]:
+    result = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(legacy_root),
+            "ls-tree",
+            "-r",
+            "--name-only",
+            "-z",
+            revision,
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return sorted(
+        (name for name in result.stdout.split("\0") if name),
+        key=str.casefold,
+    )
+
+
+def tracked_files_sha256(tracked_files: list[str]) -> str:
+    return hashlib.sha256(
+        "\n".join(sorted(tracked_files, key=str.casefold)).encode("utf-8")
+    ).hexdigest()
+
+
+def materialize_canonical_git_tree(
+    legacy_root: Path,
+    revision: str,
+    tracked_files: list[str],
+    destination_root: Path,
+) -> None:
+    """Materialize exact Git blobs, independent of checkout line endings."""
+
+    destination_root.mkdir(parents=True, exist_ok=True)
+    portable_paths: set[str] = set()
+    for source_name in tracked_files:
+        source_path = PurePosixPath(source_name)
+        if (
+            not source_name
+            or "\\" in source_name
+            or ":" in source_name
+            or source_path.is_absolute()
+            or any(part in {"", ".", ".."} for part in source_path.parts)
+        ):
+            raise ValueError(
+                "tracked Git path cannot be materialized portably: "
+                f"{source_name!r}"
+            )
+
+        portable_key = source_name.casefold()
+        if portable_key in portable_paths:
+            raise ValueError(
+                "tracked Git paths collide on a case-insensitive filesystem: "
+                f"{source_name}"
+            )
+        portable_paths.add(portable_key)
+
+        blob = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(legacy_root),
+                "cat-file",
+                "blob",
+                f"{revision}:{source_name}",
+            ],
+            check=True,
+            capture_output=True,
+        ).stdout
+        destination = destination_root.joinpath(*source_path.parts)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(blob)
+
+
+def tracked_file_exclusions(
+    tracked_files: list[str],
+) -> list[dict[str, str]]:
+    tracked_lookup = {
+        name.replace("\\", "/").casefold(): name
+        for name in tracked_files
+    }
+    exclusions: list[dict[str, str]] = []
+    for path, definition in sorted(
+        NONFUNCTIONAL_TRACKED_FILE_EXCLUSIONS.items(),
+        key=lambda item: item[0].casefold(),
+    ):
+        tracked_path = tracked_lookup.get(path.casefold())
+        if tracked_path is None:
+            continue
+        exclusions.append(
+            {
+                "path": tracked_path,
+                "kind": definition["kind"],
+                "rationale": definition["rationale"],
+            }
+        )
+    return exclusions
+
+
+def validate_tracked_file_classification(
+    tracked_files: list[str],
+    inventoried_sources: list[str],
+    exclusions: list[dict[str, str]],
+) -> None:
+    def normalized_paths(
+        paths: list[str],
+        description: str,
+    ) -> dict[str, str]:
+        normalized: dict[str, str] = {}
+        for path in paths:
+            if not isinstance(path, str) or not path.strip():
+                raise ValueError(f"{description} contains an invalid path")
+            canonical = path.replace("\\", "/").casefold()
+            if canonical in normalized:
+                raise ValueError(
+                    f"{description} contains duplicate path: {path}"
+                )
+            normalized[canonical] = path
+        return normalized
+
+    tracked = normalized_paths(tracked_files, "tracked file list")
+    sources = normalized_paths(
+        inventoried_sources,
+        "inventory reference sources",
+    )
+
+    exclusion_paths: list[str] = []
+    for exclusion in exclusions:
+        if not isinstance(exclusion, dict) or set(exclusion) != {
+            "path",
+            "kind",
+            "rationale",
+        }:
+            raise ValueError(
+                "tracked file exclusions require path, kind, and rationale"
+            )
+        path = exclusion["path"]
+        kind = exclusion["kind"]
+        rationale = exclusion["rationale"]
+        if not all(
+            isinstance(value, str) and value.strip()
+            for value in (path, kind, rationale)
+        ):
+            raise ValueError(
+                "tracked file exclusions require nonempty path, kind, "
+                "and rationale"
+            )
+        normalized_path = path.replace("\\", "/")
+        suffix = Path(normalized_path).suffix.casefold()
+        if (
+            suffix in PROTECTED_FUNCTIONAL_INPUT_SUFFIXES
+            or Path(normalized_path).name.casefold()
+            in PROTECTED_FUNCTIONAL_INPUT_NAMES
+        ):
+            raise ValueError(
+                "runtime, build, or resource input cannot be excluded: "
+                f"{path}"
+            )
+        exclusion_paths.append(path)
+
+    excluded = normalized_paths(
+        exclusion_paths,
+        "tracked file exclusions",
+    )
+    overlap = sorted(
+        set(sources).intersection(excluded),
+        key=str.casefold,
+    )
+    if overlap:
+        raise ValueError(
+            "tracked files must be classified exactly once; both inventoried "
+            "and excluded: "
+            + ", ".join(sources[path] for path in overlap)
+        )
+
+    classified = set(sources).union(excluded)
+    unclassified = sorted(
+        set(tracked).difference(classified),
+        key=str.casefold,
+    )
+    if unclassified:
+        raise ValueError(
+            "tracked files are not classified: "
+            + ", ".join(tracked[path] for path in unclassified)
+        )
+
+    not_tracked = sorted(
+        classified.difference(tracked),
+        key=str.casefold,
+    )
+    if not_tracked:
+        display_names = {
+            **sources,
+            **excluded,
+        }
+        raise ValueError(
+            "inventory classifies files absent from the pinned tree: "
+            + ", ".join(display_names[path] for path in not_tracked)
+        )
+
+
+def validate_reference_source_surfaces(
+    inventoried_sources: list[str],
+    surfaces: list[dict[str, Any]],
+) -> None:
+    surface_sources = {
+        surface["source"].replace("\\", "/").split(":", maxsplit=1)[0].casefold()
+        for surface in surfaces
+    }
+    missing = [
+        source
+        for source in inventoried_sources
+        if source.replace("\\", "/").casefold() not in surface_sources
+    ]
+    if missing:
+        raise ValueError(
+            "inventory reference sources have no surface or input record: "
+            + ", ".join(sorted(missing, key=str.casefold))
+        )
+
+
+def parse_additional_form_resources(
+    legacy_root: Path,
+    tracked_files: list[str],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    resource_names = [
+        name
+        for name in tracked_files
+        if Path(name).suffix.lower() == ".lfm"
+        or (
+            Path(name).suffix.lower() == ".dfm"
+            and name.casefold() != "main.dfm"
+        )
+    ]
+    surfaces: list[dict[str, Any]] = []
+    for source_name in resource_names:
+        source = (legacy_root / Path(source_name)).read_text(
+            encoding="utf-8-sig"
+        )
+        surfaces.extend(parse_form_resource(source, source_name))
+    return surfaces, resource_names
+
+
+def project_role(source_name: str) -> str:
+    normalized = source_name.replace("\\", "/").casefold()
+    suffix = Path(source_name).suffix.lower()
+    if suffix == ".dpk":
+        return "component-package"
+    if normalized.endswith("regexsmoketest.lpr"):
+        return "smoke-test"
+    if normalized.endswith(("unittests.dpr", "unittests.dproj")):
+        return "test-runner"
+    return "application"
+
+
+def project_file_kind(source_name: str) -> str:
+    suffix = Path(source_name).suffix.lower()
+    return {
+        ".lpr": "lazarus-program",
+        ".dpr": "delphi-program",
+        ".dpk": "delphi-package",
+        ".lpi": "lazarus-project",
+        ".dproj": "delphi-project",
+        ".deployproj": "delphi-deployment",
+        ".groupproj": "delphi-project-group",
+    }[suffix]
+
+
+def project_definition_surface(
+    legacy_root: Path,
+    source_name: str,
+) -> dict[str, Any]:
+    payload = (legacy_root / Path(source_name)).read_bytes()
+    return {
+        "id": f"legacy.project.definition.{slug(source_name)}",
+        "category": "project-definition",
+        "name": source_name,
+        "source": source_name,
+        "details": {
+            "file": source_name,
+            "kind": project_file_kind(source_name),
+            "role": project_role(source_name),
+            "bytes": len(payload),
+            "sha256": hashlib.sha256(payload).hexdigest(),
+        },
+    }
+
+
+def parse_pascal_project(
+    source: str,
+    source_name: str,
+) -> list[dict[str, Any]]:
+    project_slug = slug(source_name)
+    surfaces: list[dict[str, Any]] = []
+    clause_pattern = re.compile(
+        r"\b(?P<clause>uses|requires|contains)\b(?P<body>.*?);",
+        flags=re.DOTALL | re.IGNORECASE,
+    )
+    for clause_match in clause_pattern.finditer(source):
+        clause = clause_match.group("clause").lower()
+        body = clause_match.group("body")
+        masked_body = mask_pascal_comments(body)
+        explicit_units: set[str] = set()
+        explicit_pattern = re.compile(
+            r"\b(?P<unit>[A-Za-z_][A-Za-z0-9_.]*)\s+in\s+"
+            r"'(?P<path>(?:''|[^'])*)'"
+            r"(?:\s+\{(?P<form>[^}]+)\})?",
+            flags=re.IGNORECASE,
+        )
+        for ordinal, match in enumerate(
+            explicit_pattern.finditer(body),
+            start=1,
+        ):
+            unit_name = match.group("unit")
+            explicit_units.add(unit_name.casefold())
+            absolute_offset = clause_match.start("body") + match.start()
+            details: dict[str, Any] = {
+                "project": source_name,
+                "role": project_role(source_name),
+                "clause": clause,
+                "unit": unit_name,
+                "sourcePath": pascal_string(
+                    f"'{match.group('path')}'"
+                ).replace("\\", "/"),
+                "ordinal": ordinal,
+            }
+            if match.group("form"):
+                details["form"] = match.group("form").strip()
+            surfaces.append(
+                {
+                    "id": (
+                        f"legacy.project.unit.{project_slug}."
+                        f"{clause}.{slug(unit_name)}"
+                    ),
+                    "category": "project-unit-reference",
+                    "name": f"{source_name}: {unit_name}",
+                    "source": (
+                        f"{source_name}:"
+                        f"{line_number(source, absolute_offset)}"
+                    ),
+                    "details": details,
+                }
+            )
+
+        builtin_ordinal = len(explicit_units)
+        for item in masked_body.split(","):
+            match = re.match(
+                r"\s*(?P<unit>[A-Za-z_][A-Za-z0-9_.]*)",
+                item,
+            )
+            if match is None:
+                continue
+            unit_name = match.group("unit")
+            if unit_name.casefold() in explicit_units:
+                continue
+            builtin_ordinal += 1
+            unit_offset = source.find(
+                unit_name,
+                clause_match.start("body"),
+                clause_match.end("body"),
+            )
+            surfaces.append(
+                {
+                    "id": (
+                        f"legacy.project.unit.{project_slug}."
+                        f"{clause}.{slug(unit_name)}"
+                    ),
+                    "category": "project-unit-reference",
+                    "name": f"{source_name}: {unit_name}",
+                    "source": (
+                        f"{source_name}:"
+                        f"{line_number(source, unit_offset)}"
+                    ),
+                    "details": {
+                        "project": source_name,
+                        "role": project_role(source_name),
+                        "clause": clause,
+                        "unit": unit_name,
+                        "sourcePath": None,
+                        "ordinal": builtin_ordinal,
+                    },
+                }
+            )
+
+    lifecycle_pattern = re.compile(
+        r"(?P<operation>"
+        r"RequireDerivedFormResource\s*:=|"
+        r"Application\.Scaled\s*:=|"
+        r"Application\.Initialize\b|"
+        r"Application\.Title\s*:=|"
+        r"Application\.CreateForm\b|"
+        r"Application\.Run\b|"
+        r"TestInsight\.DUnitX\.RunRegisteredTests\b|"
+        r"TDUnitX\.CheckCommandLine\b|"
+        r"TDUnitX\.CreateRunner\b|"
+        r"runner\.Execute\b"
+        r")",
+        flags=re.IGNORECASE,
+    )
+    lifecycle_counts: dict[str, int] = defaultdict(int)
+    masked_source = mask_pascal_comments(source)
+    for match in lifecycle_pattern.finditer(masked_source):
+        operation = re.sub(r"\s*:=\s*$", "", match.group("operation"))
+        operation_key = slug(operation)
+        lifecycle_counts[operation_key] += 1
+        ordinal = lifecycle_counts[operation_key]
+        surfaces.append(
+            {
+                "id": (
+                    f"legacy.project.lifecycle.{project_slug}."
+                    f"{operation_key}.{ordinal}"
+                ),
+                "category": "project-lifecycle",
+                "name": f"{source_name}: {operation}",
+                "source": (
+                    f"{source_name}:{line_number(source, match.start())}"
+                ),
+                "details": {
+                    "project": source_name,
+                    "role": project_role(source_name),
+                    "operation": operation,
+                    "ordinal": ordinal,
+                },
+            }
+        )
+
+    resource_pattern = re.compile(
+        r"\{\$R\s+(?P<resource>[^}\r\n]+)\}",
+        flags=re.IGNORECASE,
+    )
+    for ordinal, match in enumerate(
+        resource_pattern.finditer(source),
+        start=1,
+    ):
+        resource = match.group("resource").strip()
+        surfaces.append(
+            {
+                "id": (
+                    f"legacy.project.resource-directive.{project_slug}."
+                    f"{slug(resource)}.{ordinal}"
+                ),
+                "category": "project-resource-reference",
+                "name": f"{source_name}: {resource}",
+                "source": (
+                    f"{source_name}:{line_number(source, match.start())}"
+                ),
+                "details": {
+                    "project": source_name,
+                    "role": project_role(source_name),
+                    "reference": resource,
+                    "referenceKind": "compiler-resource",
+                    "ordinal": ordinal,
+                },
+            }
+        )
+    return surfaces
+
+
+def parse_project_metadata(
+    legacy_root: Path,
+    tracked_files: list[str],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    project_suffixes = {
+        ".lpr",
+        ".dpr",
+        ".dpk",
+        ".lpi",
+        ".dproj",
+        ".deployproj",
+        ".groupproj",
+    }
+    project_names = [
+        name
+        for name in tracked_files
+        if Path(name).suffix.lower() in project_suffixes
+    ]
+    surfaces = [
+        project_definition_surface(legacy_root, name)
+        for name in project_names
+    ]
+
+    pascal_suffixes = {".lpr", ".dpr", ".dpk"}
+    for source_name in project_names:
+        if Path(source_name).suffix.lower() not in pascal_suffixes:
+            continue
+        source = (legacy_root / Path(source_name)).read_text(
+            encoding="utf-8-sig"
+        )
+        surfaces.extend(parse_pascal_project(source, source_name))
+
+    reference_patterns = {
+        "deployment-file": re.compile(
+            r"<DeployFile\b[^>]*(?:Include|LocalName)="
+            r"\"(?P<reference>[^\"]+)\"",
+            flags=re.IGNORECASE,
+        ),
+        "project-member": re.compile(
+            r"<Projects\s+Include=\"(?P<reference>[^\"]+)\"",
+            flags=re.IGNORECASE,
+        ),
+        "application-icon": re.compile(
+            r"<Icon_MainIcon>(?P<reference>[^<]+)</Icon_MainIcon>",
+            flags=re.IGNORECASE,
+        ),
+        "application-manifest": re.compile(
+            r"<Manifest_File>(?P<reference>[^<]+)</Manifest_File>",
+            flags=re.IGNORECASE,
+        ),
+    }
+    configuration_pattern = re.compile(
+        r"<(?P<property>"
+        r"MainSource|FrameworkType|AppType|DCC_Platform|"
+        r"TargetOS|TargetCPU|ResourceType|SyntaxMode"
+        r")(?:\s+Value=\"(?P<attribute_value>[^\"]*)\")?\s*"
+        r"(?:>(?P<text_value>[^<]*)</(?P=property)>|/>)",
+        flags=re.IGNORECASE,
+    )
+    tracked_lookup = {name.replace("\\", "/").casefold() for name in tracked_files}
+
+    for source_name in project_names:
+        if Path(source_name).suffix.lower() in pascal_suffixes:
+            continue
+        source = (legacy_root / Path(source_name)).read_text(
+            encoding="utf-8-sig"
+        )
+        project_slug = slug(source_name)
+        for reference_kind, pattern in reference_patterns.items():
+            if (
+                reference_kind == "project-member"
+                and Path(source_name).suffix.lower() != ".groupproj"
+            ):
+                continue
+            if (
+                reference_kind != "project-member"
+                and source_name.casefold()
+                not in {"morserunner.dproj", "morserunner.deployproj"}
+            ):
+                continue
+            grouped: dict[str, list[str]] = defaultdict(list)
+            display_names: dict[str, str] = {}
+            for match in pattern.finditer(source):
+                reference = match.group("reference").strip()
+                normalized = reference.replace("\\", "/").casefold()
+                display_names.setdefault(normalized, reference)
+                grouped[normalized].append(
+                    f"{source_name}:{line_number(source, match.start())}"
+                )
+            for normalized, sources in sorted(grouped.items()):
+                reference = display_names[normalized]
+                relative_reference = reference.replace("\\", "/")
+                exists = relative_reference.casefold() in tracked_lookup
+                surfaces.append(
+                    {
+                        "id": (
+                            f"legacy.project.reference.{project_slug}."
+                            f"{slug(reference_kind)}.{slug(reference)}"
+                        ),
+                        "category": (
+                            "project-member-reference"
+                            if reference_kind == "project-member"
+                            else "project-resource-reference"
+                        ),
+                        "name": f"{source_name}: {reference}",
+                        "source": sources[0],
+                        "details": {
+                            "project": source_name,
+                            "reference": reference,
+                            "referenceKind": reference_kind,
+                            "trackedReferenceExists": exists,
+                            "sources": sources,
+                        },
+                    }
+                )
+
+        configurations: dict[tuple[str, str], list[str]] = defaultdict(list)
+        for match in configuration_pattern.finditer(source):
+            value = (
+                match.group("attribute_value")
+                if match.group("attribute_value") is not None
+                else match.group("text_value")
+            ).strip()
+            if not value or value.casefold() == match.group(
+                "property"
+            ).casefold():
+                continue
+            property_name = match.group("property")
+            configurations[(property_name, value)].append(
+                f"{source_name}:{line_number(source, match.start())}"
+            )
+        for (property_name, value), sources in sorted(
+            configurations.items(),
+            key=lambda item: (
+                item[0][0].casefold(),
+                item[0][1].casefold(),
+            ),
+        ):
+            surfaces.append(
+                {
+                    "id": (
+                        f"legacy.project.configuration.{project_slug}."
+                        f"{slug(property_name)}.{slug(value)}"
+                    ),
+                    "category": "project-configuration",
+                    "name": f"{source_name}: {property_name}={value}",
+                    "source": sources[0],
+                    "details": {
+                        "project": source_name,
+                        "property": property_name,
+                        "value": value,
+                        "sources": sources,
+                    },
+                }
+            )
+    return surfaces, project_names
+
+
+def parse_form_resource_directives(
+    legacy_root: Path,
+    tracked_files: list[str],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    source_names = [
+        name
+        for name in tracked_files
+        if Path(name).suffix.lower() == ".pas"
+        and not name.replace("\\", "/").startswith("PerlRegEx/")
+    ]
+    pattern = re.compile(
+        r"\{\$R\s+(?P<resource>(?:\*|[A-Za-z0-9_.\\/]+)"
+        r"\.(?:dfm|lfm))\}",
+        flags=re.IGNORECASE,
+    )
+    surfaces: list[dict[str, Any]] = []
+    for source_name in source_names:
+        source = (legacy_root / Path(source_name)).read_text(
+            encoding="utf-8-sig"
+        )
+        for ordinal, match in enumerate(pattern.finditer(source), start=1):
+            resource = match.group("resource")
+            surfaces.append(
+                {
+                    "id": (
+                        "legacy.form.resource-directive."
+                        f"{slug(source_name)}.{slug(resource)}.{ordinal}"
+                    ),
+                    "category": "form-resource-reference",
+                    "name": f"{source_name}: {resource}",
+                    "source": (
+                        f"{source_name}:"
+                        f"{line_number(source, match.start())}"
+                    ),
+                    "details": {
+                        "unit": source_name,
+                        "resource": resource,
+                        "ordinal": ordinal,
+                    },
+                }
+            )
+    return surfaces, source_names
+
+
+def parse_bundled_assets(
+    legacy_root: Path,
+    tracked_files: list[str],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    data_suffixes = {".txt", ".list", ".dta"}
+    application_resource_names = {
+        "manifest.xml",
+        "morserunner.ico",
+        "morserunner_icon.ico",
+        "morserunner_icon1.ico",
+        "morserunner_icon2.ico",
+        "morserunner_icon3.ico",
+        "morserunner_icon4.ico",
+        "morserunner16.bmp",
+        "morserunner32.bmp",
+    }
+    asset_names = [
+        name
+        for name in tracked_files
+        if Path(name).parent == Path(".")
+        and (
+            Path(name).suffix.lower() in data_suffixes
+            or name.casefold() in application_resource_names
+        )
+    ]
+    surfaces: list[dict[str, Any]] = []
+    for source_name in asset_names:
+        path = legacy_root / Path(source_name)
+        payload = path.read_bytes()
+        is_data = Path(source_name).suffix.lower() in data_suffixes
+        if source_name.casefold() == "hstresults.txt":
+            role = "mutable-results-seed"
+        elif source_name.casefold() == "readme.txt":
+            role = "operator-help"
+        elif is_data:
+            role = "simulation-data"
+        else:
+            role = "application-resource"
+        surfaces.append(
+            {
+                "id": (
+                    f"legacy.asset.{'data' if is_data else 'resource'}."
+                    f"{slug(source_name)}"
+                ),
+                "category": (
+                    "bundled-data-file"
+                    if is_data
+                    else "bundled-application-resource"
+                ),
+                "name": source_name,
+                "source": source_name,
+                "details": {
+                    "file": source_name,
+                    "role": role,
+                    "bytes": len(payload),
+                    "sha256": hashlib.sha256(payload).hexdigest(),
+                },
+            }
+        )
+    return surfaces, asset_names
+
+
+def additional_input_classification(
+    source_name: str,
+) -> tuple[str, str, str] | None:
+    normalized = source_name.replace("\\", "/")
+    normalized_lower = normalized.casefold()
+    suffix = Path(normalized).suffix.casefold()
+
+    exact_inputs = {
+        ".gitattributes": (
+            "build",
+            "source-normalization-policy",
+            "repository-build-input",
+        ),
+        "perlregex/readme.txt": (
+            "documentation",
+            "third-party-component-notice",
+            "bundled-documentation",
+        ),
+        "tools/verify-normalization.sh": (
+            "build",
+            "source-normalization-verifier",
+            "repository-build-input",
+        ),
+    }
+    exact = exact_inputs.get(normalized_lower)
+    if exact is not None:
+        return exact
+
+    suffix_inputs = {
+        ".cmds": (
+            "build",
+            "delphi-compiler-command-metadata",
+            "repository-build-input",
+        ),
+        ".cnt": (
+            "resource",
+            "third-party-help-index",
+            "bundled-application-resource",
+        ),
+        ".dcr": (
+            "resource",
+            "delphi-component-resource",
+            "bundled-application-resource",
+        ),
+        ".hlp": (
+            "resource",
+            "third-party-help-content",
+            "bundled-application-resource",
+        ),
+        ".lst": (
+            "build",
+            "delphi-linker-listing",
+            "repository-build-input",
+        ),
+        ".mak": (
+            "build",
+            "native-object-build-script",
+            "repository-build-input",
+        ),
+        ".obj": (
+            "build",
+            "native-static-link-object",
+            "repository-build-input",
+        ),
+        ".otares": (
+            "resource",
+            "delphi-ide-resource-metadata",
+            "bundled-application-resource",
+        ),
+        ".pdf": (
+            "documentation",
+            "operator-manual",
+            "bundled-documentation",
+        ),
+    }
+    return suffix_inputs.get(suffix)
+
+
+def parse_additional_repository_inputs(
+    legacy_root: Path,
+    tracked_files: list[str],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    input_names = [
+        name
+        for name in tracked_files
+        if additional_input_classification(name) is not None
+    ]
+    surfaces: list[dict[str, Any]] = []
+    for source_name in input_names:
+        classification = additional_input_classification(source_name)
+        if classification is None:
+            raise AssertionError("additional input classification disappeared")
+        input_kind, role, category = classification
+        payload = (legacy_root / Path(source_name)).read_bytes()
+        surfaces.append(
+            {
+                "id": (
+                    f"legacy.asset.{input_kind}.{slug(source_name)}"
+                ),
+                "category": category,
+                "name": source_name,
+                "source": source_name,
+                "details": {
+                    "file": source_name,
+                    "inputKind": input_kind,
+                    "role": role,
+                    "bytes": len(payload),
+                    "sha256": hashlib.sha256(payload).hexdigest(),
+                },
+            }
+        )
+    return surfaces, input_names
+
+
+def parse_distribution_files(
+    legacy_root: Path,
+    tracked_files: list[str],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    script_names = [
+        name
+        for name in ("Lazarus/build.ps1", "tools/make-install.sh")
+        if name in tracked_files
+    ]
+    grouped: dict[str, list[str]] = defaultdict(list)
+    display_names: dict[str, str] = {}
+    for source_name in script_names:
+        source = (legacy_root / Path(source_name)).read_text(
+            encoding="utf-8-sig"
+        )
+        if source_name.endswith(".ps1"):
+            block_match = re.search(
+                r"\$runtimeFiles\s*=\s*@\((?P<body>.*?)\)",
+                source,
+                flags=re.DOTALL,
+            )
+            quote_pattern = re.compile(r"'(?P<file>[^']+)'")
+        else:
+            block_match = re.search(
+                r"FILES=\((?P<body>.*?)\)",
+                source,
+                flags=re.DOTALL,
+            )
+            quote_pattern = re.compile(r'"(?P<file>[^"]+)"')
+        if block_match is None:
+            raise ValueError(f"runtime file list not found: {source_name}")
+        for match in quote_pattern.finditer(block_match.group("body")):
+            file_name = match.group("file")
+            normalized = file_name.replace("\\", "/").casefold()
+            display_names.setdefault(normalized, file_name)
+            absolute_offset = block_match.start("body") + match.start()
+            grouped[normalized].append(
+                f"{source_name}:{line_number(source, absolute_offset)}"
+            )
+
+    tracked_lookup = {name.replace("\\", "/").casefold() for name in tracked_files}
+    surfaces: list[dict[str, Any]] = []
+    for normalized, sources in sorted(grouped.items()):
+        file_name = display_names[normalized]
+        is_project_output = normalized.endswith(".exe")
+        surfaces.append(
+            {
+                "id": f"legacy.distribution.file.{slug(file_name)}",
+                "category": "distribution-file",
+                "name": file_name,
+                "source": sources[0],
+                "details": {
+                    "file": file_name,
+                    "kind": (
+                        "project-output"
+                        if is_project_output
+                        else "runtime-data"
+                    ),
+                    "trackedSourceExists": (
+                        is_project_output or normalized in tracked_lookup
+                    ),
+                    "sources": sources,
+                },
+            }
+        )
+    return surfaces, script_names
+
+
+def routine_identity_at_offset(
+    source_name: str,
+    routines: list[re.Match[str]],
+    offset: int,
+) -> tuple[str, str]:
+    for routine in routines:
+        if routine.start() <= offset < routine.end():
+            return (
+                routine.group("owner") or Path(source_name).stem,
+                routine.group("name"),
+            )
+    return Path(source_name).stem, "unit-scope"
+
+
+def parse_external_integrations(
+    legacy_root: Path,
+    tracked_files: list[str],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    source_names = [
+        name
+        for name in tracked_files
+        if Path(name).suffix.lower() == ".pas"
+        and not name.replace("\\", "/").startswith("PerlRegEx/")
+    ]
+    patterns = {
+        "command-line-path": re.compile(
+            r"\b(?:ParamStr|ParamCount)\b",
+            flags=re.IGNORECASE,
+        ),
+        "shell-launch": re.compile(
+            r"\b(?:ShellExecute|GetDesktopWindow)\b",
+            flags=re.IGNORECASE,
+        ),
+        "network-client": re.compile(
+            r"\b(?:TFPHTTPClient|TIdHTTP|fphttpclient|opensslsockets|"
+            r"FormPost|ResponseStatusCode)\b",
+            flags=re.IGNORECASE,
+        ),
+        "native-window-message": re.compile(
+            r"\b(?:Windows\.)?PostMessage\b",
+            flags=re.IGNORECASE,
+        ),
+    }
+    grouped: dict[
+        tuple[str, str, str, str],
+        list[dict[str, str]],
+    ] = defaultdict(list)
+    for source_name in source_names:
+        source = mask_pascal_comments(
+            (legacy_root / Path(source_name)).read_text(
+                encoding="utf-8-sig"
+            )
+        )
+        routines = find_unit_routine_matches(source)
+        for kind, pattern in patterns.items():
+            for match in pattern.finditer(source):
+                owner, routine = routine_identity_at_offset(
+                    source_name,
+                    routines,
+                    match.start(),
+                )
+                grouped[(source_name, owner, routine, kind)].append(
+                    {
+                        "operation": match.group(0),
+                        "source": (
+                            f"{source_name}:"
+                            f"{line_number(source, match.start())}"
+                        ),
+                    }
+                )
+
+    surfaces: list[dict[str, Any]] = []
+    for (source_name, owner, routine, kind), occurrences in sorted(
+        grouped.items(),
+        key=lambda item: tuple(value.casefold() for value in item[0]),
+    ):
+        surfaces.append(
+            {
+                "id": (
+                    f"legacy.integration.{slug(kind)}."
+                    f"{slug(source_name)}.{slug(owner)}.{slug(routine)}"
+                ),
+                "category": "external-integration",
+                "name": f"{owner}.{routine}: {kind}",
+                "source": occurrences[0]["source"],
+                "details": {
+                    "unit": Path(source_name).stem,
+                    "owner": owner,
+                    "routine": routine,
+                    "integrationKind": kind,
+                    "occurrences": occurrences,
+                },
+            }
+        )
+    return surfaces, source_names
+
+
+def parse_data_parser_paths(
+    legacy_root: Path,
+    tracked_files: list[str],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    source_names = [
+        name
+        for name in tracked_files
+        if Path(name).suffix.lower() == ".pas"
+        and not name.replace("\\", "/").startswith("PerlRegEx/")
+    ]
+    operation_pattern = re.compile(
+        r"\b(?P<operation>"
+        r"LoadFromFile|TFileStream\.Create|ReadLn|BlockRead|OpenRead"
+        r")\b",
+        flags=re.IGNORECASE,
+    )
+    reference_pattern = re.compile(
+        r"'(?P<reference>[^'\r\n]*\.(?:txt|list|dta|wav|lst))'",
+        flags=re.IGNORECASE,
+    )
+    surfaces: list[dict[str, Any]] = []
+    for source_name in source_names:
+        source = mask_pascal_comments(
+            (legacy_root / Path(source_name)).read_text(
+                encoding="utf-8-sig"
+            )
+        )
+        for routine in find_unit_routine_matches(source):
+            operations: list[dict[str, str]] = []
+            body = routine.group("body")
+            for match in operation_pattern.finditer(body):
+                absolute_offset = routine.start("body") + match.start()
+                operations.append(
+                    {
+                        "operation": match.group("operation"),
+                        "source": (
+                            f"{source_name}:"
+                            f"{line_number(source, absolute_offset)}"
+                        ),
+                    }
+                )
+            if not operations:
+                continue
+            owner = routine.group("owner") or Path(source_name).stem
+            routine_name = routine.group("name")
+            references = sorted(
+                {
+                    match.group("reference")
+                    for match in reference_pattern.finditer(body)
+                },
+                key=str.casefold,
+            )
+            surfaces.append(
+                {
+                    "id": (
+                        f"legacy.data.parser.{slug(source_name)}."
+                        f"{slug(owner)}.{slug(routine_name)}"
+                    ),
+                    "category": "data-parser-path",
+                    "name": f"{owner}.{routine_name}",
+                    "source": operations[0]["source"],
+                    "details": {
+                        "unit": Path(source_name).stem,
+                        "owner": owner,
+                        "routine": routine_name,
+                        "operations": operations,
+                        "references": references,
+                    },
+                }
+            )
+    return surfaces, source_names
+
+
+def attribute_label(arguments: str) -> str:
+    match = re.match(r"\s*(?P<label>'(?:''|[^'])*')", arguments)
+    if match is None:
+        return ""
+    return pascal_string(match.group("label"))
+
+
+def attribute_values(
+    attributes: list[dict[str, Any]],
+    name: str,
+) -> list[str]:
+    return [
+        attribute["arguments"]
+        for attribute in attributes
+        if attribute["name"].casefold() == name.casefold()
+    ]
+
+
+def parse_test_fixture_body(
+    source: str,
+    source_name: str,
+    fixture: str,
+    body_start: int,
+    body_end: int,
+    enabled: bool,
+) -> list[dict[str, Any]]:
+    active_attribute_pattern = re.compile(
+        r"^\s*\[(?P<name>[A-Za-z_][A-Za-z0-9_]*)"
+        r"(?:\((?P<arguments>.*)\))?\]\s*(?://.*)?$"
+    )
+    commented_attribute_pattern = re.compile(
+        r"^\s*//\s*\[(?P<name>[A-Za-z_][A-Za-z0-9_]*)"
+        r"(?:\((?P<arguments>.*)\))?\]"
+    )
+    method_pattern = re.compile(
+        r"^\s*(?P<kind>procedure|function)\s+"
+        r"(?P<name>[A-Za-z_][A-Za-z0-9_]*)\b",
+        flags=re.IGNORECASE,
+    )
+    pending_active: list[dict[str, Any]] = []
+    pending_commented: list[dict[str, Any]] = []
+    surfaces: list[dict[str, Any]] = []
+    body = source[body_start:body_end]
+    offset = body_start
+
+    for line in body.splitlines(keepends=True):
+        active_match = active_attribute_pattern.match(line.rstrip("\r\n"))
+        if active_match is not None:
+            pending_active.append(
+                {
+                    "name": active_match.group("name"),
+                    "arguments": active_match.group("arguments") or "",
+                    "line": line_number(source, offset),
+                }
+            )
+            offset += len(line)
+            continue
+        commented_match = commented_attribute_pattern.match(
+            line.rstrip("\r\n")
+        )
+        if commented_match is not None:
+            pending_commented.append(
+                {
+                    "name": commented_match.group("name"),
+                    "arguments": commented_match.group("arguments") or "",
+                    "line": line_number(source, offset),
+                }
+            )
+            offset += len(line)
+            continue
+
+        method_match = method_pattern.match(line)
+        if method_match is None:
+            offset += len(line)
+            continue
+
+        method_name = method_match.group("name")
+        test_cases = attribute_values(pending_active, "TestCase")
+        commented_cases = attribute_values(pending_commented, "TestCase")
+        test_attributes = [
+            attribute
+            for attribute in pending_active
+            if attribute["name"].casefold() == "test"
+        ]
+        explicit_test = bool(test_attributes)
+        declared_enabled = not any(
+            attribute["arguments"].strip().casefold() == "false"
+            for attribute in test_attributes
+        )
+        method_enabled = enabled and declared_enabled
+        categories = [
+            attribute_label(value)
+            for value in attribute_values(pending_active, "Category")
+        ]
+        method_id_root = (
+            f"legacy.test.{slug(source_name)}."
+            f"{slug(fixture)}.{slug(method_name)}"
+        )
+
+        if test_cases or explicit_test:
+            surfaces.append(
+                {
+                    "id": f"{method_id_root}.method",
+                    "category": (
+                        "legacy-test-method"
+                        if method_enabled
+                        else "legacy-test-disabled-method"
+                    ),
+                    "name": f"{fixture}.{method_name}",
+                    "source": (
+                        f"{source_name}:{line_number(source, offset)}"
+                    ),
+                    "details": {
+                        "fixture": fixture,
+                        "method": method_name,
+                        "kind": method_match.group("kind").lower(),
+                        "enabled": method_enabled,
+                        "fixtureEnabled": enabled,
+                        "declaredEnabled": declared_enabled,
+                        "explicitTest": explicit_test,
+                        "categories": categories,
+                        "testCaseCount": len(test_cases),
+                    },
+                }
+            )
+
+        for ordinal, attribute in enumerate(test_attributes, start=1):
+            attribute_enabled = (
+                enabled
+                and attribute["arguments"].strip().casefold() != "false"
+            )
+            surfaces.append(
+                {
+                    "id": (
+                        f"{method_id_root}.test-declaration.{ordinal}"
+                    ),
+                    "category": (
+                        "legacy-test-declaration"
+                        if attribute_enabled
+                        else "legacy-test-disabled-declaration"
+                    ),
+                    "name": (
+                        f"{fixture}.{method_name}: Test"
+                        f"({attribute['arguments']})"
+                    ),
+                    "source": f"{source_name}:{attribute['line']}",
+                    "details": {
+                        "fixture": fixture,
+                        "method": method_name,
+                        "arguments": attribute["arguments"],
+                        "enabled": attribute_enabled,
+                        "fixtureEnabled": enabled,
+                        "declaredEnabled": (
+                            attribute["arguments"].strip().casefold()
+                            != "false"
+                        ),
+                        "ordinal": ordinal,
+                    },
+                }
+            )
+
+        active_case_occurrences: dict[str, int] = defaultdict(int)
+        for arguments in test_cases:
+            label = attribute_label(arguments)
+            fingerprint = hashlib.sha256(
+                arguments.encode("utf-8")
+            ).hexdigest()[:12]
+            active_case_occurrences[fingerprint] += 1
+            duplicate_suffix = (
+                f".{active_case_occurrences[fingerprint]}"
+                if active_case_occurrences[fingerprint] > 1
+                else ""
+            )
+            attribute = next(
+                item
+                for item in pending_active
+                if item["name"].casefold() == "testcase"
+                and item["arguments"] == arguments
+                and not item.get("used")
+            )
+            attribute["used"] = True
+            surfaces.append(
+                {
+                    "id": (
+                        f"{method_id_root}.case.{slug(label) or 'unnamed'}."
+                        f"{fingerprint}{duplicate_suffix}"
+                    ),
+                    "category": (
+                        "legacy-test-case"
+                        if method_enabled
+                        else "legacy-test-disabled-case"
+                    ),
+                    "name": f"{fixture}.{method_name}: {label}",
+                    "source": f"{source_name}:{attribute['line']}",
+                    "details": {
+                        "fixture": fixture,
+                        "method": method_name,
+                        "label": label,
+                        "arguments": arguments,
+                        "enabled": method_enabled,
+                        "fixtureEnabled": enabled,
+                        "declaredEnabled": declared_enabled,
+                        "categories": categories,
+                    },
+                }
+            )
+
+        commented_case_occurrences: dict[str, int] = defaultdict(int)
+        for arguments in commented_cases:
+            label = attribute_label(arguments)
+            fingerprint = hashlib.sha256(
+                arguments.encode("utf-8")
+            ).hexdigest()[:12]
+            commented_case_occurrences[fingerprint] += 1
+            duplicate_suffix = (
+                f".{commented_case_occurrences[fingerprint]}"
+                if commented_case_occurrences[fingerprint] > 1
+                else ""
+            )
+            attribute = next(
+                item
+                for item in pending_commented
+                if item["name"].casefold() == "testcase"
+                and item["arguments"] == arguments
+                and not item.get("used")
+            )
+            attribute["used"] = True
+            surfaces.append(
+                {
+                    "id": (
+                        f"{method_id_root}.commented-case."
+                        f"{slug(label) or 'unnamed'}.{fingerprint}"
+                        f"{duplicate_suffix}"
+                    ),
+                    "category": "legacy-test-commented-case",
+                    "name": f"{fixture}.{method_name}: {label}",
+                    "source": f"{source_name}:{attribute['line']}",
+                    "details": {
+                        "fixture": fixture,
+                        "method": method_name,
+                        "label": label,
+                        "arguments": arguments,
+                        "enabled": False,
+                        "disabledBy": "commented-attribute",
+                        "categories": categories,
+                    },
+                }
+            )
+
+        lifecycle_names = {
+            "setup",
+            "teardown",
+            "setupfixture",
+            "teardownfixture",
+        }
+        for attribute in pending_active:
+            attribute_name = attribute["name"].casefold()
+            if attribute_name not in lifecycle_names:
+                continue
+            surfaces.append(
+                {
+                    "id": (
+                        f"{method_id_root}.lifecycle."
+                        f"{slug(attribute_name)}"
+                    ),
+                    "category": "legacy-test-lifecycle",
+                    "name": (
+                        f"{fixture}.{method_name}: {attribute['name']}"
+                    ),
+                    "source": f"{source_name}:{attribute['line']}",
+                    "details": {
+                        "fixture": fixture,
+                        "method": method_name,
+                        "lifecycle": attribute["name"],
+                        "enabled": enabled,
+                    },
+                }
+            )
+
+        pending_active = []
+        pending_commented = []
+        offset += len(line)
+    return surfaces
+
+
+def parse_pascal_tests(
+    legacy_root: Path,
+    tracked_files: list[str],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    source_names = [
+        name
+        for name in tracked_files
+        if name.replace("\\", "/").startswith("Test/")
+        and Path(name).suffix.lower() == ".pas"
+    ]
+    sources = {
+        name: (legacy_root / Path(name)).read_text(encoding="utf-8-sig")
+        for name in source_names
+    }
+    active_registration_pattern = re.compile(
+        r"^\s*TDUnitX\.RegisterTestFixture\("
+        r"(?P<fixture>[A-Za-z_][A-Za-z0-9_]*)\s*\);",
+        flags=re.MULTILINE | re.IGNORECASE,
+    )
+    disabled_registration_pattern = re.compile(
+        r"^\s*//\s*TDUnitX\.RegisterTestFixture\("
+        r"(?P<fixture>[A-Za-z_][A-Za-z0-9_]*)\s*\);",
+        flags=re.MULTILINE | re.IGNORECASE,
+    )
+    active_registrations: dict[str, list[str]] = defaultdict(list)
+    disabled_registrations: dict[str, list[str]] = defaultdict(list)
+    display_names: dict[str, str] = {}
+    for source_name, source in sources.items():
+        for match in active_registration_pattern.finditer(source):
+            fixture = match.group("fixture")
+            key = fixture.casefold()
+            display_names.setdefault(key, fixture)
+            active_registrations[key].append(
+                f"{source_name}:{line_number(source, match.start())}"
+            )
+        for match in disabled_registration_pattern.finditer(source):
+            fixture = match.group("fixture")
+            key = fixture.casefold()
+            display_names.setdefault(key, fixture)
+            disabled_registrations[key].append(
+                f"{source_name}:{line_number(source, match.start())}"
+            )
+
+    surfaces: list[dict[str, Any]] = []
+    for key, registration_sources in sorted(active_registrations.items()):
+        fixture = display_names[key]
+        surfaces.append(
+            {
+                "id": f"legacy.test.registration.{slug(fixture)}",
+                "category": "legacy-test-registration",
+                "name": fixture,
+                "source": registration_sources[0],
+                "details": {
+                    "fixture": fixture,
+                    "enabled": True,
+                    "sources": registration_sources,
+                },
+            }
+        )
+    for key, registration_sources in sorted(disabled_registrations.items()):
+        fixture = display_names[key]
+        surfaces.append(
+            {
+                "id": f"legacy.test.disabled-registration.{slug(fixture)}",
+                "category": "legacy-test-disabled-registration",
+                "name": fixture,
+                "source": registration_sources[0],
+                "details": {
+                    "fixture": fixture,
+                    "enabled": False,
+                    "disabledBy": "commented-registration",
+                    "sources": registration_sources,
+                },
+            }
+        )
+
+    fixture_pattern = re.compile(
+        r"^\s*\[TestFixture(?P<arguments>[^\]\r\n]*)\]\s*\r?\n"
+        r"^\s*(?P<fixture>[A-Za-z_][A-Za-z0-9_]*)\s*=\s*class\b"
+        r"[^\r\n]*",
+        flags=re.MULTILINE | re.IGNORECASE,
+    )
+    class_end_pattern = re.compile(r"^\s*end;", flags=re.MULTILINE)
+    for source_name, source in sorted(sources.items()):
+        search_end = len(source)
+        for fixture_match in fixture_pattern.finditer(source, 0, search_end):
+            fixture = fixture_match.group("fixture")
+            fixture_key = fixture.casefold()
+            enabled = fixture_key in active_registrations
+            class_end = class_end_pattern.search(
+                source,
+                fixture_match.end(),
+                search_end,
+            )
+            if class_end is None:
+                raise ValueError(
+                    f"test fixture declaration is not terminated: "
+                    f"{source_name}:{fixture}"
+                )
+            fixture_arguments = fixture_match.group("arguments").strip()
+            surfaces.append(
+                {
+                    "id": (
+                        f"legacy.test.fixture.{slug(source_name)}."
+                        f"{slug(fixture)}"
+                    ),
+                    "category": "legacy-test-fixture",
+                    "name": fixture,
+                    "source": (
+                        f"{source_name}:"
+                        f"{line_number(source, fixture_match.start())}"
+                    ),
+                    "details": {
+                        "fixture": fixture,
+                        "arguments": (
+                            fixture_arguments[1:-1]
+                            if fixture_arguments.startswith("(")
+                            and fixture_arguments.endswith(")")
+                            else fixture_arguments
+                        ),
+                        "enabled": enabled,
+                        "registrationSources": (
+                            active_registrations.get(fixture_key)
+                            or disabled_registrations.get(fixture_key)
+                            or []
+                        ),
+                    },
+                }
+            )
+            surfaces.extend(
+                parse_test_fixture_body(
+                    source,
+                    source_name,
+                    fixture,
+                    fixture_match.end(),
+                    class_end.start(),
+                    enabled,
+                )
+            )
+    return surfaces, source_names
+
+
+def parse_smoke_tests(
+    legacy_root: Path,
+    tracked_files: list[str],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    source_names = [
+        name
+        for name in tracked_files
+        if Path(name).suffix.lower() == ".lpr"
+        and "smoketest" in Path(name).stem.casefold()
+    ]
+    pattern = re.compile(
+        r"^procedure\s+(?P<name>Test[A-Za-z0-9_]+)\s*;"
+        r"(?P<body>.*?)(?=^procedure\s+|\Z)",
+        flags=re.MULTILINE | re.DOTALL | re.IGNORECASE,
+    )
+    surfaces: list[dict[str, Any]] = []
+    for source_name in source_names:
+        source = (legacy_root / Path(source_name)).read_text(
+            encoding="utf-8-sig"
+        )
+        for match in pattern.finditer(mask_pascal_comments(source)):
+            test_name = match.group("name")
+            invocation_pattern = re.compile(
+                rf"^\s*{re.escape(test_name)}\s*;",
+                flags=re.MULTILINE | re.IGNORECASE,
+            )
+            surfaces.append(
+                {
+                    "id": (
+                        f"legacy.test.smoke.{slug(source_name)}."
+                        f"{slug(test_name)}"
+                    ),
+                    "category": "legacy-smoke-test",
+                    "name": test_name,
+                    "source": (
+                        f"{source_name}:"
+                        f"{line_number(source, match.start())}"
+                    ),
+                    "details": {
+                        "project": source_name,
+                        "test": test_name,
+                        "invoked": bool(invocation_pattern.search(source)),
+                        "checkCount": len(
+                            re.findall(
+                                r"\bCheck\s*\(",
+                                match.group("body"),
+                                flags=re.IGNORECASE,
+                            )
+                        ),
+                    },
+                }
+            )
+    return surfaces, source_names
+
+
+def parse_unit_lifecycle(
+    legacy_root: Path,
+    tracked_files: list[str],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    source_names = [
+        name
+        for name in tracked_files
+        if Path(name).suffix.lower() == ".pas"
+        and not name.replace("\\", "/").startswith("PerlRegEx/")
+    ]
+    pattern = re.compile(
+        r"^(?P<phase>initialization|finalization)\s*$",
+        flags=re.MULTILINE | re.IGNORECASE,
+    )
+    surfaces: list[dict[str, Any]] = []
+    for source_name in source_names:
+        source = mask_pascal_comments(
+            (legacy_root / Path(source_name)).read_text(
+                encoding="utf-8-sig"
+            )
+        )
+        counts: dict[str, int] = defaultdict(int)
+        for match in pattern.finditer(source):
+            phase = match.group("phase").lower()
+            counts[phase] += 1
+            surfaces.append(
+                {
+                    "id": (
+                        f"legacy.lifecycle.unit.{slug(source_name)}."
+                        f"{phase}.{counts[phase]}"
+                    ),
+                    "category": "unit-lifecycle",
+                    "name": f"{source_name}: {phase}",
+                    "source": (
+                        f"{source_name}:"
+                        f"{line_number(source, match.start())}"
+                    ),
+                    "details": {
+                        "unit": Path(source_name).stem,
+                        "phase": phase,
+                        "ordinal": counts[phase],
+                    },
+                }
+            )
+    return surfaces, source_names
+
+
+def validate_unique_surface_ids(surfaces: list[dict[str, Any]]) -> None:
+    counts: dict[str, int] = defaultdict(int)
+    for surface in surfaces:
+        counts[surface["id"]] += 1
+    duplicates = sorted(
+        surface_id
+        for surface_id, count in counts.items()
+        if count > 1
+    )
+    if duplicates:
+        raise ValueError(
+            "legacy inventory contains duplicate surface IDs: "
+            + ", ".join(duplicates)
+        )
+
+
+def build_inventory_from_canonical_tree(
+    legacy_root: Path,
+    revision: str,
+    tracked_files: list[str],
+) -> dict[str, Any]:
     ini_path = legacy_root / "Ini.pas"
     if not ini_path.is_file():
         raise ValueError(f"legacy Ini.pas not found: {ini_path}")
@@ -1378,12 +3451,6 @@ def build_inventory(legacy_root: Path) -> dict[str, Any]:
     if not log_path.is_file():
         raise ValueError("legacy Log.pas is required")
 
-    revision = subprocess.run(
-        ["git", "-C", str(legacy_root), "rev-parse", "--verify", "HEAD"],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
     original_source = ini_path.read_text(encoding="utf-8-sig")
     source = mask_pascal_comments(original_source)
 
@@ -1441,6 +3508,50 @@ def build_inventory(legacy_root: Path) -> dict[str, Any]:
         operational_source_texts,
     )
     operational_paths = parse_operational_paths(operational_source_texts)
+    additional_forms, additional_form_sources = (
+        parse_additional_form_resources(legacy_root, tracked_files)
+    )
+    project_surfaces, project_sources = parse_project_metadata(
+        legacy_root,
+        tracked_files,
+    )
+    form_resource_directives, form_directive_sources = (
+        parse_form_resource_directives(legacy_root, tracked_files)
+    )
+    bundled_assets, asset_sources = parse_bundled_assets(
+        legacy_root,
+        tracked_files,
+    )
+    distribution_files, distribution_sources = parse_distribution_files(
+        legacy_root,
+        tracked_files,
+    )
+    external_integrations, integration_sources = (
+        parse_external_integrations(legacy_root, tracked_files)
+    )
+    data_parser_paths, data_parser_sources = parse_data_parser_paths(
+        legacy_root,
+        tracked_files,
+    )
+    pascal_tests, pascal_test_sources = parse_pascal_tests(
+        legacy_root,
+        tracked_files,
+    )
+    smoke_tests, smoke_test_sources = parse_smoke_tests(
+        legacy_root,
+        tracked_files,
+    )
+    unit_lifecycle, lifecycle_sources = parse_unit_lifecycle(
+        legacy_root,
+        tracked_files,
+    )
+    regex_surfaces, regex_sources = parse_regex_units(
+        legacy_root,
+        tracked_files,
+    )
+    additional_inputs, additional_input_sources = (
+        parse_additional_repository_inputs(legacy_root, tracked_files)
+    )
     surfaces = (
         contest_enumeration
         + run_modes
@@ -1457,31 +3568,102 @@ def build_inventory(legacy_root: Path) -> dict[str, Any]:
         + support_surfaces
         + data_references
         + operational_paths
+        + additional_forms
+        + project_surfaces
+        + form_resource_directives
+        + bundled_assets
+        + distribution_files
+        + external_integrations
+        + data_parser_paths
+        + pascal_tests
+        + smoke_tests
+        + unit_lifecycle
+        + regex_surfaces
+        + additional_inputs
     )
+    validate_unique_surface_ids(surfaces)
+
+    original_reference_sources = [
+        "Ini.pas",
+        "Main.pas",
+        "Main.dfm",
+        "Log.pas",
+        "Contest.pas",
+        "Station.pas",
+        "DxOper.pas",
+        "DxStn.pas",
+        "StnColl.pas",
+        "MyStn.pas",
+        "QrmStn.pas",
+        "QrnStn.pas",
+        *vcl_sources,
+        *support_sources,
+    ]
+    expanded_reference_sources = sorted(
+        {
+            *additional_form_sources,
+            *project_sources,
+            *form_directive_sources,
+            *asset_sources,
+            *distribution_sources,
+            *integration_sources,
+            *data_parser_sources,
+            *pascal_test_sources,
+            *smoke_test_sources,
+            *lifecycle_sources,
+            *regex_sources,
+            *additional_input_sources,
+        }.difference(original_reference_sources),
+        key=str.casefold,
+    )
+    inventoried_sources = (
+        original_reference_sources + expanded_reference_sources
+    )
+    exclusions = tracked_file_exclusions(tracked_files)
+    validate_tracked_file_classification(
+        tracked_files,
+        inventoried_sources,
+        exclusions,
+    )
+    validate_reference_source_surfaces(inventoried_sources, surfaces)
 
     return {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "reference": {
             "revision": revision,
-            "sources": [
-                "Ini.pas",
-                "Main.pas",
-                "Main.dfm",
-                "Log.pas",
-                "Contest.pas",
-                "Station.pas",
-                "DxOper.pas",
-                "DxStn.pas",
-                "StnColl.pas",
-                "MyStn.pas",
-                "QrmStn.pas",
-                "QrnStn.pas",
-                *vcl_sources,
-                *support_sources,
-            ],
+            "trackedFileCount": len(tracked_files),
+            "trackedFilesSha256": tracked_files_sha256(tracked_files),
+            "sources": inventoried_sources,
+            "exclusions": exclusions,
         },
         "surfaces": surfaces,
     }
+
+
+def build_inventory(legacy_root: Path) -> dict[str, Any]:
+    revision = subprocess.run(
+        ["git", "-C", str(legacy_root), "rev-parse", "--verify", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    tracked_files = list_tracked_files(legacy_root, revision)
+
+    with tempfile.TemporaryDirectory(
+        prefix="morse-runner-legacy-inventory-"
+    ) as temporary_directory:
+        canonical_root = Path(temporary_directory)
+        materialize_canonical_git_tree(
+            legacy_root,
+            revision,
+            tracked_files,
+            canonical_root,
+        )
+        return build_inventory_from_canonical_tree(
+            canonical_root,
+            revision,
+            tracked_files,
+        )
 
 
 def serialize_inventory(inventory: dict[str, Any]) -> str:

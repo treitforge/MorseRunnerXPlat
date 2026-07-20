@@ -1,0 +1,346 @@
+{
+  "schemaVersion": 1,
+  "adapterId": "LegacyOracleTarget",
+  "versionId": "legacy-oracle-v3",
+  "certificationStatus": "unactivated-ce-runtime-candidate",
+  "sourceClosure": {
+    "oracleSource": "tests/parity/legacy-oracle/v3/LegacyOracle.lpr",
+    "oracleSourceSha256": "7b8f02b4a6012986e025272aeb668d1f022c4d8c3ccc92fd285052c431df93a6",
+    "legacyRevision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+    "legacyTree": "a44212bfee5b1eebfd0129459d476736775adf36",
+    "legacyBundleSha256": "1d9fcafb3adb0227aba360bc1884b5c32d2c1e8210448e646a4104f142b07772",
+    "legacyReferenceDefinition": {
+      "path": "tests/parity/legacy-reference.json",
+      "sha256": "663adf3bf230161abb923cf8b6651d394af1b99eab05efeafb696cb29992da23"
+    },
+    "toolchainFingerprintSha256": "3eb50f2aac396bac975d8f628ad44421318d05179c81a98524802bcf04c8afee",
+    "runtimeData": [
+      {
+        "path": "DXCC.LIST",
+        "sha256": "94ad79465eb8cd8df91861f5cd8d67064f8c3ba39a9774a737eb5f53d0b51049"
+      }
+    ],
+    "executedLegacyUnits": [
+      {
+        "path": "Main.pas",
+        "sha256": "540dc19c8e46e3458e8310963d63acd2501d7e94734ab779a0b865a36a01a71b"
+      },
+      {
+        "path": "Contest.pas",
+        "sha256": "499fb423578a5e843fac675785457925354d2d199cf8a5c26a2f458c38f59335"
+      },
+      {
+        "path": "Station.pas",
+        "sha256": "2e27ebb93819e99372b4fb5d6f4f09578adc2d3b6e635f64b8346b1ee68bdd35"
+      },
+      {
+        "path": "StnColl.pas",
+        "sha256": "4ffa112d8231ff23b3b7e4e1f00c1556e44fcae2ea72b0cff4a8f19dcf1a1667"
+      },
+      {
+        "path": "MyStn.pas",
+        "sha256": "e461193cd118c1042c2f5b84d098d1a0fc6228ade96822d17d39ae5076e23512"
+      },
+      {
+        "path": "CWSST.pas",
+        "sha256": "6fc410015d0bccaffa610d51a28145360a84c4276e5811b15dcd615e97b00f66"
+      },
+      {
+        "path": "Ini.pas",
+        "sha256": "d80d71b1511f133fd860418e1baa82cb9c0dcdd5d3d4f70ebfc98fadae99f9c3"
+      },
+      {
+        "path": "DXCC.pas",
+        "sha256": "47465404b0e39a2c3ae0adcae0bc0be931d4f62a288a4506df15e6094155f8a4"
+      },
+      {
+        "path": "Log.pas",
+        "sha256": "2160bff2a672bb2718c56fdb31066847b0d0cef50b8b05228ce3886a36836fce"
+      },
+      {
+        "path": "RndFunc.pas",
+        "sha256": "ae147571092a02b96670aaf5805ae68487a1d354c1c01c7cb5161d9123c12960"
+      },
+      {
+        "path": "ArrlFd.pas",
+        "sha256": "8baaa2ef6db6385567c9e1596f5496f6c7b60ff7034d2deee71fd3a657fbb929"
+      },
+      {
+        "path": "Util/CallsignUtils.pas",
+        "sha256": "28be4f93ebb132b9c11beca68b7d8043c64ce15b0f36e2dbef3d814749f667d5"
+      },
+      {
+        "path": "Lazarus/PerlRegEx.pas",
+        "sha256": "e3f4839ef8a099009550f5a266791afbb1c00c809fba7707611679dba9feb091"
+      },
+      {
+        "path": "VCL/MorseKey.pas",
+        "sha256": "85f35285b12d05fae1d4ba027bad6fb48c57edea27d33bff345aec7c8bb6a99b"
+      },
+      {
+        "path": "VCL/FarnsKeyer.pas",
+        "sha256": "4ede224583d085e123543ee0c0bdde096cf69adc9ea72f06eab22cebc6d2b547"
+      },
+      {
+        "path": "VCL/MorseTbl.pas",
+        "sha256": "22cace81360d582f743b507c0943c0dfaafd21f32207027404cc8e584eaf6d25"
+      },
+      {
+        "path": "VCL/MovAvg.pas",
+        "sha256": "c5197df54dc95f15f17bd353d890e3bcde512efa911dc282da32c333c8e43c03"
+      },
+      {
+        "path": "VCL/Mixers.pas",
+        "sha256": "3107bcfe0ca9ec973cdd345988fa2b91df594600288693e4ac210d23e0e0ae02"
+      },
+      {
+        "path": "VCL/VolumCtl.pas",
+        "sha256": "ce14d24190b0d98d706b84bf25e9408fea75481a9743f6d87c9cc6f16c809a9a"
+      },
+      {
+        "path": "VCL/VolmSldr.pas",
+        "sha256": "2784c727c22900f9d665376e024a4c8aca5edc205536c7e3f4a1489bb321f767"
+      },
+      {
+        "path": "VCL/PermHint.pas",
+        "sha256": "7d906d8e59ff85c1f324e35e286bc0364c6ccf38b75bb0efd271c2376b4e2f8b"
+      },
+      {
+        "path": "VCL/WavFile.pas",
+        "sha256": "0673be0240418fe82a2c403b1219d52085adc7cfa73921377900aec1537ae747"
+      },
+      {
+        "path": "VCL/SndOut.pas",
+        "sha256": "3941a1bd19e4eba791350a0b81a894be0eaf214ba3020aa4e3bfa40014cd5d16"
+      },
+      {
+        "path": "VCL/SndCustm.pas",
+        "sha256": "c2ab51edfff2c8267de87c211d3c2467a83f5fcd784c7f9c9c17ed32d98a3de4"
+      },
+      {
+        "path": "VCL/SndTypes.pas",
+        "sha256": "b6f48085575317154a7840c80eea4314426253ff8179c275db4046d2018836b3"
+      }
+    ],
+    "legacyUnitClassification": {
+      "executedDefinition": "An executed unit contributes at least one runtime method, constructor, finalizer, initialization section, or concrete component type to one or more of the five candidate cases. This does not claim that every method in that unit is reached.",
+      "referenceOnlyDefinition": "A compiled reference-only unit is pulled into the executable through the unmodified CE dependency graph, but no unit method, constructor, initialization section, or finalizer is reached by these five vectors. Its source hash is retained to make the complete compiled CE closure explicit.",
+      "resourceDefinition": "A compiled reference-only resource is linked by an unmodified CE unit but is not streamed because the candidate uses TMainForm.CreateNew(nil), never FormCreate, and never creates TScoreDlg."
+    },
+    "compiledReferenceOnlyLegacyUnits": [
+      {
+        "path": "ACAG.pas",
+        "sha256": "a9dd28b9fe019d5ff6395982e51f33609d37117fcf723a396634f7683047b68b"
+      },
+      {
+        "path": "ALLJA.pas",
+        "sha256": "950b036826536ba57b6f4bf81452be06695a4cae6f56b8800db6d76d312e2554"
+      },
+      {
+        "path": "ArrlDx.pas",
+        "sha256": "ffb4a955451407d622380b514075dae8908b19b43617b871597475e853551f39"
+      },
+      {
+        "path": "Util/ArrlSections.pas",
+        "sha256": "f8b81c9d220a404b05449a28ab41719ada5db372fa5fdc0934549dcf6affd346"
+      },
+      {
+        "path": "ArrlSS.pas",
+        "sha256": "f95b59b317998fe3087a184a250dd9ad9263d58292febaeb61116dd4d1138da7"
+      },
+      {
+        "path": "CallLst.pas",
+        "sha256": "9d80299c954d037bebe80aa6630a819f17fa7fa5e969767ecf6d76056120851d"
+      },
+      {
+        "path": "CqWpx.pas",
+        "sha256": "2aa72109688db931c63121df75e58cc8e9296ff746da118cd54b76830883038f"
+      },
+      {
+        "path": "CqWW.pas",
+        "sha256": "d35712b6b0e88f4c9bb567e163c76aeaf3a702188d153d54996f807d8eeec926"
+      },
+      {
+        "path": "VCL/Crc32.pas",
+        "sha256": "928a15f3735922ecc11b23a164d3cb3d08d4f9d577bebafaab2ac374df772f3d"
+      },
+      {
+        "path": "CWOPS.pas",
+        "sha256": "b1ef134dd331254dea34606033469da0aa99d7ca7349c29505b47d0ba88caba1"
+      },
+      {
+        "path": "DualExchContest.pas",
+        "sha256": "df77ed5e8f4aa0dba21e093f2aa77e212cc7f3e680b1e306b0db618d96573c7c"
+      },
+      {
+        "path": "DxOper.pas",
+        "sha256": "fbb0b12981dc9c8a462460cdea009ff652287c3e3ee7519a1d81683f0f196539"
+      },
+      {
+        "path": "DxStn.pas",
+        "sha256": "883c6ec59f1802635750b4d26a8ddc35f2c131edfc427c212740026a0ac31c4f"
+      },
+      {
+        "path": "ExchFields.pas",
+        "sha256": "1a3e3cf38e4e4671054f9107aedbe4172eca9ec701e71bc0f19e991e3c92cba5"
+      },
+      {
+        "path": "IaruHf.pas",
+        "sha256": "c86a3f9fa0dde7227330eaf8d642caf3f623d7431689ef92a1f8e924225066a2"
+      },
+      {
+        "path": "Util/Lexer.pas",
+        "sha256": "1bcc748564cc5cc1306b9938df1531a78666bebdc1e00ae879e4099b53c8ed4a"
+      },
+      {
+        "path": "NaQp.pas",
+        "sha256": "cb5786a90380d46f24e3f6f6ce49c5b47e89f7a616a56b417da33e3eec81dc8a"
+      },
+      {
+        "path": "QrmStn.pas",
+        "sha256": "073c09689f35494d45bd5ec68d9f8dac354c5e2b73e44a54bd27ee400a4053f1"
+      },
+      {
+        "path": "QrnStn.pas",
+        "sha256": "a15b2d018add0ace3408c2cc43a75ed2a4cf3cda3d7ea8692741527aa096fb37"
+      },
+      {
+        "path": "Qsb.pas",
+        "sha256": "eda191d15c3280161202b80eb5810b1d3dbbfb291cb834940dd30260c9378378"
+      },
+      {
+        "path": "VCL/QuickAvg.pas",
+        "sha256": "62906c84d4bf1bae5f25ddda6ca8e7aa8accc5c89fd5a373cfd81ffe0e1a111f"
+      },
+      {
+        "path": "ScoreDlg.pas",
+        "sha256": "59c293aaaf272adfd92e83b247771ae71bfdb47bebeeff0ff9e8a2e4a98cbb35"
+      },
+      {
+        "path": "SerNRGen.pas",
+        "sha256": "a3ec8e498f215cef9344e169c8eb8bd1bf50202ae0e9d56caae825e8cc1ca5de"
+      },
+      {
+        "path": "Util/SSExchParser.pas",
+        "sha256": "b6bf4e4dc73edf8fd82217bb19dd4444c81d7438648f2bcf654b8d3555a95f04"
+      }
+    ],
+    "compiledReferenceOnlyLegacyResources": [
+      {
+        "path": "Main.lfm",
+        "sha256": "03c2a42bf1109448adf6a35bba64f62a9c8e59e15a0fb940d5a6b5faffbf98f4"
+      },
+      {
+        "path": "ScoreDlg.lfm",
+        "sha256": "4331ad4ac5f5d9694303cffe6e3a81ca9cca40eeab294f18f3496dff1864da0e"
+      }
+    ]
+  },
+  "primaryInvocation": {
+    "widgetset": "nogui",
+    "compiler": "{toolchainRoot}/fpc/3.2.2/bin/x86_64-win64/fpc.exe",
+    "arguments": [
+      "-n",
+      "-Sgic",
+      "-Xs",
+      "-B",
+      "-Twin64",
+      "-Px86_64",
+      "-MDelphi",
+      "-O2",
+      "-WC",
+      "-dV3_NOGUI",
+      "-Fu{legacyRoot}",
+      "-Fu{legacyRoot}/Lazarus",
+      "-Fu{legacyRoot}/VCL",
+      "-Fu{legacyRoot}/Util",
+      "-Fu{toolchainRoot}/lcl/interfaces/nogui",
+      "-Fu{toolchainRoot}/lcl/units/x86_64-win64/nogui",
+      "-Fu{toolchainRoot}/lcl/units/x86_64-win64",
+      "-Fu{toolchainRoot}/components/freetype/lib/x86_64-win64",
+      "-Fu{toolchainRoot}/components/lazutils/lib/x86_64-win64",
+      "-Fu{toolchainRoot}/packager/units/x86_64-win64",
+      "-Fu{toolchainRoot}/fpc/3.2.2/units/x86_64-win64",
+      "-Fu{toolchainRoot}/fpc/3.2.2/units/x86_64-win64/*",
+      "-Fu{toolchainRoot}/fpc/3.2.2/units/x86_64-win64/rtl",
+      "-FD{toolchainRoot}/fpc/3.2.2/bin/x86_64-win64",
+      "-Fl{toolchainRoot}/fpc/3.2.2/lib/x86_64-win64",
+      "-FU{unitOutput}",
+      "-FE{executableOutput}",
+      "-o{executable}",
+      "{source}"
+    ]
+  },
+  "crossCheckInvocation": {
+    "widgetset": "win32",
+    "compiler": "{toolchainRoot}/fpc/3.2.2/bin/x86_64-win64/fpc.exe",
+    "arguments": [
+      "-n",
+      "-Sgic",
+      "-Xs",
+      "-B",
+      "-Twin64",
+      "-Px86_64",
+      "-MDelphi",
+      "-O2",
+      "-WC",
+      "-Fu{legacyRoot}",
+      "-Fu{legacyRoot}/Lazarus",
+      "-Fu{legacyRoot}/VCL",
+      "-Fu{legacyRoot}/Util",
+      "-Fu{toolchainRoot}/lcl/units/x86_64-win64/win32",
+      "-Fu{toolchainRoot}/lcl/units/x86_64-win64",
+      "-Fu{toolchainRoot}/components/freetype/lib/x86_64-win64",
+      "-Fu{toolchainRoot}/components/lazutils/lib/x86_64-win64",
+      "-Fu{toolchainRoot}/packager/units/x86_64-win64",
+      "-Fu{toolchainRoot}/fpc/3.2.2/units/x86_64-win64",
+      "-Fu{toolchainRoot}/fpc/3.2.2/units/x86_64-win64/*",
+      "-Fu{toolchainRoot}/fpc/3.2.2/units/x86_64-win64/rtl",
+      "-FD{toolchainRoot}/fpc/3.2.2/bin/x86_64-win64",
+      "-Fl{toolchainRoot}/fpc/3.2.2/lib/x86_64-win64",
+      "-FU{unitOutput}",
+      "-FE{executableOutput}",
+      "-o{executable}",
+      "{source}"
+    ]
+  },
+  "runtimeInvocation": {
+    "arguments": [
+      "{legacyRootWithTrailingSeparator}",
+      "{scenario}",
+      "LegacyOracleTarget",
+      "legacy-oracle-v3",
+      "tests/parity/legacy-oracle/v3/LegacyOracle.lpr",
+      "{sourceSha256}",
+      "tests/parity/legacy-oracle/v3/build-recipe.json",
+      "{buildRecipeSha256}",
+      "{caseDefinitionSha256}",
+      "{inputSha256}",
+      "{contentAddressedInputJson}",
+      "{absoluteSourceFile}",
+      "{absoluteBuildRecipeFile}",
+      "{absoluteCaseDefinitionFile}",
+      "{absoluteAdapterDescriptorFile}"
+    ],
+    "failClosedPreflight": [
+      "The C# candidate boundary verifies the content-addressed legacy reference definition and bundle, exact revision/tree metadata, all 49 compiled CE units, both linked resources, and DXCC.LIST before process launch.",
+      "The Pascal executable hashes the actual source, build recipe, and case definition files and compares their supplied hashes and identities with the parsed adapter descriptor before Application.Initialize.",
+      "The Pascal executable hashes legacyRoot/DXCC.LIST against the pinned value before Application.Initialize or any CE runtime object is constructed."
+    ]
+  },
+  "reproducibility": {
+    "compilerArgumentsAreExact": true,
+    "additionalUnitSearchPathsForbidden": true,
+    "cleanUnitOutputPerBuild": true,
+    "unitOutputAndExecutableOutputMustBeSameDirectory": true,
+    "outputLayoutReason": "The FPC win32 link is sensitive to output layout and unit search-path ordering. Use one fresh shared directory for -FU and -FE and the crossCheckInvocation arguments verbatim. In particular, do not add lcl/interfaces/win32 or any other unit path not listed by the recipe.",
+    "primaryExecutableSha256": "a8094a7e84cf44105cd85300f405371d940728c6515e6cfce210770b4d0879af",
+    "independentPrimaryRebuildSha256": "a8094a7e84cf44105cd85300f405371d940728c6515e6cfce210770b4d0879af",
+    "win32ExecutableSha256": "0e23f8d2d3378ac6cfbeef415cf3125d96afa84f3ead6ddc55c311c4f0a23553",
+    "independentWin32RebuildSha256": "0e23f8d2d3378ac6cfbeef415cf3125d96afa84f3ead6ddc55c311c4f0a23553"
+  },
+  "noguiHandlelessSupport": {
+    "reason": "Lazarus 4.6 nogui deliberately leaves LCL widget classes and monitor enumeration unregistered. The candidate registers only base handleless LCL widget classes and supplies one synthetic 96 DPI monitor. It never creates a control handle.",
+    "scope": "This shim enables TMainForm.CreateNew(nil) and construction of the real handleless controls required by the invoked CE methods. It does not implement CE policy, audio, DSP, event handling, dialogs, or resource streaming."
+  }
+}

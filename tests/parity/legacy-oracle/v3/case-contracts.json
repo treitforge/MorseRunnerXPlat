@@ -1,0 +1,375 @@
+{
+  "schemaVersion": 1,
+  "certificationStatus": "unactivated-noncertifying-ce-runtime-candidate",
+  "manifestActivation": false,
+  "externalDescriptorBuildSupported": false,
+  "scope": "Candidate evidence from actual pinned CE runtime methods and components. This v3 descriptor is deliberately absent from the active oracle registry and parity manifest. Its substitutions and safety proof require review before any activation.",
+  "adapter": "tests/parity/legacy-oracle/v3/adapter-descriptor.json",
+  "legacyRevision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "runtimeContract": {
+    "formConstruction": "TMainForm.CreateNew(nil) with only the handleless controls required by the invoked CE methods. The shim reproduces the reached CE state: Panel8 width 225, bandwidth items 100 through 600 in 50 Hz steps, SpinEdit1 range 10 through 120 with value 25, monitor HintStep 3, Activity 2, and Duration 30. FormCreate, resource streaming, dialogs, Application.Run, and physical audio-device start are not executed.",
+    "receiverContest": "General receiver scenarios instantiate TFailClosedContest, a TContest descendant whose required abstract contest-policy overrides throw and increment a counter if reached. TContest.GetAudio and inherited production methods remain unmodified.",
+    "remoteInput": "General receiver scenarios add TFixedStation to the real TContest.Stations collection. The case-bound remoteBfoHz and remoteAmplitude fields are exact synthetic controlled-receiver stimulus supplied directly to that test seam. They do not claim production TDxStation construction, value selection, propagation, or reachability. TFixedStation fixes only Pitch, Amplitude, sending state, and a constant envelope, inherits the actual TStation.GetBlock implementation, and throws if ProcessEvent is reached.",
+    "localInput": "Local sidetone scenarios call actual TContest.SendText with actual TMyStation and the global CE keyer. The local message is EEE so its 7168-sample envelope remains active for the complete observed window without invoking a terminal station event.",
+    "explicitCaseSettings": "The audio vectors deliberately set pitchHz=600 and initial bandwidthHz=500 as reachable case stimuli. They are not labeled as clean no-INI UI defaults. The pinned CE clean-start fallback selection is 450 Hz pitch and 550 Hz bandwidth.",
+    "sstInput": "SST scenarios instantiate actual TCWSST and TFarnsKeyer, call TMainForm.SetWpm, and send through Tst.SendText(Tst.Me, message).",
+    "stateIsolation": "Every baseline, controlled run, monitor-level run, and SST message recreates Tst, Keyer, gDXCCList, and MainForm and resets RandSeed to 12345.",
+    "bindingPreflight": "Before Application.Initialize, the Pascal executable hashes the actual source, build recipe, and case definition files, parses the adapter descriptor, requires every supplied identity and hash to match it, and hashes DXCC.LIST against the pinned runtime-data value.",
+    "materializedLegacyIdentity": "Before process launch, the C# candidate boundary content-validates the pinned legacy reference definition and bundle, revision and tree metadata, all 49 compiled CE units, both linked resources, and DXCC.LIST. It does not trust an adjacent checkout HEAD or cleanliness state.",
+    "safetyProof": "Every run verifies zero allocated control handles, zero abstract-stub calls, zero ProcessEvent-stub calls, disabled TAlSoundOut, closed TAlWavFile, and exact teardown of Tst, Keyer, gDXCCList, and MainForm.",
+    "timeline": "Receiver and local-audio cases retain the first five one-sample TContest.GetAudio startup requests. The first 512-sample request is absolute BlockNumber 6. Filter-swap markers use the actual absolute BlockNumber modulo 10 timeline."
+  },
+  "legacyEvidenceClassification": {
+    "completeCompiledClosure": "tests/parity/legacy-oracle/v3/build-recipe.json:sourceClosure",
+    "executedUnitDefinition": "A per-case executed unit contributes a runtime method, constructor, finalizer, initialization section, or concrete component type to that case. It does not imply that every method in that unit is reached.",
+    "compiledReferenceOnlyForEveryCase": [
+      "ACAG.pas",
+      "ALLJA.pas",
+      "ArrlDx.pas",
+      "Util/ArrlSections.pas",
+      "ArrlSS.pas",
+      "CallLst.pas",
+      "CqWpx.pas",
+      "CqWW.pas",
+      "VCL/Crc32.pas",
+      "CWOPS.pas",
+      "DualExchContest.pas",
+      "DxOper.pas",
+      "DxStn.pas",
+      "ExchFields.pas",
+      "IaruHf.pas",
+      "Util/Lexer.pas",
+      "NaQp.pas",
+      "QrmStn.pas",
+      "QrnStn.pas",
+      "Qsb.pas",
+      "VCL/QuickAvg.pas",
+      "ScoreDlg.pas",
+      "SerNRGen.pas",
+      "Util/SSExchParser.pas"
+    ],
+    "compiledReferenceOnlyResources": [
+      "Main.lfm",
+      "ScoreDlg.lfm"
+    ],
+    "disabledConditionalAudioPaths": "Ini.Qrm, Ini.Qrn, Ini.Qsb, and Ini.Flutter are false in all five v3 vectors. The corresponding CE QRM, QRN, QSB, and flutter effect branches are compiled and content-addressed but are not executed or evidenced by this candidate."
+  },
+  "cases": [
+    {
+      "id": "audio.rit-live-control",
+      "input": "tests/parity/legacy-oracle/v3/cases/audio.rit-live-control.json",
+      "inputSha256": "9db31f41c2952573745f3b1031181adbd4693ab31fc22760c12e974c52e4aab4",
+      "executedLegacyUnits": [
+        "Main.pas",
+        "Contest.pas",
+        "Station.pas",
+        "StnColl.pas",
+        "MyStn.pas",
+        "Ini.pas",
+        "DXCC.pas",
+        "Log.pas",
+        "RndFunc.pas",
+        "ArrlFd.pas",
+        "Util/CallsignUtils.pas",
+        "Lazarus/PerlRegEx.pas",
+        "VCL/MorseKey.pas",
+        "VCL/MorseTbl.pas",
+        "VCL/MovAvg.pas",
+        "VCL/Mixers.pas",
+        "VCL/VolumCtl.pas",
+        "VCL/VolmSldr.pas",
+        "VCL/PermHint.pas",
+        "VCL/WavFile.pas",
+        "VCL/SndOut.pas",
+        "VCL/SndCustm.pas",
+        "VCL/SndTypes.pas"
+      ],
+      "executedLegacyEntryPoints": [
+        "TMainForm.CreateNew",
+        "TMainForm.Panel8MouseDown",
+        "TMainForm.Shape2MouseDown",
+        "TMainForm.IncRit (private, reached through the public handlers)",
+        "TMainForm.SetBw",
+        "TMainForm.SetQsk",
+        "TMainForm.SetWpm",
+        "TContest.Create",
+        "TContest.GetAudio",
+        "TStation.GetBlock",
+        "TMovingAverage.Process",
+        "TModulator.Process",
+        "TVolumeControl.Process"
+      ],
+      "referenceOnlyLegacyLocations": [
+        "CWSST.pas",
+        "VCL/FarnsKeyer.pas",
+        "Main.pas:TMainForm.FormCreate",
+        "Main.pas:TMainForm.FormDestroy",
+        "Station.pas:TStation.ProcessEvent"
+      ],
+      "candidateSubstitutions": [
+        "TFixedStation supplies case-bound remoteBfoHz=360 and remoteAmplitude=18000 as deterministic synthetic receiver stimulus while inheriting TStation.GetBlock. These fields are not evidence of production TDxStation value selection or reachability.",
+        "TFailClosedContest supplies only the abstract contest-policy surface required to instantiate TContest.",
+        "The nogui widgetset bootstrap supplies handleless base widget registrations and one synthetic 1920x1080 96-DPI monitor."
+      ],
+      "outputContract": [
+        "Normal, reversed, HST, clamp, and reset transitions are produced by actual Panel8MouseDown and Shape2MouseDown calls. The v2-only fine dF plus or minus 2 rows are omitted because those values are not reachable through the selected CE handlers.",
+        "Baseline and controlled receiver graphs are independent and deterministically seeded. Each output row binds absolute block number, filter-swap state, baseline and controlled float hashes, equality, peak, and RMS.",
+        "The retained startup contract is five one-sample requests followed by the first 512-sample request at absolute block 6."
+      ]
+    },
+    {
+      "id": "audio.bandwidth-live-control",
+      "input": "tests/parity/legacy-oracle/v3/cases/audio.bandwidth-live-control.json",
+      "inputSha256": "b6028519fa817c16f96e76e8dd88fdc23154df1d68d143e7ab7d62b8076118e0",
+      "executedLegacyUnits": [
+        "Main.pas",
+        "Contest.pas",
+        "Station.pas",
+        "StnColl.pas",
+        "MyStn.pas",
+        "Ini.pas",
+        "DXCC.pas",
+        "Log.pas",
+        "RndFunc.pas",
+        "ArrlFd.pas",
+        "Util/CallsignUtils.pas",
+        "Lazarus/PerlRegEx.pas",
+        "VCL/MorseKey.pas",
+        "VCL/MorseTbl.pas",
+        "VCL/MovAvg.pas",
+        "VCL/Mixers.pas",
+        "VCL/VolumCtl.pas",
+        "VCL/VolmSldr.pas",
+        "VCL/PermHint.pas",
+        "VCL/WavFile.pas",
+        "VCL/SndOut.pas",
+        "VCL/SndCustm.pas",
+        "VCL/SndTypes.pas"
+      ],
+      "executedLegacyEntryPoints": [
+        "TMainForm.CreateNew",
+        "TMainForm.SetBw",
+        "TMainForm.SetQsk",
+        "TMainForm.SetWpm",
+        "TContest.Create",
+        "TContest.GetAudio",
+        "TStation.GetBlock",
+        "TMovingAverage.Process",
+        "TModulator.Process",
+        "TVolumeControl.Process"
+      ],
+      "referenceOnlyLegacyLocations": [
+        "CWSST.pas",
+        "VCL/FarnsKeyer.pas",
+        "Main.pas:TMainForm.FormCreate",
+        "Main.pas:TMainForm.FormDestroy",
+        "Station.pas:TStation.ProcessEvent"
+      ],
+      "candidateSubstitutions": [
+        "TFixedStation supplies case-bound remoteBfoHz=360 and remoteAmplitude=18000 as deterministic synthetic receiver stimulus while inheriting TStation.GetBlock. These fields are not evidence of production TDxStation value selection or reachability.",
+        "TFailClosedContest supplies only the abstract contest-policy surface required to instantiate TContest.",
+        "The nogui widgetset bootstrap supplies handleless base widget registrations and one synthetic 1920x1080 96-DPI monitor."
+      ],
+      "outputContract": [
+        "All bandwidth changes call actual TMainForm.SetBw at the requested full-block boundary.",
+        "Baseline and controlled receiver graphs are independent and deterministically seeded. Each output row binds absolute block number, filter-swap state, baseline and controlled float hashes, equality, peak, and RMS.",
+        "The retained startup contract is five one-sample requests followed by the first 512-sample request at absolute block 6."
+      ]
+    },
+    {
+      "id": "audio.operator-sidetone-pipeline",
+      "input": "tests/parity/legacy-oracle/v3/cases/audio.operator-sidetone-pipeline.json",
+      "inputSha256": "eb6f97fc3bf2c5a9bd6e8b18164eb2fd26576e8539d998ba87d3c0ee44cb297e",
+      "executedLegacyUnits": [
+        "Main.pas",
+        "Contest.pas",
+        "Station.pas",
+        "StnColl.pas",
+        "MyStn.pas",
+        "Ini.pas",
+        "DXCC.pas",
+        "Log.pas",
+        "RndFunc.pas",
+        "ArrlFd.pas",
+        "Util/CallsignUtils.pas",
+        "Lazarus/PerlRegEx.pas",
+        "VCL/MorseKey.pas",
+        "VCL/MorseTbl.pas",
+        "VCL/MovAvg.pas",
+        "VCL/Mixers.pas",
+        "VCL/VolumCtl.pas",
+        "VCL/VolmSldr.pas",
+        "VCL/PermHint.pas",
+        "VCL/WavFile.pas",
+        "VCL/SndOut.pas",
+        "VCL/SndCustm.pas",
+        "VCL/SndTypes.pas"
+      ],
+      "executedLegacyEntryPoints": [
+        "TMainForm.CreateNew",
+        "TMainForm.SetBw",
+        "TMainForm.SetQsk",
+        "TMainForm.SetWpm",
+        "TContest.Create",
+        "TContest.SendText",
+        "TContest.GetAudio",
+        "TMyStation.GetBlock",
+        "TStation.GetBlock",
+        "TKeyer.Encode",
+        "TKeyer.Key",
+        "TVolumeSlider.SetDb",
+        "TMovingAverage.Process",
+        "TModulator.Process",
+        "TVolumeControl.Process"
+      ],
+      "referenceOnlyLegacyLocations": [
+        "CWSST.pas",
+        "VCL/FarnsKeyer.pas",
+        "Main.pas:TMainForm.FormCreate",
+        "Main.pas:TMainForm.FormDestroy",
+        "Station.pas:TStation.ProcessEvent"
+      ],
+      "candidateSubstitutions": [
+        "TFixedStation supplies case-bound remoteBfoHz=180 and remoteAmplitude=18000 as deterministic synthetic receiver stimulus while inheriting TStation.GetBlock. These fields are not evidence of production TDxStation value selection or reachability.",
+        "TFailClosedContest supplies only the abstract contest-policy surface required to instantiate TContest.",
+        "The nogui widgetset bootstrap supplies handleless base widget registrations and one synthetic 1920x1080 96-DPI monitor."
+      ],
+      "outputContract": [
+        "QSK is set false through actual TMainForm.SetQsk.",
+        "Each monitor-level graph sends EEE through Tst.SendText(Tst.Me, text), records actual TVolumeSlider state, retains the five one-sample startup requests, and observes ten full TContest.GetAudio blocks.",
+        "The graph is recreated and RandSeed reset for each monitor level."
+      ]
+    },
+    {
+      "id": "audio.qsk-receiver-ducking",
+      "input": "tests/parity/legacy-oracle/v3/cases/audio.qsk-receiver-ducking.json",
+      "inputSha256": "15bc1e47c7d5225aef5abda10c303a4a09587c139affb9b16a4ad5c773cb0116",
+      "executedLegacyUnits": [
+        "Main.pas",
+        "Contest.pas",
+        "Station.pas",
+        "StnColl.pas",
+        "MyStn.pas",
+        "Ini.pas",
+        "DXCC.pas",
+        "Log.pas",
+        "RndFunc.pas",
+        "ArrlFd.pas",
+        "Util/CallsignUtils.pas",
+        "Lazarus/PerlRegEx.pas",
+        "VCL/MorseKey.pas",
+        "VCL/MorseTbl.pas",
+        "VCL/MovAvg.pas",
+        "VCL/Mixers.pas",
+        "VCL/VolumCtl.pas",
+        "VCL/VolmSldr.pas",
+        "VCL/PermHint.pas",
+        "VCL/WavFile.pas",
+        "VCL/SndOut.pas",
+        "VCL/SndCustm.pas",
+        "VCL/SndTypes.pas"
+      ],
+      "executedLegacyEntryPoints": [
+        "TMainForm.CreateNew",
+        "TMainForm.SetBw",
+        "TMainForm.SetQsk",
+        "TMainForm.SetWpm",
+        "TContest.Create",
+        "TContest.SendText",
+        "TContest.GetAudio",
+        "TMyStation.GetBlock",
+        "TStation.GetBlock",
+        "TKeyer.Encode",
+        "TKeyer.Key",
+        "TVolumeSlider.SetDb",
+        "TMovingAverage.Process",
+        "TModulator.Process",
+        "TVolumeControl.Process"
+      ],
+      "referenceOnlyLegacyLocations": [
+        "CWSST.pas",
+        "VCL/FarnsKeyer.pas",
+        "Main.pas:TMainForm.FormCreate",
+        "Main.pas:TMainForm.FormDestroy",
+        "Station.pas:TStation.ProcessEvent"
+      ],
+      "candidateSubstitutions": [
+        "TFixedStation supplies case-bound remoteBfoHz=180 and remoteAmplitude=18000 as deterministic synthetic receiver stimulus while inheriting TStation.GetBlock. These fields are not evidence of production TDxStation value selection or reachability.",
+        "TFailClosedContest supplies only the abstract contest-policy surface required to instantiate TContest.",
+        "The nogui widgetset bootstrap supplies handleless base widget registrations and one synthetic 1920x1080 96-DPI monitor."
+      ],
+      "outputContract": [
+        "QSK is set true through actual TMainForm.SetQsk.",
+        "Each monitor-level graph sends EEE through Tst.SendText(Tst.Me, text), records actual TVolumeSlider state, retains the five one-sample startup requests, and observes ten full TContest.GetAudio blocks.",
+        "The graph is recreated and RandSeed reset for each monitor level so QSK receiver retention is directly comparable with the QSK-off case."
+      ]
+    },
+    {
+      "id": "audio.sst-farnsworth-timing",
+      "input": "tests/parity/legacy-oracle/v3/cases/audio.sst-farnsworth-timing.json",
+      "inputSha256": "ac0978f34e8056a72e2c113649c023a5561648a94b6eb8604e3625620e02bfab",
+      "executedLegacyUnits": [
+        "Main.pas",
+        "Contest.pas",
+        "Station.pas",
+        "StnColl.pas",
+        "MyStn.pas",
+        "CWSST.pas",
+        "Ini.pas",
+        "DXCC.pas",
+        "Log.pas",
+        "RndFunc.pas",
+        "ArrlFd.pas",
+        "Util/CallsignUtils.pas",
+        "Lazarus/PerlRegEx.pas",
+        "VCL/MorseKey.pas",
+        "VCL/FarnsKeyer.pas",
+        "VCL/MorseTbl.pas",
+        "VCL/MovAvg.pas",
+        "VCL/Mixers.pas",
+        "VCL/VolumCtl.pas",
+        "VCL/VolmSldr.pas",
+        "VCL/PermHint.pas",
+        "VCL/WavFile.pas",
+        "VCL/SndOut.pas",
+        "VCL/SndCustm.pas",
+        "VCL/SndTypes.pas"
+      ],
+      "executedLegacyEntryPoints": [
+        "TMainForm.CreateNew",
+        "TMainForm.SetBw",
+        "TMainForm.SetQsk",
+        "TMainForm.SetWpm",
+        "TContest.Create",
+        "TCWSST.Create",
+        "TCWSST.SendText",
+        "TContest.SendText",
+        "TMyStation.StartSending",
+        "TFarnsKeyer.Encode",
+        "TFarnsKeyer.Key"
+      ],
+      "referenceOnlyLegacyLocations": [
+        "Contest.pas:TContest.GetAudio",
+        "Station.pas:TStation.GetBlock",
+        "Main.pas:TMainForm.FormCreate",
+        "Main.pas:TMainForm.FormDestroy"
+      ],
+      "candidateSubstitutions": [
+        "The nogui widgetset bootstrap supplies handleless base widget registrations and one synthetic 1920x1080 96-DPI monitor.",
+        "No contest or station subclass is substituted in this case. The runtime contest is TCWSST and the sending station is TMyStation."
+      ],
+      "outputContract": [
+        "Each message recreates the actual TCWSST, TMyStation, and TFarnsKeyer graph and resets RandSeed.",
+        "The output records runtime class selection, sending and character WPM, CE Morse encoding, true envelope length, block-padded envelope length, threshold transitions, and SHA-256 over every padded IEEE-754 Single sample.",
+        "This case validates the live SST selection and send path. It deliberately does not call TContest.GetAudio."
+      ]
+    }
+  ],
+  "activationRequirements": [
+    "Review and explicitly accept or replace the deterministic TFixedStation input seam.",
+    "Review and explicitly accept or replace the nogui handleless widget bootstrap.",
+    "Add the descriptor through the repository's registry and manifest workflow only after review.",
+    "Retain mutation coverage proving altered DXCC.LIST, source/build/case hashes, descriptor bindings, reference identity metadata, and materialized CE source files fail before CE behavior is observed.",
+    "Run the certifying legacy build integration and identical XPlat vectors after activation. This candidate capture must not be presented as certifying evidence."
+  ]
+}

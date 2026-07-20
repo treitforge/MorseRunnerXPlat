@@ -1,0 +1,16 @@
+{
+  "adapterId": "LegacyOracleTarget",
+  "versionId": "legacy-oracle-v3",
+  "source": "tests/parity/legacy-oracle/v3/LegacyOracle.lpr",
+  "sourceSha256": "7b8f02b4a6012986e025272aeb668d1f022c4d8c3ccc92fd285052c431df93a6",
+  "buildRecipe": "tests/parity/legacy-oracle/v3/build-recipe.json",
+  "buildRecipeSha256": "16965b687a5352c542493add9efc3be86ffd2c133ba9b671e3c25a762f99cce3",
+  "caseDefinition": "tests/parity/legacy-oracle/v3/case-contracts.json",
+  "caseDefinitionSha256": "c74634b9c9fd9dc08dcded6a8df49d566798cb37fe0b3d89ee6ade0757239a8e",
+  "legacyReferenceDefinition": "tests/parity/legacy-reference.json",
+  "legacyReferenceDefinitionSha256": "663adf3bf230161abb923cf8b6651d394af1b99eab05efeafb696cb29992da23",
+  "legacyBundle": "tests/parity/legacy-reference.bundle",
+  "legacyBundleSha256": "1d9fcafb3adb0227aba360bc1884b5c32d2c1e8210448e646a4104f142b07772",
+  "legacyRevision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "legacyTree": "a44212bfee5b1eebfd0129459d476736775adf36"
+}

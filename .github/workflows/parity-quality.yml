@@ -8,14 +8,34 @@ on:
     paths:
       - "src/**"
       - "tests/parity/**"
+      - "tests/MorseRunner.LegacyParity.Tests/**"
+      - "tools/parity/**"
       - "docs/architecture/engineering-specification.md"
       - ".github/workflows/parity-quality.yml"
+      - "global.json"
+      - "Directory.*"
+      - "MorseRunnerXPlat.slnx"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".python-version"
+      - ".gitattributes"
+      - ".gitignore"
   pull_request:
     paths:
       - "src/**"
       - "tests/parity/**"
+      - "tests/MorseRunner.LegacyParity.Tests/**"
+      - "tools/parity/**"
       - "docs/architecture/engineering-specification.md"
       - ".github/workflows/parity-quality.yml"
+      - "global.json"
+      - "Directory.*"
+      - "MorseRunnerXPlat.slnx"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".python-version"
+      - ".gitattributes"
+      - ".gitignore"
 
 concurrency:
   group: parity-quality-${{ github.ref }}
@@ -32,6 +52,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Checkout public legacy base
+        uses: actions/checkout@v5
+        with:
+          repository: w7sst/MorseRunner
+          ref: 2dd6f5cfd8a96e00f472d189adae594823ae5b61
+          path: artifacts/legacy-source/MorseRunner
+          persist-credentials: false
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v5.4.0
+        with:
+          global-json-file: global.json
 
       - name: Install uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -40,7 +75,19 @@ jobs:
           cache-dependency-glob: uv.lock
 
       - name: Synchronize Python tooling
-        run: uv sync --locked
+        run: |
+          uv sync --locked
+          dotnet restore MorseRunnerXPlat.slnx
+
+      - name: Cache pinned Lazarus toolchain
+        uses: actions/cache@v4
+        with:
+          path: C:\lazarus
+          key: lazarus-4.6-fpc-3.2.2-win64-3eb50f2aac396bac
+
+      - name: Verify pinned legacy toolchain
+        shell: pwsh
+        run: .\tests\parity\Install-LegacyOracleToolchain.ps1
 
       - name: Enforce test-first parity scaffold
         id: parity
@@ -66,12 +113,78 @@ jobs:
             Write-Host 'Repository remains in pre-implementation Phase 0. No production code was found.'
           }
 
-      - name: Audit feature completeness
+      - name: Run live parity suite
         if: steps.parity.outputs.ready == 'true'
         shell: pwsh
-        run: .\tests\parity\Test-ParityCompleteness.ps1
+        run: |
+          $eventName = '${{ github.event_name }}'
+          if ($eventName -eq 'pull_request') {
+            $env:MORSE_RUNNER_PARITY_HISTORY_KIND = 'pull-request'
+            $env:MORSE_RUNNER_PARITY_BASE_REVISION = `
+              '${{ github.event.pull_request.base.sha }}'
+          }
+          elseif ($eventName -eq 'push') {
+            $env:MORSE_RUNNER_PARITY_HISTORY_KIND = 'main-push'
+            $env:MORSE_RUNNER_PARITY_BASE_REVISION = `
+              '${{ github.event.before }}'
+          }
+          else {
+            if ('${{ github.ref }}' -ne 'refs/heads/main') {
+              throw 'Manual certified parity runs are allowed only on main.'
+            }
+            $env:MORSE_RUNNER_PARITY_HISTORY_KIND = 'manual-main'
+            Remove-Item Env:MORSE_RUNNER_PARITY_BASE_REVISION `
+              -ErrorAction SilentlyContinue
+          }
+          try {
+            .\tests\parity\Run-Parity.ps1 `
+              -Target Both `
+              -Mode PullRequest `
+              -LegacyRoot '${{ github.workspace }}\artifacts\legacy-source\MorseRunner'
+          }
+          finally {
+            Remove-Item Env:MORSE_RUNNER_PARITY_HISTORY_KIND `
+              -ErrorAction SilentlyContinue
+            Remove-Item Env:MORSE_RUNNER_PARITY_BASE_REVISION `
+              -ErrorAction SilentlyContinue
+          }
 
-      - name: Run pull-request parity suite
-        if: steps.parity.outputs.ready == 'true'
+      - name: Stage complete live parity artifact closure
+        id: live-parity-artifacts
+        if: success()
         shell: pwsh
-        run: .\tests\parity\Run-Parity.ps1 -Target Both -Mode PullRequest
+        run: |
+          $registries = @(
+            Get-ChildItem `
+              -LiteralPath artifacts/legacy-oracle/registries `
+              -Filter '*.json' -File)
+          if ($registries.Count -ne 1) {
+            throw (
+              'The live Both gate must produce exactly one legacy ' +
+              'oracle registry.')
+          }
+          $registry = $registries[0]
+          $registryHash = (
+            Get-FileHash -LiteralPath $registry.FullName `
+              -Algorithm SHA256).Hash.ToLowerInvariant()
+          $package = .\tests\parity\New-ParityBothArtifactPackage.ps1 `
+            -PackageRoot `
+              'artifacts/parity-package-staging/live-both' `
+            -RegistryPath $registry.FullName `
+            -RegistrySha256 $registryHash `
+            -PassThru
+          "package_root=$($package.packageRoot)" >> $env:GITHUB_OUTPUT
+          "package_import_root=artifacts/parity-imports/$($package.indexSha256)" >> $env:GITHUB_OUTPUT
+          "package_index=artifacts/parity-imports/$($package.indexSha256)/artifacts/parity-full-suite/windows-both-package-index/$($package.indexSha256).json" >> $env:GITHUB_OUTPUT
+          "package_index_sha256=$($package.indexSha256)" >> $env:GITHUB_OUTPUT
+
+      - name: Upload live parity provenance and results
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: >-
+            live-parity-${{ github.run_id }}-${{ github.run_attempt }}-${{
+            steps.live-parity-artifacts.outputs.package_index_sha256 }}
+          path: ${{ steps.live-parity-artifacts.outputs.package_root }}
+          if-no-files-found: error
+          retention-days: 30

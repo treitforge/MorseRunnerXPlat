@@ -1,32 +1,46 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 3,
+  "canonicalJson": {
+    "version": 1,
+    "vectors": "tests/parity/canonical-json-vectors.json",
+    "vectorsSha256": "4ba11483bf880f673218b2e284bbae1cff8e91f8e36e5a5cf42f810c10ae646f"
+  },
   "inventoryStatus": "complete",
   "reference": {
     "repository": "https://github.com/w7sst/MorseRunner.git",
-    "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e"
+    "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+    "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+    "bundle": "tests/parity/legacy-reference.bundle",
+    "bundleSha256": "1d9fcafb3adb0227aba360bc1884b5c32d2c1e8210448e646a4104f142b07772",
+    "definition": "tests/parity/legacy-reference.json",
+    "definitionSha256": "663adf3bf230161abb923cf8b6651d394af1b99eab05efeafb696cb29992da23"
   },
   "legacySurfaceInventory": "tests/parity/legacy-surface-inventory.json",
   "auditedSurfaces": [
-    "Ini.pas:TSimContest",
-    "Ini.pas:TRunMode",
-    "Ini.pas:ContestDefinitions",
-    "Ini.pas:persisted settings access",
-    "Main.dfm:form objects and menu items",
-    "Main.dfm:event bindings",
-    "Main.dfm:declared shortcuts",
-    "Main.pas:bound handlers and keyboard branches",
-    "Log.pas:TLogError and TQso",
-    "Log.pas:logging, correction, scoring, rate, and result routines",
-    "Contest, Station, operator, and station-collection enums",
-    "Contest, Station, operator, and station-collection routines and state transitions",
-    "VCL portable DSP, keying, mixing, averaging, AGC, and sound data surfaces",
-    "VCL Windows sound output, buffering, and WAV adapter surfaces",
-    "VCL-only hint and volume control surfaces",
-    "Contest-specific rule and exchange implementations",
-    "Call list, DXCC, serial number, exchange field, lexer, and Sweepstakes parser surfaces",
-    "QSB and seeded random effect surfaces",
-    "Score dialog surfaces",
-    "Bundled and generated data references plus file and failure operations"
+    "catalog.contest-enumeration",
+    "session.run-mode-enumeration",
+    "catalog.contest-definitions",
+    "configuration.persisted-settings",
+    "ux.main-form-objects",
+    "ux.main-menu-commands",
+    "ux.main-form-events",
+    "ux.keyboard-workflows",
+    "logging.qso-model",
+    "logging.scoring-rate-and-results",
+    "simulation.state-models",
+    "simulation.runtime-routines",
+    "audio-dsp.legacy-processing",
+    "audio.legacy-adapters",
+    "ux.legacy-vcl-components",
+    "contest.legacy-implementations",
+    "data.legacy-parsers",
+    "simulation.legacy-effects",
+    "ux.score-dialog",
+    "data.files-and-operational-paths",
+    "ux.legacy-form-definitions",
+    "build.legacy-project-metadata",
+    "quality.legacy-tests-and-smoke",
+    "lifecycle.legacy-unit-hooks"
   ],
   "pendingAuditSurfaces": [],
   "items": [
@@ -41,46 +55,13 @@
       "legacySurfaceSelectors": [
         "legacy.ini.contest.*"
       ],
-      "preconditions": [
-        "The pinned legacy Ini.pas source is available or its pinned observation fixture is loaded."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacyContestCatalogTarget",
-        "XPlatCatalogTarget"
-      ],
-      "assertions": {
-        "orderedValues": [
-          "scWpx",
-          "scCwt",
-          "scFieldDay",
-          "scNaQp",
-          "scHst",
-          "scCQWW",
-          "scArrlDx",
-          "scSst",
-          "scAllJa",
-          "scAcag",
-          "scIaruHf",
-          "scArrlSS"
-        ],
-        "numericTolerance": null
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/catalog-contest-enumeration.json",
-      "evidence": "tests/parity/evidence/catalog-contest-enumeration.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
     },
     {
       "id": "session.run-mode-enumeration",
@@ -93,39 +74,13 @@
       "legacySurfaceSelectors": [
         "legacy.ini.run-mode.*"
       ],
-      "preconditions": [
-        "The legacy run-mode inventory has been extracted from the pinned Ini.pas source."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacyInventoryTarget",
-        "XPlatCatalogTarget"
-      ],
-      "assertions": {
-        "orderedValues": [
-          "rmStop",
-          "rmPileup",
-          "rmSingle",
-          "rmWpx",
-          "rmHst"
-        ],
-        "numericTolerance": null
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/session-run-mode-enumeration.json",
-      "evidence": "tests/parity/evidence/session-run-mode-enumeration.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
     },
     {
       "id": "catalog.contest-definitions",
@@ -138,46 +93,13 @@
       "legacySurfaceSelectors": [
         "legacy.ini.contest-definition.*"
       ],
-      "preconditions": [
-        "The legacy contest-definition inventory has been extracted from the pinned Ini.pas source."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacyInventoryTarget",
-        "XPlatCatalogTarget"
-      ],
-      "assertions": {
-        "orderedValues": [
-          "scWpx|CqWpx|CQ WPX|etRST|etSerialNr|True|5NN #",
-          "scCwt|Cwt|CWOPS CWT|etOpName|etGenericField|True|DAVID 123",
-          "scFieldDay|ArrlFd|ARRL Field Day|etFdClass|etArrlSection|True|3A OR",
-          "scNaQp|NAQP|NCJ NAQP|etOpName|etNaQpExch2|True|ALEX ON",
-          "scHst|HST|HST (High Speed Test)|etRST|etSerialNr|False|5NN #",
-          "scCQWW|CQWW|CQ WW|etRST|etCQZone|True|5NN 3",
-          "scARRLDX|ArrlDx|ARRL DX|etRST|etStateProv|True|5NN ON",
-          "scSst|Sst|K1USN Slow Speed Test|etOpName|etGenericField|True|BRUCE MA",
-          "scAllJa|AllJa|JARL ALL JA|etRST|etJaPref|True|5NN 10H",
-          "scAcag|Acag|JARL ACAG|etRST|etJaCity|True|5NN 1002H",
-          "scIaruHf|IaruHf|IARU HF|etRST|etGenericField|True|5NN 6",
-          "scArrlSS|SSCW|ARRL Sweepstakes|etSSNrPrecedence|etSSCheckSection|True|A 72 OR"
-        ],
-        "numericTolerance": null
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/catalog-contest-definitions.json",
-      "evidence": "tests/parity/evidence/catalog-contest-definitions.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
     },
     {
       "id": "configuration.persisted-settings",
@@ -190,33 +112,13 @@
       "legacySurfaceSelectors": [
         "legacy.ini.setting.*"
       ],
-      "preconditions": [
-        "The legacy persisted-setting inventory has been extracted from the pinned Ini.pas source."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacySurfaceContractTarget",
-        "XPlatSettingsContractTarget"
-      ],
-      "assertions": {
-        "fixtureComparison": "exact",
-        "observedSurfaceCount": 60
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/configuration-persisted-settings.json",
-      "evidence": "tests/parity/evidence/configuration-persisted-settings.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
     },
     {
       "id": "ux.main-form-objects",
@@ -229,33 +131,13 @@
       "legacySurfaceSelectors": [
         "legacy.main.object.*"
       ],
-      "preconditions": [
-        "The main-form object inventory has been extracted from the pinned Main.dfm source."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacySurfaceContractTarget",
-        "XPlatUxContractTarget"
-      ],
-      "assertions": {
-        "fixtureComparison": "exact",
-        "observedSurfaceCount": 79
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/ux-main-form-objects.json",
-      "evidence": "tests/parity/evidence/ux-main-form-objects.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
     },
     {
       "id": "ux.main-menu-commands",
@@ -268,33 +150,13 @@
       "legacySurfaceSelectors": [
         "legacy.main.menu-item.*"
       ],
-      "preconditions": [
-        "The main-menu inventory has been extracted from the pinned Main.dfm source."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacySurfaceContractTarget",
-        "XPlatUxContractTarget"
-      ],
-      "assertions": {
-        "fixtureComparison": "exact",
-        "observedSurfaceCount": 129
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/ux-main-menu-commands.json",
-      "evidence": "tests/parity/evidence/ux-main-menu-commands.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
     },
     {
       "id": "ux.main-form-events",
@@ -309,33 +171,13 @@
         "legacy.main.event-binding.*",
         "legacy.main.handler.*"
       ],
-      "preconditions": [
-        "The event-binding and handler inventories have been extracted from the pinned Main.dfm and Main.pas sources."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacySurfaceContractTarget",
-        "XPlatUxContractTarget"
-      ],
-      "assertions": {
-        "fixtureComparison": "exact",
-        "observedSurfaceCount": 229
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/ux-main-form-events.json",
-      "evidence": "tests/parity/evidence/ux-main-form-events.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
     },
     {
       "id": "ux.keyboard-workflows",
@@ -349,33 +191,13 @@
       "legacySurfaceSelectors": [
         "legacy.main.shortcut.*"
       ],
-      "preconditions": [
-        "The declared-shortcut and keyboard-branch inventories have been extracted from the pinned Main.dfm and Main.pas sources."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacySurfaceContractTarget",
-        "XPlatUxContractTarget"
-      ],
-      "assertions": {
-        "fixtureComparison": "exact",
-        "observedSurfaceCount": 53
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/ux-keyboard-workflows.json",
-      "evidence": "tests/parity/evidence/ux-keyboard-workflows.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
     },
     {
       "id": "logging.qso-model",
@@ -389,33 +211,13 @@
         "legacy.log.error.*",
         "legacy.log.qso-field.*"
       ],
-      "preconditions": [
-        "The QSO record and error inventories have been extracted from the pinned Log.pas source."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacySurfaceContractTarget",
-        "XPlatLoggingTarget"
-      ],
-      "assertions": {
-        "fixtureComparison": "exact",
-        "observedSurfaceCount": 47
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/logging-qso-model.json",
-      "evidence": "tests/parity/evidence/logging-qso-model.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
     },
     {
       "id": "logging.scoring-rate-and-results",
@@ -429,33 +231,13 @@
         "legacy.log.routine.*",
         "legacy.log.score-column.*"
       ],
-      "preconditions": [
-        "The logging routine and score-column inventories have been extracted from the pinned Log.pas source."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacyOracleTarget",
-        "XPlatLoggingTarget"
-      ],
-      "assertions": {
-        "fixtureComparison": "exact",
-        "observedValueCount": 17
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/logging-scoring-rate-and-results.json",
-      "evidence": "tests/parity/evidence/logging-scoring-rate-and-results.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
     },
     {
       "id": "simulation.state-models",
@@ -476,33 +258,13 @@
         "legacy.sim.enum.*",
         "legacy.sim.transition.*"
       ],
-      "preconditions": [
-        "Simulation enums and explicit state assignments have been extracted from the pinned legacy simulation units."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacyOracleTarget",
-        "XPlatSimulationTarget"
-      ],
-      "assertions": {
-        "fixtureComparison": "exact",
-        "observedValueCount": 10
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/simulation-state-models.json",
-      "evidence": "tests/parity/evidence/simulation-state-models.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
     },
     {
       "id": "simulation.runtime-routines",
@@ -522,33 +284,13 @@
       "legacySurfaceSelectors": [
         "legacy.sim.routine.*"
       ],
-      "preconditions": [
-        "Simulation routine inventories have been extracted from the pinned legacy units."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacyOracleTarget",
-        "XPlatSimulationTarget"
-      ],
-      "assertions": {
-        "fixtureComparison": "exact",
-        "observedValueCount": 13
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/simulation-runtime-routines.json",
-      "evidence": "tests/parity/evidence/simulation-runtime-routines.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
     },
     {
       "id": "audio-dsp.legacy-processing",
@@ -569,34 +311,13 @@
       "legacySurfaceSelectors": [
         "legacy.vcl.dsp.*"
       ],
-      "preconditions": [
-        "Portable VCL DSP declarations and production routines have been extracted from the pinned legacy units."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacyOracleTarget",
-        "XPlatDspTarget"
-      ],
-      "assertions": {
-        "fixtureComparison": "exact",
-        "observedValueCount": 31,
-        "numericTolerance": 1e-06
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/audio-dsp-legacy-processing.json",
-      "evidence": "tests/parity/evidence/audio-dsp-legacy-processing.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
     },
     {
       "id": "audio.legacy-adapters",
@@ -612,34 +333,13 @@
       "legacySurfaceSelectors": [
         "legacy.vcl.adapter.*"
       ],
-      "preconditions": [
-        "Windows-specific VCL audio adapter declarations and production routines have been extracted without treating their APIs as the target architecture."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacyOracleTarget",
-        "XPlatAudioAdapterTarget"
-      ],
-      "assertions": {
-        "fixtureComparison": "exact",
-        "observedValueCount": 19,
-        "numericTolerance": 1e-06
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/audio-legacy-adapters.json",
-      "evidence": "tests/parity/evidence/audio-legacy-adapters.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
     },
     {
       "id": "ux.legacy-vcl-components",
@@ -653,33 +353,13 @@
       "legacySurfaceSelectors": [
         "legacy.vcl.ui.*"
       ],
-      "preconditions": [
-        "VCL-only control declarations and production routines have been extracted from the pinned legacy units."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacySurfaceContractTarget",
-        "XPlatUxContractTarget"
-      ],
-      "assertions": {
-        "fixtureComparison": "exact",
-        "observedSurfaceCount": 36
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/ux-legacy-vcl-components.json",
-      "evidence": "tests/parity/evidence/ux-legacy-vcl-components.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
     },
     {
       "id": "contest.legacy-implementations",
@@ -703,39 +383,21 @@
       "legacySurfaceSelectors": [
         "legacy.support.contest.*"
       ],
-      "preconditions": [
-        "Contest-specific declarations and production routines have been extracted from the pinned legacy units."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacyOracleTarget",
-        "XPlatContestRulesTarget"
-      ],
-      "assertions": {
-        "fixtureComparison": "exact",
-        "observedValueCount": 72
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/contest-legacy-implementations.json",
-      "evidence": "tests/parity/evidence/contest-legacy-implementations.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "partial",
+      "caseIds": [
+        "contest.exchange-shapes"
+      ]
     },
     {
       "id": "data.legacy-parsers",
       "category": "data-and-parsing",
       "feature": "Legacy call, prefix, exchange, and serial data parsers",
-      "behavior": "Call-list lookup, DXCC lookup, exchange fields, serial generation, callsign utilities, lexical analysis, and Sweepstakes exchange parsing preserve their legacy data model and failure behavior.",
+      "behavior": "Call-list lookup, DXCC lookup, exchange fields, serial generation, callsign utilities, lexical analysis, Sweepstakes exchange parsing, contest call-history loading, and every explicit parser path preserve their legacy data model and failure behavior.",
       "legacySources": [
         "CallLst.pas",
         "DXCC.pas",
@@ -744,38 +406,31 @@
         "Util/ArrlSections.pas",
         "Util/CallsignUtils.pas",
         "Util/Lexer.pas",
-        "Util/SSExchParser.pas"
+        "Util/SSExchParser.pas",
+        "ACAG.pas",
+        "ALLJA.pas",
+        "ArrlDx.pas",
+        "ArrlFd.pas",
+        "ArrlSS.pas",
+        "CqWW.pas",
+        "CWOPS.pas",
+        "CWSST.pas",
+        "IaruHf.pas",
+        "Main.pas",
+        "NaQp.pas",
+        "Test/SSLexerTest.pas"
       ],
       "legacySurfaceSelectors": [
-        "legacy.support.data.*"
+        "legacy.support.data.*",
+        "legacy.data.parser.*"
       ],
-      "preconditions": [
-        "Data and parser declarations, enum members, properties, and production routines have been extracted from the pinned legacy units."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacyOracleTarget",
-        "XPlatDataParserTarget"
-      ],
-      "assertions": {
-        "fixtureComparison": "exact",
-        "observedValueCount": 46
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/data-legacy-parsers.json",
-      "evidence": "tests/parity/evidence/data-legacy-parsers.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
     },
     {
       "id": "simulation.legacy-effects",
@@ -789,34 +444,13 @@
       "legacySurfaceSelectors": [
         "legacy.support.effect.*"
       ],
-      "preconditions": [
-        "QSB and random-effect declarations and production routines have been extracted from the pinned legacy units."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacyOracleTarget",
-        "XPlatLegacyEffectsTarget"
-      ],
-      "assertions": {
-        "fixtureComparison": "exact",
-        "observedValueCount": 59,
-        "numericTolerance": 1e-06
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/simulation-legacy-effects.json",
-      "evidence": "tests/parity/evidence/simulation-legacy-effects.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
     },
     {
       "id": "ux.score-dialog",
@@ -829,65 +463,358 @@
       "legacySurfaceSelectors": [
         "legacy.support.ui.*"
       ],
-      "preconditions": [
-        "Score dialog declarations and production routines have been extracted from the pinned legacy unit."
-      ],
-      "input": {
-        "seed": null,
-        "commands": []
-      },
-      "targetAdapters": [
-        "LegacySurfaceContractTarget",
-        "XPlatUxContractTarget"
-      ],
-      "assertions": {
-        "fixtureComparison": "exact",
-        "observedSurfaceCount": 5
-      },
       "platforms": [
         "windows",
         "linux",
         "macos"
       ],
-      "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/ux-score-dialog.json",
-      "evidence": "tests/parity/evidence/ux-score-dialog.baseline.json",
-      "firstGreenCommit": null
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
     },
     {
       "id": "data.files-and-operational-paths",
       "category": "data-and-failure-paths",
       "feature": "Legacy data files, recording, export, and failure paths",
-      "behavior": "Every referenced bundled or generated data file and every explicit file, persistence, export, dialog, and exception operation remains represented by acceptance coverage.",
+      "behavior": "Every bundled application or data asset, distribution-file contract, command-line and external integration, generated data file, recording and export path, and explicit file, persistence, dialog, and exception operation remains available with equivalent success and failure behavior.",
       "legacySources": [
         "Ini.pas",
         "Main.pas",
         "Log.pas",
         "Station.pas",
         "VCL",
-        "contest and data support units"
+        "contest and data support units",
+        "bundled data and application resource files",
+        "Lazarus/build.ps1",
+        "tools/make-install.sh",
+        "ACAG.pas",
+        "ALLJA.pas",
+        "ArrlDx.pas",
+        "ArrlFd.pas",
+        "ArrlSS.pas",
+        "CallLst.pas",
+        "CqWW.pas",
+        "CWOPS.pas",
+        "CWSST.pas",
+        "DXCC.pas",
+        "IaruHf.pas",
+        "NaQp.pas"
       ],
       "legacySurfaceSelectors": [
         "legacy.data.reference.*",
-        "legacy.operation.*"
+        "legacy.operation.*",
+        "legacy.asset.*",
+        "legacy.distribution.*",
+        "legacy.integration.*"
+      ],
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
+    },
+    {
+      "id": "ux.legacy-form-definitions",
+      "category": "operator-workflow",
+      "feature": "Legacy Lazarus and Delphi form definitions",
+      "behavior": "Every legacy form object, event binding, keyboard shortcut, resource reference, and published form member remains represented by an equivalent keyboard-first cross-platform workflow and observable UI outcome.",
+      "legacySources": [
+        "Main.lfm",
+        "Main.pas",
+        "ScoreDlg.dfm",
+        "ScoreDlg.lfm",
+        "ScoreDlg.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.form.*"
+      ],
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
+    },
+    {
+      "id": "build.legacy-project-metadata",
+      "category": "build-and-packaging",
+      "feature": "Legacy project, package, and deployment metadata",
+      "behavior": "Every Delphi and Lazarus application, package, test-project, deployment, resource, configuration, unit-membership, and lifecycle declaration needed to build and distribute the legacy product has an explicit cross-platform counterpart or verified replacement.",
+      "legacySources": [
+        "Lazarus/tests/RegexSmokeTest.lpr",
+        "MRCE.groupproj",
+        "MorseRunner.deployproj",
+        "MorseRunner.dpr",
+        "MorseRunner.dproj",
+        "MorseRunner.lpi",
+        "MorseRunner.lpr",
+        "Test/UnitTests.dpr",
+        "Test/UnitTests.dproj",
+        "VCL/MorseRunnerVcl.dpk",
+        "VCL/MorseRunnerVcl.dproj"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.project.*"
+      ],
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
+    },
+    {
+      "id": "quality.legacy-tests-and-smoke",
+      "category": "legacy-test-contract",
+      "feature": "Legacy unit and smoke test contracts",
+      "behavior": "Every active, disabled, and commented legacy test declaration, registration, fixture, lifecycle hook, method, case, and Lazarus smoke check is reviewed and represented by executable cross-implementation coverage or an equivalent port acceptance case.",
+      "legacySources": [
+        "Lazarus/tests/RegexSmokeTest.lpr",
+        "Test/CallsignUtilsTest.pas",
+        "Test/DxOperTest.pas",
+        "Test/DxccListTest.pas",
+        "Test/LexerTest.pas",
+        "Test/MySSExchTest.pas",
+        "Test/SSExchParserTest.pas",
+        "Test/SSLexerTest.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.test.*"
+      ],
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
+    },
+    {
+      "id": "lifecycle.legacy-unit-hooks",
+      "category": "runtime-lifecycle",
+      "feature": "Legacy Pascal unit lifecycle hooks",
+      "behavior": "Every legacy initialization and finalization hook executes at an equivalent lifecycle boundary with deterministic ordering, state effects, registration behavior, cleanup, and failure handling.",
+      "legacySources": [
+        "ArrlFd.pas",
+        "Log.pas",
+        "Test/CallsignUtilsTest.pas",
+        "Test/DxOperTest.pas",
+        "Test/DxccListTest.pas",
+        "Test/LexerTest.pas",
+        "Test/MySSExchTest.pas",
+        "Test/SSExchParserTest.pas",
+        "Test/SSLexerTest.pas",
+        "Util/CallsignUtils.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.lifecycle.unit.*"
+      ],
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "acceptanceStatus": "not-authored",
+      "caseIds": []
+    }
+  ],
+  "behavioralObligations": [
+    {"id": "catalog.contest-identifiers", "capabilityId": "catalog.contest-enumeration", "behavior": "Every CE contest identifier is present in declaration order and selects the same contest family.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "catalog.contest-metadata-and-defaults", "capabilityId": "catalog.contest-definitions", "behavior": "Every contest exposes CE-equivalent names, exchange types, defaults, and feature flags.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "session.run-mode-identifiers", "capabilityId": "session.run-mode-enumeration", "behavior": "Every CE run mode is present and retains its observable selection semantics.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "quality.live-ce-oracle-required", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "Certified parity always executes the pinned CE oracle and never silently substitutes a committed fixture.", "platforms": ["windows"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "quality.xplat-acceptance-target-executes", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "The dedicated XPlat parity target executes every applicable acceptance case exactly once.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "quality.ci-builds-pinned-ce", "capabilityId": "build.legacy-project-metadata", "behavior": "CI checks out the pinned clean CE revision and builds the hash-verified oracle before certification.", "platforms": ["windows"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "quality.complete-replay-inputs-and-first-green", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "Every case retains complete replay inputs, red evidence, and a reachable first-green commit.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "quality.manifest-evidence-reconciliation", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "Manifest status, inputs, outputs, evidence classification, hashes, and Git provenance are internally consistent.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "quality.complete-legacy-inventory", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "The inventory covers CE forms, projects, resources, generated files, tests, commands, data, and failure paths.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "contest.oracle-active-contest-selection", "capabilityId": "contest.legacy-implementations", "behavior": "The CE oracle selects each ActiveContest before observing contest-dependent metadata or behavior.", "platforms": ["windows"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "quality.behavioral-not-structural-evidence", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "UX, settings, data, adapters, and runtime features are certified by executed behavior rather than source tokens or filenames.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.operator-sidetone-pipeline", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Local sidetone is mixed at the CE pipeline stage and level before filtering, modulation, and AGC.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.non-farnsworth-symbols-timing-and-ramps", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Non-Farnsworth Morse symbols, cut numbers, unit timing, five millisecond ramps, and mark-space transitions match CE exactly.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.moving-average-receiver-filter-numerics", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Every CE moving-average receiver stage, reset, cascade order, and filter-swap numeric vector matches exactly.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.carrier-quantization-and-modulator-numerics", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Carrier frequency quantization, phase advance, quadrature modulation signs, and modulator numeric vectors match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.agc-equations-and-state-numerics", "capabilityId": "audio-dsp.legacy-processing", "behavior": "AGC attack, release, gain equations, state transitions, reset behavior, and output numeric vectors match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.complex-station-mixing-signs-order-and-normalization", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Complex remote-station BFO mixing uses CE-equivalent signs, channel order, phase application, accumulation order, and output normalization.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.default-compatibility-output-profile", "capabilityId": "audio.legacy-adapters", "behavior": "The default CE compatibility output contract is 11025 Hz mono, 512 samples per block, and identical sample totals.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.physical-queue-depth-and-order", "capabilityId": "audio.legacy-adapters", "behavior": "The physical audio queue preserves CE-equivalent default depth, FIFO block order, startup fill order, and exact sample continuity.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.deterministic-random-primitives", "capabilityId": "simulation.legacy-effects", "behavior": "MT19937 output and every CE random distribution primitive produce deterministic numeric vectors for reviewed seeds.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.qsk-receiver-ducking-and-recovery", "capabilityId": "audio-dsp.legacy-processing", "behavior": "QSK applies CE-equivalent receiver ducking and recovery around local transmissions.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.rit-affects-rendered-stations", "capabilityId": "audio-dsp.legacy-processing", "behavior": "RIT changes each station's audible offset using CE range, steps, and block-boundary timing.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.runtime-bandwidth-updates-filters", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Runtime bandwidth changes replace or update receiver filters at the CE-equivalent block boundary.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.qrm-interfering-cw-stations", "capabilityId": "simulation.legacy-effects", "behavior": "QRM uses CE-equivalent randomized interfering CW stations, messages, levels, pitches, speeds, retries, and lifetimes.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.qrn-impulses-and-burst-stations", "capabilityId": "simulation.legacy-effects", "behavior": "QRN produces CE sparse impulses and burst stations before receiver filtering and AGC.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.qsb-independent-per-station", "capabilityId": "simulation.legacy-effects", "behavior": "Every remote station has an independent CE-distributed QSB process without fading the receiver noise floor.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.flutter-fast-per-station-qsb", "capabilityId": "simulation.legacy-effects", "behavior": "Flutter is the CE probabilistic fast per-station QSB mode rather than a global multiplier.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.station-level-and-pitch-distributions", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Remote station amplitude and pitch use CE distributions and deterministic draw ordering.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.bfo-phase-state-and-reset", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Station BFO phase advances and resets at the same CE transmission boundaries.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.sst-farnsworth-timing", "capabilityId": "audio-dsp.legacy-processing", "behavior": "SST uses independent character and spacing speeds with CE Farnsworth timing.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.single-seeded-random-stream", "capabilityId": "simulation.legacy-effects", "behavior": "One seeded session random stream reproduces CE ownership and cross-feature draw order.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.legacy-block-size-configurations", "capabilityId": "audio-dsp.legacy-processing", "behavior": "CE block sizes from 128 through 2048 are supported or proven import-equivalent with matching timing.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.startup-warmup-and-filter-timing", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Startup warmup requests, block numbering, prefill, and alternating-filter swap timing match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.realistic-hiss-and-noise-floor", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Base complex hiss and receiver noise floor match CE level, spectrum, random draws, and processing order.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.wav-pcm-bit-exact", "capabilityId": "audio.legacy-adapters", "behavior": "WAV headers, PCM scaling, rounding, clipping, negative full scale, and sample bytes match CE vectors.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.recording-failure-and-backpressure-isolation", "capabilityId": "audio.legacy-adapters", "behavior": "Recording failure and queue backpressure stop recording without faulting or allocating in the contest render path.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.sink-preconversion-block-equivalence", "capabilityId": "audio.legacy-adapters", "behavior": "Raw capture, WAV, null, and physical playback receive identical ordered pre-conversion audio blocks.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.physical-device-lifecycle", "capabilityId": "audio.legacy-adapters", "behavior": "Physical callbacks, underruns, drops, device loss, recovery, stale callbacks, shutdown, and disposal are bounded and proven natively.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.all-effects-performance", "capabilityId": "audio.legacy-adapters", "behavior": "All-effects rendering retains allocation, latency, queue-depth, underrun, drop, and GC evidence representative of sustained play.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "engine.operator-message-completion-timing", "capabilityId": "simulation.runtime-routines", "behavior": "Operator transmission completion and remote interpretation occur only after the rendered CW envelope completes.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "engine.event-driven-poisson-caller-arrivals", "capabilityId": "simulation.runtime-routines", "behavior": "Caller creation follows completed CQ, TU, and MyCall events with CE Poisson and no-stop rules.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "engine.start-silent-empty-enter-cq", "capabilityId": "simulation.runtime-routines", "behavior": "Start is silent and an empty Enter initiates the appropriate CE contest CQ.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "engine.contest-specific-cq-tu-and-station-id", "capabilityId": "contest.legacy-implementations", "behavior": "CQ, TU, operator call insertion, and periodic station-ID messages match each CE contest.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "contest.full-remote-exchange-formatting", "capabilityId": "contest.legacy-implementations", "behavior": "Remote exchanges retain and format every CE contest identity field, cut number, repeat, and correction variant.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "contest.required-exchange-fields-all-contests", "capabilityId": "contest.legacy-implementations", "behavior": "CWT, SST, Field Day, NAQP, Sweepstakes, WPX, HST, and all other contests include every required CE exchange field.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "contest.allja-acag-truth-column-mapping", "capabilityId": "contest.legacy-implementations", "behavior": "ALLJA and ACAG station truth use the correct CE data columns without serial fallback.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "contest.sweepstakes-complete-truth-model", "capabilityId": "contest.legacy-implementations", "behavior": "Sweepstakes models serial, weighted precedence, own call, check, section, copied values, truth, and errors.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "contest.arrldx-naqp-home-filtering-and-location", "capabilityId": "contest.legacy-implementations", "behavior": "ARRL DX and NAQP apply CE home-call filtering and dynamic location or exchange derivation.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "contest.wpx-hst-station-serial-generation", "capabilityId": "contest.legacy-implementations", "behavior": "WPX and HST station serials use CE elapsed-time, skill, and random behavior.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "session.hst-wpx-start-constraints", "capabilityId": "session.run-mode-enumeration", "behavior": "HST and WPX start constraints, forced settings, activity, bandwidth, duration, and valid serial rules match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "engine.station-delay-lifetime-and-call-pool-rules", "capabilityId": "simulation.state-models", "behavior": "Single-call delay, caller lifetime, patience, retry, Gaussian WPM, calls-from-keyer, station-ID rate, and HST call-pool removal match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "engine.midmessage-append-correction-and-abort", "capabilityId": "simulation.runtime-routines", "behavior": "Mid-message append, unsent callsign correction, and abort completion preserve CE timing and station notification.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "engine.confidence-lid-repeat-and-f12-branches", "capabilityId": "simulation.runtime-routines", "behavior": "Confidence, LID, Sweepstakes correction, call-and-number repeat, and F12 probability branches match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "engine.reset-and-restart-state", "capabilityId": "simulation.state-models", "behavior": "Reset and restart clear and recreate the same authoritative state at the same ordered boundaries as CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "contest.exchange-shapes-and-constructor-metadata", "capabilityId": "contest.legacy-implementations", "behavior": "All 12 contest constructors expose the same exchange enum pair, default own exchange acceptance, and Farnsworth flag as CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["ACAG.pas:107", "ALLJA.pas:107", "ArrlDx.pas:58", "ArrlFd.pas:372", "ArrlSS.pas:137", "CqWpx.pas:100", "CqWW.pas:127", "CWOPS.pas:114", "CWSST.pas:116", "IaruHf.pas:57", "NaQp.pas:214"], "legacySurfaceSelectors": ["legacy.support.contest.routine.acag.tacag.create", "legacy.support.contest.routine.allja.tallja.create", "legacy.support.contest.routine.arrldx.tarrldx.create", "legacy.support.contest.routine.arrlfd.tarrlfieldday.create", "legacy.support.contest.routine.arrlss.tsweepstakes.create", "legacy.support.contest.routine.cqwpx.tcqwpx.create", "legacy.support.contest.routine.cqww.tcqww.create", "legacy.support.contest.routine.cwops.tcwops.create", "legacy.support.contest.routine.cwsst.tcwsst.create", "legacy.support.contest.routine.iaruhf.tiaruhf.create", "legacy.support.contest.routine.naqp.tncjnaqp.create"], "acceptanceStatus": "partial", "caseIds": ["contest.exchange-shapes"]},
+    {"id": "logging.nil-without-live-station-truth", "capabilityId": "logging.qso-model", "behavior": "Logging without a completed matching live station produces CE-compatible NIL truth rather than fabricated truth.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "logging.worked-call-after-verified-success", "capabilityId": "logging.qso-model", "behavior": "A call enters worked-call state only when CE would accept verified truth, so an initial error does not poison correction.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "logging.duplicate-requires-prior-correct-qso", "capabilityId": "logging.qso-model", "behavior": "Duplicate classification requires the same prior verified-correct QSO conditions as CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "logging.complete-copied-true-error-model", "capabilityId": "logging.qso-model", "behavior": "QSO records preserve true WPM, copied and true fields, per-field errors, corrections, and contest column flags.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "logging.deliberate-wrong-incomplete-nil-b4-corrected", "capabilityId": "logging.qso-model", "behavior": "Wrong, incomplete, NIL, B4, and corrected training QSOs are committed with CE message and logging order.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "logging.raw-verified-points-multipliers-rate-corrections", "capabilityId": "logging.scoring-rate-and-results", "behavior": "Raw and verified points, multipliers, score, rate, and correction totals match CE after every QSO.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "logging.score-history-and-competition-results", "capabilityId": "logging.scoring-rate-and-results", "behavior": "Automatic completion, WPX history, HST append, historical score browsing, and submission workflows match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "logging.complete-contest-cabrillo-export", "capabilityId": "logging.scoring-rate-and-results", "behavior": "Cabrillo export includes complete interoperable QSO fields for every supported contest.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.persisted-per-contest-own-exchange", "capabilityId": "configuration.persisted-settings", "behavior": "Operators can validate, persist, reload, and use a distinct own exchange for every CE contest.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.f2-and-esm-send-own-exchange", "capabilityId": "ux.main-form-events", "behavior": "F2 and ESM transmit the configured operator exchange rather than received-entry values.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.contest-aware-entry-layout-and-focus", "capabilityId": "ux.main-form-objects", "behavior": "Entry labels, visibility, widths, limits, filters, and focus order adapt to each contest as CE does.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.input-transforms-paste-and-ime", "capabilityId": "ux.keyboard-workflows", "behavior": "Contest-specific input transforms preserve valid text and apply equivalently to keys, paste, and IME input.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.wipe-resets-authoritative-qso-state", "capabilityId": "ux.main-form-events", "behavior": "Wipe clears local fields and authoritative engine ESM or active-QSO state at one semantic boundary.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.abort-resets-authoritative-send-state", "capabilityId": "ux.keyboard-workflows", "behavior": "Escape or Abort resets active send and ESM state and notifies stations with CE completion semantics.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.punctuation-and-modified-enter-logging", "capabilityId": "ux.keyboard-workflows", "behavior": "Punctuation and modified Enter preserve CE TU, log-only, wrong-QSO, and field-clearing workflows.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.f9-explicit-pileup-action", "capabilityId": "ux.main-menu-commands", "behavior": "F9 and Run Pile-Up explicitly start Pile-Up regardless of the selected run-mode control.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.live-settings-send-semantic-commands", "capabilityId": "ux.main-menu-commands", "behavior": "Every live QSK, effect, activity, speed, pitch, bandwidth, and monitor change reaches the engine through the client.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.rit-wpm-bandwidth-ranges-and-steps", "capabilityId": "ux.keyboard-workflows", "behavior": "RIT, WPM, and bandwidth ranges, increments, clamping, and displayed engine state match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.shortcut-labels-and-score-wipe-commands", "capabilityId": "ux.main-menu-commands", "behavior": "Visible shortcut labels and commands consistently distinguish F11 Wipe from Ctrl+F11 Score.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.plus-equals-keypad-and-layouts", "capabilityId": "ux.keyboard-workflows", "behavior": "Physical plus, equals, keypad Add, and international layouts invoke only the CE-equivalent completion actions.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.keyboard-and-pointer-tuning-workflows", "capabilityId": "ux.keyboard-workflows", "behavior": "All CE key-down, key-up, shortcut, mouse-wheel, tuning-reset, and monitor-reset workflows are available.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.log-truth-correction-and-error-presentation", "capabilityId": "ux.main-form-objects", "behavior": "Log rows expose copied and true values, corrections, NIL, B4, duplicate, error type, and chronological status accessibly.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.start-stop-reset-fields-focus-and-pointer", "capabilityId": "ux.main-form-events", "behavior": "Start, stop, and reset clear fields, restore focus, and transition pointer affordances exactly as CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.high-frequency-tab-order", "capabilityId": "ux.legacy-form-definitions", "behavior": "Tab and Shift+Tab remain in the CE high-frequency entry workflow for every contest and state.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.numeric-controls-and-live-status-accessibility", "capabilityId": "ux.legacy-form-definitions", "behavior": "Numeric child controls, validation, status, and failure feedback expose names, values, actions, focus, and live announcements.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.native-scaling-contrast-and-layout", "capabilityId": "ux.legacy-form-definitions", "behavior": "The native GUI remains usable at minimum size, 100, 150, and 200 percent scaling, high contrast, and platform fonts.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.score-dialog-and-history-workflow", "capabilityId": "ux.score-dialog", "behavior": "Score dialogs, automatic completion, history navigation, actions, focus, and accessible content match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.legacy-component-runtime-behavior", "capabilityId": "ux.legacy-vcl-components", "behavior": "Every legacy hint, volume, and UI component behavior remains functionally available through the cross-platform UX.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "settings.production-legacy-import", "capabilityId": "configuration.persisted-settings", "behavior": "Production startup invokes CE settings migration when appropriate.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "settings.ce-encoding-translation", "capabilityId": "configuration.persisted-settings", "behavior": "Migration translates CE indexes, ordinals, zero-or-one booleans, IDs, Hz values, duration, block size, and contest exchanges.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "settings.preserve-unknown-and-unconsumed-values", "capabilityId": "configuration.persisted-settings", "behavior": "Migration and save preserve unknown or unconsumed CE values and are idempotent.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "settings.clean-profile-ce-defaults", "capabilityId": "configuration.persisted-settings", "behavior": "Clean-profile call, WPM, activity, duration, pitch, bandwidth, and related defaults match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "settings.full-duration-range", "capabilityId": "configuration.persisted-settings", "behavior": "Every CE duration from 1 through 240 minutes is accepted and persists without hidden clamping.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "data.replaceable-reference-root-and-fallback", "capabilityId": "data.files-and-operational-paths", "behavior": "Users can replace CE reference data through an explicit root with packaged fallback and equivalent discovery.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "data.malformed-and-missing-file-reporting", "capabilityId": "data.legacy-parsers", "behavior": "Every parser rejects malformed rows and reports missing or invalid replacement data without fabricating values.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "data.legacy-parser-output-equivalence", "capabilityId": "data.legacy-parsers", "behavior": "Call, prefix, exchange, serial, section, lexer, and contest data parsers produce CE-equivalent values and failures.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "recording.ce-filename-overwrite-and-discovery", "capabilityId": "data.files-and-operational-paths", "behavior": "A CE-compatible fixed WAV naming, overwrite, and discovery workflow remains available.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "release.version-package-and-about-provenance", "capabilityId": "build.legacy-project-metadata", "behavior": "About, engine, assembly, CLI, archive, icon, package, and evidence version provenance agree.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "release.real-native-gui-window-evidence", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "Release evidence launches and discovers a real native Avalonia main window rather than setup-only execution.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "release.physical-audio-evidence-required", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "Release publication requires physical-audio startup, sustained playback, effects, device change, recovery, and shutdown evidence.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "transport.completed-state-is-immutable", "capabilityId": "simulation.state-models", "behavior": "In-process and remote clients cannot mutate authoritative completed QSO or result state.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "transport.single-active-interactive-session", "capabilityId": "simulation.state-models", "behavior": "The shared application service enforces the documented single active interactive session contract.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "transport.commands-apply-at-every-block-boundary", "capabilityId": "simulation.runtime-routines", "behavior": "Commands apply at every documented block boundary, including during long simulation advances.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "transport.bounded-idempotent-mutations", "capabilityId": "simulation.runtime-routines", "behavior": "Mutating request IDs replay safely and command idempotency retention is bounded.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "transport.lossless-events-coalesced-snapshots", "capabilityId": "simulation.runtime-routines", "behavior": "Lossless events and coalescible snapshots use independent bounded delivery so slow observers cannot delay or silently lose authority.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "transport.resync-watermark-ordering", "capabilityId": "simulation.state-models", "behavior": "Snapshots carry a sequence watermark and reconnect never delivers older events after newer state.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "transport.required-event-groups", "capabilityId": "simulation.state-models", "behavior": "Fault, operator-message, score, rate, recording, result, and control-lease events expose every authoritative transition.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "transport.control-lease-semantics", "capabilityId": "simulation.state-models", "behavior": "Lease acquire, renew, release, takeover, identity, ordering, and transport-neutral control behavior are complete.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "transport.inprocess-grpc-full-session-equivalence", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "Identical full-session vectors produce identical commands, events, snapshots, results, and failures through in-process and gRPC clients.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "release.native-gui-input-accessibility-evidence", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "Native GUI, focus, routed-key, pointer, scaling, accessibility, and shutdown evidence exists on every supported platform.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "release.all-client-and-artifact-path-evidence", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "TUI, CLI, in-process, hosted gRPC, WAV, data override, migration, and archive behavior are captured on clean systems.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "release.platform-complete-publication-gate", "capabilityId": "build.legacy-project-metadata", "behavior": "Every supported platform must be complete before release promotion or artifact publication.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "release.zero-skips-live-final-certification", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "Final certification executes every obligation live with zero skipped, waived, quarantined, expected-failure, or fixture-only cases.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "release.experienced-user-ab-listening", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "Structured CE and XPlat A/B sessions cover contests, audio conditions, corrections, logging, history, and migration with experienced users.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.enter-esm-partial-call-message-selection", "capabilityId": "ux.keyboard-workflows", "behavior": "Enter with an empty, partial, corrected, or complete call selects and sends the same ESM message and state transition as CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.log-selection-updates-callsign-information", "capabilityId": "ux.main-form-events", "behavior": "Selecting a historical QSO updates the callsign-information region to the selected call as CE does.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.semantic-duration-not-simulation-blocks", "capabilityId": "ux.main-form-events", "behavior": "The UX sends semantic duration and never owns sample-rate or simulation-block conversion policy.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.help-about-readme-community-actions", "capabilityId": "ux.main-menu-commands", "behavior": "Help, About, readme, website, and community actions match CE availability, targets, errors, keyboard access, and focus return.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "ux.score-service-browse-submit-and-failures", "capabilityId": "ux.score-dialog", "behavior": "Score browsing, submission, disabled or unavailable service behavior, failures, focus, and history match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "transport.session-lifecycle-transition-validity", "capabilityId": "simulation.state-models", "behavior": "Session lifecycle transitions reject invalid starts such as rmStop, define close-while-running behavior, and emit the same ordered terminal state through every client.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "settings.all-supported-ce-keys-consumed-or-preserved", "capabilityId": "configuration.persisted-settings", "behavior": "Every supported CE key is consumed with equivalent semantics or preserved losslessly across import, save, and restart.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "release.cli-help-version-exit-codes", "capabilityId": "build.legacy-project-metadata", "behavior": "CLI help, version, validation failures, runtime failures, and successful commands expose stable documented output and exit codes in packaged builds.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "lifecycle.unit-initialization-finalization-order", "capabilityId": "lifecycle.legacy-unit-hooks", "behavior": "Legacy initialization and finalization hooks execute with equivalent order, registration, cleanup, state, and failures.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []}
+  ],
+  "cases": [
+    {
+      "id": "contest.exchange-shapes",
+      "capabilityId": "contest.legacy-implementations",
+      "obligationIds": [
+        "contest.exchange-shapes-and-constructor-metadata"
+      ],
+      "behavior": "For all 12 legacy contest IDs in declared order, the selected contest implementation exposes the same sent and received exchange-field enum pair, accepts the same catalog default own exchange, and enables Farnsworth timing for the same contests.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v1",
+        "source": "tests/parity/legacy-oracle/v1/LegacyOracle.lpr",
+        "sourceSha256": "c5a414dfb3e28919f611f791e443409398551f216b3a43cde2a1a78559af5e8a",
+        "buildRecipe": "tests/parity/legacy-oracle/v1/build-recipe.json",
+        "buildRecipeSha256": "e1d2005df869ff47c18b514a35a280066d2f289d282f467c6dd07a2c55290ea9"
+      },
+      "legacySources": [
+        "ACAG.pas:107",
+        "ALLJA.pas:107",
+        "ArrlDx.pas:58",
+        "ArrlFd.pas:372",
+        "ArrlSS.pas:137",
+        "CqWpx.pas:100",
+        "CqWW.pas:127",
+        "CWOPS.pas:114",
+        "CWSST.pas:116",
+        "IaruHf.pas:57",
+        "NaQp.pas:214"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.support.contest.routine.acag.tacag.create",
+        "legacy.support.contest.routine.allja.tallja.create",
+        "legacy.support.contest.routine.arrldx.tarrldx.create",
+        "legacy.support.contest.routine.arrlfd.tarrlfieldday.create",
+        "legacy.support.contest.routine.arrlss.tsweepstakes.create",
+        "legacy.support.contest.routine.cqwpx.tcqwpx.create",
+        "legacy.support.contest.routine.cqww.tcqww.create",
+        "legacy.support.contest.routine.cwops.tcwops.create",
+        "legacy.support.contest.routine.cwsst.tcwsst.create",
+        "legacy.support.contest.routine.iaruhf.tiaruhf.create",
+        "legacy.support.contest.routine.naqp.tncjnaqp.create"
       ],
       "preconditions": [
-        "Runtime data references and explicit operational paths have been extracted from all audited production units."
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The schema-v2 fixture was captured from the pinned clean CE reference.",
+        "The 12 contest IDs are evaluated in their legacy declaration order."
       ],
       "input": {
-        "seed": null,
-        "commands": []
+        "scenario": "contest.exchange-shapes",
+        "contestIds": [
+          "scWpx",
+          "scCwt",
+          "scFieldDay",
+          "scNaQp",
+          "scHst",
+          "scCQWW",
+          "scArrlDx",
+          "scSst",
+          "scAllJa",
+          "scAcag",
+          "scIaruHf",
+          "scArrlSS"
+        ]
       },
       "targetAdapters": [
-        "LegacySurfaceContractTarget",
-        "XPlatDataOperationsTarget"
+        "LegacyOracleTarget",
+        "XPlatContestRulesTarget"
       ],
       "assertions": {
         "fixtureComparison": "exact",
-        "observedSurfaceCount": 65
+        "observedValueCount": 12,
+        "observedValuesSha256": "0a43e2a657b2ec0f7602fbd05ed03382c463459aa3dc2c61e5f954604e4c6175",
+        "firstDivergence": "The zero-based first ordinal mismatch between fixture and observed string arrays, with null expected or actual only when one array ends first.",
+        "functionalDivergenceCode": "contest-exchange-shape-mismatch"
       },
       "platforms": [
         "windows",
@@ -895,11 +822,11 @@
         "macos"
       ],
       "legacyTestStatus": "pass",
-      "xplatTestStatus": "pass",
-      "status": "both-green",
-      "failureCode": null,
-      "fixture": "tests/parity/fixtures/legacy/data-files-and-operational-paths.json",
-      "evidence": "tests/parity/evidence/data-files-and-operational-paths.baseline.json",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "contest-exchange-shape-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/contest-exchange-shapes.json",
+      "evidence": "tests/parity/evidence/contest-exchange-shapes.baseline.json",
       "firstGreenCommit": null
     }
   ]

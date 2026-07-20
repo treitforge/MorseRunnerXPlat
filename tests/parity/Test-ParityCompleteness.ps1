@@ -6,6 +6,11 @@ param(
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 
+& (Join-Path $PSScriptRoot 'Test-ParityPathSafety.ps1')
+if ($LASTEXITCODE -ne 0) {
+    throw "Parity path safety checks failed with exit code $LASTEXITCODE."
+}
+
 & uv run --locked python -m unittest discover -s tools\parity -p 'test_*.py'
 if ($LASTEXITCODE -ne 0) {
     throw "Parity tooling tests failed with exit code $LASTEXITCODE."

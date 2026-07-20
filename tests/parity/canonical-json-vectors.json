@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "ordering": "utf16-code-unit-ordinal-recursive",
+  "encoding": "utf8-no-bom-no-normalization",
+  "vectors": [
+    {
+      "name": "nested-unicode-escaping-and-int64",
+      "value": {
+        "outer": {
+          "": "bmp-private-key-second",
+          "𐀀": "astral-key-first",
+          "nested": {
+            "unicode": "Ω 日本 🎧 é é",
+            "separators": "  ",
+            "escapes": "quote:\" backslash:\\ slash:/ controls:\b\f\t\r\n",
+            "array": [
+              true,
+              false,
+              null,
+              -9223372036854775808,
+              9223372036854775807
+            ]
+          }
+        }
+      },
+      "canonicalUtf8Base64": "eyJvdXRlciI6eyJuZXN0ZWQiOnsiYXJyYXkiOlt0cnVlLGZhbHNlLG51bGwsLTkyMjMzNzIwMzY4NTQ3NzU4MDgsOTIyMzM3MjAzNjg1NDc3NTgwN10sImVzY2FwZXMiOiJxdW90ZTpcIiBiYWNrc2xhc2g6XFwgc2xhc2g6LyBjb250cm9sczpcYlxmXHRcclxuIiwic2VwYXJhdG9ycyI6IuKAqOKAqSIsInVuaWNvZGUiOiLOqSDml6XmnKwg8J+OpyBlzIEgw6kifSwi8JCAgCI6ImFzdHJhbC1rZXktZmlyc3QiLCLugIAiOiJibXAtcHJpdmF0ZS1rZXktc2Vjb25kIn19",
+      "sha256": "8a3c187ebd3846533be418f811bb87a34a45ec4dba008c7f8e1db7c299a04d33"
+    }
+  ],
+  "invalidJsonTexts": [
+    "{\"\\ud800\":\"key\"}",
+    "{\"value\":\"\\udfff\"}"
+  ]
+}

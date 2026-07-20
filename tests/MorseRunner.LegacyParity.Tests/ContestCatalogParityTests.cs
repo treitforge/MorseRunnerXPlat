@@ -21,33 +21,29 @@ public sealed class ContestCatalogParityTests
     ];
 
     [Fact]
-    public async Task ContestEnumerationIsBothGreen()
+    [Trait("Category", "LegacyV1Noncertifying")]
+    public async Task ContestEnumerationMatchesSelectedTarget()
     {
         ParityScenario scenario = new(
             "catalog.contest-enumeration",
             "contest-catalog",
             ExpectedContestIds);
-        LegacyContestCatalogTarget legacyTarget = new();
-        XPlatCatalogTarget xplatTarget = new();
+        SelectedParityObservation selected =
+            await ParityRegressionRunner.ExecuteSelectedAsync(
+                scenario,
+                static () => new LegacyContestCatalogTarget(),
+                static () => new XPlatCatalogTarget(),
+                TestContext.Current.CancellationToken);
 
-        ParityObservation legacy = await legacyTarget.ExecuteAsync(
-            scenario,
-            TestContext.Current.CancellationToken);
-        ParityObservation xplat = await xplatTarget.ExecuteAsync(
-            scenario,
-            TestContext.Current.CancellationToken);
-
-        Assert.Equal(ParityTargetOutcome.Passed, legacy.Outcome);
-        Assert.Equal(ExpectedContestIds, legacy.Values);
-        Assert.Equal(ParityTargetOutcome.Passed, xplat.Outcome);
-        Assert.Equal(ExpectedContestIds, xplat.Values);
         Assert.Equal(
-            ParityAssessment.BothGreen,
-            ParityAssessmentClassifier.Classify(legacy, xplat));
+            ParityTargetOutcome.Passed,
+            selected.Observation.Outcome);
+        Assert.Equal(ExpectedContestIds, selected.Observation.Values);
     }
 
     [Fact]
-    public void ManifestRetainsRedEvidenceAfterTurningGreen()
+    [Trait("Category", "ParityMetadata")]
+    public void ManifestSeparatesContestEnumerationFromLegacyV1Evidence()
     {
         string manifestPath = Path.Combine(
             RepositoryPaths.Root,
@@ -67,12 +63,16 @@ public sealed class ContestCatalogParityTests
             "catalog.contest-enumeration",
             item.GetProperty("id").GetString());
         Assert.Equal(
-            "both-green",
-            item.GetProperty("status").GetString());
+            "not-authored",
+            item.GetProperty("acceptanceStatus").GetString());
+        Assert.Empty(item.GetProperty("caseIds").EnumerateArray());
 
         string evidencePath = Path.Combine(
             RepositoryPaths.Root,
-            item.GetProperty("evidence").GetString()!);
+            "tests",
+            "parity",
+            "evidence",
+            "catalog-contest-enumeration.baseline.json");
         Assert.True(File.Exists(evidencePath), $"Evidence not found: {evidencePath}");
     }
 }

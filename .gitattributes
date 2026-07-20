@@ -1,1 +1,4 @@
 src/MorseRunner.Infrastructure/Data/** -text
+tests/parity/*.json text eol=lf
+tests/parity/**/*.json text eol=lf
+tests/parity/legacy-oracle/**/*.lpr text eol=crlf

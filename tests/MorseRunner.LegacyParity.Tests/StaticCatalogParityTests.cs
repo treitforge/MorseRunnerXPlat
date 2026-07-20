@@ -30,35 +30,39 @@ public sealed class StaticCatalogParityTests
     ];
 
     [Fact]
-    public async Task RunModesAreBothGreen()
+    [Trait("Category", "LegacyV1Noncertifying")]
+    public async Task RunModesMatchSelectedTarget()
     {
-        await AssertBothGreenAsync(
+        await AssertSelectedTargetAsync(
             new ParityScenario(
                 "session.run-mode-enumeration",
                 "session-lifecycle",
                 ExpectedRunModes),
-            new LegacyInventoryTarget(
+            () => new LegacyInventoryTarget(
                 "legacy.ini.run-mode.",
                 surface => surface.GetProperty("name").GetString()!));
     }
 
     [Fact]
-    public async Task ContestDefinitionsAreBothGreen()
+    [Trait("Category", "LegacyV1Noncertifying")]
+    public async Task ContestDefinitionsMatchSelectedTarget()
     {
-        await AssertBothGreenAsync(
+        await AssertSelectedTargetAsync(
             new ParityScenario(
                 "catalog.contest-definitions",
                 "contest-catalog",
                 ExpectedContestDefinitions),
-            new LegacyInventoryTarget(
+            () => new LegacyInventoryTarget(
                 "legacy.ini.contest-definition.",
                 FormatContestDefinition));
     }
 
     [Theory]
+    [Trait("Category", "ParityMetadata")]
     [InlineData("session.run-mode-enumeration")]
     [InlineData("catalog.contest-definitions")]
-    public void ManifestRetainsStaticCatalogEvidence(string parityId)
+    public void ManifestSeparatesStaticCatalogFromLegacyV1Evidence(
+        string parityId)
     {
         string manifestPath = Path.Combine(
             RepositoryPaths.Root,
@@ -71,19 +75,25 @@ public sealed class StaticCatalogParityTests
             .GetProperty("items")
             .EnumerateArray()
             .Single(entry => entry.GetProperty("id").GetString() == parityId);
-
         Assert.Equal(
-            "both-green",
-            item.GetProperty("status").GetString());
-        Assert.Equal("pass", item.GetProperty("legacyTestStatus").GetString());
-        Assert.Equal("pass", item.GetProperty("xplatTestStatus").GetString());
+            "not-authored",
+            item.GetProperty("acceptanceStatus").GetString());
+        Assert.Empty(item.GetProperty("caseIds").EnumerateArray());
 
+        string legacyV1Name = parityId.Replace('.', '-');
         string fixturePath = Path.Combine(
             RepositoryPaths.Root,
-            item.GetProperty("fixture").GetString()!);
+            "tests",
+            "parity",
+            "fixtures",
+            "legacy",
+            $"{legacyV1Name}.json");
         string evidencePath = Path.Combine(
             RepositoryPaths.Root,
-            item.GetProperty("evidence").GetString()!);
+            "tests",
+            "parity",
+            "evidence",
+            $"{legacyV1Name}.baseline.json");
         Assert.True(File.Exists(fixturePath), $"Fixture not found: {fixturePath}");
         Assert.True(File.Exists(evidencePath), $"Evidence not found: {evidencePath}");
     }
@@ -102,24 +112,20 @@ public sealed class StaticCatalogParityTests
             details.GetProperty("exchangeDefault").GetString());
     }
 
-    private static async Task AssertBothGreenAsync(
+    private static async Task AssertSelectedTargetAsync(
         ParityScenario scenario,
-        LegacyInventoryTarget legacyTarget)
+        Func<IParityTarget> createLegacy)
     {
-        XPlatCatalogTarget xplatTarget = new();
-        ParityObservation legacy = await legacyTarget.ExecuteAsync(
-            scenario,
-            TestContext.Current.CancellationToken);
-        ParityObservation xplat = await xplatTarget.ExecuteAsync(
-            scenario,
-            TestContext.Current.CancellationToken);
+        SelectedParityObservation selected =
+            await ParityRegressionRunner.ExecuteSelectedAsync(
+                scenario,
+                createLegacy,
+                static () => new XPlatCatalogTarget(),
+                TestContext.Current.CancellationToken);
 
-        Assert.Equal(ParityTargetOutcome.Passed, legacy.Outcome);
-        Assert.Equal(scenario.ExpectedValues, legacy.Values);
-        Assert.Equal(ParityTargetOutcome.Passed, xplat.Outcome);
-        Assert.Equal(scenario.ExpectedValues, xplat.Values);
         Assert.Equal(
-            ParityAssessment.BothGreen,
-            ParityAssessmentClassifier.Classify(legacy, xplat));
+            ParityTargetOutcome.Passed,
+            selected.Observation.Outcome);
+        Assert.Equal(scenario.ExpectedValues, selected.Observation.Values);
     }
 }

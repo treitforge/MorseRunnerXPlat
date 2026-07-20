@@ -15,15 +15,30 @@ and then converge to a 100 percent XPlat pass rate with zero functional gaps.
 ## Project status
 
 The initial cross-platform architecture, deterministic session service, audio
-adapters, Avalonia operator workflow, TUI, CLI, and optional gRPC host are
-implemented. The pinned legacy inventory contains 1,501 structurally mapped
-surfaces and the fixture-level acceptance capabilities are green.
+adapters, Avalonia operator workflow, TUI, CLI, and optional gRPC host exist.
+They are not yet certified as a complete CE port. The parity audit found
+release-blocking gaps in contest and exchange behavior, station simulation,
+audio effects and pipeline ordering, operator workflows, persistence, results,
+and cross-platform native verification.
 
-That structural result is not yet proof of full behavioral parity. The
-end-to-end UX audit found remaining work in contest-specific scoring and
-exchange behavior, realistic station simulation, several advanced settings,
-score submission, and cross-platform visual verification. These are
-release-blocking gaps, tracked in the
+The current pinned-reference audit classifies all 143 tracked CE files. It
+inventories 131 runtime, build, resource, data, integration, and test inputs
+and records 12 narrow nonfunctional exclusions with individual rationales.
+Those inputs produce 3,668 stable legacy surfaces mapped to 24 broad
+capabilities. The broad capabilities were reset to `not-authored` or `partial`
+until narrow executable cases cover every mapped surface on every required
+platform.
+
+The earlier 1,501-surface and 20-case report is invalidated history. Its 25
+schema-v1 observation records are retained for provenance only and cannot
+certify a capability, an acceptance case, or a release. The first schema-v3
+case, `contest.exchange-shapes`, is currently
+`legacy-green-xplat-red`. It remains a recorded functional gap until the
+unchanged case passes XPlat with retained red and green evidence. Do not infer a
+green release status from the amount of implemented code.
+
+Current progress and known gaps are tracked in the
+[generated parity report](tests/parity/PARITY_REPORT.md) and the
 [legacy compatibility matrix](docs/ux/legacy-compatibility-matrix.md).
 
 ## Engineering guidance
@@ -48,16 +63,44 @@ runtime dependency.
 During compatibility work, the adjacent `..\MorseRunner` repository is the
 functional reference implementation.
 
+The live parity runner does not execute an arbitrary adjacent binary. It
+prepares the exact pinned Git revision in a clean artifact worktree, imports
+the committed reference bundle, verifies the complete tree, builds the Pascal
+oracle version required by each case with the pinned Lazarus and Free Pascal
+toolchain, and validates its content-addressed build registry and provenance
+before running either target. The toolchain attestation covers 14,553 files
+across every consumed compiler and Lazarus unit root. The build record captures
+the exact compiler options, search paths, output paths, source, and executable.
+
+Legacy and XPlat execute in separate test processes. Each result records the
+clean XPlat revision and tree, platform and runtime identity, and, for a live
+Legacy run, the clean CE revision and tree plus fresh oracle and provenance
+hashes. Fixtures, case definitions, observed values, run results, and
+provenance are content-addressed so stale or substituted evidence fails closed.
+The exact xUnit identity, TRX, process exit code, selected case IDs, and result
+hash are bound by a per-target execution envelope. A `not-runnable` result is
+infrastructure failure, not a functional divergence.
+
+Release validation requires a live `Both` run on Windows and explicit native
+XPlat evidence on Windows, Linux, and macOS. Offline fixtures and retained
+schema-v1 observations never satisfy the live Legacy release gate.
+
 ## Initial .NET validation
 
 ```powershell
 dotnet restore MorseRunnerXPlat.slnx
 dotnet format MorseRunnerXPlat.slnx --verify-no-changes
 dotnet build MorseRunnerXPlat.slnx --no-restore --configuration Release
-dotnet test --solution MorseRunnerXPlat.slnx --no-build --configuration Release
+dotnet test --solution MorseRunnerXPlat.slnx --no-build --configuration Release -- --filter-not-trait Category=ParityAcceptance --filter-not-trait Category=LegacyOracleBuildIntegration
 .\tests\parity\Test-ParityCompleteness.ps1 -LegacyRoot ..\MorseRunner
 .\tests\parity\Run-Parity.ps1 -Target Both -Mode Development -LegacyRoot ..\MorseRunner
 ```
+
+Certifying `ParityAcceptance` tests and the mandatory fresh-build integration
+test run only through `Run-Parity.ps1`. A recorded XPlat red is a deliberately
+failing product test, so invoking those tests through the ordinary solution
+test command would make an honest development baseline indistinguishable from
+an unrelated test failure.
 
 ## Run
 

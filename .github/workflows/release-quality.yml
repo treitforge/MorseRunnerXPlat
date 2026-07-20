@@ -20,6 +20,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Checkout public legacy base
+        uses: actions/checkout@v5
+        with:
+          repository: w7sst/MorseRunner
+          ref: 2dd6f5cfd8a96e00f472d189adae594823ae5b61
+          path: artifacts/legacy-source/MorseRunner
+          persist-credentials: false
+
       - name: Set up .NET 10
         uses: actions/setup-dotnet@v5.4.0
         with:
@@ -43,15 +51,69 @@ jobs:
           uv sync --locked
           dotnet restore MorseRunnerXPlat.slnx
 
+      - name: Cache pinned Lazarus toolchain
+        uses: actions/cache@v4
+        with:
+          path: C:\lazarus
+          key: lazarus-4.6-fpc-3.2.2-win64-3eb50f2aac396bac
+
+      - name: Verify pinned legacy toolchain
+        shell: pwsh
+        run: .\tests\parity\Install-LegacyOracleToolchain.ps1
+
       - name: Validate
         shell: pwsh
         run: |
           dotnet format MorseRunnerXPlat.slnx --verify-no-changes --no-restore
           dotnet build MorseRunnerXPlat.slnx --configuration Release --no-restore
-          dotnet test --solution MorseRunnerXPlat.slnx --configuration Release --no-build
+          dotnet test --solution MorseRunnerXPlat.slnx `
+            --configuration Release --no-build -- `
+            --filter-not-trait Category=ParityAcceptance `
+            --filter-not-trait Category=LegacyOracleBuildIntegration
           buf lint
-          .\tests\parity\Test-ParityCompleteness.ps1
-          .\tests\parity\Run-Parity.ps1 -Target Both -Mode Release
+          .\tests\parity\Run-Parity.ps1 `
+            -Target Both `
+            -Mode Release `
+            -LegacyRoot '${{ github.workspace }}\artifacts\legacy-source\MorseRunner'
+
+      - name: Stage complete live parity artifact closure
+        id: release-parity-artifacts
+        if: success()
+        shell: pwsh
+        run: |
+          $registries = @(
+            Get-ChildItem `
+              -LiteralPath artifacts/legacy-oracle/registries `
+              -Filter '*.json' -File)
+          if ($registries.Count -ne 1) {
+            throw (
+              'The Release Both gate must produce exactly one legacy ' +
+              'oracle registry.')
+          }
+          $registry = $registries[0]
+          $registryHash = (
+            Get-FileHash -LiteralPath $registry.FullName `
+              -Algorithm SHA256).Hash.ToLowerInvariant()
+          $package = .\tests\parity\New-ParityBothArtifactPackage.ps1 `
+            -PackageRoot `
+              'artifacts/parity-package-staging/release-both' `
+            -RegistryPath $registry.FullName `
+            -RegistrySha256 $registryHash `
+            -PassThru
+          "package_root=$($package.packageRoot)" >> $env:GITHUB_OUTPUT
+          "package_index_sha256=$($package.indexSha256)" >> $env:GITHUB_OUTPUT
+
+      - name: Upload live parity provenance and results
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: >-
+            release-live-parity-${{ github.run_id }}-${{
+            github.run_attempt }}-${{
+            steps.release-parity-artifacts.outputs.package_index_sha256 }}
+          path: ${{ steps.release-parity-artifacts.outputs.package_root }}
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Publish runtime packages
         shell: pwsh
