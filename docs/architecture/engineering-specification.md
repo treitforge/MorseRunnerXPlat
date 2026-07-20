@@ -2593,6 +2593,25 @@ rows bit-for-bit. Independent stations, disabling QSB after prior enabled
 evolution, and UI mutation workflow remain separately pending.
 
 The authored
+`engine.start-silent-empty-enter-cq-seed-12345` case fixes the CQ WPX session
+start boundary. Its pinned CE v20 adapter creates a handleless `TMainForm`
+runtime for station `W7SST` at seed 12345. Before any operator input,
+`TMyStation` is listening with no selected message, message text, envelope, or
+QSO. Driving an empty `VK_RETURN` through `TMainForm.FormKeyDown` then selects
+`msgCQ`; `TContest.SendMsg` and `TMyStation.SendText` expand the message to
+`CQ W7SST TEST` and create a nonempty local envelope.
+
+The retained pre-implementation evidence records
+`engine-start-silent-empty-enter-cq-mismatch`. Production
+`StartSessionCommand` now changes session state and enables timing without
+loading a local message. The first operator transmission remains an explicit
+operator command. For CQ WPX, both `OperatorIntent.Cq` and an empty
+`TriggerEnterSendMessageCommand` compose `CQ {stationCall} TEST`, return that
+exact semantic message, and load the same text into the production tone
+renderer. CQ text for the remaining contests stays within the separate
+`engine.contest-specific-cq-tu-and-station-id` obligation.
+
+The authored
 `audio.flutter-no-station-noise-invariance-seed-12345` case narrows the first
 flutter acceptance boundary to station-free receiver audio. Its pinned CE
 adapter creates two fresh `TContest.GetAudio` runtimes with the same seed,

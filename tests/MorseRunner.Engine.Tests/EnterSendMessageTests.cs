@@ -17,9 +17,26 @@ public sealed class EnterSendMessageTests
         Assert.Equal(
             EnterSendMessageOutcome.SendCq,
             result.EnterSendMessage?.Outcome);
-        Assert.Equal(["CQ TEST"], result.EnterSendMessage?.SentMessages);
-        Assert.Equal("CQ TEST", session.Snapshot.LastOperatorMessage);
+        Assert.Equal(
+            ["CQ W7SST TEST"],
+            result.EnterSendMessage?.SentMessages);
+        Assert.Equal(
+            "CQ W7SST TEST",
+            session.Snapshot.LastOperatorMessage);
         Assert.Equal(0, session.Snapshot.QsoCount);
+    }
+
+    [Fact]
+    public async Task ExplicitCqUsesConfiguredCallForCqWpx()
+    {
+        await using var session = await StartedSession.CreateAsync();
+
+        CommandResult result = await session.SendAsync(OperatorIntent.Cq);
+
+        Assert.True(result.Accepted);
+        Assert.Equal(
+            "CQ W7SST TEST",
+            session.Snapshot.LastOperatorMessage);
     }
 
     [Fact]
@@ -237,7 +254,9 @@ public sealed class EnterSendMessageTests
         Assert.Equal(
             EnterSendMessageOutcome.SendCq,
             next.EnterSendMessage?.Outcome);
-        Assert.Equal("CQ TEST", session.Snapshot.LastOperatorMessage);
+        Assert.Equal(
+            "CQ W7SST TEST",
+            session.Snapshot.LastOperatorMessage);
         Assert.Equal(1, session.Snapshot.QsoCount);
     }
 

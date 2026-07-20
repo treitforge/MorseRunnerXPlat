@@ -1188,7 +1188,6 @@ internal sealed class EngineSession : IAsyncDisposable
 
         _state = SessionState.Running;
         StartAutomaticTimer();
-        _toneRenderer.LoadMessage("CQ TEST");
         _revision++;
         PublishEvent(SessionEventKind.Started, null);
         return AcceptedResult();
@@ -1574,7 +1573,7 @@ internal sealed class EngineSession : IAsyncDisposable
 
         string message = command.Intent switch
         {
-            OperatorIntent.Cq => "CQ TEST",
+            OperatorIntent.Cq => ComposeCqMessage(),
             OperatorIntent.Exchange => JoinMessage(
                 command.Rst,
                 command.Exchange1,
@@ -1617,16 +1616,17 @@ internal sealed class EngineSession : IAsyncDisposable
         QsoEntrySnapshot entry = command.Entry;
         if (entry.Call.Length == 0)
         {
+            string cqMessage = ComposeCqMessage();
             _esmSentCall = null;
             _esmExchangeSent = false;
             SendEsmMessages(
                 command,
-                [(OperatorIntent.Cq, "CQ TEST")]);
+                [(OperatorIntent.Cq, cqMessage)]);
             _revision++;
             return AcceptedResult(
                 CreateEnterResult(
                     EnterSendMessageOutcome.SendCq,
-                    ["CQ TEST"],
+                    [cqMessage],
                     EntryFocusTarget.Call));
         }
 
@@ -1848,6 +1848,13 @@ internal sealed class EngineSession : IAsyncDisposable
                     allowLidErrors: true);
             }
         }
+    }
+
+    private string ComposeCqMessage()
+    {
+        return _settings.ContestId.Value == "scWpx"
+            ? $"CQ {_settings.StationCall} TEST"
+            : "CQ TEST";
     }
 
     private void AddCallersAtCurrentBlock()

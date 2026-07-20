@@ -162,6 +162,18 @@ public sealed class AudioSinkTests
                 TestContext.Current.CancellationToken)).Accepted);
         Assert.True(
             (await engine.ExecuteAsync(
+                new SendOperatorIntentCommand(
+                    RequestId.New(),
+                    sessionId,
+                    TestClient,
+                    OperatorIntent.Cq,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty),
+                TestContext.Current.CancellationToken)).Accepted);
+        Assert.True(
+            (await engine.ExecuteAsync(
                 new AdvanceSimulationCommand(
                     RequestId.New(),
                     sessionId,

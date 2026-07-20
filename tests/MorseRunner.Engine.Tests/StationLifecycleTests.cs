@@ -512,7 +512,26 @@ public sealed class StationLifecycleTests
         SessionHandle handle = await engine.CreateSessionAsync(
             settings,
             TestContext.Current.CancellationToken);
-        await StartAndAdvanceAsync(engine, handle.SessionId, blocks: 24);
+        Assert.True(
+            (await engine.ExecuteAsync(
+                new StartSessionCommand(
+                    RequestId.New(),
+                    handle.SessionId,
+                    TestClient),
+                TestContext.Current.CancellationToken)).Accepted);
+        Assert.True(
+            (await engine.ExecuteAsync(
+                new SendOperatorIntentCommand(
+                    RequestId.New(),
+                    handle.SessionId,
+                    TestClient,
+                    OperatorIntent.Cq,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty),
+                TestContext.Current.CancellationToken)).Accepted);
+        await AdvanceAsync(engine, handle.SessionId, blocks: 24);
         return sink.GetHash();
     }
 
