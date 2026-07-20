@@ -9,6 +9,8 @@ public sealed class SimulatedStation
     private readonly MorseToneRenderer _renderer;
     private readonly ContestId _contestId;
     private readonly SerialNumberRangeMode _serialNumberRange;
+    private readonly int _customSerialNumberMinimum;
+    private readonly int _customSerialNumberMinimumDigits;
     private readonly QsbProcessor? _qsb;
     private readonly float[] _scratch =
         new float[CompatibilityProfile.BlockSize];
@@ -27,11 +29,15 @@ public sealed class SimulatedStation
         OperatorState initialOperatorState = OperatorState.NeedPreviousEnd,
         ContestId? contestId = null,
         SerialNumberRangeMode serialNumberRange =
-            SerialNumberRangeMode.StartOfContest)
+            SerialNumberRangeMode.StartOfContest,
+        int customSerialNumberMinimum = 1,
+        int customSerialNumberMinimumDigits = 2)
     {
         Identity = identity ?? throw new ArgumentNullException(nameof(identity));
         _contestId = contestId ?? new("scWpx");
         _serialNumberRange = serialNumberRange;
+        _customSerialNumberMinimum = customSerialNumberMinimum;
+        _customSerialNumberMinimumDigits = customSerialNumberMinimumDigits;
         WordsPerMinute = wordsPerMinute;
         PitchOffsetHz = pitchOffsetHz;
         Operator = new(
@@ -86,11 +92,15 @@ public sealed class SimulatedStation
         float r1,
         float amplitude,
         ContestId contestId,
-        SerialNumberRangeMode serialNumberRange)
+        SerialNumberRangeMode serialNumberRange,
+        int customSerialNumberMinimum,
+        int customSerialNumberMinimumDigits)
     {
         Identity = identity;
         _contestId = contestId;
         _serialNumberRange = serialNumberRange;
+        _customSerialNumberMinimum = customSerialNumberMinimum;
+        _customSerialNumberMinimumDigits = customSerialNumberMinimumDigits;
         WordsPerMinute = wordsPerMinute;
         CharacterWordsPerMinute = characterWordsPerMinute;
         PitchOffsetHz = pitchOffsetHz;
@@ -117,7 +127,9 @@ public sealed class SimulatedStation
         bool sweepstakes,
         bool flutter,
         ContestId contestId,
-        SerialNumberRangeMode serialNumberRange)
+        SerialNumberRangeMode serialNumberRange,
+        int customSerialNumberMinimum,
+        int customSerialNumberMinimumDigits)
     {
         ArgumentNullException.ThrowIfNull(identityFactory);
         ArgumentNullException.ThrowIfNull(wordsPerMinuteFactory);
@@ -172,7 +184,9 @@ public sealed class SimulatedStation
             r1,
             amplitude,
             contestId,
-            serialNumberRange);
+            serialNumberRange,
+            customSerialNumberMinimum,
+            customSerialNumberMinimumDigits);
     }
 
     public static SimulatedStation CreateReadyCaller(
@@ -185,7 +199,9 @@ public sealed class SimulatedStation
         bool sweepstakes,
         ContestId? contestId = null,
         SerialNumberRangeMode serialNumberRange =
-            SerialNumberRangeMode.StartOfContest)
+            SerialNumberRangeMode.StartOfContest,
+        int customSerialNumberMinimum = 1,
+        int customSerialNumberMinimumDigits = 2)
     {
         var station = new SimulatedStation(
             identity,
@@ -197,7 +213,9 @@ public sealed class SimulatedStation
             sweepstakes,
             OperatorState.NeedQso,
             contestId,
-            serialNumberRange);
+            serialNumberRange,
+            customSerialNumberMinimum,
+            customSerialNumberMinimumDigits);
         station.State = StationState.PreparingToSend;
         station._timeoutBlocks = station.Operator.GetSendDelay(wordsPerMinute);
         return station;
@@ -502,6 +520,19 @@ public sealed class SimulatedStation
                         CultureInfo.InvariantCulture));
         }
 
+        if (_contestId.Value == "scWpx"
+            && _serialNumberRange == SerialNumberRangeMode.Custom)
+        {
+            int minimumDigits = R1 < 0.5f
+                ? _customSerialNumberMinimumDigits
+                : DecimalDigitCount(_customSerialNumberMinimum);
+            return ToCutNumbers(Identity.Rst)
+                + ToCutNumbers(
+                    Identity.Number.ToString(
+                        $"D{minimumDigits}",
+                        CultureInfo.InvariantCulture));
+        }
+
         string rst = ToCutNumbers(Identity.Rst);
         string exchange = Identity.Exchange2;
         if (int.TryParse(exchange, out int number))
@@ -522,6 +553,15 @@ public sealed class SimulatedStation
 
     private static string ToCutNumbers(string value) =>
         value.Replace('9', 'N').Replace('0', 'T');
+
+    private static int DecimalDigitCount(int value) =>
+        value switch
+        {
+            >= 1_000 => 4,
+            >= 100 => 3,
+            >= 10 => 2,
+            _ => 1,
+        };
 }
 
 internal enum StationBlockTransition

@@ -223,6 +223,8 @@ public sealed class MainWindowViewModelTests
             first.SelectedSerialNumberRange = first.SerialNumberRanges[3];
             first.CustomSerialNumberMinimum = 70;
             first.CustomSerialNumberExclusiveMaximum = 80;
+            first.CustomSerialNumberMinimumDigits = 3;
+            first.CustomSerialNumberMaximumDigits = 4;
             first.HstOperatorName = "Randy";
             first.ShowCallsignInformation = false;
             first.Qsb = true;
@@ -244,6 +246,8 @@ public sealed class MainWindowViewModelTests
                 second.SelectedSerialNumberRange.Mode);
             Assert.Equal(70, second.CustomSerialNumberMinimum);
             Assert.Equal(80, second.CustomSerialNumberExclusiveMaximum);
+            Assert.Equal(3, second.CustomSerialNumberMinimumDigits);
+            Assert.Equal(4, second.CustomSerialNumberMaximumDigits);
             Assert.Equal("RANDY", second.HstOperatorName);
             Assert.False(second.ShowCallsignInformation);
             Assert.True(second.Qsb);

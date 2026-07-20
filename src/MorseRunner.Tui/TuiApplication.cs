@@ -510,6 +510,10 @@ public sealed class TuiApplication : IDisposable
                 State.CustomSerialNumberMinimum,
             CustomSerialNumberExclusiveMaximum =
                 State.CustomSerialNumberExclusiveMaximum,
+            CustomSerialNumberMinimumDigits =
+                State.CustomSerialNumberMinimumDigits,
+            CustomSerialNumberMaximumDigits =
+                State.CustomSerialNumberMaximumDigits,
             HstOperatorName = State.HstOperatorName,
         };
         SessionHandle handle = await _client.CreateSessionAsync(
@@ -774,11 +778,11 @@ public sealed class TuiApplication : IDisposable
                 return true;
             case TuiActionKind.NextField:
             case TuiActionKind.RitDown:
-                State.SettingsIndex = (State.SettingsIndex + 1) % 19;
+                State.SettingsIndex = (State.SettingsIndex + 1) % 21;
                 return true;
             case TuiActionKind.PreviousField:
             case TuiActionKind.RitUp:
-                State.SettingsIndex = (State.SettingsIndex + 18) % 19;
+                State.SettingsIndex = (State.SettingsIndex + 20) % 21;
                 return true;
             case TuiActionKind.IncreaseSetting:
             case TuiActionKind.EnterSendMessage:
@@ -877,6 +881,9 @@ public sealed class TuiApplication : IDisposable
                     direction,
                     1,
                     State.CustomSerialNumberExclusiveMaximum - 1);
+                State.CustomSerialNumberMinimumDigits = Math.Max(
+                    State.CustomSerialNumberMinimumDigits,
+                    DecimalDigitCount(State.CustomSerialNumberMinimum));
                 break;
             case 10:
                 State.CustomSerialNumberExclusiveMaximum = Step(
@@ -884,26 +891,45 @@ public sealed class TuiApplication : IDisposable
                     direction,
                     State.CustomSerialNumberMinimum + 1,
                     9_999);
+                State.CustomSerialNumberMaximumDigits = Math.Max(
+                    State.CustomSerialNumberMaximumDigits,
+                    DecimalDigitCount(
+                        State.CustomSerialNumberExclusiveMaximum));
+                break;
+            case 11:
+                State.CustomSerialNumberMinimumDigits = Step(
+                    State.CustomSerialNumberMinimumDigits,
+                    direction,
+                    DecimalDigitCount(State.CustomSerialNumberMinimum),
+                    4);
                 break;
             case 12:
-                State.Qsk = !State.Qsk;
-                break;
-            case 13:
-                State.Qsb = !State.Qsb;
+                State.CustomSerialNumberMaximumDigits = Step(
+                    State.CustomSerialNumberMaximumDigits,
+                    direction,
+                    DecimalDigitCount(
+                        State.CustomSerialNumberExclusiveMaximum),
+                    4);
                 break;
             case 14:
-                State.Qrm = !State.Qrm;
+                State.Qsk = !State.Qsk;
                 break;
             case 15:
-                State.Qrn = !State.Qrn;
+                State.Qsb = !State.Qsb;
                 break;
             case 16:
-                State.Flutter = !State.Flutter;
+                State.Qrm = !State.Qrm;
                 break;
             case 17:
-                State.Lids = !State.Lids;
+                State.Qrn = !State.Qrn;
                 break;
             case 18:
+                State.Flutter = !State.Flutter;
+                break;
+            case 19:
+                State.Lids = !State.Lids;
+                break;
+            case 20:
                 ToggleRecording();
                 break;
         }
@@ -920,7 +946,7 @@ public sealed class TuiApplication : IDisposable
         {
             State.StationCall += character;
         }
-        else if (State.SettingsIndex == 11
+        else if (State.SettingsIndex == 13
             && State.HstOperatorName.Length < 32
             && !Char.IsControl(character))
         {
@@ -934,7 +960,7 @@ public sealed class TuiApplication : IDisposable
         {
             State.StationCall = State.StationCall[..^1];
         }
-        else if (State.SettingsIndex == 11
+        else if (State.SettingsIndex == 13
             && State.HstOperatorName.Length > 0)
         {
             State.HstOperatorName = State.HstOperatorName[..^1];
@@ -947,7 +973,7 @@ public sealed class TuiApplication : IDisposable
         {
             State.StationCall = string.Empty;
         }
-        else if (State.SettingsIndex == 11)
+        else if (State.SettingsIndex == 13)
         {
             State.HstOperatorName = string.Empty;
         }
@@ -1090,6 +1116,9 @@ public sealed class TuiApplication : IDisposable
             ["Station.SerialNrCustomMaximum"] =
                 State.CustomSerialNumberExclusiveMaximum.ToString(
                     CultureInfo.InvariantCulture),
+            ["Station.SerialNrCustomRange"] = string.Create(
+                CultureInfo.InvariantCulture,
+                $"{State.CustomSerialNumberMinimum.ToString($"D{State.CustomSerialNumberMinimumDigits}", CultureInfo.InvariantCulture)}-{State.CustomSerialNumberExclusiveMaximum.ToString($"D{State.CustomSerialNumberMaximumDigits}", CultureInfo.InvariantCulture)}"),
             ["Station.Name"] = State.HstOperatorName,
             ["Station.Qsk"] = State.Qsk.ToString(
                 CultureInfo.InvariantCulture),
@@ -1369,6 +1398,24 @@ public sealed class TuiApplication : IDisposable
             values,
             "Station.SerialNrCustomMaximum",
             State.CustomSerialNumberExclusiveMaximum);
+        if (TryParseSerialNumberRange(
+                Get(
+                    values,
+                    "Station.SerialNrCustomRange",
+                    string.Create(
+                        CultureInfo.InvariantCulture,
+                        $"{State.CustomSerialNumberMinimum.ToString($"D{State.CustomSerialNumberMinimumDigits}", CultureInfo.InvariantCulture)}-{State.CustomSerialNumberExclusiveMaximum.ToString($"D{State.CustomSerialNumberMaximumDigits}", CultureInfo.InvariantCulture)}")),
+                out int minimum,
+                out int maximum,
+                out int minimumDigits,
+                out int maximumDigits))
+        {
+            State.CustomSerialNumberMinimum = minimum;
+            State.CustomSerialNumberExclusiveMaximum = maximum;
+            State.CustomSerialNumberMinimumDigits = minimumDigits;
+            State.CustomSerialNumberMaximumDigits = maximumDigits;
+        }
+
         if (State.CustomSerialNumberMinimum < 1
             || State.CustomSerialNumberExclusiveMaximum
                 <= State.CustomSerialNumberMinimum
@@ -1376,6 +1423,8 @@ public sealed class TuiApplication : IDisposable
         {
             State.CustomSerialNumberMinimum = 1;
             State.CustomSerialNumberExclusiveMaximum = 99;
+            State.CustomSerialNumberMinimumDigits = 2;
+            State.CustomSerialNumberMaximumDigits = 2;
         }
 
         State.HstOperatorName = Get(
@@ -1481,6 +1530,46 @@ public sealed class TuiApplication : IDisposable
 
     private static int Mod(int value, int modulus) =>
         ((value % modulus) + modulus) % modulus;
+
+    private static int DecimalDigitCount(int value) =>
+        value switch
+        {
+            >= 1_000 => 4,
+            >= 100 => 3,
+            >= 10 => 2,
+            _ => 1,
+        };
+
+    private static bool TryParseSerialNumberRange(
+        string value,
+        out int minimum,
+        out int maximum,
+        out int minimumDigits,
+        out int maximumDigits)
+    {
+        string[] parts = value.Split('-', 2);
+        minimum = 0;
+        maximum = 0;
+        bool valid = parts.Length == 2
+            && Int32.TryParse(
+                parts[0],
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out minimum)
+            && Int32.TryParse(
+                parts[1],
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out maximum)
+            && minimum >= 1
+            && maximum > minimum
+            && maximum <= 9_999
+            && parts[0].Length <= 4
+            && parts[1].Length <= 4;
+        minimumDigits = valid ? parts[0].Length : 0;
+        maximumDigits = valid ? parts[1].Length : 0;
+        return valid;
+    }
 
     private static string Get(
         IReadOnlyDictionary<string, string> values,

@@ -163,6 +163,28 @@ public sealed class SimulationAndScoringTests
     }
 
     [Fact]
+    public void WpxCustomRangeRemoteExchangePreservesMinimumDigitWidth()
+    {
+        var station = new SimulatedStation(
+            new StationIdentity(
+                "K1ABC",
+                "599",
+                Number: 7,
+                "599",
+                "7"),
+            wordsPerMinute: 25,
+            pitchOffsetHz: 0,
+            new LegacyRandom(12_345),
+            OperatorRunMode.Wpx,
+            contestId: new("scWpx"),
+            serialNumberRange: SerialNumberRangeMode.Custom,
+            customSerialNumberMinimum: 1,
+            customSerialNumberMinimumDigits: 2);
+
+        Assert.Equal("5NNT7", station.ObserveExchangeForParity());
+    }
+
+    [Fact]
     public void QsoColumnErrorsUseAllThirtyTwoBits()
     {
         Qso value = new Qso()

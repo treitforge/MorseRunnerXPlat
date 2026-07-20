@@ -243,17 +243,45 @@
                   ColumnDefinitions="*,*"
                   ColumnSpacing="10"
                   IsVisible="{Binding IsCustomSerialNumberRange}">
-                <NumericUpDown
-                    AutomationProperties.Name="Custom serial number minimum"
-                    Minimum="1"
-                    Maximum="9998"
-                    Value="{Binding CustomSerialNumberMinimum}" />
-                <NumericUpDown
-                    Grid.Column="1"
-                    AutomationProperties.Name="Custom serial number exclusive maximum"
-                    Minimum="2"
-                    Maximum="9999"
-                    Value="{Binding CustomSerialNumberExclusiveMaximum}" />
+                <StackPanel Spacing="3">
+                  <TextBlock Foreground="#91A6B8" Text="Minimum" />
+                  <NumericUpDown
+                      AutomationProperties.Name="Custom serial number minimum"
+                      Minimum="1"
+                      Maximum="9998"
+                      Value="{Binding CustomSerialNumberMinimum}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="3">
+                  <TextBlock Foreground="#91A6B8" Text="Maximum" />
+                  <NumericUpDown
+                      AutomationProperties.Name="Custom serial number exclusive maximum"
+                      Minimum="2"
+                      Maximum="9999"
+                      Value="{Binding CustomSerialNumberExclusiveMaximum}" />
+                </StackPanel>
+              </Grid>
+              <Grid
+                  ColumnDefinitions="*,*"
+                  ColumnSpacing="10"
+                  IsVisible="{Binding IsCustomSerialNumberRange}">
+                <StackPanel Spacing="3">
+                  <TextBlock Foreground="#91A6B8" Text="Minimum digits" />
+                  <NumericUpDown
+                      x:Name="CustomSerialNumberMinimumDigitsInput"
+                      AutomationProperties.Name="Custom serial number minimum digits"
+                      Minimum="1"
+                      Maximum="4"
+                      Value="{Binding CustomSerialNumberMinimumDigits}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="3">
+                  <TextBlock Foreground="#91A6B8" Text="Maximum digits" />
+                  <NumericUpDown
+                      x:Name="CustomSerialNumberMaximumDigitsInput"
+                      AutomationProperties.Name="Custom serial number maximum digits"
+                      Minimum="1"
+                      Maximum="4"
+                      Value="{Binding CustomSerialNumberMaximumDigits}" />
+                </StackPanel>
               </Grid>
               <TextBlock Foreground="#91A6B8" Text="HST operator" />
               <TextBox

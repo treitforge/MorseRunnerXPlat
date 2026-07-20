@@ -25,6 +25,32 @@ public sealed class SessionLoopTests
                 TestContext.Current.CancellationToken));
     }
 
+    [Theory]
+    [InlineData(1, 99, 0, 2)]
+    [InlineData(1, 99, 5, 2)]
+    [InlineData(70, 800, 1, 3)]
+    [InlineData(70, 800, 2, 2)]
+    public async Task InvalidCustomSerialNumberDigitWidthsAreRejected(
+        int minimum,
+        int maximum,
+        int minimumDigits,
+        int maximumDigits)
+    {
+        await using var engine = new MorseRunnerEngine();
+
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => engine.CreateSessionAsync(
+                SessionSettings.CreateDefault(seed: 12_345) with
+                {
+                    SerialNumberRange = SerialNumberRangeMode.Custom,
+                    CustomSerialNumberMinimum = minimum,
+                    CustomSerialNumberExclusiveMaximum = maximum,
+                    CustomSerialNumberMinimumDigits = minimumDigits,
+                    CustomSerialNumberMaximumDigits = maximumDigits,
+                },
+                TestContext.Current.CancellationToken));
+    }
+
     [Fact]
     public async Task SeededSessionAdvancesOnlyOnTheSessionWorker()
     {

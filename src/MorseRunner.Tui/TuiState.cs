@@ -75,6 +75,10 @@ public sealed class TuiState
 
     public int CustomSerialNumberExclusiveMaximum { get; set; } = 99;
 
+    public int CustomSerialNumberMinimumDigits { get; set; } = 2;
+
+    public int CustomSerialNumberMaximumDigits { get; set; } = 2;
+
     public string HstOperatorName { get; set; } = string.Empty;
 
     public bool RecordingEnabled { get; set; }

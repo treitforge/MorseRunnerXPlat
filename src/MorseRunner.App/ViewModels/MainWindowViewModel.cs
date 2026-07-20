@@ -149,6 +149,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private int _receiveSpeedAboveWpm;
     private int _customSerialNumberMinimum = 1;
     private int _customSerialNumberExclusiveMaximum = 99;
+    private int _customSerialNumberMinimumDigits = 2;
+    private int _customSerialNumberMaximumDigits = 2;
     private string _hstOperatorName = string.Empty;
     private bool _showCallsignInformation = true;
     private string _callsignInformation = "No caller selected";
@@ -481,17 +483,55 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     public int CustomSerialNumberMinimum
     {
         get => _customSerialNumberMinimum;
-        set => SetField(
-            ref _customSerialNumberMinimum,
-            Math.Clamp(value, 1, 9_998));
+        set
+        {
+            if (SetField(
+                    ref _customSerialNumberMinimum,
+                    Math.Clamp(value, 1, 9_998)))
+            {
+                CustomSerialNumberMinimumDigits = Math.Max(
+                    CustomSerialNumberMinimumDigits,
+                    DecimalDigitCount(_customSerialNumberMinimum));
+            }
+        }
     }
 
     public int CustomSerialNumberExclusiveMaximum
     {
         get => _customSerialNumberExclusiveMaximum;
+        set
+        {
+            if (SetField(
+                    ref _customSerialNumberExclusiveMaximum,
+                    Math.Clamp(value, 2, 9_999)))
+            {
+                CustomSerialNumberMaximumDigits = Math.Max(
+                    CustomSerialNumberMaximumDigits,
+                    DecimalDigitCount(_customSerialNumberExclusiveMaximum));
+            }
+        }
+    }
+
+    public int CustomSerialNumberMinimumDigits
+    {
+        get => _customSerialNumberMinimumDigits;
         set => SetField(
-            ref _customSerialNumberExclusiveMaximum,
-            Math.Clamp(value, 2, 9_999));
+            ref _customSerialNumberMinimumDigits,
+            Math.Clamp(
+                value,
+                DecimalDigitCount(CustomSerialNumberMinimum),
+                4));
+    }
+
+    public int CustomSerialNumberMaximumDigits
+    {
+        get => _customSerialNumberMaximumDigits;
+        set => SetField(
+            ref _customSerialNumberMaximumDigits,
+            Math.Clamp(
+                value,
+                DecimalDigitCount(CustomSerialNumberExclusiveMaximum),
+                4));
     }
 
     public string HstOperatorName
@@ -738,11 +778,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             values,
             "Station.CWMaxRxSpeed",
             ReceiveSpeedAboveWpm);
-        (int importedMinimum, int importedMaximum) =
+        (
+            int importedMinimum,
+            int importedMaximum,
+            int importedMinimumDigits,
+            int importedMaximumDigits) =
             ParseSerialNumberRange(
-                Get(values, "Station.SerialNrCustomRange", "1-99"),
+                Get(values, "Station.SerialNrCustomRange", "01-99"),
                 CustomSerialNumberMinimum,
-                CustomSerialNumberExclusiveMaximum);
+                CustomSerialNumberExclusiveMaximum,
+                CustomSerialNumberMinimumDigits,
+                CustomSerialNumberMaximumDigits);
         CustomSerialNumberMinimum = GetInt(
             values,
             "Station.SerialNrCustomMinimum",
@@ -751,6 +797,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             values,
             "Station.SerialNrCustomMaximum",
             importedMaximum);
+        CustomSerialNumberMinimumDigits = importedMinimumDigits;
+        CustomSerialNumberMaximumDigits = importedMaximumDigits;
         HstOperatorName = Get(
             values,
             "Station.Name",
@@ -884,6 +932,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                 CustomSerialNumberMinimum = CustomSerialNumberMinimum,
                 CustomSerialNumberExclusiveMaximum =
                     CustomSerialNumberExclusiveMaximum,
+                CustomSerialNumberMinimumDigits =
+                    CustomSerialNumberMinimumDigits,
+                CustomSerialNumberMaximumDigits =
+                    CustomSerialNumberMaximumDigits,
                 HstOperatorName = HstOperatorName.Trim(),
                 AudioOutputDeviceName = SelectedAudioOutputDevice?.Name,
             };
@@ -1746,7 +1798,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                     CultureInfo.InvariantCulture),
             ["Station.SerialNrCustomRange"] = string.Create(
                 CultureInfo.InvariantCulture,
-                $"{CustomSerialNumberMinimum}-{CustomSerialNumberExclusiveMaximum}"),
+                $"{CustomSerialNumberMinimum.ToString($"D{CustomSerialNumberMinimumDigits}", CultureInfo.InvariantCulture)}-{CustomSerialNumberExclusiveMaximum.ToString($"D{CustomSerialNumberMaximumDigits}", CultureInfo.InvariantCulture)}"),
             ["Station.Name"] = HstOperatorName.Trim(),
             ["Station.AudioOutputDevice"] =
                 SelectedAudioOutputDevice?.Name ?? string.Empty,
@@ -1805,10 +1857,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             ? parsed
             : fallback;
 
-    private static (int Minimum, int ExclusiveMaximum) ParseSerialNumberRange(
+    private static (
+        int Minimum,
+        int ExclusiveMaximum,
+        int MinimumDigits,
+        int MaximumDigits) ParseSerialNumberRange(
         string value,
         int fallbackMinimum,
-        int fallbackMaximum)
+        int fallbackMaximum,
+        int fallbackMinimumDigits,
+        int fallbackMaximumDigits)
     {
         string[] parts = value.Split('-', 2);
         return parts.Length == 2
@@ -1825,9 +1883,24 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             && minimum >= 1
             && maximum > minimum
             && maximum <= 9_999
-                ? (minimum, maximum)
-                : (fallbackMinimum, fallbackMaximum);
+            && parts[0].Length <= 4
+            && parts[1].Length <= 4
+                ? (minimum, maximum, parts[0].Length, parts[1].Length)
+                : (
+                    fallbackMinimum,
+                    fallbackMaximum,
+                    fallbackMinimumDigits,
+                    fallbackMaximumDigits);
     }
+
+    private static int DecimalDigitCount(int value) =>
+        value switch
+        {
+            >= 1_000 => 4,
+            >= 100 => 3,
+            >= 10 => 2,
+            _ => 1,
+        };
 
     private static bool GetBool(
         IReadOnlyDictionary<string, string> values,

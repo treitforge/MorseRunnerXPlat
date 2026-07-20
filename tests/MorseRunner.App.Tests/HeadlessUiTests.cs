@@ -40,6 +40,12 @@ public sealed class HeadlessUiTests
         Assert.NotNull(
             window.FindControl<ComboBox>("SerialNumberRangeSelector"));
         Assert.NotNull(
+            window.FindControl<NumericUpDown>(
+                "CustomSerialNumberMinimumDigitsInput"));
+        Assert.NotNull(
+            window.FindControl<NumericUpDown>(
+                "CustomSerialNumberMaximumDigitsInput"));
+        Assert.NotNull(
             window.FindControl<ComboBox>("AudioOutputDeviceSelector"));
         Assert.True(window.Bounds.Width >= window.MinWidth);
         Assert.True(window.Bounds.Height >= window.MinHeight);
@@ -63,9 +69,12 @@ public sealed class HeadlessUiTests
         Directory.CreateDirectory(directory);
         try
         {
-            var mainWindow = new MainWindow(
-                new MainWindowViewModel(
-                    InProcessMorseRunnerClient.CreateDefault()));
+            var mainViewModel = new MainWindowViewModel(
+                InProcessMorseRunnerClient.CreateDefault());
+            mainViewModel.SelectedSerialNumberRange =
+                mainViewModel.SerialNumberRanges.Single(
+                    option => option.Mode == SerialNumberRangeMode.Custom);
+            var mainWindow = new MainWindow(mainViewModel);
             mainWindow.Show();
             string mainPath = Path.Combine(
                 directory,

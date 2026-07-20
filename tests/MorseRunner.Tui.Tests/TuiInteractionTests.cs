@@ -162,6 +162,8 @@ public sealed class TuiInteractionTests
                     SerialNumberRangeMode.Custom;
                 first.State.CustomSerialNumberMinimum = 40;
                 first.State.CustomSerialNumberExclusiveMaximum = 80;
+                first.State.CustomSerialNumberMinimumDigits = 3;
+                first.State.CustomSerialNumberMaximumDigits = 4;
                 first.State.HstOperatorName = "W7SST";
                 await first.HandleAsync(
                     new(TuiActionKind.ToggleQsb),
@@ -187,6 +189,8 @@ public sealed class TuiInteractionTests
                 second.State.SerialNumberRange);
             Assert.Equal(40, second.State.CustomSerialNumberMinimum);
             Assert.Equal(80, second.State.CustomSerialNumberExclusiveMaximum);
+            Assert.Equal(3, second.State.CustomSerialNumberMinimumDigits);
+            Assert.Equal(4, second.State.CustomSerialNumberMaximumDigits);
             Assert.Equal("W7SST", second.State.HstOperatorName);
             Assert.True(second.State.Qsb);
             Assert.True(second.State.RecordingEnabled);
@@ -261,6 +265,8 @@ public sealed class TuiInteractionTests
         {
             View = TuiView.Settings,
             HstOperatorName = "W7SST",
+            CustomSerialNumberMinimumDigits = 3,
+            CustomSerialNumberMaximumDigits = 4,
             ConnectionStatus = "Connected to authenticated local host.",
         };
 
@@ -272,6 +278,8 @@ public sealed class TuiInteractionTests
 
         Assert.Contains("ADVANCED SETTINGS", settings, StringComparison.Ordinal);
         Assert.Contains("HST OPERATOR", settings, StringComparison.Ordinal);
+        Assert.Contains("CUSTOM MINIMUM      001", settings, StringComparison.Ordinal);
+        Assert.Contains("CUSTOM MAXIMUM      0099", settings, StringComparison.Ordinal);
         Assert.Contains("RESULTS", results, StringComparison.Ordinal);
         Assert.Contains("No completed result", results, StringComparison.Ordinal);
         Assert.Contains("DIAGNOSTICS", diagnostics, StringComparison.Ordinal);

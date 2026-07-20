@@ -1981,7 +1981,9 @@ internal sealed class EngineSession : IAsyncDisposable
                         _settings.ContestId.Value == "scArrlSS",
                     _settings.Flutter,
                     _settings.ContestId,
-                    _settings.SerialNumberRange);
+                    _settings.SerialNumberRange,
+                    _settings.CustomSerialNumberMinimum,
+                    _settings.CustomSerialNumberMinimumDigits);
             candidateObserver?.Invoke(attemptNumber, candidate);
 
             if (attemptNumber == 10

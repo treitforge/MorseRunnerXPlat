@@ -70,8 +70,16 @@ public static class TuiRenderer
             $"RX BELOW            {state.ReceiveSpeedBelowWpm} WPM",
             $"RX ABOVE            {state.ReceiveSpeedAboveWpm} WPM",
             $"SERIAL RANGE        {SerialRangeName(state.SerialNumberRange)}",
-            $"CUSTOM MINIMUM      {state.CustomSerialNumberMinimum}",
-            $"CUSTOM MAXIMUM      {state.CustomSerialNumberExclusiveMaximum}",
+            "CUSTOM MINIMUM      "
+                + state.CustomSerialNumberMinimum.ToString(
+                    $"D{state.CustomSerialNumberMinimumDigits}",
+                    CultureInfo.InvariantCulture),
+            "CUSTOM MAXIMUM      "
+                + state.CustomSerialNumberExclusiveMaximum.ToString(
+                    $"D{state.CustomSerialNumberMaximumDigits}",
+                    CultureInfo.InvariantCulture),
+            $"CUSTOM MIN DIGITS   {state.CustomSerialNumberMinimumDigits}",
+            $"CUSTOM MAX DIGITS   {state.CustomSerialNumberMaximumDigits}",
             $"HST OPERATOR        {state.HstOperatorName}",
             $"QSK                 {OnOff(state.Qsk)}",
             $"QSB                 {OnOff(state.Qsb)}",

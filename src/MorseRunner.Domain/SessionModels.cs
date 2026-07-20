@@ -70,6 +70,10 @@ public sealed record SessionSettings(
 
     public int CustomSerialNumberExclusiveMaximum { get; init; } = 99;
 
+    public int CustomSerialNumberMinimumDigits { get; init; } = 2;
+
+    public int CustomSerialNumberMaximumDigits { get; init; } = 2;
+
     public string HstOperatorName { get; init; } = string.Empty;
 
     public string? AudioOutputDeviceName { get; init; }

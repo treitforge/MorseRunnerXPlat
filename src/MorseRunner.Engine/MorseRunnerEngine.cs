@@ -310,11 +310,19 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
             && (settings.CustomSerialNumberMinimum < 1
                 || settings.CustomSerialNumberExclusiveMaximum
                     <= settings.CustomSerialNumberMinimum
-                || settings.CustomSerialNumberExclusiveMaximum > 9_999))
+                || settings.CustomSerialNumberExclusiveMaximum > 9_999
+                || settings.CustomSerialNumberMinimumDigits
+                    < DecimalDigitCount(
+                        settings.CustomSerialNumberMinimum)
+                || settings.CustomSerialNumberMinimumDigits > 4
+                || settings.CustomSerialNumberMaximumDigits
+                    < DecimalDigitCount(
+                        settings.CustomSerialNumberExclusiveMaximum)
+                || settings.CustomSerialNumberMaximumDigits > 4))
         {
             throw new ArgumentOutOfRangeException(
                 nameof(settings),
-                "The custom serial range must be min-max with 1 <= min < max <= 9999.");
+                "The custom serial range must be min-max with 1 <= min < max <= 9999 and one to four digits per bound.");
         }
 
         ContestCatalog.Get(settings.ContestId);
@@ -325,6 +333,15 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
                 nameof(settings));
         }
     }
+
+    private static int DecimalDigitCount(int value) =>
+        value switch
+        {
+            >= 1_000 => 4,
+            >= 100 => 3,
+            >= 10 => 2,
+            _ => 1,
+        };
 
     private EngineSession GetSession(SessionId sessionId)
     {

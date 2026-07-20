@@ -21,6 +21,8 @@ public sealed class GrpcTransportTests
             SerialNumberRange = SerialNumberRangeMode.Custom,
             CustomSerialNumberMinimum = 70,
             CustomSerialNumberExclusiveMaximum = 80,
+            CustomSerialNumberMinimumDigits = 3,
+            CustomSerialNumberMaximumDigits = 4,
             HstOperatorName = "RANDY",
             AudioOutputDeviceName = "Test Device",
         };
@@ -41,6 +43,20 @@ public sealed class GrpcTransportTests
         SessionSettings actual = TransportMapper.ToDomain(transport);
 
         Assert.Equal(3, actual.StationIdRate);
+    }
+
+    [Fact]
+    public void OmittedCustomSerialNumberDigitsUseCeDefaults()
+    {
+        SessionSettingsMessage transport = TransportMapper.ToTransport(
+            SessionSettings.CreateDefault(42));
+        transport.ClearCustomSerialNumberMinimumDigits();
+        transport.ClearCustomSerialNumberMaximumDigits();
+
+        SessionSettings actual = TransportMapper.ToDomain(transport);
+
+        Assert.Equal(2, actual.CustomSerialNumberMinimumDigits);
+        Assert.Equal(2, actual.CustomSerialNumberMaximumDigits);
     }
 
     [Fact]

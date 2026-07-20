@@ -79,6 +79,10 @@ public static class TransportMapper
             CustomSerialNumberMinimum = value.CustomSerialNumberMinimum,
             CustomSerialNumberExclusiveMaximum =
                 value.CustomSerialNumberExclusiveMaximum,
+            CustomSerialNumberMinimumDigits =
+                value.CustomSerialNumberMinimumDigits,
+            CustomSerialNumberMaximumDigits =
+                value.CustomSerialNumberMaximumDigits,
             HstOperatorName = value.HstOperatorName,
             AudioOutputDeviceName = value.AudioOutputDeviceName ?? string.Empty,
         };
@@ -122,6 +126,14 @@ public static class TransportMapper
                 value.HasCustomSerialNumberExclusiveMaximum
                 ? value.CustomSerialNumberExclusiveMaximum
                 : 99,
+            CustomSerialNumberMinimumDigits =
+                value.HasCustomSerialNumberMinimumDigits
+                ? value.CustomSerialNumberMinimumDigits
+                : 2,
+            CustomSerialNumberMaximumDigits =
+                value.HasCustomSerialNumberMaximumDigits
+                ? value.CustomSerialNumberMaximumDigits
+                : 2,
             HstOperatorName = value.HstOperatorName,
             AudioOutputDeviceName = EmptyToNull(value.AudioOutputDeviceName),
         };

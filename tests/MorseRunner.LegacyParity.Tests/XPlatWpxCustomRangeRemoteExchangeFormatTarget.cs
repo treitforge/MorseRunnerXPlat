@@ -62,7 +62,9 @@ public sealed class XPlatWpxCustomRangeRemoteExchangeFormatTarget : IParityTarge
             new LegacyRandom(input.Seed),
             OperatorRunMode.Wpx,
             contestId: new(input.ContestId),
-            serialNumberRange: SerialNumberRangeMode.Custom);
+            serialNumberRange: SerialNumberRangeMode.Custom,
+            customSerialNumberMinimum: 1,
+            customSerialNumberMinimumDigits: 2);
         string formatted = station.ObserveExchangeForParity();
         return
         [

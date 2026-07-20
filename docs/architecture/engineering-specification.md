@@ -2684,6 +2684,29 @@ the existing numeric cutting stage. Start, end, and custom range acceptance,
 custom leading-zero intent, probabilistic cut variants, repeats, correction
 variants, and LID errors remain within the partial obligation.
 
+The authored `contest.wpx-custom-range-remote-exchange-format-seed-12345`
+case binds the WPX/HST station-serial obligation to CE's custom range parser
+and formatting path. Its pinned CE v27 adapter parses the literal range
+`01-99`, fixes the remote serial at seven and the station width selector below
+0.5, and observes the exact cut exchange `5NNT7`. Retained red evidence records
+`contest-wpx-custom-range-remote-exchange-format-mismatch`, where XPlat lost
+the textual minimum width and forced three digits, producing `5NNTT7`.
+
+`SessionSettings` therefore carries the numeric custom bounds and the digit
+width of each textual bound. The CE-compatible defaults are minimum one,
+exclusive maximum 99, and two digits for each bound. A custom session requires
+each width to be at least the decimal width of its bound and no greater than
+four. Protobuf fields 25 and 26 carry the minimum and maximum widths
+additively, with omission restoring two. Avalonia and terminal settings expose
+both widths, persist the CE-compatible padded `SerialNrCustomRange` text, and
+recover its leading-zero intent. The session passes the custom minimum and its
+width to each simulated station. WPX formatting selects the configured width
+when the station's retained `R1` is below 0.5 and otherwise uses the natural
+width of the configured minimum, matching CE's per-station width choice.
+Elapsed-time serial generation, arbitrary custom-range parser edge cases,
+maximum-width consumers, repeats, correction variants, and LID errors remain
+within the partial obligation.
+
 The authored `contest.fieldday-remote-exchange-format-seed-12345` case extends
 the same obligation through Field Day's two-field exchange composition. Its
 pinned CE v26 adapter fixes the remote class at `3A` and ARRL section at `OR`,
