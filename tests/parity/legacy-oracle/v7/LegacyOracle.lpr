@@ -11,6 +11,7 @@ uses
   LCLType,
   Types,
   Controls,
+  StdCtrls,
   ExtCtrls,
   fpjson,
   jsonparser,
@@ -18,6 +19,7 @@ uses
   WSControls,
   WSForms,
   WSExtCtrls,
+  WSStdCtrls,
   SysUtils,
   Classes,
   Math,
@@ -180,6 +182,8 @@ begin
     RegisterWSComponent(TCustomForm, TWSCustomForm);
   if FindWSRegistered(TCustomPanel) = nil then
     RegisterWSComponent(TCustomPanel, TWSCustomPanel);
+  if FindWSRegistered(TCustomComboBox) = nil then
+    RegisterWSComponent(TCustomComboBox, TWSCustomComboBox);
 end;
 
 function JsonEscape(const Value: string): string;
@@ -617,6 +621,8 @@ begin
 end;
 
 procedure CreateRuntime(const Seed: Integer);
+var
+  BandwidthIndex: Integer;
 begin
   if Assigned(Tst)
     or Assigned(Keyer)
@@ -634,7 +640,15 @@ begin
   MainForm.Panel2 := TPanel.Create(MainForm);
   MainForm.Panel4 := TPanel.Create(MainForm);
   MainForm.Panel7 := TPanel.Create(MainForm);
+  MainForm.Panel8 := TPanel.Create(MainForm);
+  MainForm.Panel8.Width := 100;
+  MainForm.Shape2 := TShape.Create(MainForm);
+  MainForm.ComboBox2 := TComboBox.Create(MainForm);
+  for BandwidthIndex := 0 to 10 do
+    MainForm.ComboBox2.Items.Add(
+      IntToStr(100 + BandwidthIndex * 50) + ' Hz');
   MainForm.AlWavFile1 := TAlWavFile.Create(MainForm);
+  MainForm.SetBw((ExpectedBandwidthHz - 100) div 50);
 
   if (Tst.ClassType <> TFailClosedContest)
     or (Tst.Me.ClassType <> TMyStation)
@@ -644,7 +658,13 @@ begin
     or MainForm.Panel2.HandleAllocated
     or MainForm.Panel4.HandleAllocated
     or MainForm.Panel7.HandleAllocated
+    or MainForm.Panel8.HandleAllocated
+    or MainForm.ComboBox2.HandleAllocated
     or MainForm.AlWavFile1.IsOpen
+    or (Ini.Bandwidth <> ExpectedBandwidthHz)
+    or (MainForm.ComboBox2.ItemIndex <> 8)
+    or (Tst.Filt.Points <> 15)
+    or (Tst.Filt2.Points <> Tst.Filt.Points)
     or (AbstractStubCalls <> 0) then
     raise Exception.Create('CE pure receiver runtime is not active');
 end;
@@ -792,7 +812,13 @@ begin
         or MainForm.Panel2.HandleAllocated
         or MainForm.Panel4.HandleAllocated
         or MainForm.Panel7.HandleAllocated
+        or MainForm.Panel8.HandleAllocated
+        or MainForm.ComboBox2.HandleAllocated
         or MainForm.AlWavFile1.IsOpen
+        or (Ini.Bandwidth <> ExpectedBandwidthHz)
+        or (MainForm.ComboBox2.ItemIndex <> 8)
+        or (Tst.Filt.Points <> 15)
+        or (Tst.Filt2.Points <> Tst.Filt.Points)
         or (AbstractStubCalls <> 0) then
         raise Exception.Create(
           'CE noise-floor capture left the pure receiver path');

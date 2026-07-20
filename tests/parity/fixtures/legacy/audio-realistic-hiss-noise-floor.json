@@ -6,9 +6,9 @@
   "referenceDefinitionSha256": "663adf3bf230161abb923cf8b6651d394af1b99eab05efeafb696cb29992da23",
   "oracle": "tests/parity/legacy-oracle/v7/LegacyOracle.lpr",
   "legacyOracleVersionId": "legacy-oracle-v7",
-  "oracleSourceSha256": "437209499456896aa10f4237d4f6926ae4dd2dba4253571322113ec7210d156c",
-  "oracleBuildRecipeSha256": "bf9ababe666dc5205b555f1c92c0c6c0281c9004b685eb77f46c0707cc734193",
-  "oracleExecutableSha256": "695fe849204c2a7f520490b5381dd3325e07590e1441d431be659ae0190d7044",
+  "oracleSourceSha256": "7e84384235bba8a1f2e9d632df70698d257a4c0d33e4575acf30209583147d14",
+  "oracleBuildRecipeSha256": "d2faedc3f9cef5b108ef30f793e1b386eea2387686b282cce49acc751f961b5b",
+  "oracleExecutableSha256": "9049f10d9d34152f89f0d82f655b5c485fc1dde7140c6919b2cc40f336ac7b01",
   "toolchain": {
     "lazarus": "4.6",
     "fpc": "3.2.2",
@@ -25,13 +25,13 @@
     "block[2]|sample-count=512|probe-bits=bc5b3ee2,bbec34e8,ba4d0da6,3bb19cbc,bd21741c,3cacf62f|float-sha256=25d26f62e7aaff567b3c4a1d6cb812af06d250cb8e5c40a3d94d86c09647a263",
     "block[3]|sample-count=512|probe-bits=3c0a577b,bba972e2,bc95f95d,bcf38162,bbcb3737,3bd2f186|float-sha256=092cb3575b75b63e6034f15a66f82279052cfce26fa7aea536455bce079ea5b9",
     "block[4]|sample-count=512|probe-bits=3c790520,3cbf81d7,3cf38b65,3d0958c8,bcd5ba3c,bc346c65|float-sha256=1983a08425511769ab84486da63f019a5f6bd8c7db8057f6bbee87378d129a13",
-    "block[5]|sample-count=512|probe-bits=bc474801,bc66e499,bc896ad7,bc9e0068,babb3256,3c2759ea|float-sha256=766a1eee00d0c3a36819bf0bf2f9d3b245f34df9e75c36e40a32f7c010a99707",
-    "block[6]|sample-count=512|probe-bits=3c4cdac5,3c58dcc0,3c4a5848,3c23868d,3c0fa6c6,3bf767b1|float-sha256=3b05676a4d72dda2a739d71681b9262ff85b8dfa33db59ddb8829777456cf798",
-    "block[7]|sample-count=512|probe-bits=3c2651c2,3c3d00d3,3c3c6005,3c23f088,3c3f1458,bb4f72f3|float-sha256=0dfe5d37213e565b103322589ae4a10bc20c60d5be08c4b903e19d5d35ea730a",
-    "block[8]|sample-count=512|probe-bits=bb8aec3c,bb9c731b,bb9ac20b,bb86ae38,3af89e39,bc221778|float-sha256=fd36af6809a8cfa0a0d99f5c961a43779dbf007ca2b8684744a36b7993ac7214",
-    "block[9]|sample-count=512|probe-bits=bb87d781,3b043925,3bff63fd,3c4be928,3ae67436,bb8fe215|float-sha256=34d6b7faf64d6255b3c9aff2222a8deb3f76262f8902104c3060d51745ebe19c",
-    "block[10]|sample-count=512|probe-bits=bbac8cd2,bbb55319,bba940eb,bb89c51d,3c2710ae,3b155072|float-sha256=c2cf087f30611a03c842440748c1ccbf24c3ba87c8d004f743c0535f2b2618db",
-    "block[11]|sample-count=512|probe-bits=3a385e92,ba762061,bb203d3a,bb6dd9bd,bc547047,bbea99d3|float-sha256=6e35632c77f0f9633316e4517c7502c44c063d1d03e4bcd38ac2ce73d47c3d32",
-    "aggregate|sample-count=6144|peak=0.081599809|rms=0.017093432|float-sha256=e575eb9b473f71ab38ea0d2c2c5fcddaa7d3e93afaea61e2a7f428c141336578"
+    "block[5]|sample-count=512|probe-bits=bc474801,bc66e499,bc896ad7,bc9e0068,3bc130bb,3c4b0ed5|float-sha256=da4adf75c697f22bae9638fde089ebf1e5028036075956939d857e18a1fe468d",
+    "block[6]|sample-count=512|probe-bits=3ae436cc,bc2f281e,bcb7b05e,bd0138b1,bd185e25,bcac1a19|float-sha256=55ae7393637c99ff41b53df3b965ee89b006da839731c4762b7a1894dc980c5f",
+    "block[7]|sample-count=512|probe-bits=bc137277,3b82aca9,3c83ccf1,3cd24424,bcb17917,3c97a74c|float-sha256=f193f04aea3c4ed263538ade8794b89422cf8631b7f893e795551fc4cad416a6",
+    "block[8]|sample-count=512|probe-bits=3cfb6395,3d18fdcd,3d175750,3ceed4fa,bd5a7f3f,3cd4cf47|float-sha256=2fe3741da70270422bfd18cb42088a7f6fff83c684b373b8e3d9a17ca364fac6",
+    "block[9]|sample-count=512|probe-bits=3c8ba450,3c064914,3a44461e,bb99a8b2,ba9e4248,bccbc213|float-sha256=2491cf5fa93f758368cfb3f9aef8713542a88a1823b63cfead0e4f70016e56da",
+    "block[10]|sample-count=512|probe-bits=bcfcfe64,bd007ca9,bcdb5b4f,bc940d26,3beb9b40,3d24498c|float-sha256=e7ef0429a2ae841367f8882926515f060f45e2f7503fc59a71f78175dff94ddd",
+    "block[11]|sample-count=512|probe-bits=3d1d7645,3d00db84,3c9d480d,3b4aa439,bd0ddc65,bcc1d3d0|float-sha256=f203c0027ea861e24bee401d50619f90d6af39b6f26fac514a0c560b93d4e601",
+    "aggregate|sample-count=6144|peak=0.083737813|rms=0.024757234|float-sha256=9852474e203a364ada944ecede337f2048a8ee80ad3a0e24ce833a287e64f1e1"
   ]
 }

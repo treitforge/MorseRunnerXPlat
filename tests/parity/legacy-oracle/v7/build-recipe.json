@@ -4,7 +4,7 @@
   "versionId": "legacy-oracle-v7",
   "sourceClosure": {
     "oracleSource": "tests/parity/legacy-oracle/v7/LegacyOracle.lpr",
-    "oracleSourceSha256": "437209499456896aa10f4237d4f6926ae4dd2dba4253571322113ec7210d156c",
+    "oracleSourceSha256": "7e84384235bba8a1f2e9d632df70698d257a4c0d33e4575acf30209583147d14",
     "legacyRevision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
     "legacyTree": "a44212bfee5b1eebfd0129459d476736775adf36",
     "legacyBundleSha256": "1d9fcafb3adb0227aba360bc1884b5c32d2c1e8210448e646a4104f142b07772",
