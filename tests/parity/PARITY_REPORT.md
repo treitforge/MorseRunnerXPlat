@@ -107,18 +107,18 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 
 - Manifest capabilities: 24
 - Complete capabilities: 0
-- Partially authored capabilities: 2
-- Not-authored capabilities: 22
+- Partially authored capabilities: 3
+- Not-authored capabilities: 21
 - Behavioral obligations: 119
-- Source-bound obligations: 2
-- Pending source bindings: 117
+- Source-bound obligations: 3
+- Pending source bindings: 116
 - Complete obligations: 0
-- Partially authored obligations: 2
-- Not-authored obligations: 117
+- Partially authored obligations: 3
+- Not-authored obligations: 116
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 2
+- Active acceptance cases: 3
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 2
+- Legacy-green/XPlat-red cases: 3
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
@@ -130,7 +130,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `ux.main-form-objects` | Legacy main-form objects | `not-authored` | 0 | 79 | 0 | `Main.dfm:1-1988` |
 | `ux.main-menu-commands` | Legacy main-menu commands | `not-authored` | 0 | 129 | 0 | `Main.dfm:964-1579` |
 | `ux.main-form-events` | Legacy main-form event bindings and handlers | `not-authored` | 0 | 229 | 0 | `Main.dfm:1-1988`<br>`Main.pas:452-2867` |
-| `ux.keyboard-workflows` | Legacy shortcuts and keyboard branches | `not-authored` | 0 | 53 | 0 | `Main.dfm:1000-1579`<br>`Main.pas:629-947` |
+| `ux.keyboard-workflows` | Legacy shortcuts and keyboard branches | `partial` | 1 | 53 | 0 | `Main.dfm:1000-1579`<br>`Main.pas:629-947` |
 | `logging.qso-model` | Legacy QSO record and error model | `not-authored` | 0 | 47 | 0 | `Log.pas:48-82` |
 | `logging.scoring-rate-and-results` | Legacy logging, scoring, rate, correction, and result paths | `not-authored` | 0 | 55 | 0 | `Log.pas:147-1137` |
 | `simulation.state-models` | Legacy simulation state models and transitions | `not-authored` | 0 | 66 | 0 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
@@ -262,7 +262,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `release.platform-complete-publication-gate` | `build.legacy-project-metadata` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Every supported platform must be complete before release promotion or artifact publication. |
 | `release.zero-skips-live-final-certification` | `quality.legacy-tests-and-smoke` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Final certification executes every obligation live with zero skipped, waived, quarantined, expected-failure, or fixture-only cases. |
 | `release.experienced-user-ab-listening` | `quality.legacy-tests-and-smoke` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Structured CE and XPlat A/B sessions cover contests, audio conditions, corrections, logging, history, and migration with experienced users. |
-| `ux.enter-esm-partial-call-message-selection` | `ux.keyboard-workflows` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Enter with an empty, partial, corrected, or complete call selects and sends the same ESM message and state transition as CE. |
+| `ux.enter-esm-partial-call-message-selection` | `ux.keyboard-workflows` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | Enter with an empty, partial, corrected, or complete call selects and sends the same ESM message and state transition as CE. |
 | `ux.log-selection-updates-callsign-information` | `ux.main-form-events` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Selecting a historical QSO updates the callsign-information region to the selected call as CE does. |
 | `ux.semantic-duration-not-simulation-blocks` | `ux.main-form-events` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | The UX sends semantic duration and never owns sample-rate or simulation-block conversion policy. |
 | `ux.help-about-readme-community-actions` | `ux.main-menu-commands` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Help, About, readme, website, and community actions match CE availability, targets, errors, keyboard access, and focus return. |
@@ -282,6 +282,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 |---|---|---|---|---|---|---|
 | `audio.sst-farnsworth-envelope-timing` | `audio-dsp.legacy-processing` | `audio.sst-farnsworth-timing` | `legacy-green-xplat-red` | `audio-sst-farnsworth-timing-mismatch` | `pass` | `fail` |
 | `contest.exchange-shapes` | `contest.legacy-implementations` | `contest.exchange-shapes-and-constructor-metadata` | `legacy-green-xplat-red` | `contest-exchange-shape-mismatch` | `pass` | `fail` |
+| `ux.enter-esm-partial-call-message-selection-live` | `ux.keyboard-workflows` | `ux.enter-esm-partial-call-message-selection` | `legacy-green-xplat-red` | `ux-enter-esm-partial-call-message-selection-mismatch` | `pass` | `fail` |
 
 ## Retained noncertifying observations
 
