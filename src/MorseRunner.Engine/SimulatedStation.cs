@@ -458,6 +458,11 @@ public sealed class SimulatedStation
 
     private string FormatExchange()
     {
+        if (_contestId.Value == "scCwt")
+        {
+            return $"{Identity.Exchange1}  {Identity.Exchange2}";
+        }
+
         string rst = ToCutNumbers(Identity.Rst);
         string exchange = Identity.Exchange2;
         if (int.TryParse(exchange, out int number))
@@ -473,7 +478,6 @@ public sealed class SimulatedStation
 
     internal string ObserveExchangeForParity()
     {
-        _ = _contestId;
         return FormatExchange();
     }
 

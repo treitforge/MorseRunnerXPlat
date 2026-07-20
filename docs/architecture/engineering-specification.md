@@ -2635,6 +2635,19 @@ immutable nonnegative `SessionSettings.StationIdRate` defaults to three and is
 mapped additively as optional Protobuf field 24, with omission preserving that
 CE default.
 
+The authored `contest.cwt-remote-exchange-format-seed-12345` case begins the
+full remote-exchange formatting obligation. Its pinned CE v22 adapter selects
+CWT in pileup mode and exposes the protected `TStation.NrAsText` result for a
+fixed K1ABC station with name `DAVID` and member number `123`, before reply
+prefix selection or CW rendering. CE composes the exact string `DAVID  123`,
+including the two spaces between fields. The retained pre-implementation
+evidence records `contest-cwt-remote-exchange-format-mismatch`, where XPlat
+instead discarded field one and composed `5NN123`. Production simulated
+stations now retain their contest ID and use the CE CWT two-field composition
+for every remote reply that consumes the station exchange formatter. Numeric
+cutting, leading-zero width, other contests, repeat and correction variants,
+and LID errors remain within the partial obligation.
+
 The authored
 `audio.flutter-no-station-noise-invariance-seed-12345` case narrows the first
 flutter acceptance boundary to station-free receiver audio. Its pinned CE

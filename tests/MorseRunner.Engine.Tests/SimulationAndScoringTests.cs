@@ -58,6 +58,25 @@ public sealed class SimulationAndScoringTests
     }
 
     [Fact]
+    public void CwtRemoteExchangeIncludesNameAndMemberNumber()
+    {
+        var station = new SimulatedStation(
+            new StationIdentity(
+                "K1ABC",
+                "599",
+                Number: 0,
+                "DAVID",
+                "123"),
+            wordsPerMinute: 25,
+            pitchOffsetHz: 0,
+            new LegacyRandom(12_345),
+            OperatorRunMode.Pileup,
+            contestId: new("scCwt"));
+
+        Assert.Equal("DAVID  123", station.ObserveExchangeForParity());
+    }
+
+    [Fact]
     public void QsoColumnErrorsUseAllThirtyTwoBits()
     {
         Qso value = new Qso()
