@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "target": "XPlat",
+  "platform": "windows",
+  "operatingSystem": "Microsoft Windows 10.0.26200",
+  "architecture": "x64",
+  "runtimeIdentifier": "win-x64",
+  "revision": "895d783811c945e754d204b54c7f94c32e780b3f",
+  "tree": "d9068f652e88f11f8fd78aa34c07b354e74a611d",
+  "resultSha256": "5732f069875c2de4bc23c7fc54ef2b9e6dd41cc02b6c2e928ffd323c8f268822",
+  "testReportSha256": "646fbe100f4050466595f7251e964551c8464d448acdd52377ae5f8f227e9c6b",
+  "testProcessExitCode": 2,
+  "wrapper": {
+    "completed": true,
+    "correlationValidated": true,
+    "exitCode": 0
+  },
+  "functionalDivergences": [
+    {
+      "caseId": "contest.wpx-custom-range-remote-exchange-format-seed-12345",
+      "failureCode": "contest-wpx-custom-range-remote-exchange-format-mismatch"
+    }
+  ]
+}

@@ -22,7 +22,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Mapped legacy surfaces: 3668
 - Unmapped legacy surfaces: 0
 - Pending audit surfaces: 0
-- Overlapping case surface/platform assignments: 120
+- Overlapping case surface/platform assignments: 123
 
 | Category | Discovered surfaces |
 |---|---:|
@@ -110,15 +110,15 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Partially authored capabilities: 5
 - Not-authored capabilities: 19
 - Behavioral obligations: 119
-- Source-bound obligations: 14
-- Pending source bindings: 105
+- Source-bound obligations: 15
+- Pending source bindings: 104
 - Complete obligations: 0
-- Partially authored obligations: 14
-- Not-authored obligations: 105
+- Partially authored obligations: 15
+- Not-authored obligations: 104
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 22
+- Active acceptance cases: 23
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 22
+- Legacy-green/XPlat-red cases: 23
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
@@ -134,11 +134,11 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `logging.qso-model` | Legacy QSO record and error model | `not-authored` | 0 | 47 | 0 | `Log.pas:48-82` |
 | `logging.scoring-rate-and-results` | Legacy logging, scoring, rate, correction, and result paths | `not-authored` | 0 | 55 | 0 | `Log.pas:147-1137` |
 | `simulation.state-models` | Legacy simulation state models and transitions | `not-authored` | 0 | 66 | 0 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
-| `simulation.runtime-routines` | Legacy contest, station, and operator routines | `partial` | 1 | 93 | 114 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
+| `simulation.runtime-routines` | Legacy contest, station, and operator routines | `partial` | 1 | 93 | 117 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
 | `audio-dsp.legacy-processing` | Legacy portable keying and DSP processing | `partial` | 3 | 131 | 0 | `VCL/Crc32.pas`<br>`VCL/FarnsKeyer.pas`<br>`VCL/Mixers.pas`<br>`VCL/MorseKey.pas`<br>`VCL/MorseTbl.pas`<br>`VCL/MovAvg.pas`<br>`VCL/QuickAvg.pas`<br>`VCL/SndTypes.pas`<br>`VCL/VolumCtl.pas` |
 | `audio.legacy-adapters` | Legacy sound output, buffering, and WAV adapters | `not-authored` | 0 | 85 | 0 | `VCL/BaseComp.pas`<br>`VCL/SndCustm.pas`<br>`VCL/SndOut.pas`<br>`VCL/WavFile.pas` |
 | `ux.legacy-vcl-components` | Legacy VCL-only hint and volume controls | `not-authored` | 0 | 36 | 0 | `VCL/PermHint.pas`<br>`VCL/VolmSldr.pas` |
-| `contest.legacy-implementations` | Legacy contest-specific implementations | `partial` | 7 | 215 | 0 | `ACAG.pas`<br>`ALLJA.pas`<br>`ArrlDx.pas`<br>`ArrlFd.pas`<br>`ArrlSS.pas`<br>`CqWpx.pas`<br>`CqWW.pas`<br>`CWOPS.pas`<br>`CWSST.pas`<br>`DualExchContest.pas`<br>`IaruHf.pas`<br>`NaQp.pas` |
+| `contest.legacy-implementations` | Legacy contest-specific implementations | `partial` | 8 | 215 | 0 | `ACAG.pas`<br>`ALLJA.pas`<br>`ArrlDx.pas`<br>`ArrlFd.pas`<br>`ArrlSS.pas`<br>`CqWpx.pas`<br>`CqWW.pas`<br>`CWOPS.pas`<br>`CWSST.pas`<br>`DualExchContest.pas`<br>`IaruHf.pas`<br>`NaQp.pas` |
 | `data.legacy-parsers` | Legacy call, prefix, exchange, and serial data parsers | `not-authored` | 0 | 477 | 0 | `CallLst.pas`<br>`DXCC.pas`<br>`ExchFields.pas`<br>`SerNRGen.pas`<br>`Util/ArrlSections.pas`<br>`Util/CallsignUtils.pas`<br>`Util/Lexer.pas`<br>`Util/SSExchParser.pas`<br>`ACAG.pas`<br>`ALLJA.pas`<br>`ArrlDx.pas`<br>`ArrlFd.pas`<br>`ArrlSS.pas`<br>`CqWW.pas`<br>`CWOPS.pas`<br>`CWSST.pas`<br>`IaruHf.pas`<br>`Main.pas`<br>`NaQp.pas`<br>`Test/SSLexerTest.pas` |
 | `simulation.legacy-effects` | Legacy QSB and random effects | `partial` | 10 | 15 | 6 | `Qsb.pas`<br>`RndFunc.pas` |
 | `ux.score-dialog` | Legacy score dialog | `not-authored` | 0 | 5 | 0 | `ScoreDlg.pas` |
@@ -201,7 +201,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `contest.allja-acag-truth-column-mapping` | `contest.legacy-implementations` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | ALLJA and ACAG station truth use the correct CE data columns without serial fallback. |
 | `contest.sweepstakes-complete-truth-model` | `contest.legacy-implementations` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Sweepstakes models serial, weighted precedence, own call, check, section, copied values, truth, and errors. |
 | `contest.arrldx-naqp-home-filtering-and-location` | `contest.legacy-implementations` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | ARRL DX and NAQP apply CE home-call filtering and dynamic location or exchange derivation. |
-| `contest.wpx-hst-station-serial-generation` | `contest.legacy-implementations` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | WPX and HST station serials use CE elapsed-time, skill, and random behavior. |
+| `contest.wpx-hst-station-serial-generation` | `contest.legacy-implementations` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | WPX and HST station serials use CE elapsed-time, skill, and random behavior. |
 | `session.hst-wpx-start-constraints` | `session.run-mode-enumeration` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | HST and WPX start constraints, forced settings, activity, bandwidth, duration, and valid serial rules match CE. |
 | `engine.station-delay-lifetime-and-call-pool-rules` | `simulation.state-models` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Single-call delay, caller lifetime, patience, retry, Gaussian WPM, calls-from-keyer, station-ID rate, and HST call-pool removal match CE. |
 | `engine.midmessage-append-correction-and-abort` | `simulation.runtime-routines` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Mid-message append, unsent callsign correction, and abort completion preserve CE timing and station notification. |
@@ -299,6 +299,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `contest.hst-remote-exchange-format-seed-12345` | `contest.legacy-implementations` | `contest.full-remote-exchange-formatting` | `legacy-green-xplat-red` | `contest-hst-remote-exchange-format-mismatch` | `pass` | `fail` |
 | `contest.naqp-remote-exchange-format-seed-12345` | `contest.legacy-implementations` | `contest.full-remote-exchange-formatting` | `legacy-green-xplat-red` | `contest-naqp-remote-exchange-format-mismatch` | `pass` | `fail` |
 | `contest.fieldday-remote-exchange-format-seed-12345` | `contest.legacy-implementations` | `contest.full-remote-exchange-formatting` | `legacy-green-xplat-red` | `contest-fieldday-remote-exchange-format-mismatch` | `pass` | `fail` |
+| `contest.wpx-custom-range-remote-exchange-format-seed-12345` | `contest.legacy-implementations` | `contest.wpx-hst-station-serial-generation` | `legacy-green-xplat-red` | `contest-wpx-custom-range-remote-exchange-format-mismatch` | `pass` | `fail` |
 | `contest.wpx-midcontest-remote-exchange-format-seed-12345` | `contest.legacy-implementations` | `contest.full-remote-exchange-formatting` | `legacy-green-xplat-red` | `contest-wpx-midcontest-remote-exchange-format-mismatch` | `pass` | `fail` |
 | `contest.exchange-shapes` | `contest.legacy-implementations` | `contest.exchange-shapes-and-constructor-metadata` | `legacy-green-xplat-red` | `contest-exchange-shape-mismatch` | `pass` | `fail` |
 | `ux.enter-esm-partial-call-message-selection-live` | `ux.keyboard-workflows` | `ux.enter-esm-partial-call-message-selection` | `legacy-green-xplat-red` | `ux-enter-esm-partial-call-message-selection-mismatch` | `pass` | `fail` |
