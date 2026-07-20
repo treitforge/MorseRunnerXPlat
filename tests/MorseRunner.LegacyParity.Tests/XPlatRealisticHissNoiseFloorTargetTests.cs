@@ -5,6 +5,26 @@ namespace MorseRunner.LegacyParity.Tests;
 public sealed class XPlatRealisticHissNoiseFloorTargetTests
 {
     [Fact]
+    public async Task PublicEngineCaptureMatchesPinnedCeFixture()
+    {
+        ParityCertificationCase definition =
+            ParityCertificationCase.LoadForInspection(
+                XPlatRealisticHissNoiseFloorTarget.ParityId);
+
+        ParityObservation observation =
+            await new XPlatRealisticHissNoiseFloorTarget()
+                .ExecuteAsync(
+                    definition.Scenario,
+                    TestContext.Current.CancellationToken);
+
+        Assert.Equal(ParityTargetOutcome.Passed, observation.Outcome);
+        Assert.Null(observation.FailureCode);
+        Assert.Equal(
+            definition.Scenario.ExpectedValues,
+            observation.Values);
+    }
+
+    [Fact]
     public async Task PublicEngineCaptureIsDeterministicAndWellFramed()
     {
         RealisticHissNoiseFloorInput input = ValidInput();

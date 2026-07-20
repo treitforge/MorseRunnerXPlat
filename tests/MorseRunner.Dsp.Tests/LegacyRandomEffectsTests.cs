@@ -25,6 +25,24 @@ public sealed class LegacyRandomEffectsTests
     }
 
     [Fact]
+    public void ReceiverNoiseUsesCeFinalSingleRounding()
+    {
+        var random = new LegacyRandom(12_345);
+
+        float firstReal =
+            (float)(18_000d * (random.NextDouble() - 0.5d));
+        float firstImaginary =
+            (float)(18_000d * (random.NextDouble() - 0.5d));
+
+        Assert.Equal(
+            0x45F1A8B7U,
+            BitConverter.SingleToUInt32Bits(firstReal));
+        Assert.Equal(
+            0x45DB7647U,
+            BitConverter.SingleToUInt32Bits(firstImaginary));
+    }
+
+    [Fact]
     public void TimeConversionUsesLegacyBlockSemantics()
     {
         Assert.Equal(27, LegacyRandomEffects.SecondsToBlocks(1.25f));
