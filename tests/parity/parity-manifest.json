@@ -454,8 +454,10 @@
         "linux",
         "macos"
       ],
-      "acceptanceStatus": "not-authored",
-      "caseIds": []
+      "acceptanceStatus": "partial",
+      "caseIds": [
+        "audio.deterministic-random-primitives-seed-12345"
+      ]
     },
     {
       "id": "ux.score-dialog",
@@ -646,7 +648,7 @@
     {"id": "audio.complex-station-mixing-signs-order-and-normalization", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Complex remote-station BFO mixing uses CE-equivalent signs, channel order, phase application, accumulation order, and output normalization.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.default-compatibility-output-profile", "capabilityId": "audio.legacy-adapters", "behavior": "The default CE compatibility output contract is 11025 Hz mono, 512 samples per block, and identical sample totals.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.physical-queue-depth-and-order", "capabilityId": "audio.legacy-adapters", "behavior": "The physical audio queue preserves CE-equivalent default depth, FIFO block order, startup fill order, and exact sample continuity.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "audio.deterministic-random-primitives", "capabilityId": "simulation.legacy-effects", "behavior": "MT19937 output and every CE random distribution primitive produce deterministic numeric vectors for reviewed seeds.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.deterministic-random-primitives", "capabilityId": "simulation.legacy-effects", "behavior": "MT19937 output and every CE random distribution primitive produce deterministic numeric vectors for reviewed seeds.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["RndFunc.pas"], "legacySurfaceSelectors": ["legacy.support.effect.routine.rndfunc.rndfunc.rndgausslim", "legacy.support.effect.routine.rndfunc.rndfunc.rndnormal", "legacy.support.effect.routine.rndfunc.rndfunc.rndpoisson", "legacy.support.effect.routine.rndfunc.rndfunc.rndrayleigh", "legacy.support.effect.routine.rndfunc.rndfunc.rnduniform", "legacy.support.effect.routine.rndfunc.rndfunc.rndushaped"], "acceptanceStatus": "partial", "caseIds": ["audio.deterministic-random-primitives-seed-12345"]},
     {"id": "audio.qsk-receiver-ducking-and-recovery", "capabilityId": "audio-dsp.legacy-processing", "behavior": "QSK applies CE-equivalent receiver ducking and recovery around local transmissions.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.rit-affects-rendered-stations", "capabilityId": "audio-dsp.legacy-processing", "behavior": "RIT changes each station's audible offset using CE range, steps, and block-boundary timing.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.runtime-bandwidth-updates-filters", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Runtime bandwidth changes replace or update receiver filters at the CE-equivalent block boundary.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -802,6 +804,85 @@
     {"id": "lifecycle.unit-initialization-finalization-order", "capabilityId": "lifecycle.legacy-unit-hooks", "behavior": "Legacy initialization and finalization hooks execute with equivalent order, registration, cleanup, state, and failures.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []}
   ],
   "cases": [
+    {
+      "id": "audio.deterministic-random-primitives-seed-12345",
+      "capabilityId": "simulation.legacy-effects",
+      "obligationIds": [
+        "audio.deterministic-random-primitives"
+      ],
+      "behavior": "For the fixed seed 12345 vector, raw CE Random conversion to binary32, bounded integer Random including bound zero, and the CE RndUniform, RndUShaped, RndNormal, RndGaussLim, RndRayleigh, and RndPoisson routines produce the same first eight exact values, complete 4096-value distribution sequence hash, and post-group random-stream sentinel as the XPlat LegacyRandom and LegacyRandomEffects primitives.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v8",
+        "source": "tests/parity/legacy-oracle/v8/LegacyOracle.lpr",
+        "sourceSha256": "8dff1f33611df9e9fee5fa928853a15672b94dcb18313e6403c1dfcc3cc60112",
+        "buildRecipe": "tests/parity/legacy-oracle/v8/build-recipe.json",
+        "buildRecipeSha256": "42ea3f5e87b6373832134f98dafef2e173827ce590a965c8a1fddd8885342fb3"
+      },
+      "legacySources": [
+        "RndFunc.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.support.effect.routine.rndfunc.rndfunc.rndgausslim",
+        "legacy.support.effect.routine.rndfunc.rndfunc.rndnormal",
+        "legacy.support.effect.routine.rndfunc.rndfunc.rndpoisson",
+        "legacy.support.effect.routine.rndfunc.rndfunc.rndrayleigh",
+        "legacy.support.effect.routine.rndfunc.rndfunc.rnduniform",
+        "legacy.support.effect.routine.rndfunc.rndfunc.rndushaped"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The vector uses seed 12345, eight directly reported probes and 4096 total results per distribution group, integer bounds 0, 1, 2, 3, 10, 1000, 65536, and 2147483647, Gaussian mean 5.1 and limit 1.3, Rayleigh mean 2.7, and Poisson mean 3.3.",
+        "The CE adapter resets RandSeed to 12345 immediately before each raw or distribution group so every primitive starts from the same MT19937 state.",
+        "The raw group assigns each Random result directly to Single, and every floating-point result is compared by exact little-endian IEEE-754 binary32 bits.",
+        "The bounded-integer group executes the pinned FPC System.Random(LongInt) overload used by CE; this toolchain-owned overload has no RndFunc.pas inventory selector, while all CE distribution routines remain bound to their exact RndFunc selectors.",
+        "After each complete 4096-value group, the adapter records the next raw Random-to-Single value as a sentinel for the primitive's exact random draw consumption.",
+        "The XPlat adapter creates a fresh LegacyRandom for each group and invokes the production LegacyRandom and LegacyRandomEffects primitives without substituting recorded decisions."
+      ],
+      "input": {
+        "scenario": "audio.deterministic-random-primitives-seed-12345",
+        "seed": 12345,
+        "probeCount": 8,
+        "sequenceCount": 4096,
+        "integerBounds": [
+          0,
+          1,
+          2,
+          3,
+          10,
+          1000,
+          65536,
+          2147483647
+        ],
+        "gaussianMeanMilli": 5100,
+        "gaussianLimitMilli": 1300,
+        "rayleighMeanMilli": 2700,
+        "poissonMeanMilli": 3300
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatRandomPrimitivesTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 80,
+        "observedValuesSha256": "51e95b1ef37b187db282b114527a12c479ccc20a9b0480d6976aef210b3bc5be",
+        "firstDivergence": "The zero-based first ordinal mismatch between fixture and observed string arrays, with null expected or actual only when one array ends first.",
+        "functionalDivergenceCode": "audio-deterministic-random-primitives-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "audio-deterministic-random-primitives-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/audio-deterministic-random-primitives-seed-12345.json",
+      "evidence": "tests/parity/evidence/audio-deterministic-random-primitives-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
     {
       "id": "audio.realistic-hiss-noise-floor",
       "capabilityId": "audio-dsp.legacy-processing",

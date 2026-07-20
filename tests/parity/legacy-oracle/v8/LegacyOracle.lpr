@@ -1,0 +1,788 @@
+program LegacyOracle;
+
+{$mode Delphi}{$H+}
+{$apptype console}
+
+uses
+  Interfaces,
+  SysUtils,
+  Classes,
+  fpjson,
+  jsonparser,
+  RndFunc;
+
+const
+  ExpectedAdapterId = 'LegacyOracleTarget';
+  ExpectedVersionId = 'legacy-oracle-v8';
+  ExpectedSource =
+    'tests/parity/legacy-oracle/v8/LegacyOracle.lpr';
+  ExpectedBuildRecipe =
+    'tests/parity/legacy-oracle/v8/build-recipe.json';
+  ExpectedScenario = 'audio.deterministic-random-primitives-seed-12345';
+  ExpectedSeed = 12345;
+  ExpectedProbeCount = 8;
+  ExpectedSequenceCount = 4096;
+  ExpectedGaussianMeanMilli = 5100;
+  ExpectedGaussianLimitMilli = 1300;
+  ExpectedRayleighMeanMilli = 2700;
+  ExpectedPoissonMeanMilli = 3300;
+  ExpectedDistributionGroupCount = 7;
+  ExpectedIntegerBoundCount = 8;
+  ExpectedValueCount =
+    1
+    + ExpectedDistributionGroupCount * (ExpectedProbeCount + 2)
+    + ExpectedIntegerBoundCount
+    + 1;
+
+  ExpectedIntegerBounds:
+    array[0..ExpectedIntegerBoundCount - 1] of Integer = (
+      0,
+      1,
+      2,
+      3,
+      10,
+      1000,
+      65536,
+      2147483647
+    );
+
+type
+  TSha256State = array[0..7] of LongWord;
+  TSha256Schedule = array[0..63] of LongWord;
+  TByteBuffer = array of Byte;
+  TIntegerVector = array of Integer;
+  TSingleVector = array of Single;
+
+function JsonEscape(const Value: string): string;
+begin
+  Result := StringReplace(Value, '\', '\\', [rfReplaceAll]);
+  Result := StringReplace(Result, '"', '\"', [rfReplaceAll]);
+  Result := StringReplace(Result, #13, '\r', [rfReplaceAll]);
+  Result := StringReplace(Result, #10, '\n', [rfReplaceAll]);
+end;
+
+function IsSha256(const Value: string): Boolean;
+var
+  Index: Integer;
+begin
+  Result := Length(Value) = 64;
+  if not Result then
+    Exit;
+  for Index := 1 to Length(Value) do
+    if not (Value[Index] in ['0'..'9', 'a'..'f']) then
+      Exit(False);
+end;
+
+function RotateRight32(
+  const Value: LongWord;
+  const Count: Byte): LongWord;
+begin
+  Result := (Value shr Count) or (Value shl (32 - Count));
+end;
+
+function Sha256Bytes(const Value: RawByteString): string;
+const
+  RoundConstants: array[0..63] of LongWord = (
+    $428A2F98, $71374491, $B5C0FBCF, $E9B5DBA5,
+    $3956C25B, $59F111F1, $923F82A4, $AB1C5ED5,
+    $D807AA98, $12835B01, $243185BE, $550C7DC3,
+    $72BE5D74, $80DEB1FE, $9BDC06A7, $C19BF174,
+    $E49B69C1, $EFBE4786, $0FC19DC6, $240CA1CC,
+    $2DE92C6F, $4A7484AA, $5CB0A9DC, $76F988DA,
+    $983E5152, $A831C66D, $B00327C8, $BF597FC7,
+    $C6E00BF3, $D5A79147, $06CA6351, $14292967,
+    $27B70A85, $2E1B2138, $4D2C6DFC, $53380D13,
+    $650A7354, $766A0ABB, $81C2C92E, $92722C85,
+    $A2BFE8A1, $A81A664B, $C24B8B70, $C76C51A3,
+    $D192E819, $D6990624, $F40E3585, $106AA070,
+    $19A4C116, $1E376C08, $2748774C, $34B0BCB5,
+    $391C0CB3, $4ED8AA4A, $5B9CCA4F, $682E6FF3,
+    $748F82EE, $78A5636F, $84C87814, $8CC70208,
+    $90BEFFFA, $A4506CEB, $BEF9A3F7, $C67178F2
+  );
+var
+  A: LongWord;
+  B: LongWord;
+  C: LongWord;
+  Ch: LongWord;
+  D: LongWord;
+  E: LongWord;
+  F: LongWord;
+  G: LongWord;
+  H: LongWord;
+  Index: Integer;
+  Major: LongWord;
+  MessageBytes: TByteBuffer;
+  MessageLength: Integer;
+  Offset: Integer;
+  PaddedLength: Integer;
+  Schedule: TSha256Schedule;
+  Sigma0: LongWord;
+  Sigma1: LongWord;
+  State: TSha256State;
+  Temp1: LongWord;
+  Temp2: LongWord;
+  ValueBitLength: QWord;
+begin
+  State[0] := $6A09E667;
+  State[1] := $BB67AE85;
+  State[2] := $3C6EF372;
+  State[3] := $A54FF53A;
+  State[4] := $510E527F;
+  State[5] := $9B05688C;
+  State[6] := $1F83D9AB;
+  State[7] := $5BE0CD19;
+
+  MessageLength := Length(Value);
+  PaddedLength := ((MessageLength + 9 + 63) div 64) * 64;
+  SetLength(MessageBytes, PaddedLength);
+  for Index := 0 to MessageLength - 1 do
+    MessageBytes[Index] := Byte(Value[Index + 1]);
+  MessageBytes[MessageLength] := $80;
+  ValueBitLength := QWord(MessageLength) * 8;
+  for Index := 0 to 7 do
+    MessageBytes[PaddedLength - 1 - Index] :=
+      Byte(ValueBitLength shr (Index * 8));
+
+  Offset := 0;
+  while Offset < PaddedLength do
+  begin
+    for Index := 0 to 15 do
+      Schedule[Index] :=
+        (LongWord(MessageBytes[Offset + Index * 4]) shl 24)
+        or (LongWord(MessageBytes[Offset + Index * 4 + 1]) shl 16)
+        or (LongWord(MessageBytes[Offset + Index * 4 + 2]) shl 8)
+        or LongWord(MessageBytes[Offset + Index * 4 + 3]);
+    for Index := 16 to 63 do
+    begin
+      Sigma0 :=
+        RotateRight32(Schedule[Index - 15], 7)
+        xor RotateRight32(Schedule[Index - 15], 18)
+        xor (Schedule[Index - 15] shr 3);
+      Sigma1 :=
+        RotateRight32(Schedule[Index - 2], 17)
+        xor RotateRight32(Schedule[Index - 2], 19)
+        xor (Schedule[Index - 2] shr 10);
+      Schedule[Index] :=
+        Schedule[Index - 16]
+        + Sigma0
+        + Schedule[Index - 7]
+        + Sigma1;
+    end;
+
+    A := State[0];
+    B := State[1];
+    C := State[2];
+    D := State[3];
+    E := State[4];
+    F := State[5];
+    G := State[6];
+    H := State[7];
+    for Index := 0 to 63 do
+    begin
+      Sigma1 :=
+        RotateRight32(E, 6)
+        xor RotateRight32(E, 11)
+        xor RotateRight32(E, 25);
+      Ch := (E and F) xor ((not E) and G);
+      Temp1 :=
+        H + Sigma1 + Ch + RoundConstants[Index] + Schedule[Index];
+      Sigma0 :=
+        RotateRight32(A, 2)
+        xor RotateRight32(A, 13)
+        xor RotateRight32(A, 22);
+      Major := (A and B) xor (A and C) xor (B and C);
+      Temp2 := Sigma0 + Major;
+      H := G;
+      G := F;
+      F := E;
+      E := D + Temp1;
+      D := C;
+      C := B;
+      B := A;
+      A := Temp1 + Temp2;
+    end;
+
+    State[0] := State[0] + A;
+    State[1] := State[1] + B;
+    State[2] := State[2] + C;
+    State[3] := State[3] + D;
+    State[4] := State[4] + E;
+    State[5] := State[5] + F;
+    State[6] := State[6] + G;
+    State[7] := State[7] + H;
+    Inc(Offset, 64);
+  end;
+
+  Result := '';
+  for Index := 0 to 7 do
+    Result := Result + LowerCase(IntToHex(State[Index], 8));
+end;
+
+procedure ValidateSha256Implementation;
+begin
+  if Sha256Bytes('') <>
+      'e3b0c44298fc1c149afbf4c8996fb924'
+      + '27ae41e4649b934ca495991b7852b855' then
+    raise Exception.Create('SHA-256 empty-vector self-test failed');
+  if Sha256Bytes('abc') <>
+      'ba7816bf8f01cfea414140de5dae2223'
+      + 'b00361a396177a9cb410ff61f20015ad' then
+    raise Exception.Create('SHA-256 abc-vector self-test failed');
+end;
+
+function SingleBits(const Value: Single): string;
+var
+  Bits: LongWord;
+begin
+  if SizeOf(Value) <> SizeOf(Bits) then
+    raise Exception.Create('CE Single storage is not 32-bit');
+  Move(Value, Bits, SizeOf(Bits));
+  Result := LowerCase(IntToHex(Bits, 8));
+end;
+
+procedure ValidateSingleStorage;
+var
+  Value: Single;
+begin
+  Value := 1;
+  if SingleBits(Value) <> '3f800000' then
+    raise Exception.Create(
+      'CE Single storage is not little-endian IEEE-754 binary32');
+end;
+
+function SingleVectorSha256(
+  const Values: TSingleVector): string;
+var
+  Raw: RawByteString;
+begin
+  SetLength(Raw, Length(Values) * SizeOf(Single));
+  if Length(Raw) > 0 then
+    Move(Values[0], Raw[1], Length(Raw));
+  Result := Sha256Bytes(Raw);
+end;
+
+function IntegerVectorSha256(
+  const Values: TIntegerVector): string;
+var
+  Raw: RawByteString;
+begin
+  if SizeOf(Integer) <> 4 then
+    raise Exception.Create('CE Integer storage is not 32-bit');
+  SetLength(Raw, Length(Values) * SizeOf(Integer));
+  if Length(Raw) > 0 then
+    Move(Values[0], Raw[1], Length(Raw));
+  Result := Sha256Bytes(Raw);
+end;
+
+procedure RequireExactObjectFields(
+  const Value: TJSONObject;
+  const ExpectedNames: array of string);
+var
+  ExpectedIndex: Integer;
+  Found: Boolean;
+  Index: Integer;
+begin
+  if Value.Count <> Length(ExpectedNames) then
+    raise Exception.Create('scenario input has unsupported fields');
+  for Index := 0 to Value.Count - 1 do
+  begin
+    Found := False;
+    for ExpectedIndex := Low(ExpectedNames) to High(ExpectedNames) do
+      if Value.Names[Index] = ExpectedNames[ExpectedIndex] then
+      begin
+        Found := True;
+        Break;
+      end;
+    if not Found then
+      raise Exception.Create(
+        'scenario input has unsupported field: ' + Value.Names[Index]);
+  end;
+end;
+
+function RequireInteger(
+  const Input: TJSONObject;
+  const Name: string;
+  const Minimum: Integer;
+  const Maximum: Integer): Integer;
+var
+  Data: TJSONData;
+  Value: Int64;
+begin
+  Data := Input.Find(Name);
+  if (Data = nil) or not (Data is TJSONIntegerNumber) then
+    raise Exception.Create(Name + ' is not an integer');
+  Value := Data.AsInt64;
+  if (Value < Minimum) or (Value > Maximum) then
+    raise Exception.Create(Name + ' is outside its supported range');
+  Result := Integer(Value);
+end;
+
+function RequireIntegerArray(
+  const Input: TJSONObject;
+  const Name: string;
+  const Minimum: Integer;
+  const Maximum: Integer): TIntegerVector;
+var
+  ArrayData: TJSONArray;
+  Data: TJSONData;
+  Index: Integer;
+  Value: Int64;
+begin
+  Data := Input.Find(Name);
+  if (Data = nil) or (Data.JSONType <> jtArray) then
+    raise Exception.Create(Name + ' is not an array');
+  ArrayData := TJSONArray(Data);
+  if ArrayData.Count = 0 then
+    raise Exception.Create(Name + ' is empty');
+  SetLength(Result, ArrayData.Count);
+  for Index := 0 to ArrayData.Count - 1 do
+  begin
+    Data := ArrayData.Items[Index];
+    if not (Data is TJSONIntegerNumber) then
+      raise Exception.Create(Name + ' contains a non-integer');
+    Value := Data.AsInt64;
+    if (Value < Minimum) or (Value > Maximum) then
+      raise Exception.Create(Name + ' contains an out-of-range value');
+    Result[Index] := Integer(Value);
+  end;
+end;
+
+function LoadScenarioInput(
+  const InputPath: string;
+  const Scenario: string;
+  const InputSha256: string): TJSONObject;
+var
+  Data: TJSONData;
+  FileStream: TFileStream;
+  RawInput: RawByteString;
+  ScenarioData: TJSONData;
+begin
+  if ExtractFileName(InputPath) <> InputSha256 + '.json' then
+    raise Exception.Create('scenario input path is not content addressed');
+  if not FileExists(InputPath) then
+    raise Exception.Create('scenario input file does not exist');
+  FileStream := TFileStream.Create(
+    InputPath,
+    fmOpenRead or fmShareDenyWrite);
+  try
+    if FileStream.Size > High(Integer) then
+      raise Exception.Create('scenario input file is too large');
+    SetLength(RawInput, Integer(FileStream.Size));
+    if Length(RawInput) > 0 then
+      FileStream.ReadBuffer(RawInput[1], Length(RawInput));
+    if Sha256Bytes(RawInput) <> InputSha256 then
+      raise Exception.Create('scenario input SHA-256 mismatch');
+    FileStream.Position := 0;
+    Data := GetJSON(FileStream, True);
+  finally
+    FileStream.Free;
+  end;
+  if not (Data is TJSONObject) then
+  begin
+    Data.Free;
+    raise Exception.Create('scenario input root is not an object');
+  end;
+  Result := TJSONObject(Data);
+  try
+    ScenarioData := Result.Find('scenario');
+    if (ScenarioData = nil)
+      or (ScenarioData.JSONType <> jtString)
+      or (ScenarioData.AsString <> Scenario) then
+      raise Exception.Create('scenario input discriminator mismatch');
+  except
+    Result.Free;
+    raise;
+  end;
+end;
+
+procedure Emit(
+  const Scenario: string;
+  const AdapterId: string;
+  const VersionId: string;
+  const Source: string;
+  const SourceSha256: string;
+  const BuildRecipe: string;
+  const BuildRecipeSha256: string;
+  const CaseDefinitionSha256: string;
+  const InputSha256: string;
+  const Values: TStrings);
+var
+  Index: Integer;
+begin
+  Write(
+    '{"scenario":"', JsonEscape(Scenario),
+    '","adapterId":"', JsonEscape(AdapterId),
+    '","versionId":"', JsonEscape(VersionId),
+    '","source":"', JsonEscape(Source),
+    '","sourceSha256":"', JsonEscape(SourceSha256),
+    '","buildRecipe":"', JsonEscape(BuildRecipe),
+    '","buildRecipeSha256":"', JsonEscape(BuildRecipeSha256),
+    '","caseDefinitionSha256":"', JsonEscape(CaseDefinitionSha256),
+    '","inputSha256":"', JsonEscape(InputSha256),
+    '","values":[');
+  for Index := 0 to Values.Count - 1 do
+  begin
+    if Index > 0 then
+      Write(',');
+    Write('"', JsonEscape(Values[Index]), '"');
+  end;
+  WriteLn(']}');
+end;
+
+procedure AddFloatValue(
+  const Values: TStrings;
+  const GroupName: string;
+  const Index: Integer;
+  const Value: Single);
+begin
+  Values.Add(
+    GroupName + '[' + IntToStr(Index) + ']'
+    + '|bits=' + SingleBits(Value));
+end;
+
+procedure AddRawSentinel(
+  const Values: TStrings;
+  const GroupName: string);
+var
+  Value: Single;
+begin
+  Value := Random;
+  Values.Add(
+    GroupName + '|next-raw-single-bits=' + SingleBits(Value));
+end;
+
+procedure ObserveRandomPrimitives(
+  const Values: TStrings;
+  const Input: TJSONObject);
+var
+  GaussianLimit: Single;
+  GaussianLimitMilli: Integer;
+  GaussianMean: Single;
+  GaussianMeanMilli: Integer;
+  Index: Integer;
+  IntegerBounds: TIntegerVector;
+  IntegerSequence: TIntegerVector;
+  IntegerValue: Integer;
+  PoissonMean: Single;
+  PoissonMeanMilli: Integer;
+  ProbeCount: Integer;
+  RayleighMean: Single;
+  RayleighMeanMilli: Integer;
+  Seed: Integer;
+  SequenceCount: Integer;
+  SingleSequence: TSingleVector;
+  Value: Single;
+begin
+  RequireExactObjectFields(
+    Input,
+    [
+      'gaussianLimitMilli',
+      'gaussianMeanMilli',
+      'integerBounds',
+      'poissonMeanMilli',
+      'probeCount',
+      'rayleighMeanMilli',
+      'scenario',
+      'seed',
+      'sequenceCount'
+    ]);
+  Seed := RequireInteger(
+    Input,
+    'seed',
+    Low(Integer),
+    MaxInt);
+  ProbeCount := RequireInteger(
+    Input,
+    'probeCount',
+    1,
+    64);
+  SequenceCount := RequireInteger(
+    Input,
+    'sequenceCount',
+    ProbeCount,
+    65536);
+  GaussianMeanMilli := RequireInteger(
+    Input,
+    'gaussianMeanMilli',
+    1,
+    MaxInt);
+  IntegerBounds := RequireIntegerArray(
+    Input,
+    'integerBounds',
+    0,
+    MaxInt);
+  GaussianLimitMilli := RequireInteger(
+    Input,
+    'gaussianLimitMilli',
+    1,
+    MaxInt);
+  RayleighMeanMilli := RequireInteger(
+    Input,
+    'rayleighMeanMilli',
+    1,
+    MaxInt);
+  PoissonMeanMilli := RequireInteger(
+    Input,
+    'poissonMeanMilli',
+    1,
+    MaxInt);
+
+  if (Seed <> ExpectedSeed)
+    or (ProbeCount <> ExpectedProbeCount)
+    or (SequenceCount <> ExpectedSequenceCount)
+    or (GaussianMeanMilli <> ExpectedGaussianMeanMilli)
+    or (GaussianLimitMilli <> ExpectedGaussianLimitMilli)
+    or (RayleighMeanMilli <> ExpectedRayleighMeanMilli)
+    or (PoissonMeanMilli <> ExpectedPoissonMeanMilli) then
+    raise Exception.Create(
+      'random primitive scenario input does not match its contract');
+  if Length(IntegerBounds) <> ExpectedIntegerBoundCount then
+    raise Exception.Create(
+      'integer random bounds do not match their contract');
+  for Index := 0 to ExpectedIntegerBoundCount - 1 do
+    if IntegerBounds[Index] <> ExpectedIntegerBounds[Index] then
+      raise Exception.Create(
+        'integer random bounds do not match their contract');
+
+  GaussianMean := GaussianMeanMilli / 1000;
+  GaussianLimit := GaussianLimitMilli / 1000;
+  RayleighMean := RayleighMeanMilli / 1000;
+  PoissonMean := PoissonMeanMilli / 1000;
+  Values.Add(
+    'configuration'
+    + '|seed=' + IntToStr(Seed)
+    + '|probe-count=' + IntToStr(ProbeCount)
+    + '|sequence-count=' + IntToStr(SequenceCount)
+    + '|gaussian-mean-milli=' + IntToStr(GaussianMeanMilli)
+    + '|gaussian-limit-milli=' + IntToStr(GaussianLimitMilli)
+    + '|rayleigh-mean-milli=' + IntToStr(RayleighMeanMilli)
+    + '|poisson-mean-milli=' + IntToStr(PoissonMeanMilli)
+    + '|integer-bound-count=' + IntToStr(Length(IntegerBounds))
+    + '|binary32=ieee-754-little-endian'
+    + '|reset=randseed-per-group');
+
+  RandSeed := Seed;
+  SetLength(SingleSequence, SequenceCount);
+  for Index := 0 to SequenceCount - 1 do
+  begin
+    Value := Random;
+    SingleSequence[Index] := Value;
+    if Index < ProbeCount then
+      AddFloatValue(
+        Values,
+        'raw-random-single',
+        Index,
+        Value);
+  end;
+  Values.Add(
+    'raw-random-single|sequence-count='
+    + IntToStr(SequenceCount)
+    + '|float-sha256=' + SingleVectorSha256(SingleSequence));
+  AddRawSentinel(Values, 'raw-random-single');
+
+  RandSeed := Seed;
+  for Index := 0 to High(IntegerBounds) do
+  begin
+    IntegerValue := Random(IntegerBounds[Index]);
+    Values.Add(
+      'raw-random-int[' + IntToStr(Index) + ']'
+      + '|bound=' + IntToStr(IntegerBounds[Index])
+      + '|value=' + IntToStr(IntegerValue));
+  end;
+  AddRawSentinel(Values, 'raw-random-int');
+
+  RandSeed := Seed;
+  for Index := 0 to SequenceCount - 1 do
+  begin
+    SingleSequence[Index] := RndUniform;
+    if Index < ProbeCount then
+      AddFloatValue(
+        Values,
+        'rnd-uniform',
+        Index,
+        SingleSequence[Index]);
+  end;
+  Values.Add(
+    'rnd-uniform|sequence-count=' + IntToStr(SequenceCount)
+    + '|float-sha256=' + SingleVectorSha256(SingleSequence));
+  AddRawSentinel(Values, 'rnd-uniform');
+
+  RandSeed := Seed;
+  for Index := 0 to SequenceCount - 1 do
+  begin
+    SingleSequence[Index] := RndUShaped;
+    if Index < ProbeCount then
+      AddFloatValue(
+        Values,
+        'rnd-ushaped',
+        Index,
+        SingleSequence[Index]);
+  end;
+  Values.Add(
+    'rnd-ushaped|sequence-count=' + IntToStr(SequenceCount)
+    + '|float-sha256=' + SingleVectorSha256(SingleSequence));
+  AddRawSentinel(Values, 'rnd-ushaped');
+
+  RandSeed := Seed;
+  for Index := 0 to SequenceCount - 1 do
+  begin
+    SingleSequence[Index] := RndNormal;
+    if Index < ProbeCount then
+      AddFloatValue(
+        Values,
+        'rnd-normal',
+        Index,
+        SingleSequence[Index]);
+  end;
+  Values.Add(
+    'rnd-normal|sequence-count=' + IntToStr(SequenceCount)
+    + '|float-sha256=' + SingleVectorSha256(SingleSequence));
+  AddRawSentinel(Values, 'rnd-normal');
+
+  RandSeed := Seed;
+  for Index := 0 to SequenceCount - 1 do
+  begin
+    SingleSequence[Index] := RndGaussLim(
+        GaussianMean,
+        GaussianLimit);
+    if Index < ProbeCount then
+      AddFloatValue(
+        Values,
+        'rnd-gauss-lim',
+        Index,
+        SingleSequence[Index]);
+  end;
+  Values.Add(
+    'rnd-gauss-lim|sequence-count=' + IntToStr(SequenceCount)
+    + '|float-sha256=' + SingleVectorSha256(SingleSequence));
+  AddRawSentinel(Values, 'rnd-gauss-lim');
+
+  RandSeed := Seed;
+  for Index := 0 to SequenceCount - 1 do
+  begin
+    SingleSequence[Index] := RndRayleigh(RayleighMean);
+    if Index < ProbeCount then
+      AddFloatValue(
+        Values,
+        'rnd-rayleigh',
+        Index,
+        SingleSequence[Index]);
+  end;
+  Values.Add(
+    'rnd-rayleigh|sequence-count=' + IntToStr(SequenceCount)
+    + '|float-sha256=' + SingleVectorSha256(SingleSequence));
+  AddRawSentinel(Values, 'rnd-rayleigh');
+
+  RandSeed := Seed;
+  SetLength(IntegerSequence, SequenceCount);
+  for Index := 0 to SequenceCount - 1 do
+  begin
+    IntegerSequence[Index] := RndPoisson(PoissonMean);
+    if Index < ProbeCount then
+      Values.Add(
+        'rnd-poisson[' + IntToStr(Index) + ']'
+        + '|value=' + IntToStr(IntegerSequence[Index]));
+  end;
+  Values.Add(
+    'rnd-poisson|sequence-count=' + IntToStr(SequenceCount)
+    + '|int32-sha256=' + IntegerVectorSha256(IntegerSequence));
+  AddRawSentinel(Values, 'rnd-poisson');
+
+  if Values.Count <> ExpectedValueCount then
+    raise Exception.Create(
+      'random primitive scenario emitted an invalid row count');
+end;
+
+var
+  AdapterId: string;
+  BuildRecipe: string;
+  BuildRecipeSha256: string;
+  CaseDefinitionSha256: string;
+  ExitStatus: Integer;
+  Input: TJSONObject;
+  InputPath: string;
+  InputSha256: string;
+  Scenario: string;
+  Source: string;
+  SourceSha256: string;
+  Values: TStringList;
+  VersionId: string;
+
+begin
+  DefaultFormatSettings.DecimalSeparator := '.';
+  ExitStatus := 0;
+  Input := nil;
+  Values := nil;
+  try
+    ValidateSha256Implementation;
+    ValidateSingleStorage;
+    if ParamCount <> 11 then
+      raise Exception.Create(
+        'usage: LegacyOracle <legacy-root-with-separator> <scenario> '
+        + '<adapter-id> <version-id> <source> <source-sha256> '
+        + '<build-recipe> <build-recipe-sha256> '
+        + '<case-definition-sha256> <input-sha256> <input-json-path>');
+    if (ParamStr(1) = '')
+      or not DirectoryExists(ParamStr(1))
+      or not CharInSet(
+        ParamStr(1)[Length(ParamStr(1))],
+        ['\', '/']) then
+      raise Exception.Create(
+        'legacy root must exist and end with a directory separator');
+
+    Scenario := ParamStr(2);
+    AdapterId := ParamStr(3);
+    VersionId := ParamStr(4);
+    Source := ParamStr(5);
+    SourceSha256 := ParamStr(6);
+    BuildRecipe := ParamStr(7);
+    BuildRecipeSha256 := ParamStr(8);
+    CaseDefinitionSha256 := ParamStr(9);
+    InputSha256 := ParamStr(10);
+    InputPath := ParamStr(11);
+
+    if Scenario <> ExpectedScenario then
+      raise Exception.Create('legacy oracle scenario mismatch');
+    if AdapterId <> ExpectedAdapterId then
+      raise Exception.Create('legacy oracle adapter ID mismatch');
+    if VersionId <> ExpectedVersionId then
+      raise Exception.Create('legacy oracle version ID mismatch');
+    if Source <> ExpectedSource then
+      raise Exception.Create('legacy oracle source identity mismatch');
+    if BuildRecipe <> ExpectedBuildRecipe then
+      raise Exception.Create(
+        'legacy oracle build recipe identity mismatch');
+    if not IsSha256(SourceSha256)
+      or not IsSha256(BuildRecipeSha256)
+      or not IsSha256(CaseDefinitionSha256)
+      or not IsSha256(InputSha256) then
+      raise Exception.Create('legacy oracle binding hash is invalid');
+
+    Input := LoadScenarioInput(InputPath, Scenario, InputSha256);
+    Values := TStringList.Create;
+    ObserveRandomPrimitives(Values, Input);
+    Emit(
+      Scenario,
+      AdapterId,
+      VersionId,
+      Source,
+      SourceSha256,
+      BuildRecipe,
+      BuildRecipeSha256,
+      CaseDefinitionSha256,
+      InputSha256,
+      Values);
+  except
+    on E: Exception do
+    begin
+      WriteLn(StdErr, E.ClassName, ': ', E.Message);
+      ExitStatus := 4;
+    end;
+  end;
+
+  Values.Free;
+  Input.Free;
+  if ExitStatus <> 0 then
+    Halt(ExitStatus);
+end.
