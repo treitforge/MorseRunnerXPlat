@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "target": "legacy",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "8bddce27d62059d2ceca3adc1ea8218a3618c4cf",
+      "tree": "df8b99a7960962b2cf51be001b2c496a73db7b3e",
+      "clean": true
+    },
+    "legacy": {
+      "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+      "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+      "clean": true
+    }
+  },
+  "expectedParityIds": [
+    "audio.realistic-hiss-noise-floor"
+  ],
+  "results": [
+    {
+      "parityId": "audio.realistic-hiss-noise-floor",
+      "acceptanceTestName": "parity:audio.realistic-hiss-noise-floor()",
+      "target": "legacy",
+      "adapter": "LegacyOracleTarget",
+      "caseDefinitionSha256": "03b899336d36a2740f9c68767663e20e8b0482f3f1a9f87e595b3c9ed82c78ce",
+      "fixtureSha256": "519dfd26023e8f3860816de1ea90f9c9b74ad08e83539a59ecd8fb0c9584ab40",
+      "outcome": "passed",
+      "failureCode": null,
+      "evidenceSource": "tests/parity/legacy-oracle/v7/LegacyOracle.lpr",
+      "observedValues": [
+        "configuration|sample-rate=11025|block-size=512|seed=12345|bandwidth-hz=500|pitch-hz=600|total-blocks=12|probe-sample-indexes=0,1,2,3,310,511|ce-startup-requests-discarded=5|normalization=ce-single-div-32768-clamp-unit",
+        "block[0]|sample-count=512|probe-bits=00000000,00000000,00000000,00000000,b864f231,3b26ef5d|float-sha256=6b468ab13ccc1accb6ec587b8a51d27ca23eb80b20bce034106e547ad3565378",
+        "block[1]|sample-count=512|probe-bits=3b3a0bcc,399814f0,bb2e6686,bb846947,bcd26871,bc95cf84|float-sha256=6d874352696aba890974bffc8c5973fe99353bccaa4b710ec3c7e3f135066117",
+        "block[2]|sample-count=512|probe-bits=bc5b3ee2,bbec34e8,ba4d0da6,3bb19cbc,bd21741c,3cacf62f|float-sha256=25d26f62e7aaff567b3c4a1d6cb812af06d250cb8e5c40a3d94d86c09647a263",
+        "block[3]|sample-count=512|probe-bits=3c0a577b,bba972e2,bc95f95d,bcf38162,bbcb3737,3bd2f186|float-sha256=092cb3575b75b63e6034f15a66f82279052cfce26fa7aea536455bce079ea5b9",
+        "block[4]|sample-count=512|probe-bits=3c790520,3cbf81d7,3cf38b65,3d0958c8,bcd5ba3c,bc346c65|float-sha256=1983a08425511769ab84486da63f019a5f6bd8c7db8057f6bbee87378d129a13",
+        "block[5]|sample-count=512|probe-bits=bc474801,bc66e499,bc896ad7,bc9e0068,3bc130bb,3c4b0ed5|float-sha256=da4adf75c697f22bae9638fde089ebf1e5028036075956939d857e18a1fe468d",
+        "block[6]|sample-count=512|probe-bits=3ae436cc,bc2f281e,bcb7b05e,bd0138b1,bd185e25,bcac1a19|float-sha256=55ae7393637c99ff41b53df3b965ee89b006da839731c4762b7a1894dc980c5f",
+        "block[7]|sample-count=512|probe-bits=bc137277,3b82aca9,3c83ccf1,3cd24424,bcb17917,3c97a74c|float-sha256=f193f04aea3c4ed263538ade8794b89422cf8631b7f893e795551fc4cad416a6",
+        "block[8]|sample-count=512|probe-bits=3cfb6395,3d18fdcd,3d175750,3ceed4fa,bd5a7f3f,3cd4cf47|float-sha256=2fe3741da70270422bfd18cb42088a7f6fff83c684b373b8e3d9a17ca364fac6",
+        "block[9]|sample-count=512|probe-bits=3c8ba450,3c064914,3a44461e,bb99a8b2,ba9e4248,bccbc213|float-sha256=2491cf5fa93f758368cfb3f9aef8713542a88a1823b63cfead0e4f70016e56da",
+        "block[10]|sample-count=512|probe-bits=bcfcfe64,bd007ca9,bcdb5b4f,bc940d26,3beb9b40,3d24498c|float-sha256=e7ef0429a2ae841367f8882926515f060f45e2f7503fc59a71f78175dff94ddd",
+        "block[11]|sample-count=512|probe-bits=3d1d7645,3d00db84,3c9d480d,3b4aa439,bd0ddc65,bcc1d3d0|float-sha256=f203c0027ea861e24bee401d50619f90d6af39b6f26fac514a0c560b93d4e601",
+        "aggregate|sample-count=6144|peak=0.083737813|rms=0.024757234|float-sha256=9852474e203a364ada944ecede337f2048a8ee80ad3a0e24ce833a287e64f1e1"
+      ],
+      "observedValueCount": 14,
+      "observedValuesSha256": "e77ffe0158b076e508f8bf4649711d237aaf7bb24923412841bfe04c75e0b074",
+      "firstDivergence": null,
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v7",
+        "source": "tests/parity/legacy-oracle/v7/LegacyOracle.lpr",
+        "sourceSha256": "7e84384235bba8a1f2e9d632df70698d257a4c0d33e4575acf30209583147d14",
+        "buildRecipe": "tests/parity/legacy-oracle/v7/build-recipe.json",
+        "buildRecipeSha256": "d2faedc3f9cef5b108ef30f793e1b386eea2387686b282cce49acc751f961b5b",
+        "registrySha256": "869b5603b517364734d8909aa74c2ec3c88f1bdbadcc68fab2c28a166dbdd1d8",
+        "executableSha256": "9049f10d9d34152f89f0d82f655b5c485fc1dde7140c6919b2cc40f336ac7b01",
+        "provenance": "artifacts/legacy-oracle/builds/legacy-oracle-v7/186402559a25a4b235bf6308b69de7b53076119f4d6d96d4a82dc8103107e883/4c9ccef88b8543588fdde76c156706ce/LegacyOracle.provenance.json",
+        "provenanceSha256": "f6e5a56d4511f35785fb9ec9c3591579b4e23b7eeb3c5b04d5b65de519f2dbd6"
+      },
+      "executionCount": 1
+    }
+  ]
+}
