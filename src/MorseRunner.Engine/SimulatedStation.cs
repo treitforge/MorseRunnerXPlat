@@ -8,7 +8,6 @@ public sealed class SimulatedStation
 {
     private readonly MorseToneRenderer _renderer;
     private readonly QsbProcessor? _qsb;
-    private readonly bool _qsbEnabled;
     private readonly float[] _scratch =
         new float[CompatibilityProfile.BlockSize];
     private double _bfoPhase;
@@ -77,7 +76,6 @@ public sealed class SimulatedStation
         int pitchOffsetHz,
         SimulatedOperator simulatedOperator,
         QsbProcessor qsb,
-        bool qsbEnabled,
         float r1,
         float amplitude)
     {
@@ -88,7 +86,6 @@ public sealed class SimulatedStation
         Operator = simulatedOperator;
         State = StationState.Copying;
         _qsb = qsb;
-        _qsbEnabled = qsbEnabled;
         R1 = r1;
         Amplitude = amplitude;
         _renderer = new(
@@ -107,7 +104,6 @@ public sealed class SimulatedStation
         OperatorRunMode runMode,
         bool lids,
         bool sweepstakes,
-        bool qsbEnabled,
         bool flutter)
     {
         ArgumentNullException.ThrowIfNull(identityFactory);
@@ -160,7 +156,6 @@ public sealed class SimulatedStation
             pitchOffsetHz,
             simulatedOperator,
             qsb,
-            qsbEnabled,
             r1,
             amplitude);
     }
@@ -257,7 +252,9 @@ public sealed class SimulatedStation
     internal void RenderBlock(
         Span<float> receiverReal,
         Span<float> receiverImaginary,
-        bool mixOutput = true)
+        bool qsbEnabled,
+        bool mixOutput = true,
+        Span<float> envelopeObservation = default)
     {
         _transmissionCompletedInRenderedBlock = false;
         if (State != StationState.Sending)
@@ -267,12 +264,25 @@ public sealed class SimulatedStation
 
         bool hadAudio = _renderer.HasPendingAudio;
         _renderer.RenderEnvelope(_scratch);
-        if (_qsbEnabled)
+        if (qsbEnabled)
         {
             (_qsb
                 ?? throw new InvalidOperationException(
                     "The QSB-enabled station has no QSB processor."))
                 .Apply(_scratch);
+        }
+
+        if (!envelopeObservation.IsEmpty)
+        {
+            if (envelopeObservation.Length != _scratch.Length)
+            {
+                throw new ArgumentException(
+                    "The station envelope observation must match the "
+                    + "compatibility block size.",
+                    nameof(envelopeObservation));
+            }
+
+            _scratch.CopyTo(envelopeObservation);
         }
 
         if (mixOutput)
@@ -301,6 +311,20 @@ public sealed class SimulatedStation
 
         _transmissionCompletedInRenderedBlock =
             hadAudio && !_renderer.HasPendingAudio;
+    }
+
+    internal void StartScriptedTransmissionForParity(string message)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(message);
+        if (State == StationState.Sending || _renderer.HasPendingAudio)
+        {
+            throw new InvalidOperationException(
+                "The station already has a pending transmission.");
+        }
+
+        _renderer.LoadMessage(message);
+        State = StationState.Sending;
+        _timeoutBlocks = int.MaxValue;
     }
 
     internal StationBlockTransition Tick()

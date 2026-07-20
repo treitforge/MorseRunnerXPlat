@@ -4,7 +4,7 @@ public sealed class XPlatQsbRuntimeToggleTargetTests
 {
     [Fact]
     [Trait("Category", "ParityInfrastructure")]
-    public async Task CurrentEngineReportsMissingRuntimeQsbBoundary()
+    public async Task ProductionStationRuntimeToggleMatchesPinnedCeFixture()
     {
         ParityCertificationCase definition =
             ParityCertificationCase.LoadForInspection(
@@ -15,17 +15,15 @@ public sealed class XPlatQsbRuntimeToggleTargetTests
                 definition.Scenario,
                 TestContext.Current.CancellationToken);
 
-        Assert.Equal(ParityTargetOutcome.Failed, observation.Outcome);
         Assert.Equal(
-            XPlatQsbRuntimeToggleTarget.FunctionalDivergenceCode,
-            observation.FailureCode);
+            definition.Scenario.ExpectedValues,
+            observation.Values);
+        Assert.Equal(ParityTargetOutcome.Passed, observation.Outcome);
+        Assert.Null(observation.FailureCode);
         Assert.Equal(
-            definition.Scenario.ExpectedValues[0],
-            observation.Values[0]);
-        Assert.Equal(
-            "runtime-qsb-toggle|supported=false"
-                + "|reason=session-settings-immutable",
-            observation.Values[1]);
+            "15c67eb36e309a1d88237761b7d6bda1"
+                + "953a08d4e8a5b9085d314aaea56c864b",
+            ParityObservedValuesDigest.Compute(observation.Values));
     }
 
     [Fact]
@@ -61,4 +59,5 @@ public sealed class XPlatQsbRuntimeToggleTargetTests
             ParityObservedValuesDigest.Compute(
                 definition.Scenario.ExpectedValues));
     }
+
 }

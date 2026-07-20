@@ -249,6 +249,13 @@ public static class TransportMapper
                     Delta = control.Delta,
                 };
                 break;
+            case Domain.SetRadioConditionCommand condition:
+                message.SetRadioCondition = new()
+                {
+                    Condition = ToTransport(condition.Condition),
+                    Enabled = condition.Enabled,
+                };
+                break;
             case Domain.LogQsoCommand qso:
                 message.LogQso = new()
                 {
@@ -348,6 +355,14 @@ public static class TransportMapper
                     ToDomain(value.RadioControl.Control),
                     value.RadioControl.Delta,
                     revision),
+            Contract.CommandEnvelope.PayloadOneofCase.SetRadioCondition =>
+                new Domain.SetRadioConditionCommand(
+                    requestId,
+                    sessionId,
+                    clientId,
+                    ToDomain(value.SetRadioCondition.Condition),
+                    value.SetRadioCondition.Enabled,
+                    revision),
             Contract.CommandEnvelope.PayloadOneofCase.LogQso =>
                 new Domain.LogQsoCommand(
                     requestId,
@@ -395,6 +410,7 @@ public static class TransportMapper
             LastLoggedCall = value.LastLoggedCall ?? String.Empty,
             ActiveOperatorState = ToTransport(value.ActiveOperatorState),
             QsoRatePerHour = value.QsoRatePerHour,
+            QsbEnabled = value.QsbEnabled,
         };
         if (lease is not null)
         {
@@ -440,7 +456,8 @@ public static class TransportMapper
             EmptyToNull(value.LastLoggedCall),
             ToDomain(value.ActiveOperatorState),
             value.QsoRatePerHour,
-            value.ActiveStations.Select(ToDomain).ToArray());
+            value.ActiveStations.Select(ToDomain).ToArray(),
+            value.QsbEnabled);
 
     private static Contract.ActiveStationMessage ToTransport(
         Domain.ActiveStationSnapshot value) =>
@@ -866,6 +883,19 @@ public static class TransportMapper
         int numeric = (int)value - 1;
         return System.Enum.IsDefined(typeof(Domain.RadioControl), numeric)
             ? (Domain.RadioControl)numeric
+            : throw new ArgumentOutOfRangeException(nameof(value));
+    }
+
+    private static Contract.RadioConditionMessage ToTransport(
+        Domain.RadioCondition value) =>
+        (Contract.RadioConditionMessage)((int)value + 1);
+
+    private static Domain.RadioCondition ToDomain(
+        Contract.RadioConditionMessage value)
+    {
+        int numeric = (int)value - 1;
+        return System.Enum.IsDefined(typeof(Domain.RadioCondition), numeric)
+            ? (Domain.RadioCondition)numeric
             : throw new ArgumentOutOfRangeException(nameof(value));
     }
 

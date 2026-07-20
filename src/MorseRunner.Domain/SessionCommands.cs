@@ -131,6 +131,20 @@ public sealed record AdjustRadioControlCommand(
     long? ExpectedRevision = null)
     : SessionCommand(RequestId, SessionId, ClientId, ExpectedRevision);
 
+public enum RadioCondition
+{
+    Qsb,
+}
+
+public sealed record SetRadioConditionCommand(
+    RequestId RequestId,
+    SessionId SessionId,
+    ClientId ClientId,
+    RadioCondition Condition,
+    bool Enabled,
+    long? ExpectedRevision = null)
+    : SessionCommand(RequestId, SessionId, ClientId, ExpectedRevision);
+
 public sealed record LogQsoCommand(
     RequestId RequestId,
     SessionId SessionId,

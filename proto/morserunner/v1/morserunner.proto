@@ -176,6 +176,7 @@ message CommandEnvelope {
     LogQsoCommand log_qso = 17;
     RecoverAudioCommand recover_audio = 18;
     EnterSendMessageCommand enter_send_message = 19;
+    SetRadioConditionCommand set_radio_condition = 20;
   }
 }
 
@@ -218,6 +219,16 @@ enum RadioControlMessage {
 message RadioControlCommand {
   RadioControlMessage control = 1;
   int32 delta = 2;
+}
+
+enum RadioConditionMessage {
+  RADIO_CONDITION_MESSAGE_UNSPECIFIED = 0;
+  RADIO_CONDITION_MESSAGE_QSB = 1;
+}
+
+message SetRadioConditionCommand {
+  RadioConditionMessage condition = 1;
+  bool enabled = 2;
 }
 
 message LogQsoCommand {
@@ -308,6 +319,7 @@ message SessionSnapshotMessage {
   OperatorStateMessage active_operator_state = 25;
   int32 qso_rate_per_hour = 26;
   repeated ActiveStationMessage active_stations = 27;
+  bool qsb_enabled = 28;
 }
 
 message ActiveStationMessage {

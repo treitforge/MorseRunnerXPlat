@@ -129,7 +129,8 @@ public sealed record SessionSnapshot(
     string? LastLoggedCall = null,
     OperatorState? ActiveOperatorState = null,
     int QsoRatePerHour = 0,
-    IReadOnlyList<ActiveStationSnapshot>? ActiveStations = null);
+    IReadOnlyList<ActiveStationSnapshot>? ActiveStations = null,
+    bool QsbEnabled = false);
 
 public sealed record AudioOutputDevice(
     string Name,

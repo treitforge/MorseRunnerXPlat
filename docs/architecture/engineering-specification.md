@@ -1435,8 +1435,11 @@ identical functional and audio outcomes.
 
 QSB is owned by each remote station. It must never be applied to the aggregate
 receiver buffer, receiver hiss, QRN, QRM, or local sidetone. XPlat currently
-enforces this aggregate-path invariant, but the positive per-station QSB step
-remains pending its own retained acceptance coverage and implementation.
+enforces this aggregate-path invariant. Active remote stations consult the
+session-loop-owned QSB condition at every render boundary and apply only their
+private continuously initialized QSB processor when it is enabled. The
+retained runtime-toggle case certifies this positive per-station path for one
+station. Independent multi-station evolution remains pending.
 
 Flutter is not an aggregate receiver effect. CE consults it only while
 constructing a remote station's QSB processor, where it may select the fast
@@ -1695,6 +1698,11 @@ a concrete client use case.
   identical outcome and focus guidance.
 - Represent receive-speed bounds, serial-number ranges, HST operator identity,
   and preferred audio-device name as additive session-setting fields.
+- Represent an eligible runtime radio-condition change as the semantic
+  `SetRadioCondition` command with an explicit condition and enabled value.
+  The initial condition enum contains QSB. The current QSB value is an
+  additive session-snapshot field so in-process and hosted clients observe the
+  same applied block-boundary state.
 - Use explicit `oneof` payloads for commands and events.
 - Keep zero enum values unspecified.
 - Prefer additive evolution.
@@ -2573,13 +2581,16 @@ random stream through `TQsb.ApplyTo`.
 
 The pinned CE v19 adapter records six binary32 probes and a raw-`Single` hash
 for every block, four transition comparisons, aggregate hashes, and terminal
-random checkpoints. Current XPlat freezes the QSB-enabled flag in
-`SimulatedStation` when the caller is constructed and exposes no semantic
-runtime QSB command. Its authored adapter therefore reports
-`audio-qsb-runtime-toggle-active-station-mismatch` at the first station block
-instead of synthesizing the missing transition. This case must retain its
-CE-green/XPlat-red evidence before the station setting becomes mutable at a
-documented simulation-block boundary.
+random checkpoints. The retained pre-implementation evidence records
+`audio-qsb-runtime-toggle-active-station-mismatch`. XPlat now owns the current
+QSB value on the session loop, exposes `SetRadioCondition(Qsb, enabled)` to
+both in-process and gRPC clients, includes the applied value in
+`SessionSnapshot`, and passes it into every active station render. A station
+retains the same private `QsbProcessor` across disabled and enabled blocks, so
+enabling QSB advances exactly that station's processor and shared random state
+without reconstructing it. The unchanged development case matches all 15 CE
+rows bit-for-bit. Independent stations, disabling QSB after prior enabled
+evolution, and UI mutation workflow remain separately pending.
 
 The authored
 `audio.flutter-no-station-noise-invariance-seed-12345` case narrows the first
@@ -3088,9 +3099,12 @@ Current Phase 3 implementation inventory, not parity certification:
   caller and QRM interaction, runtime QRN toggling, and RIT rotation remain
   uncertified. QSK and LID paths still use deterministic XPlat behavior rather
   than certified CE behavior. Production callers now own private CE-style QSB
-  processors and construction draws, but the enabled flag is frozen at caller
-  creation. Runtime QSB changes, positive envelope certification, independent
-  multi-station evolution, and flutter remain incomplete. Positive QRM now
+  processors and construction draws. The session loop owns the mutable QSB
+  flag, applies it at station render boundaries, and publishes it through
+  in-process and gRPC snapshots. The retained seed-12345 runtime-toggle case
+  certifies the first positive per-station envelope transition. Independent
+  multi-station evolution, the disable-after-enable path, UI mutation, and
+  flutter remain incomplete. Positive QRM now
   uses pooled CE-style station construction and
   same-block receiver mixing for the first-trigger boundary described above,
   while retry/lifetime, overlap, normal-caller interaction, RIT, QSK, and

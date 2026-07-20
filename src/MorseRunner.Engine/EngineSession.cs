@@ -130,6 +130,7 @@ internal sealed class EngineSession : IAsyncDisposable
     private int _currentWordsPerMinute;
     private int _currentBandwidthHz;
     private int _ritOffsetHz;
+    private bool _qsbEnabled;
     private float _ritPhase;
     private int _qsoCount;
     private int _score;
@@ -144,6 +145,7 @@ internal sealed class EngineSession : IAsyncDisposable
     private string? _lastLoggedCall;
     private bool _parityRandomCheckpointTaken;
     private bool _callerCollisionParityProbeTaken;
+    private bool _qsbRuntimeParityProbeTaken;
     private int _disposed;
 
     public EngineSession(
@@ -206,6 +208,7 @@ internal sealed class EngineSession : IAsyncDisposable
         _monitorGain = MathF.Pow(10F, (float)settings.MonitorLevelDb / 20F);
         _currentWordsPerMinute = settings.WordsPerMinute;
         _currentBandwidthHz = settings.BandwidthHz;
+        _qsbEnabled = settings.Qsb;
         _toneRenderer = new(
             CompatibilityProfile.SampleRate,
             CompatibilityProfile.BlockSize,
@@ -595,6 +598,69 @@ internal sealed class EngineSession : IAsyncDisposable
             + "observation completed.");
     }
 
+    internal async Task<QsbRuntimeParityObservation>
+        ObserveQsbRuntimeForParityAsync(
+            long expectedRevision,
+            long expectedSimulationBlock,
+            string stationCall,
+            string message,
+            int blockCount,
+            int toggleAfterBlockCount,
+            bool runtimeToggle,
+            CancellationToken cancellationToken)
+    {
+        if (_automaticTiming)
+        {
+            throw new InvalidOperationException(
+                "QSB runtime parity observations require manual timing.");
+        }
+
+        ArgumentOutOfRangeException.ThrowIfNegative(expectedRevision);
+        ArgumentOutOfRangeException.ThrowIfNegative(
+            expectedSimulationBlock);
+        ArgumentException.ThrowIfNullOrWhiteSpace(stationCall);
+        ArgumentException.ThrowIfNullOrWhiteSpace(message);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(blockCount);
+        ArgumentOutOfRangeException.ThrowIfNegative(
+            toggleAfterBlockCount);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        TaskCompletionSource<QsbRuntimeParityObservation> completion =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        if (!_commands.Writer.TryWrite(
+                new QsbRuntimeObservationWorkItem(
+                    expectedRevision,
+                    expectedSimulationBlock,
+                    stationCall,
+                    message,
+                    blockCount,
+                    toggleAfterBlockCount,
+                    runtimeToggle,
+                    completion)))
+        {
+            throw new InvalidOperationException(
+                "Could not enqueue the QSB runtime parity observation.");
+        }
+
+        Task completed = await Task.WhenAny(completion.Task, _worker);
+        if (completion.Task.IsCompleted)
+        {
+            return await completion.Task;
+        }
+
+        if (completed == _worker && _worker.IsFaulted)
+        {
+            throw new InvalidOperationException(
+                "The session faulted before the QSB runtime parity "
+                + "observation completed.",
+                _worker.Exception);
+        }
+
+        throw new InvalidOperationException(
+            "The session stopped before the QSB runtime parity "
+            + "observation completed.");
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
@@ -716,6 +782,9 @@ internal sealed class EngineSession : IAsyncDisposable
             case CallerCollisionObservationWorkItem observation:
                 ApplyCallerCollisionObservation(observation);
                 return true;
+            case QsbRuntimeObservationWorkItem observation:
+                ApplyQsbRuntimeObservation(observation);
+                return true;
             case CloseWorkItem close:
                 ApplyClose(close.Completion);
                 return false;
@@ -751,6 +820,8 @@ internal sealed class EngineSession : IAsyncDisposable
             TriggerEnterSendMessageCommand enter =>
                 ApplyEnterSendMessage(enter),
             AdjustRadioControlCommand control => ApplyRadioControl(control),
+            SetRadioConditionCommand condition =>
+                ApplyRadioCondition(condition),
             LogQsoCommand qso => ApplyLogQso(qso),
             ExpireControlLeaseCommand expired => ApplyControlExpired(expired),
             _ => RejectedResult(
@@ -1014,6 +1085,100 @@ internal sealed class EngineSession : IAsyncDisposable
                 _random.NextSingle()));
     }
 
+    private void ApplyQsbRuntimeObservation(
+        QsbRuntimeObservationWorkItem observation)
+    {
+        if (_revision != observation.ExpectedRevision
+            || _simulationBlock
+                != observation.ExpectedSimulationBlock)
+        {
+            observation.Completion.TrySetException(
+                new InvalidOperationException(
+                    "The QSB runtime parity observation did not match "
+                    + "the expected session revision and simulation "
+                    + "block."));
+            return;
+        }
+
+        if (_qsbRuntimeParityProbeTaken)
+        {
+            observation.Completion.TrySetException(
+                new InvalidOperationException(
+                    "The QSB runtime parity observation was already "
+                    + "executed for this session."));
+            return;
+        }
+
+        if (_state != SessionState.Ready
+            || _qsbEnabled
+            || _settings.Qrm
+            || _settings.Qrn
+            || _settings.Flutter
+            || _settings.Qsk
+            || _settings.Lids
+            || _stations.Count != 0
+            || _hasCreatedStation
+            || observation.BlockCount != 4
+            || observation.ToggleAfterBlockCount != 2)
+        {
+            observation.Completion.TrySetException(
+                new InvalidOperationException(
+                    "The QSB runtime parity observation requires the "
+                    + "fresh CE-compatible station configuration."));
+            return;
+        }
+
+        _qsbRuntimeParityProbeTaken = true;
+        // The CE fixture seeds before TContest construction. Its home station
+        // consumes one R1 draw during construction and one during contest Init.
+        _ = _random.NextSingle();
+        _ = _random.NextSingle();
+        SimulatedStation? station = AddCaller(
+            ToOperatorRunMode(_settings.RunModeId),
+            _ => new(
+                observation.StationCall,
+                "599",
+                123,
+                "Randy",
+                "WA",
+                OperatorName: "Randy"),
+            prepareForArrival: false);
+        if (station is null)
+        {
+            observation.Completion.TrySetException(
+                new InvalidOperationException(
+                    "The QSB runtime parity station was not created."));
+            return;
+        }
+
+        station.StartScriptedTransmissionForParity(observation.Message);
+        var receiverReal = new float[CompatibilityProfile.BlockSize];
+        var receiverImaginary = new float[CompatibilityProfile.BlockSize];
+        var blocks = new float[observation.BlockCount][];
+        for (int blockIndex = 0;
+             blockIndex < blocks.Length;
+             blockIndex++)
+        {
+            if (observation.RuntimeToggle
+                && blockIndex == observation.ToggleAfterBlockCount)
+            {
+                _qsbEnabled = true;
+            }
+
+            float[] block = new float[CompatibilityProfile.BlockSize];
+            station.RenderBlock(
+                receiverReal,
+                receiverImaginary,
+                _qsbEnabled,
+                mixOutput: false,
+                envelopeObservation: block);
+            blocks[blockIndex] = block;
+        }
+
+        observation.Completion.TrySetResult(
+            new(blocks, _random.NextSingle()));
+    }
+
     private CommandResult ApplyStart()
     {
         if (_state != SessionState.Ready)
@@ -1149,6 +1314,7 @@ internal sealed class EngineSession : IAsyncDisposable
                 station.RenderBlock(
                     _receiverReal,
                     _receiverImaginary,
+                    _qsbEnabled,
                     mixOutput: _settings.Qsk || !operatorIsSending);
             }
             _ritPhase = LegacyStationMixer.AdvanceRitPhase(
@@ -1744,7 +1910,6 @@ internal sealed class EngineSession : IAsyncDisposable
                     _settings.Lids,
                     sweepstakes:
                         _settings.ContestId.Value == "scArrlSS",
-                    _settings.Qsb,
                     _settings.Flutter);
             candidateObserver?.Invoke(attemptNumber, candidate);
 
@@ -1944,6 +2109,29 @@ internal sealed class EngineSession : IAsyncDisposable
                 return RejectedResult(
                     DomainErrorCodes.InvalidSetting,
                     $"Unknown radio control '{command.Control}'.");
+        }
+
+        _revision++;
+        return AcceptedResult();
+    }
+
+    private CommandResult ApplyRadioCondition(
+        SetRadioConditionCommand command)
+    {
+        if (_state is not (SessionState.Running or SessionState.Paused))
+        {
+            return InvalidState("set a radio condition");
+        }
+
+        switch (command.Condition)
+        {
+            case RadioCondition.Qsb:
+                _qsbEnabled = command.Enabled;
+                break;
+            default:
+                return RejectedResult(
+                    DomainErrorCodes.InvalidSetting,
+                    $"Unknown radio condition '{command.Condition}'.");
         }
 
         _revision++;
@@ -2374,7 +2562,8 @@ internal sealed class EngineSession : IAsyncDisposable
             _lastLoggedCall,
             activeOperatorState,
             QsoRateCalculator.Calculate(_completedQsos, elapsed),
-            activeStations);
+            activeStations,
+            _qsbEnabled);
     }
 
     private void FailPendingCommands(Exception exception)
@@ -2458,6 +2647,17 @@ internal sealed class EngineSession : IAsyncDisposable
         string CollisionCall,
         int RetryLimit,
         TaskCompletionSource<CallerCollisionParityObservation> Completion)
+        : WorkItem;
+
+    private sealed record QsbRuntimeObservationWorkItem(
+        long ExpectedRevision,
+        long ExpectedSimulationBlock,
+        string StationCall,
+        string Message,
+        int BlockCount,
+        int ToggleAfterBlockCount,
+        bool RuntimeToggle,
+        TaskCompletionSource<QsbRuntimeParityObservation> Completion)
         : WorkItem;
 
     private sealed record CloseWorkItem(

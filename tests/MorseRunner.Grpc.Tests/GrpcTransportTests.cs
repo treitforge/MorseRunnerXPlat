@@ -73,6 +73,23 @@ public sealed class GrpcTransportTests
     }
 
     [Fact]
+    public void SetRadioConditionCommandRoundTripsWithoutLoss()
+    {
+        MorseRunner.Domain.SetRadioConditionCommand expected = new(
+            RequestId.New(),
+            SessionId.New(),
+            new ClientId("condition"),
+            RadioCondition.Qsb,
+            Enabled: true,
+            ExpectedRevision: 14);
+
+        SessionCommand actual = TransportMapper.ToDomain(
+            TransportMapper.ToTransport(expected));
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
     public async Task InProcessAndGrpcClientsProduceEquivalentScenario()
     {
         await using GrpcTestHost host = await GrpcTestHost.StartAsync();
@@ -312,6 +329,15 @@ public sealed class GrpcTransportTests
                 TestContext.Current.CancellationToken)).Accepted);
         Assert.True(
             (await client.ExecuteAsync(
+                new MorseRunner.Domain.SetRadioConditionCommand(
+                    RequestId.New(),
+                    sessionId,
+                    id,
+                    RadioCondition.Qsb,
+                    Enabled: true),
+                TestContext.Current.CancellationToken)).Accepted);
+        Assert.True(
+            (await client.ExecuteAsync(
                 new AdvanceSimulationCommand(
                     RequestId.New(),
                     sessionId,
@@ -356,5 +382,6 @@ public sealed class GrpcTransportTests
         Assert.Equal(expected.LastOperatorMessage, actual.LastOperatorMessage);
         Assert.Equal(expected.QsoCount, actual.QsoCount);
         Assert.Equal(expected.Score, actual.Score);
+        Assert.Equal(expected.QsbEnabled, actual.QsbEnabled);
     }
 }
