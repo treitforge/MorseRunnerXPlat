@@ -6,8 +6,7 @@ public sealed class XPlatFlutterNoStationNoiseInvarianceTargetTests
 {
     [Fact]
     [Trait("Category", "ParityInfrastructure")]
-    public async Task
-        CurrentProductionFailsAtFirstFlutterBlockWithPinnedCode()
+    public async Task PublicEngineCaptureMatchesPinnedCeFixture()
     {
         ParityCertificationCase definition =
             ParityCertificationCase.LoadForInspection(
@@ -19,35 +18,15 @@ public sealed class XPlatFlutterNoStationNoiseInvarianceTargetTests
                     definition.Scenario,
                     TestContext.Current.CancellationToken);
 
-        Assert.Equal(ParityTargetOutcome.Failed, observation.Outcome);
-        Assert.Equal(
-            XPlatFlutterNoStationNoiseInvarianceTarget
-                .FunctionalDivergenceCode,
-            observation.FailureCode);
+        Assert.Equal(ParityTargetOutcome.Passed, observation.Outcome);
+        Assert.Null(observation.FailureCode);
         Assert.Equal(
             XPlatFlutterNoStationNoiseInvarianceTarget.EvidenceSource,
             observation.EvidenceSource);
         Assert.Equal(
-            definition.Scenario.ExpectedValues.Take(3),
-            observation.Values.Take(3),
+            definition.Scenario.ExpectedValues,
+            observation.Values,
             StringComparer.Ordinal);
-        Assert.Equal(
-            3,
-            FindFirstDivergence(
-                definition.Scenario.ExpectedValues,
-                observation.Values));
-        Assert.StartsWith(
-            "flutter-block[0]|",
-            observation.Values[3],
-            StringComparison.Ordinal);
-        Assert.EndsWith(
-            "|exact-equal=false",
-            observation.Values[5],
-            StringComparison.Ordinal);
-        Assert.EndsWith(
-            "|exact-equal=false",
-            observation.Values[^1],
-            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -122,20 +101,20 @@ public sealed class XPlatFlutterNoStationNoiseInvarianceTargetTests
             FlutterNoStationNoiseInvarianceInput.ExpectedValueCount,
             first.Length);
         Assert.Equal(
-            "d7534be943cad60b3fe6310e67ff5a81"
-                + "6c86d06b4976f0ed893d4ffcb19f33b6",
+            "7fc8f051c3453475a30a9cdccd55886a"
+                + "839739338b2309d73e18d8e76c708a6d",
             ParityObservedValuesDigest.Compute(first));
         Assert.Equal(
             "6b468ab13ccc1accb6ec587b8a51d27c"
                 + "a23eb80b20bce034106e547ad3565378",
             ExtractHash(first[1]));
-        Assert.NotEqual(ExtractHash(first[1]), ExtractHash(first[3]));
+        Assert.Equal(ExtractHash(first[1]), ExtractHash(first[3]));
         Assert.EndsWith(
-            "|exact-equal=false",
+            "|exact-equal=true",
             first[5],
             StringComparison.Ordinal);
         Assert.EndsWith(
-            "|exact-equal=false",
+            "|exact-equal=true",
             first[^1],
             StringComparison.Ordinal);
     }
@@ -358,24 +337,6 @@ public sealed class XPlatFlutterNoStationNoiseInvarianceTargetTests
                 input,
                 clean,
                 flutter));
-    }
-
-    private static int FindFirstDivergence(
-        IReadOnlyList<string> expected,
-        IReadOnlyList<string> actual)
-    {
-        int commonCount = Math.Min(expected.Count, actual.Count);
-        for (int index = 0; index < commonCount; index++)
-        {
-            if (!StringComparer.Ordinal.Equals(
-                    expected[index],
-                    actual[index]))
-            {
-                return index;
-            }
-        }
-
-        return expected.Count == actual.Count ? -1 : commonCount;
     }
 
     private static string ExtractHash(string row)

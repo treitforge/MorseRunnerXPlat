@@ -351,7 +351,7 @@ public sealed class SessionLoopTests
     }
 
     [Fact]
-    public async Task QrmQrnAndFlutterAreDeterministicAndChangeRenderedAudio()
+    public async Task QrmAndQrnAreDeterministicAndChangeRenderedAudio()
     {
         SessionSettings cleanSettings =
             SessionSettings.CreateDefault(seed: 12345) with
@@ -363,7 +363,6 @@ public sealed class SessionLoopTests
         {
             Qrm = true,
             Qrn = true,
-            Flutter = true,
         };
 
         byte[] clean = await RenderHashAsync(cleanSettings);
@@ -377,10 +376,27 @@ public sealed class SessionLoopTests
     [Fact]
     public async Task QsbDoesNotChangeStationFreeReceiverAudio()
     {
-        byte[] clean = await RenderStationFreeHashAsync(qsbEnabled: false);
-        byte[] qsb = await RenderStationFreeHashAsync(qsbEnabled: true);
+        byte[] clean = await RenderStationFreeHashAsync(
+            qsbEnabled: false,
+            flutterEnabled: false);
+        byte[] qsb = await RenderStationFreeHashAsync(
+            qsbEnabled: true,
+            flutterEnabled: false);
 
         Assert.Equal(clean, qsb);
+    }
+
+    [Fact]
+    public async Task FlutterDoesNotChangeStationFreeReceiverAudio()
+    {
+        byte[] clean = await RenderStationFreeHashAsync(
+            qsbEnabled: false,
+            flutterEnabled: false);
+        byte[] flutter = await RenderStationFreeHashAsync(
+            qsbEnabled: false,
+            flutterEnabled: true);
+
+        Assert.Equal(clean, flutter);
     }
 
     [Fact]
@@ -440,7 +456,8 @@ public sealed class SessionLoopTests
     }
 
     private static async Task<byte[]> RenderStationFreeHashAsync(
-        bool qsbEnabled)
+        bool qsbEnabled,
+        bool flutterEnabled)
     {
         var sink = new HashingAudioSink();
         await using MorseRunnerEngine engine = new(_ => sink);
@@ -459,7 +476,7 @@ public sealed class SessionLoopTests
             Qsb = qsbEnabled,
             Qrm = false,
             Qrn = false,
-            Flutter = false,
+            Flutter = flutterEnabled,
             Lids = false,
             MonitorLevelDb = 0d,
         };

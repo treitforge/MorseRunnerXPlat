@@ -134,7 +134,6 @@ internal sealed class EngineSession : IAsyncDisposable
     private Qso[] _completedQsos = [];
     private string? _lastLoggedCall;
     private float _qrmPhase;
-    private float _flutterPhase;
     private int _disposed;
 
     public EngineSession(
@@ -690,8 +689,6 @@ internal sealed class EngineSession : IAsyncDisposable
         float qrmIncrement =
             2F * MathF.PI * (_settings.PitchHz + 170F)
             / CompatibilityProfile.SampleRate;
-        float flutterIncrement =
-            2F * MathF.PI * 11F / CompatibilityProfile.SampleRate;
         for (int index = 0; index < _renderBuffer.Length; index++)
         {
             float sample = _renderBuffer[index];
@@ -708,16 +705,6 @@ internal sealed class EngineSession : IAsyncDisposable
             if (_settings.Qrn)
             {
                 sample += (_effectRandom.NextSingle() * 2F - 1F) * 0.035F;
-            }
-
-            if (_settings.Flutter)
-            {
-                sample *= 0.86F + (0.14F * MathF.Sin(_flutterPhase));
-                _flutterPhase += flutterIncrement;
-                if (_flutterPhase >= 2F * MathF.PI)
-                {
-                    _flutterPhase -= 2F * MathF.PI;
-                }
             }
 
             float localMonitor =

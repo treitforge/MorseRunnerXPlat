@@ -1430,6 +1430,14 @@ receiver buffer, receiver hiss, QRN, QRM, or local sidetone. XPlat currently
 enforces this aggregate-path invariant, but the positive per-station QSB step
 remains pending its own retained acceptance coverage and implementation.
 
+Flutter is not an aggregate receiver effect. CE consults it only while
+constructing a remote station's QSB processor, where it may select the fast
+QSB bandwidth distribution. Enabling flutter with no remote stations must not
+change receiver audio or consume effect-specific random draws. XPlat enforces
+the station-free and aggregate-path invariant, but positive station
+construction and fast per-station QSB remain pending retained acceptance
+coverage and implementation.
+
 ### 14.3 Renderer ownership
 
 - One renderer instance belongs to one session.
@@ -2501,13 +2509,15 @@ their aggregate raw-`Single` hash remain bit-for-bit identical. The XPlat
 adapter performs the same paired capture through fresh production engine
 sessions and `IAudioSink`.
 
-The current XPlat session-global post-receiver flutter multiplier changes the
-station-free hiss, so the authored case remains `legacy-green-xplat-red` with
-divergence code `audio-flutter-no-station-noise-invariance-mismatch` until red
-evidence is retained and production flutter ownership is corrected. This case
-does not certify positive per-station ownership, QSB gating, the 30 percent
-fast-mode selection, bandwidth distribution, draw order, independent
-envelopes, or runtime toggling. The
+The retained pre-implementation baseline remains `legacy-green-xplat-red` with
+divergence code `audio-flutter-no-station-noise-invariance-mismatch`.
+Production `EngineSession` no longer applies a session-global post-receiver
+flutter multiplier, so enabling flutter leaves station-free receiver audio
+unchanged. The unchanged development case must pass before this correction is
+considered a local green regression, while the retained red evidence remains
+immutable. This correction does not implement or certify positive per-station
+ownership, QSB gating, the 30 percent fast-mode selection, bandwidth
+distribution, draw order, independent envelopes, or runtime toggling. The
 `audio.flutter-fast-per-station-qsb` obligation therefore remains partial.
 
 The `audio.deterministic-random-primitives-seed-12345` case executes the pinned CE
@@ -2586,12 +2596,12 @@ Current Phase 3 implementation inventory, not parity certification:
   ordered session events with revision and simulation-block metadata. Seeded
   tests verify caller sets, station event traces, true-exchange logging, NIL
   outcomes, and deterministic audio hashes.
-- QSK, QRM, QRN, flutter, and LID paths exist and use deterministic XPlat
-  state. QSB setting carriage exists, but the incorrect session-global
-  receiver application has been removed and the CE per-station application is
-  not implemented yet. The audit found further differences in audio ordering,
-  signal models, and random-source ownership, so these paths are not
-  CE-equivalent yet.
+- QSK, QRM, QRN, and LID paths exist and use deterministic XPlat state. Setting
+  carriage for QSB and flutter exists, but their incorrect session-global
+  receiver applications have been removed and the CE per-station construction
+  and application are not implemented yet. The audit found further differences
+  in audio ordering, signal models, and random-source ownership, so these paths
+  are not CE-equivalent yet.
 - Immutable QSO records, score and multiplier behavior, radio controls,
   versioned settings, one-way INI import, atomic persistence, and
   platform-specific application paths are implemented.
