@@ -6,8 +6,7 @@ public sealed class XPlatReceiverHissSharedRandomCheckpointTargetTests
 {
     [Fact]
     [Trait("Category", "ParityInfrastructure")]
-    public async Task
-        CurrentProductionFailsAtSharedRandomCheckpointWithPinnedCode()
+    public async Task PublicEngineCaptureMatchesPinnedCeFixture()
     {
         ParityCertificationCase definition =
             ParityCertificationCase.LoadForInspection(
@@ -19,28 +18,15 @@ public sealed class XPlatReceiverHissSharedRandomCheckpointTargetTests
                     definition.Scenario,
                     TestContext.Current.CancellationToken);
 
-        Assert.Equal(ParityTargetOutcome.Failed, observation.Outcome);
-        Assert.Equal(
-            XPlatReceiverHissSharedRandomCheckpointTarget
-                .FunctionalDivergenceCode,
-            observation.FailureCode);
+        Assert.Equal(ParityTargetOutcome.Passed, observation.Outcome);
+        Assert.Null(observation.FailureCode);
         Assert.Equal(
             XPlatReceiverHissSharedRandomCheckpointTarget.EvidenceSource,
             observation.EvidenceSource);
         Assert.Equal(
-            definition.Scenario.ExpectedValues.Take(2),
-            observation.Values.Take(2),
+            definition.Scenario.ExpectedValues,
+            observation.Values,
             StringComparer.Ordinal);
-        Assert.Equal(
-            2,
-            FindFirstDivergence(
-                definition.Scenario.ExpectedValues,
-                observation.Values));
-        Assert.Equal(
-            "shared-random-checkpoint"
-                + "|draw-count-before-checkpoint=1024"
-                + "|ordinal=1024|single-bits=3f6dfb52",
-            observation.Values[2]);
     }
 
     [Fact]
@@ -110,8 +96,8 @@ public sealed class XPlatReceiverHissSharedRandomCheckpointTargetTests
             ReceiverHissSharedRandomCheckpointInput.ExpectedValueCount,
             first.Length);
         Assert.Equal(
-            "aeb163bf9f1e789ec08402edab2afc0"
-                + "cfec497442afa3f36770b169617a266c2",
+            "6af5b9552bd37181add531e082c979823"
+                + "9fa16df8e5fb3805a57717fc1391060",
             ParityObservedValuesDigest.Compute(first));
         Assert.Equal(
             "6b468ab13ccc1accb6ec587b8a51d27c"
@@ -120,7 +106,7 @@ public sealed class XPlatReceiverHissSharedRandomCheckpointTargetTests
         Assert.Equal(
             "shared-random-checkpoint"
                 + "|draw-count-before-checkpoint=1024"
-                + "|ordinal=1024|single-bits=3f6dfb52",
+                + "|ordinal=1024|single-bits=3e320354",
             first[2]);
     }
 
@@ -375,24 +361,6 @@ public sealed class XPlatReceiverHissSharedRandomCheckpointTargetTests
                 .Normalize(
                     input,
                     capture));
-    }
-
-    private static int FindFirstDivergence(
-        IReadOnlyList<string> expected,
-        IReadOnlyList<string> actual)
-    {
-        int commonCount = Math.Min(expected.Count, actual.Count);
-        for (int index = 0; index < commonCount; index++)
-        {
-            if (!StringComparer.Ordinal.Equals(
-                    expected[index],
-                    actual[index]))
-            {
-                return index;
-            }
-        }
-
-        return expected.Count == actual.Count ? -1 : commonCount;
     }
 
     private static string ExtractHash(string row)

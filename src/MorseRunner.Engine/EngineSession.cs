@@ -754,12 +754,14 @@ internal sealed class EngineSession : IAsyncDisposable
     private void PrepareReceiverInput()
     {
         const double noiseAmplitude = 18_000d;
+        LegacyRandom noiseRandom =
+            _settings.Qrn ? _effectRandom : _random;
         for (int index = 0; index < _receiverReal.Length; index++)
         {
             _receiverReal[index] = (float)(
-                noiseAmplitude * (_effectRandom.NextDouble() - 0.5d));
+                noiseAmplitude * (noiseRandom.NextDouble() - 0.5d));
             _receiverImaginary[index] = (float)(
-                noiseAmplitude * (_effectRandom.NextDouble() - 0.5d));
+                noiseAmplitude * (noiseRandom.NextDouble() - 0.5d));
         }
     }
 

@@ -2506,12 +2506,13 @@ through `IAudioSink`, and validates the final public `SessionSnapshot`. As its
 final engine operation, it requests exactly one value from the authoritative
 session random source through an internal parity-only session-loop work item.
 The request is guarded by the observed revision and simulation block and does
-not add a Domain, client, Protobuf, or gRPC contract. The authored case is
-legacy-green/XPlat-red with divergence code
-`audio-receiver-hiss-shared-random-checkpoint-mismatch`: XPlat currently emits
-the exact CE block from an effect-specific stream but returns checkpoint bits
-`3f6dfb52` from an untouched authoritative session stream. The first
-divergence is row 2, `shared-random-checkpoint`.
+not add a Domain, client, Protobuf, or gRPC contract. The retained
+pre-implementation baseline is legacy-green/XPlat-red with divergence code
+`audio-receiver-hiss-shared-random-checkpoint-mismatch`: it records the exact
+CE block alongside XPlat checkpoint bits `3f6dfb52` from the then-untouched
+authoritative session stream. On the certified QRN-disabled path, production
+`EngineSession` now uses that one session stream for receiver hiss and returns
+CE checkpoint bits `3e320354`; the retained red evidence remains immutable.
 
 This narrow vector proves only ownership and draw order for receiver hiss in
 the first complete block. It does not cover later blocks or ordering across
@@ -2684,8 +2685,9 @@ Current Phase 3 implementation inventory, not parity certification:
   carriage for QSB, flutter, and QRM exists, but their incorrect session-global
   receiver applications have been removed and the CE station construction and
   application paths are not implemented yet. The audit found further
-  differences in audio ordering, signal models, and random-source ownership,
-  so these paths are not CE-equivalent yet.
+  differences in audio ordering, signal models, remaining random-source
+  ownership, and cross-feature draw ordering, so these paths are not
+  CE-equivalent yet.
 - Immutable QSO records, score and multiplier behavior, radio controls,
   versioned settings, one-way INI import, atomic persistence, and
   platform-specific application paths are implemented.

@@ -192,7 +192,7 @@ public sealed class StationLifecycleTests
     {
         await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
         SessionHandle handle = await engine.CreateSessionAsync(
-            SessionSettings.CreateDefault(seed: 404) with
+            SessionSettings.CreateDefault(seed: 405) with
             {
                 RunModeId = new("rmPileup"),
                 WordsPerMinute = 30,
