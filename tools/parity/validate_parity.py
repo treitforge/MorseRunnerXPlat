@@ -134,6 +134,9 @@ TRUSTED_V3_MIGRATION_OBLIGATION_OWNERS = {
     ),
     "audio.bfo-phase-state-and-reset": "audio-dsp.legacy-processing",
     "audio.sst-farnsworth-timing": "audio-dsp.legacy-processing",
+    "audio.sst-farnsworth-session-wiring": (
+        "audio-dsp.legacy-processing"
+    ),
     "audio.single-seeded-random-stream": "simulation.legacy-effects",
     "audio.legacy-block-size-configurations": (
         "audio-dsp.legacy-processing"
@@ -321,8 +324,8 @@ TRUSTED_V3_MIGRATION_OBLIGATION_IDS = frozenset(
     TRUSTED_V3_MIGRATION_OBLIGATION_OWNERS
 )
 TRUSTED_V3_MIGRATION_OBLIGATION_SHA256 = (
-    "11e4404f6daf79937e979f25e45f6431"
-    "ff3b2d545d55b12c367b8f320b32a693"
+    "7aeea673f32d0a9bd58bda945d12afc6"
+    "a5bba5dbdfc64c548bb648073fa808a8"
 )
 TRUSTED_V3_MIGRATION_CAPABILITY_SHA256 = (
     "04330886992153a69429ed7f271e9bf7"

@@ -13,6 +13,16 @@ public static class ParityAcceptanceRegistry
         new Dictionary<string, ParityAcceptanceRegistration>(
             StringComparer.Ordinal)
         {
+            [XPlatSstFarnsworthTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatSstFarnsworthTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatSstFarnsworthTarget),
+                    XPlatSstFarnsworthTarget.FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = SstFarnsworthTimingInput.Parse(scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () => new XPlatSstFarnsworthTarget()),
             ["contest.exchange-shapes"] =
                 new ParityAcceptanceRegistration(
                     "contest.exchange-shapes",

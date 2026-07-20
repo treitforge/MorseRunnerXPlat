@@ -2318,6 +2318,22 @@ Current Phase 2 implementation inventory, not parity certification:
   recovery, and real-time allocation coverage. Existing lower-level tests do
   not certify these behaviors as CE-equivalent.
 
+The first manifest schema-v3 audio case is
+`audio.sst-farnsworth-envelope-timing`. It executes the pinned CE `TCWSST`
+send path with `TFarnsKeyer` at 11025 Hz, 512 samples per block, 15 WPM sending
+speed, 25 WPM character speed, and amplitude 300000. For `PARIS TEST` and
+`K1ABC 599 123`, it compares the true sample count, padded sample count, and
+SHA-256 of the raw `Single` envelope bytes. The retained baseline is currently
+`legacy-green-xplat-red`; its first divergence is the true sample count for
+`PARIS TEST`. This case covers only SST Farnsworth encoding, spacing, default
+ramp numerics, and block padding. It does not certify station mixing, effects,
+filtering, AGC, PCM conversion, physical playback, or the complete session
+audio path. `MorseToneRenderer` and `EngineSession` do not yet carry the
+separate SST character rate, so direct keyer parity must not be treated as
+end-to-end operator availability. The separate
+`audio.sst-farnsworth-session-wiring` obligation remains pending until a live
+session case proves that complete path.
+
 ### Phase 3: core simulation and data
 
 Deliver:

@@ -6,6 +6,12 @@ namespace MorseRunner.LegacyParity.Tests;
 
 public sealed class ParityInfrastructureTests
 {
+    private static readonly string[] SstFarnsworthMessages =
+    [
+        "PARIS TEST",
+        "K1ABC 599 123",
+    ];
+
     [Fact]
     [Trait("Category", "ParityInfrastructure")]
     public void EmptyTargetSelectionDefaultsToXPlat()
@@ -53,16 +59,49 @@ public sealed class ParityInfrastructureTests
 
     [Fact]
     [Trait("Category", "ParityInfrastructure")]
-    public void ActiveRegistryContainsOnlyExchangeShapes()
+    public void ActiveRegistryContainsEveryExecutableCase()
     {
         Assert.Equal(
-            ["contest.exchange-shapes"],
+            [
+                "audio.sst-farnsworth-envelope-timing",
+                "contest.exchange-shapes",
+            ],
             ParityAcceptanceRegistry.AllIds,
             StringComparer.Ordinal);
         Assert.Equal(
-            ["contest.exchange-shapes"],
+            [
+                "audio.sst-farnsworth-envelope-timing",
+                "contest.exchange-shapes",
+            ],
             ParityAcceptanceRegistry.ActiveIds,
             StringComparer.Ordinal);
+    }
+
+    [Fact]
+    [Trait("Category", "ParityInfrastructure")]
+    public void CaseIdSelectsItsExactXPlatAdapter()
+    {
+        Assert.IsType<XPlatSstFarnsworthTarget>(
+            ParityAcceptanceRegistry
+                .Get("audio.sst-farnsworth-envelope-timing")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatContestRulesTarget>(
+            ParityAcceptanceRegistry
+                .Get("contest.exchange-shapes")
+                .CreateTarget(ParityTargetKind.XPlat)());
+    }
+
+    [Fact]
+    [Trait("Category", "ParityInfrastructure")]
+    public void EveryExecutableCaseMatchesItsManifestBinding()
+    {
+        foreach (string parityId in ParityAcceptanceRegistry.AllIds)
+        {
+            ParityCertificationCase definition =
+                ParityCertificationCase.LoadForInspection(parityId);
+            ParityAcceptanceRegistry.Get(parityId)
+                .ValidateManifestBinding(definition);
+        }
     }
 
     [Fact]
@@ -167,7 +206,12 @@ public sealed class ParityInfrastructureTests
         JsonObject manifest = JsonNode.Parse(
             File.ReadAllText(manifestPath))!.AsObject();
         JsonObject descriptor = manifest["cases"]!
-            .AsArray()[0]!["legacyOracle"]!
+            .AsArray()
+            .Select(node => node!.AsObject())
+            .Single(
+                caseNode => StringComparer.Ordinal.Equals(
+                    caseNode["id"]!.GetValue<string>(),
+                    "contest.exchange-shapes"))["legacyOracle"]!
             .AsObject();
         descriptor["versionId"] = versionId;
         descriptor["source"] = source;
@@ -237,6 +281,145 @@ public sealed class ParityInfrastructureTests
             selectedIds[1] + "|",
             observation.Values[1],
             StringComparison.Ordinal);
+    }
+
+    [Fact]
+    [Trait("Category", "ParityInfrastructure")]
+    public void SstFarnsworthInputParsesTheExactCertifyingVector()
+    {
+        ParityScenario scenario = CreateSstFarnsworthScenario(
+            Enumerable.Repeat("expected", 11).ToArray());
+
+        SstFarnsworthTimingInput input =
+            SstFarnsworthTimingInput.Parse(scenario);
+
+        Assert.Equal(11_025, input.SampleRate);
+        Assert.Equal(512, input.BlockSize);
+        Assert.Equal(300_000, input.Amplitude);
+        Assert.Equal(15, input.SendingWordsPerMinute);
+        Assert.Equal(25, input.CharacterWordsPerMinute);
+        Assert.Equal(
+            SstFarnsworthMessages,
+            input.Messages,
+            StringComparer.Ordinal);
+    }
+
+    [Theory]
+    [Trait("Category", "ParityInfrastructure")]
+    [InlineData("sampleRate", 11_024)]
+    [InlineData("blockSize", 256)]
+    [InlineData("amplitude", 299_999)]
+    [InlineData("sendingWpm", 14)]
+    [InlineData("characterWpm", 24)]
+    public void SstFarnsworthInputRejectsNumericVectorDrift(
+        string propertyName,
+        int value)
+    {
+        JsonObject input = CreateSstFarnsworthInput();
+        input[propertyName] = value;
+
+        AssertSstFarnsworthInputRejected(input);
+    }
+
+    [Fact]
+    [Trait("Category", "ParityInfrastructure")]
+    public void SstFarnsworthInputRejectsStructuralVectorDrift()
+    {
+        JsonObject extraProperty = CreateSstFarnsworthInput();
+        extraProperty["unexpected"] = true;
+        JsonObject missingProperty = CreateSstFarnsworthInput();
+        Assert.True(missingProperty.Remove("amplitude"));
+        JsonObject fractionalNumber = CreateSstFarnsworthInput();
+        fractionalNumber["sampleRate"] = 11_025.5;
+        JsonObject wrongMessageOrder = CreateSstFarnsworthInput();
+        wrongMessageOrder["messages"] = new JsonArray(
+            "K1ABC 599 123",
+            "PARIS TEST");
+        JsonObject wrongMessageType = CreateSstFarnsworthInput();
+        wrongMessageType["messages"] = new JsonArray(
+            "PARIS TEST",
+            123);
+        JsonObject missingMessage = CreateSstFarnsworthInput();
+        missingMessage["messages"] = new JsonArray("PARIS TEST");
+
+        foreach (JsonObject input in new[]
+                 {
+                     extraProperty,
+                     missingProperty,
+                     fractionalNumber,
+                     wrongMessageOrder,
+                     wrongMessageType,
+                     missingMessage,
+                 })
+        {
+            AssertSstFarnsworthInputRejected(input);
+        }
+
+        AssertSstFarnsworthInputRejected(
+            CreateSstFarnsworthInput(),
+            expectedValueCount: 10);
+    }
+
+    [Fact]
+    [Trait("Category", "ParityInfrastructure")]
+    public async Task
+        SstFarnsworthTargetHasPinnedRedDivergenceAndIsDeterministic()
+    {
+        string[] expectedCurrentValues =
+        [
+            "configuration|sample-rate=11025|block-size=512"
+            + "|amplitude=300000|sending-wpm=15|character-wpm=25",
+            "message[0]=PARIS TEST",
+            "timing[0]|sending-wpm=15|character-wpm=25"
+            + "|amplitude=300000",
+            "true-length[0]=67087",
+            "padded-length[0]=67584",
+            "float-sha256[0]="
+            + "63b45195172fda28e42be0be2ce92e9c"
+            + "c6a1ba41b818d78c8f1204281b72e78d",
+            "message[1]=K1ABC 599 123",
+            "timing[1]|sending-wpm=15|character-wpm=25"
+            + "|amplitude=300000",
+            "true-length[1]=162663",
+            "padded-length[1]=162816",
+            "float-sha256[1]="
+            + "5cc7e981911cb96e6f585729761ac59db"
+            + "1b3f2edb7ccfac5d49308b34a28d18f",
+        ];
+        ParityCertificationCase definition =
+            ParityCertificationCase.LoadForInspection(
+                XPlatSstFarnsworthTarget.ParityId);
+        var target = new XPlatSstFarnsworthTarget();
+        ParityObservation first = await target.ExecuteAsync(
+            definition.Scenario,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(ParityTargetOutcome.Failed, first.Outcome);
+        Assert.Equal(
+            XPlatSstFarnsworthTarget.FunctionalDivergenceCode,
+            first.FailureCode);
+        Assert.Equal(
+            expectedCurrentValues,
+            first.Values,
+            StringComparer.Ordinal);
+        Assert.Equal(
+            3,
+            Enumerable.Range(0, first.Values.Count)
+                .First(
+                    index => !StringComparer.Ordinal.Equals(
+                        first.Values[index],
+                        definition.Scenario.ExpectedValues[index])));
+
+        ParityObservation second = await target.ExecuteAsync(
+            definition.Scenario,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(first.Outcome, second.Outcome);
+        Assert.Equal(first.FailureCode, second.FailureCode);
+        Assert.Equal(
+            first.Values,
+            second.Values,
+            StringComparer.Ordinal);
     }
 
     [Theory]
@@ -560,11 +743,6 @@ public sealed class ParityInfrastructureTests
     [Trait("Category", "ParityInfrastructure")]
     public async Task RecorderAtomicallyAccumulatesConcurrentResults()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
         using TemporaryDirectory temporary = new();
         string path = Path.Combine(temporary.Path, "xplat-results.json");
 
@@ -655,16 +833,17 @@ public sealed class ParityInfrastructureTests
                 Assert.Equal(
                     "passed",
                     result.GetProperty("outcome").GetString());
+                string parityId = result.GetProperty(
+                    "parityId").GetString()!;
                 Assert.Equal(
-                    "XPlatContestRulesTarget",
+                    ParityAcceptanceRegistry.Get(parityId)
+                        .AdapterId(ParityTargetKind.XPlat),
                     result.GetProperty("adapter").GetString());
                 Assert.Equal(
                     1,
                     result.GetProperty("executionCount").GetInt32());
                 ParityCertificationCase definition =
-                    ParityCertificationCase.Load(
-                        result.GetProperty(
-                            "parityId").GetString()!);
+                    ParityCertificationCase.Load(parityId);
                 Assert.Equal(
                     definition.Scenario.ExpectedValues.Count,
                     result.GetProperty(
@@ -1022,6 +1201,51 @@ public sealed class ParityInfrastructureTests
             ["LegacyOracleTarget", "XPlatContestRulesTarget"],
             ["windows", "linux", "macos"],
             "test-mismatch");
+    }
+
+    private static ParityScenario CreateSstFarnsworthScenario(
+        IReadOnlyList<string> expectedValues)
+    {
+        return new ParityScenario(
+            XPlatSstFarnsworthTarget.ParityId,
+            "audio-dsp.legacy-processing",
+            expectedValues,
+            JsonSerializer.SerializeToElement(
+                CreateSstFarnsworthInput()));
+    }
+
+    private static JsonObject CreateSstFarnsworthInput()
+    {
+        return new JsonObject
+        {
+            ["scenario"] = XPlatSstFarnsworthTarget.ParityId,
+            ["sampleRate"] = 11_025,
+            ["blockSize"] = 512,
+            ["amplitude"] = 300_000,
+            ["sendingWpm"] = 15,
+            ["characterWpm"] = 25,
+            ["messages"] = new JsonArray(
+                "PARIS TEST",
+                "K1ABC 599 123"),
+        };
+    }
+
+    private static void AssertSstFarnsworthInputRejected(
+        JsonObject input,
+        int expectedValueCount = 11)
+    {
+        Assert.Throws<InvalidDataException>(
+            () =>
+            {
+                ParityScenario scenario = new(
+                    XPlatSstFarnsworthTarget.ParityId,
+                    "audio-dsp.legacy-processing",
+                    Enumerable.Repeat(
+                        "expected",
+                        expectedValueCount).ToArray(),
+                    JsonSerializer.SerializeToElement(input));
+                _ = SstFarnsworthTimingInput.Parse(scenario);
+            });
     }
 
     private sealed class StubTarget : IParityTarget

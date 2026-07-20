@@ -316,8 +316,10 @@
         "linux",
         "macos"
       ],
-      "acceptanceStatus": "not-authored",
-      "caseIds": []
+      "acceptanceStatus": "partial",
+      "caseIds": [
+        "audio.sst-farnsworth-envelope-timing"
+      ]
     },
     {
       "id": "audio.legacy-adapters",
@@ -651,7 +653,8 @@
     {"id": "audio.flutter-fast-per-station-qsb", "capabilityId": "simulation.legacy-effects", "behavior": "Flutter is the CE probabilistic fast per-station QSB mode rather than a global multiplier.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.station-level-and-pitch-distributions", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Remote station amplitude and pitch use CE distributions and deterministic draw ordering.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.bfo-phase-state-and-reset", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Station BFO phase advances and resets at the same CE transmission boundaries.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "audio.sst-farnsworth-timing", "capabilityId": "audio-dsp.legacy-processing", "behavior": "SST uses independent character and spacing speeds with CE Farnsworth timing.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.sst-farnsworth-timing", "capabilityId": "audio-dsp.legacy-processing", "behavior": "The production keyer primitive used by SST supports independent character and spacing speeds with CE-equivalent marker encoding, sample counts, default ramps, and block padding.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["VCL/FarnsKeyer.pas", "VCL/MorseKey.pas"], "legacySurfaceSelectors": ["legacy.vcl.dsp.type.farnskeyer.tfarnskeyer", "legacy.vcl.dsp.routine.farnskeyer.tfarnskeyer.create", "legacy.vcl.dsp.routine.farnskeyer.tfarnskeyer.encode", "legacy.vcl.dsp.routine.farnskeyer.tfarnskeyer.getenvelope", "legacy.vcl.dsp.routine.farnskeyer.tfarnskeyer.loadmorsetable", "legacy.vcl.dsp.routine.morsekey.tkeyer.create", "legacy.vcl.dsp.routine.morsekey.tkeyer.setrisetime", "legacy.vcl.dsp.routine.morsekey.tkeyer.setwpm", "legacy.vcl.dsp.routine.morsekey.tkeyer.blackmanharriskernel", "legacy.vcl.dsp.routine.morsekey.tkeyer.blackmanharrisstepresponse", "legacy.vcl.dsp.routine.morsekey.tkeyer.makeramp"], "acceptanceStatus": "partial", "caseIds": ["audio.sst-farnsworth-envelope-timing"]},
+    {"id": "audio.sst-farnsworth-session-wiring", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Selecting SST carries the configured sending and character speeds through settings, session state, station message sequencing, and the production renderer so operator audio uses CE Farnsworth timing.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.single-seeded-random-stream", "capabilityId": "simulation.legacy-effects", "behavior": "One seeded session random stream reproduces CE ownership and cross-feature draw order.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.legacy-block-size-configurations", "capabilityId": "audio-dsp.legacy-processing", "behavior": "CE block sizes from 128 through 2048 are supported or proven import-equivalent with matching timing.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.startup-warmup-and-filter-timing", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Startup warmup requests, block numbering, prefill, and alternating-filter swap timing match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -742,6 +745,80 @@
     {"id": "lifecycle.unit-initialization-finalization-order", "capabilityId": "lifecycle.legacy-unit-hooks", "behavior": "Legacy initialization and finalization hooks execute with equivalent order, registration, cleanup, state, and failures.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []}
   ],
   "cases": [
+    {
+      "id": "audio.sst-farnsworth-envelope-timing",
+      "capabilityId": "audio-dsp.legacy-processing",
+      "obligationIds": [
+        "audio.sst-farnsworth-timing"
+      ],
+      "behavior": "For the CE compatibility profile, the pinned CE SST station path and the XPlat production keyer primitive at 15 WPM with 25 WPM character timing produce the same true and block-padded sample counts and raw Single envelope bytes for two fixed messages.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v4",
+        "source": "tests/parity/legacy-oracle/v4/LegacyOracle.lpr",
+        "sourceSha256": "fc901b43c1f1318a12cd6c243987357f51ee9c072f7350a1818bd56ed4973eb2",
+        "buildRecipe": "tests/parity/legacy-oracle/v4/build-recipe.json",
+        "buildRecipeSha256": "02eba397470e7622d0a4828a8c8b34234913a6213312783d82fd5be1fa2e8bbe"
+      },
+      "legacySources": [
+        "VCL/FarnsKeyer.pas",
+        "VCL/MorseKey.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.vcl.dsp.type.farnskeyer.tfarnskeyer",
+        "legacy.vcl.dsp.routine.farnskeyer.tfarnskeyer.create",
+        "legacy.vcl.dsp.routine.farnskeyer.tfarnskeyer.encode",
+        "legacy.vcl.dsp.routine.farnskeyer.tfarnskeyer.getenvelope",
+        "legacy.vcl.dsp.routine.farnskeyer.tfarnskeyer.loadmorsetable",
+        "legacy.vcl.dsp.routine.morsekey.tkeyer.create",
+        "legacy.vcl.dsp.routine.morsekey.tkeyer.setrisetime",
+        "legacy.vcl.dsp.routine.morsekey.tkeyer.setwpm",
+        "legacy.vcl.dsp.routine.morsekey.tkeyer.blackmanharriskernel",
+        "legacy.vcl.dsp.routine.morsekey.tkeyer.blackmanharrisstepresponse",
+        "legacy.vcl.dsp.routine.morsekey.tkeyer.makeramp"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The schema-v2 fixture was captured from the pinned clean CE reference.",
+        "The CE side executes the real SST station send path; the XPlat side invokes the shipped production keyer primitive directly.",
+        "Each side uses a fresh keyer for every fixed message at 11025 Hz, 512 samples per block, and output amplitude 300000."
+      ],
+      "input": {
+        "amplitude": 300000,
+        "blockSize": 512,
+        "characterWpm": 25,
+        "messages": [
+          "PARIS TEST",
+          "K1ABC 599 123"
+        ],
+        "sampleRate": 11025,
+        "scenario": "audio.sst-farnsworth-envelope-timing",
+        "sendingWpm": 15
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatSstFarnsworthTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 11,
+        "observedValuesSha256": "8180df1900097edf57debf06184621b05be8643d0abb8d1ac98eb0291d1aa92d",
+        "firstDivergence": "The zero-based first ordinal mismatch between fixture and observed string arrays, with null expected or actual only when one array ends first.",
+        "functionalDivergenceCode": "audio-sst-farnsworth-timing-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "audio-sst-farnsworth-timing-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/audio-sst-farnsworth-envelope-timing.json",
+      "evidence": "tests/parity/evidence/audio-sst-farnsworth-envelope-timing.baseline.json",
+      "firstGreenCommit": null
+    },
     {
       "id": "contest.exchange-shapes",
       "capabilityId": "contest.legacy-implementations",
