@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "c8fd38e6b5b4b9dd37926ce996cdefbc65cb3eca",
+      "tree": "b8ba13903a7431a4058700b523aa29767b11b2c4",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "contest.hst-remote-exchange-format-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "contest.hst-remote-exchange-format-seed-12345",
+      "acceptanceTestName": "parity:contest.hst-remote-exchange-format-seed-12345()",
+      "target": "xplat",
+      "adapter": "XPlatHstRemoteExchangeFormatTarget",
+      "caseDefinitionSha256": "d45d94d98e7b568f1d8d5f738ef28c4aae357128ed7cebb8552662176f54b6e7",
+      "fixtureSha256": "056e1e60d30b9867a7ad1536c3060884902c76669ef85977b44369b14b93e6dd",
+      "outcome": "functional-divergence",
+      "failureCode": "contest-hst-remote-exchange-format-mismatch",
+      "evidenceSource": "MorseRunner.Engine.SimulatedStation.ObserveExchangeForParity",
+      "observedValues": [
+        "configuration|scenario=contest.hst-remote-exchange-format-seed-12345|station=W7SST|seed=12345|contest=scHst|run-mode=rmHst",
+        "remote-exchange|call=K1ABC|rst=599|exchange1=599|exchange2=7|formatted=5NNTT7"
+      ],
+      "observedValueCount": 2,
+      "observedValuesSha256": "ff815bfade187f6bf8712c4fd4784e73eb5fa6d233dda12bb3f6451bb62ed650",
+      "firstDivergence": {
+        "index": 1,
+        "expected": "remote-exchange|call=K1ABC|rst=599|exchange1=599|exchange2=7|formatted=5NN007",
+        "actual": "remote-exchange|call=K1ABC|rst=599|exchange1=599|exchange2=7|formatted=5NNTT7"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}
