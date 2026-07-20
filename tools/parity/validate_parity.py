@@ -1108,6 +1108,7 @@ def validate_hashing_attributes(root: Path = ROOT) -> None:
     probes = {
         "tests/parity/evidence/runs/probe.json": "lf",
         "tests/parity/legacy-oracle/v1/Probe.lpr": "crlf",
+        "tests/parity/legacy-oracle/v16/LegacyOracle.lpr": "lf",
     }
     attribute_check = run_git(
         root,

@@ -252,6 +252,14 @@ and recipe under the exact `tests/parity/legacy-oracle/vN/` directory. The
 unversioned source retained for historical schema-v1 fixtures is never an
 active build or runtime candidate.
 
+Oracle source hashes cover the exact checked-out bytes, including line
+endings. Repository attributes normally materialize Pascal oracle sources with
+CRLF. A version-specific line-ending override is part of that immutable
+adapter's source contract when retained certification evidence hashed a
+different byte sequence. The v16 source is therefore materialized with LF so
+fresh checkouts reproduce its certified descriptor without rewriting retained
+content-addressed evidence. New oracle versions use CRLF.
+
 Descriptor paths are canonical repository-relative `/`-separated strings.
 Absolute paths, backslashes, empty segments, `.`, `..`, aliases, and a
 version-directory mismatch are rejected identically by every language layer.

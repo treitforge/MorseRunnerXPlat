@@ -2,3 +2,5 @@ src/MorseRunner.Infrastructure/Data/** -text
 tests/parity/*.json text eol=lf
 tests/parity/**/*.json text eol=lf
 tests/parity/legacy-oracle/**/*.lpr text eol=crlf
+# v16 was certified from LF source bytes. Preserve its immutable descriptor.
+tests/parity/legacy-oracle/v16/LegacyOracle.lpr text eol=lf

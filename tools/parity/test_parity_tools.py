@@ -212,7 +212,9 @@ class ManifestTrustTests(unittest.TestCase):
             root = Path(directory)
             (root / ".gitattributes").write_text(
                 "tests/parity/**/*.json text eol=lf\n"
-                "tests/parity/legacy-oracle/**/*.lpr text eol=crlf\n",
+                "tests/parity/legacy-oracle/**/*.lpr text eol=crlf\n"
+                "tests/parity/legacy-oracle/v16/LegacyOracle.lpr "
+                "text eol=lf\n",
                 encoding="utf-8",
             )
             repository = subprocess.CompletedProcess(
@@ -226,6 +228,8 @@ class ManifestTrustTests(unittest.TestCase):
                 stdout=(
                     "tests/parity/evidence/runs/probe.json: eol: lf\n"
                     "tests/parity/legacy-oracle/v1/Probe.lpr: eol: crlf\n"
+                    "tests/parity/legacy-oracle/v16/LegacyOracle.lpr: "
+                    "eol: lf\n"
                 ),
             )
             with patch.object(
@@ -241,6 +245,8 @@ class ManifestTrustTests(unittest.TestCase):
                 stdout=(
                     "tests/parity/evidence/runs/probe.json: eol: crlf\n"
                     "tests/parity/legacy-oracle/v1/Probe.lpr: eol: crlf\n"
+                    "tests/parity/legacy-oracle/v16/LegacyOracle.lpr: "
+                    "eol: lf\n"
                 ),
             )
             with patch.object(
