@@ -100,7 +100,7 @@ internal sealed class EngineSession : IAsyncDisposable
         new float[CompatibilityProfile.BlockSize];
     private readonly MorseToneRenderer _toneRenderer;
     private readonly LegacyReceiverPipeline _receiverPipeline;
-    private readonly LegacyRandom _effectRandom;
+    private readonly LegacyReceiverNoiseGenerator _receiverNoiseGenerator;
     private readonly float _monitorGain;
     private readonly bool _automaticTiming;
     private readonly TimeSpan _blockPeriod;
@@ -151,7 +151,7 @@ internal sealed class EngineSession : IAsyncDisposable
         _blockPeriod = options.BlockPeriod;
         _random = new(settings.Seed);
         _stationCatalog = StationReferenceCatalog.Load(settings.ContestId);
-        _effectRandom = new(settings.Seed);
+        _receiverNoiseGenerator = new(_random);
         _monitorGain = MathF.Pow(10F, (float)settings.MonitorLevelDb / 20F);
         _currentWordsPerMinute = settings.WordsPerMinute;
         _currentBandwidthHz = settings.BandwidthHz;
@@ -753,16 +753,10 @@ internal sealed class EngineSession : IAsyncDisposable
 
     private void PrepareReceiverInput()
     {
-        const double noiseAmplitude = 18_000d;
-        LegacyRandom noiseRandom =
-            _settings.Qrn ? _effectRandom : _random;
-        for (int index = 0; index < _receiverReal.Length; index++)
-        {
-            _receiverReal[index] = (float)(
-                noiseAmplitude * (noiseRandom.NextDouble() - 0.5d));
-            _receiverImaginary[index] = (float)(
-                noiseAmplitude * (noiseRandom.NextDouble() - 0.5d));
-        }
+        _ = _receiverNoiseGenerator.PrepareInput(
+            _receiverReal,
+            _receiverImaginary,
+            _settings.Qrn);
     }
 
     private void ApplyAudioEffects(bool operatorIsSending)
@@ -770,11 +764,6 @@ internal sealed class EngineSession : IAsyncDisposable
         for (int index = 0; index < _renderBuffer.Length; index++)
         {
             float sample = _renderBuffer[index];
-            if (_settings.Qrn)
-            {
-                sample += (_effectRandom.NextSingle() * 2F - 1F) * 0.035F;
-            }
-
             float localMonitor =
                 _operatorBuffer[index] * _monitorGain;
             _renderBuffer[index] = Math.Clamp(

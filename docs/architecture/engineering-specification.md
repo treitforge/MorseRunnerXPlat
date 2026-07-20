@@ -2644,14 +2644,25 @@ The XPlat adapter performs the paired capture through two fresh actual
 `MorseRunnerEngine` and `EngineSession` sessions and the production
 `IAudioSink` port. After validating each final public snapshot, it requests
 one guarded terminal value from the authoritative session random source. The
-authoring test is legacy-green/XPlat-red with first row divergence at
-`qrn-block[0]` and code
-`audio-qrn-background-sparse-impulses-mismatch`. Production currently draws
-QRN-enabled receiver hiss from an effect-specific stream and adds continuous
-post-receiver noise, rather than using CE's shared-stream sparse
-real-component replacements before receiver processing. No retained XPlat
-evidence is created by case authoring; evidence capture is a separate review
-and promotion step.
+retained pre-implementation baseline is legacy-green/XPlat-red with first row
+divergence at `qrn-block[0]` and code
+`audio-qrn-background-sparse-impulses-mismatch`. It records the former
+effect-specific QRN stream and continuous post-receiver noise path, including
+first final-output divergence at sample 0 and an untouched authoritative
+session checkpoint.
+
+Production now injects the authoritative session `LegacyRandom` into
+`LegacyReceiverNoiseGenerator`. For every complete block it generates all
+complex hiss first. With QRN enabled it then takes one binary64 trigger per
+sample, replaces only the selected real components with CE's binary64
+360000-scale expression followed by one binary32 cast, and takes the burst
+trigger after the background loop. The prepared complex block enters both
+receiver filters before modulation and AGC. The old effect-specific random
+source and normalized post-AGC continuous QRN addition have been removed.
+This path allocates no memory per block and preserves the clean ordinal 1024
+and QRN ordinal 1543 terminal checkpoints. A true burst trigger is consumed
+but is not yet converted into an internal QRN station; that behavior remains
+the next required QRN tranche.
 
 This case covers first-block background trigger probability, replacement
 semantics, source-order draw ownership, final receiver output, the no-burst
@@ -2737,13 +2748,16 @@ Current Phase 3 implementation inventory, not parity certification:
   ordered session events with revision and simulation-block metadata. Seeded
   tests verify caller sets, station event traces, true-exchange logging, NIL
   outcomes, and deterministic audio hashes.
-- QSK, QRN, and LID paths exist and use deterministic XPlat state. Setting
-  carriage for QSB, flutter, and QRM exists, but their incorrect session-global
-  receiver applications have been removed and the CE station construction and
-  application paths are not implemented yet. The audit found further
-  differences in audio ordering, signal models, remaining random-source
-  ownership, and cross-feature draw ordering, so these paths are not
-  CE-equivalent yet.
+- QRN sparse background impulses now use the CE shared-stream draw order,
+  real-component replacement semantics, and pre-filter receiver stage.
+  Triggered QRN burst-station construction and lifetime remain pending. QSK
+  and LID paths still use deterministic XPlat behavior rather than certified
+  CE behavior. Setting carriage for QSB, flutter, and QRM exists, but their
+  incorrect session-global receiver applications have been removed and the CE
+  station construction and application paths are not implemented yet. The
+  audit found further differences in audio ordering, signal models, remaining
+  random-source ownership, and cross-feature draw ordering, so these paths
+  are not CE-equivalent yet.
 - Immutable QSO records, score and multiplier behavior, radio controls,
   versioned settings, one-way INI import, atomic persistence, and
   platform-specific application paths are implemented.

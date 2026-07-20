@@ -6,7 +6,7 @@ public sealed class XPlatQrnBackgroundSparseImpulsesTargetTests
 {
     [Fact]
     [Trait("Category", "ParityInfrastructure")]
-    public async Task CurrentProductionFailsAtQrnBlockWithPinnedCode()
+    public async Task CurrentProductionMatchesPinnedQrnBackgroundVector()
     {
         ParityCertificationCase definition =
             ParityCertificationCase.LoadForInspection(
@@ -18,27 +18,15 @@ public sealed class XPlatQrnBackgroundSparseImpulsesTargetTests
                     definition.Scenario,
                     TestContext.Current.CancellationToken);
 
-        Assert.Equal(ParityTargetOutcome.Failed, observation.Outcome);
-        Assert.Equal(
-            XPlatQrnBackgroundSparseImpulsesTarget
-                .FunctionalDivergenceCode,
-            observation.FailureCode);
+        Assert.Equal(ParityTargetOutcome.Passed, observation.Outcome);
+        Assert.Null(observation.FailureCode);
         Assert.Equal(
             XPlatQrnBackgroundSparseImpulsesTarget.EvidenceSource,
             observation.EvidenceSource);
         Assert.Equal(
-            definition.Scenario.ExpectedValues.Take(3),
-            observation.Values.Take(3),
+            definition.Scenario.ExpectedValues,
+            observation.Values,
             StringComparer.Ordinal);
-        Assert.Equal(
-            3,
-            FindFirstDivergence(
-                definition.Scenario.ExpectedValues,
-                observation.Values));
-        Assert.StartsWith(
-            "qrn-block[0]|sample-count=512|",
-            observation.Values[3],
-            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -436,24 +424,6 @@ public sealed class XPlatQrnBackgroundSparseImpulsesTargetTests
                     ],
                     0,
                     0.25f)));
-    }
-
-    private static int FindFirstDivergence(
-        IReadOnlyList<string> expected,
-        IReadOnlyList<string> actual)
-    {
-        int commonCount = Math.Min(expected.Count, actual.Count);
-        for (int index = 0; index < commonCount; index++)
-        {
-            if (!StringComparer.Ordinal.Equals(
-                    expected[index],
-                    actual[index]))
-            {
-                return index;
-            }
-        }
-
-        return expected.Count == actual.Count ? -1 : commonCount;
     }
 
     private static QrnBackgroundSparseImpulsesInput ValidInput()

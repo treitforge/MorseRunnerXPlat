@@ -20,6 +20,7 @@ public sealed class XPlatQrnBackgroundSparseImpulsesTarget :
         + "+MorseRunner.Engine.IAudioSink.WriteAsync"
         + "+MorseRunner.Engine.MorseRunnerEngine"
         + ".TakeNextSessionRandomSingleForParityAsync"
+        + "+MorseRunner.Dsp.LegacyReceiverNoiseGenerator"
         + "+MorseRunner.Dsp.LegacyRandom";
 
     private const double BackgroundTriggerProbability = 0.01d;
