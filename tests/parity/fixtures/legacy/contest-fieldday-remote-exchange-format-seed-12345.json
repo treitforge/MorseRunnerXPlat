@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 2,
+  "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+  "parityId": "contest.fieldday-remote-exchange-format-seed-12345",
+  "referenceDefinitionSha256": "663adf3bf230161abb923cf8b6651d394af1b99eab05efeafb696cb29992da23",
+  "oracle": "tests/parity/legacy-oracle/v26/LegacyOracle.lpr",
+  "legacyOracleVersionId": "legacy-oracle-v26",
+  "oracleSourceSha256": "9af633edd494a9b29b5ec5d4c38c020851b8997756d96cbae41463585395cbb9",
+  "oracleBuildRecipeSha256": "5bc5120c1ebc8034d58cad0e770a3d7b35cd0ecaf9a4fea913079d91008e3bbc",
+  "oracleExecutableSha256": "bc002694fdf9b761ca91fe44fd2d5a39e622673da5a23ae2b3c129fb3d77defa",
+  "toolchain": {
+    "lazarus": "4.6",
+    "fpc": "3.2.2",
+    "target": "x86_64-win64",
+    "compilerSha256": "8ba500bbb84bd7100c169f151082b1461e9241e4491e0f6f38f2376bec49c319",
+    "backendCompilerSha256": "1f33c43b890e2d02e6b07c88401fc47cfcac48e003a29bb58b2e1220ac6a3e22",
+    "lazbuildSha256": "9554983fff43cfe5b5cef9a8374a37ff8a152e2de9c40c5750e723501f6edfd1",
+    "fingerprintSha256": "3eb50f2aac396bac975d8f628ad44421318d05179c81a98524802bcf04c8afee"
+  },
+  "values": [
+    "configuration|scenario=contest.fieldday-remote-exchange-format-seed-12345|station=W7SST|seed=12345|contest=scFieldDay|run-mode=rmPileup",
+    "remote-exchange|call=K1ABC|rst=599|exchange1=3A|exchange2=OR|formatted=3A OR"
+  ]
+}
