@@ -117,6 +117,7 @@ message SessionSettingsMessage {
   optional int32 custom_serial_number_exclusive_maximum = 21;
   string hst_operator_name = 22;
   string audio_output_device_name = 23;
+  optional int32 station_id_rate = 24;
 }
 
 enum SerialNumberRangeModeMessage {

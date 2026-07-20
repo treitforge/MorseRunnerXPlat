@@ -127,12 +127,15 @@ internal sealed class EngineSession : IAsyncDisposable
     private string? _lastOperatorMessage;
     private string? _esmSentCall;
     private bool _esmExchangeSent;
+    private bool _operatorMessageHasCq;
+    private bool _operatorMessageHasThankYou;
     private int _currentWordsPerMinute;
     private int _currentBandwidthHz;
     private int _ritOffsetHz;
     private bool _qsbEnabled;
     private float _ritPhase;
     private int _qsoCount;
+    private int _qsoCountSinceStationId;
     private int _score;
     private int _nextStationSerial = 1;
     private bool _hasCreatedStation;
@@ -1282,6 +1285,8 @@ internal sealed class EngineSession : IAsyncDisposable
 
             bool operatorIsSending = _toneRenderer.HasPendingAudio;
             _toneRenderer.Render(_operatorBuffer);
+            bool operatorFinished = operatorIsSending
+                && !_toneRenderer.HasPendingAudio;
             PrepareReceiverInput();
             for (int sourceIndex = 0;
                  sourceIndex < _receiverSources.Count;
@@ -1330,6 +1335,10 @@ internal sealed class EngineSession : IAsyncDisposable
                 _renderBuffer,
                 _simulationBlock,
                 _lifetime.Token);
+            if (operatorFinished)
+            {
+                CompleteOperatorTransmission();
+            }
             TickReceiverSources();
             _simulationBlock++;
             _renderedSamples += CompatibilityProfile.BlockSize;
@@ -1578,7 +1587,7 @@ internal sealed class EngineSession : IAsyncDisposable
                 command.Rst,
                 command.Exchange1,
                 command.Exchange2),
-            OperatorIntent.ThankYou => "TU",
+            OperatorIntent.ThankYou => ComposeThankYouMessage(),
             OperatorIntent.MyCall => _settings.StationCall,
             OperatorIntent.HisCall => command.Call,
             OperatorIntent.Before => "QSO B4",
@@ -1589,8 +1598,7 @@ internal sealed class EngineSession : IAsyncDisposable
             _ => throw new InvalidOperationException(
                 $"Unknown operator intent '{command.Intent}'."),
         };
-        _toneRenderer.LoadMessage(message);
-        _lastOperatorMessage = message;
+        LoadOperatorMessage(message, [command.Intent]);
         ApplyIntentToStations(command);
         if (command.Intent == OperatorIntent.HisCall)
         {
@@ -1696,7 +1704,8 @@ internal sealed class EngineSession : IAsyncDisposable
                             entry.Call.Contains('?')));
             }
 
-            messages.Add((OperatorIntent.ThankYou, "TU"));
+            messages.Add(
+                (OperatorIntent.ThankYou, ComposeThankYouMessage()));
             SendEsmMessages(command, messages);
             CommandResult logged = ApplyLogQsoCore(logCommand, evaluation);
             return logged with
@@ -1746,8 +1755,9 @@ internal sealed class EngineSession : IAsyncDisposable
         string combined = String.Join(
             ' ',
             messages.Select(item => item.Message));
-        _toneRenderer.LoadMessage(combined);
-        _lastOperatorMessage = combined;
+        LoadOperatorMessage(
+            combined,
+            messages.Select(item => item.Intent));
         foreach ((OperatorIntent intent, _) in messages)
         {
             var intentCommand = new SendOperatorIntentCommand(
@@ -1852,9 +1862,61 @@ internal sealed class EngineSession : IAsyncDisposable
 
     private string ComposeCqMessage()
     {
-        return _settings.ContestId.Value == "scWpx"
-            ? $"CQ {_settings.StationCall} TEST"
-            : "CQ TEST";
+        return _settings.ContestId.Value switch
+        {
+            "scCwt" => $"CQ CWT {_settings.StationCall}",
+            "scFieldDay" => $"CQ FD {_settings.StationCall}",
+            "scSst" => $"CQ SST {_settings.StationCall}",
+            "scArrlSS" => $"CQ SS {_settings.StationCall}",
+            _ => $"CQ {_settings.StationCall} TEST",
+        };
+    }
+
+    private string ComposeThankYouMessage()
+    {
+        if (_settings.ContestId.Value == "scSst")
+        {
+            return $"TU {_settings.StationCall}";
+        }
+
+        bool stationIdEligible = _settings.RunModeId.Value
+            is "rmPileup" or "rmWpx";
+        return stationIdEligible
+            && _settings.StationIdRate > 0
+            && _qsoCountSinceStationId >= _settings.StationIdRate - 1
+                ? $"TU {_settings.StationCall}"
+                : "TU";
+    }
+
+    private void LoadOperatorMessage(
+        string message,
+        IEnumerable<OperatorIntent> intents)
+    {
+        _operatorMessageHasCq = false;
+        _operatorMessageHasThankYou = false;
+        foreach (OperatorIntent intent in intents)
+        {
+            _operatorMessageHasCq |= intent == OperatorIntent.Cq;
+            _operatorMessageHasThankYou |=
+                intent == OperatorIntent.ThankYou;
+        }
+
+        _toneRenderer.LoadMessage(message);
+        _lastOperatorMessage = message;
+    }
+
+    private void CompleteOperatorTransmission()
+    {
+        if (_operatorMessageHasCq
+            || (_operatorMessageHasThankYou
+                && _qsoCountSinceStationId
+                    >= _settings.StationIdRate))
+        {
+            _qsoCountSinceStationId = 0;
+        }
+
+        _operatorMessageHasCq = false;
+        _operatorMessageHasThankYou = false;
     }
 
     private void AddCallersAtCurrentBlock()
@@ -2210,6 +2272,7 @@ internal sealed class EngineSession : IAsyncDisposable
         }
 
         _qsoCount++;
+        _qsoCountSinceStationId++;
         _lastLoggedCall = evaluation.Call;
         _lastCaller = _lastLoggedCall;
         StationIdentity? truth = completedStation?.Identity;

@@ -12,6 +12,20 @@ public sealed class SessionLoopTests
     private static readonly ClientId TestClient = new("engine-tests");
 
     [Fact]
+    public async Task NegativeStationIdRateIsRejected()
+    {
+        await using var engine = new MorseRunnerEngine();
+
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => engine.CreateSessionAsync(
+                SessionSettings.CreateDefault(seed: 12_345) with
+                {
+                    StationIdRate = -1,
+                },
+                TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task SeededSessionAdvancesOnlyOnTheSessionWorker()
     {
         Dictionary<SessionId, NullAudioSink> sinks = [];

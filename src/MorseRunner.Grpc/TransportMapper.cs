@@ -65,6 +65,7 @@ public static class TransportMapper
             PitchHz = value.PitchHz,
             BandwidthHz = value.BandwidthHz,
             Activity = value.Activity,
+            StationIdRate = value.StationIdRate,
             Qsk = value.Qsk,
             Qsb = value.Qsb,
             Qrm = value.Qrm,
@@ -95,6 +96,9 @@ public static class TransportMapper
             PitchHz = value.PitchHz,
             BandwidthHz = value.BandwidthHz,
             Activity = value.HasActivity ? value.Activity : 5,
+            StationIdRate = value.HasStationIdRate
+                ? value.StationIdRate
+                : 3,
             Qsk = value.Qsk,
             Qsb = value.Qsb,
             Qrm = value.Qrm,

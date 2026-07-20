@@ -17,6 +17,7 @@ public sealed class GrpcTransportTests
         {
             ReceiveSpeedBelowWpm = 6,
             ReceiveSpeedAboveWpm = 2,
+            StationIdRate = 5,
             SerialNumberRange = SerialNumberRangeMode.Custom,
             CustomSerialNumberMinimum = 70,
             CustomSerialNumberExclusiveMaximum = 80,
@@ -28,6 +29,18 @@ public sealed class GrpcTransportTests
             TransportMapper.ToTransport(expected));
 
         Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void OmittedStationIdRateUsesCeDefault()
+    {
+        SessionSettingsMessage transport = TransportMapper.ToTransport(
+            SessionSettings.CreateDefault(42));
+        transport.ClearStationIdRate();
+
+        SessionSettings actual = TransportMapper.ToDomain(transport);
+
+        Assert.Equal(3, actual.StationIdRate);
     }
 
     [Fact]

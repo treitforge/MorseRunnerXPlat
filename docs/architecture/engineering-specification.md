@@ -982,7 +982,7 @@ At minimum, `SessionSettings` includes:
 - Serial-number range mode and validated custom range.
 - HST operator identity.
 - Pitch and filter bandwidth.
-- Activity and station behavior settings.
+- Activity, station behavior settings, and the nonnegative station-ID rate.
 - QRN, QRM, QSB, flutter, LID, QSK, and other condition toggles.
 - Audio sink selection.
 - Recording settings.
@@ -1697,7 +1697,9 @@ a concrete client use case.
   an additive command-result message so in-process and gRPC clients receive
   identical outcome and focus guidance.
 - Represent receive-speed bounds, serial-number ranges, HST operator identity,
-  and preferred audio-device name as additive session-setting fields.
+  preferred audio-device name, and station-ID rate as additive
+  session-setting fields. An omitted station-ID rate uses the CE default of
+  three QSOs.
 - Represent an eligible runtime radio-condition change as the semantic
   `SetRadioCondition` command with an explicit condition and enabled value.
   The initial condition enum contains QSB. The current QSB value is an
@@ -2608,8 +2610,30 @@ loading a local message. The first operator transmission remains an explicit
 operator command. For CQ WPX, both `OperatorIntent.Cq` and an empty
 `TriggerEnterSendMessageCommand` compose `CQ {stationCall} TEST`, return that
 exact semantic message, and load the same text into the production tone
-renderer. CQ text for the remaining contests stays within the separate
-`engine.contest-specific-cq-tu-and-station-id` obligation.
+renderer.
+
+The authored `engine.contest-specific-cq-tu-station-id-seed-12345` case fixes
+the remaining contest operator-message boundary. Its pinned CE v21 adapter
+creates one handleless runtime for each of the 12 contests at station `W7SST`,
+seed 12345, station-ID rate three, 25 WPM, 11025 Hz audio, and 512-sample
+blocks. It records the initial CQ, TU before the threshold, TU at the
+threshold, and TU after the qualifying transmission completes and resets the
+counter. CWT uses `CQ CWT {stationCall}`, Field Day uses
+`CQ FD {stationCall}`, SST uses `CQ SST {stationCall}`, Sweepstakes uses
+`CQ SS {stationCall}`, and every other contest uses
+`CQ {stationCall} TEST`. SST always sends `TU {stationCall}`. Other contests
+insert the callsign only in pileup or WPX run mode when the completed-QSO
+counter has reached `stationIdRate - 1`; HST mode therefore sends plain `TU`.
+Logging increments the counter after TU composition. Completion of a CQ, or
+completion of a TU after the configured count has been reached, resets it.
+
+The retained pre-implementation evidence records
+`engine-contest-specific-cq-tu-station-id-mismatch`. Production owns the
+counter on the session loop, detects operator-envelope completion at the audio
+block boundary, and applies the same composition and reset rules. The
+immutable nonnegative `SessionSettings.StationIdRate` defaults to three and is
+mapped additively as optional Protobuf field 24, with omission preserving that
+CE default.
 
 The authored
 `audio.flutter-no-station-noise-invariance-seed-12345` case narrows the first

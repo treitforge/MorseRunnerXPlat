@@ -280,6 +280,13 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
                 "Activity must be between 1 and 9.");
         }
 
+        if (settings.StationIdRate < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(settings),
+                "Station ID rate cannot be negative.");
+        }
+
         if (settings.MonitorLevelDb is < -60d or > 0d)
         {
             throw new ArgumentOutOfRangeException(

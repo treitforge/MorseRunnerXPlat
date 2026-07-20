@@ -39,6 +39,32 @@ public sealed class EnterSendMessageTests
             session.Snapshot.LastOperatorMessage);
     }
 
+    [Theory]
+    [InlineData("scWpx", "CQ W7SST TEST")]
+    [InlineData("scCwt", "CQ CWT W7SST")]
+    [InlineData("scFieldDay", "CQ FD W7SST")]
+    [InlineData("scNaQp", "CQ W7SST TEST")]
+    [InlineData("scHst", "CQ W7SST TEST")]
+    [InlineData("scCQWW", "CQ W7SST TEST")]
+    [InlineData("scArrlDx", "CQ W7SST TEST")]
+    [InlineData("scSst", "CQ SST W7SST")]
+    [InlineData("scAllJa", "CQ W7SST TEST")]
+    [InlineData("scAcag", "CQ W7SST TEST")]
+    [InlineData("scIaruHf", "CQ W7SST TEST")]
+    [InlineData("scArrlSS", "CQ SS W7SST")]
+    public async Task ExplicitCqUsesCeContestText(
+        string contestId,
+        string expected)
+    {
+        await using var session = await StartedSession.CreateAsync(
+            new(contestId));
+
+        CommandResult result = await session.SendAsync(OperatorIntent.Cq);
+
+        Assert.True(result.Accepted);
+        Assert.Equal(expected, session.Snapshot.LastOperatorMessage);
+    }
+
     [Fact]
     public async Task ShortCqWpxCallSendsOnlyCallAndFocusesSerialExchange()
     {
@@ -276,6 +302,30 @@ public sealed class EnterSendMessageTests
         Assert.Equal(0, session.Snapshot.QsoCount);
     }
 
+    [Fact]
+    public async Task StationIdRateAddsCallAtThresholdAndResetsAfterTuFinishes()
+    {
+        await using var session = await StartedSession.CreateAsync(
+            new("scWpx"),
+            new("rmPileup"),
+            stationIdRate: 3);
+
+        _ = await session.SendAsync(OperatorIntent.ThankYou);
+        Assert.Equal("TU", session.Snapshot.LastOperatorMessage);
+        _ = await session.SendAsync(OperatorIntent.Abort);
+
+        _ = await session.LogAsync("K1ABC", "5NN", "123", "");
+        _ = await session.LogAsync("K1ABC", "5NN", "123", "");
+        _ = await session.SendAsync(OperatorIntent.ThankYou);
+        Assert.Equal("TU W7SST", session.Snapshot.LastOperatorMessage);
+
+        _ = await session.LogAsync("K1ABC", "5NN", "123", "");
+        _ = await session.AdvanceAsync(128);
+        _ = await session.SendAsync(OperatorIntent.ThankYou);
+
+        Assert.Equal("TU", session.Snapshot.LastOperatorMessage);
+    }
+
     [Theory]
     [InlineData("scWpx", "K1ABC", "5NN", "123", "")]
     [InlineData("scCwt", "K1ABC", "5NN", "DAVID", "123")]
@@ -316,7 +366,9 @@ public sealed class EnterSendMessageTests
         Assert.Equal(
             EnterSendMessageOutcome.CompleteAndLogQso,
             completed.EnterSendMessage?.Outcome);
-        Assert.Equal(["TU"], completed.EnterSendMessage?.SentMessages);
+        Assert.Equal(
+            contestId == "scSst" ? ["TU W7SST"] : ["TU"],
+            completed.EnterSendMessage?.SentMessages);
         Assert.Equal(1, session.Snapshot.QsoCount);
     }
 
@@ -335,13 +387,24 @@ public sealed class EnterSendMessageTests
         public SessionSnapshot Snapshot => Engine.GetSnapshot(SessionId);
 
         public static async Task<StartedSession> CreateAsync(
-            ContestId? contestId = null)
+            ContestId? contestId = null,
+            RunModeId? runModeId = null,
+            int stationIdRate = 3)
         {
             var engine = new MorseRunnerEngine();
-            SessionSettings settings = SessionSettings.CreateDefault(12_345);
+            SessionSettings settings = SessionSettings.CreateDefault(12_345)
+                with
+            {
+                StationIdRate = stationIdRate,
+            };
             if (contestId is ContestId selectedContest)
             {
                 settings = settings with { ContestId = selectedContest };
+            }
+
+            if (runModeId is RunModeId selectedRunMode)
+            {
+                settings = settings with { RunModeId = selectedRunMode };
             }
 
             SessionHandle handle = await engine.CreateSessionAsync(
@@ -380,6 +443,31 @@ public sealed class EnterSendMessageTests
                     "5NN",
                     "",
                     ""),
+                TestContext.Current.CancellationToken);
+
+        public Task<CommandResult> LogAsync(
+            string call,
+            string rst,
+            string exchange1,
+            string exchange2) =>
+            Engine.ExecuteAsync(
+                new LogQsoCommand(
+                    RequestId.New(),
+                    SessionId,
+                    TestClient,
+                    call,
+                    rst,
+                    exchange1,
+                    exchange2),
+                TestContext.Current.CancellationToken);
+
+        public Task<CommandResult> AdvanceAsync(int blockCount) =>
+            Engine.ExecuteAsync(
+                new AdvanceSimulationCommand(
+                    RequestId.New(),
+                    SessionId,
+                    TestClient,
+                    blockCount),
                 TestContext.Current.CancellationToken);
 
         public ValueTask DisposeAsync() => Engine.DisposeAsync();

@@ -109,6 +109,7 @@ public sealed class XPlatContestOperatorMessagesTarget : IParityTarget
             PitchHz = 600,
             BandwidthHz = 500,
             Activity = 1,
+            StationIdRate = input.StationIdRate,
             Qsk = false,
             Qsb = false,
             Qrm = false,
