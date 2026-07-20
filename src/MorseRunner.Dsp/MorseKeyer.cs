@@ -65,15 +65,11 @@ public sealed class MorseKeyer
         BlockSize = blockSize;
         RiseTimeSeconds = riseTimeSeconds;
 
-        int rampLength = (int)MathF.Round(
-            2.7f * RiseTimeSeconds * SampleRate,
+        int rampLength = (int)Math.Round(
+            2.7d * (double)RiseTimeSeconds * SampleRate,
             MidpointRounding.ToEven);
-        _rampOn = CreateBlackmanHarrisStepResponse(rampLength);
-        _rampOff = new float[rampLength];
-        for (int index = 0; index < rampLength; index++)
-        {
-            _rampOff[_rampOff.Length - 1 - index] = _rampOn[index];
-        }
+        _rampOn = LegacyMorseRamp.CreateOn(rampLength);
+        _rampOff = LegacyMorseRamp.CreateOff(_rampOn);
     }
 
     public int SampleRate { get; }
@@ -128,6 +124,11 @@ public sealed class MorseKeyer
 
         return result.ToString();
     }
+
+    internal static bool TryGetPattern(
+        char character,
+        out string? pattern) =>
+        MorsePatterns.TryGetValue(character, out pattern);
 
     public string EncodeText(string text)
     {
@@ -515,34 +516,6 @@ public sealed class MorseKeyer
             _pendingAdditionalWordSpaces = spaceCount - 2;
             return true;
         }
-    }
-
-    private static float[] CreateBlackmanHarrisStepResponse(int length)
-    {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(length);
-        var response = new float[length];
-        for (int index = 0; index < response.Length; index++)
-        {
-            double position = (float)index / length;
-            response[index] = (float)(
-                0.35875d
-                - (0.48829d * Math.Cos(2d * Math.PI * position))
-                + (0.14128d * Math.Cos(4d * Math.PI * position))
-                - (0.01168d * Math.Cos(6d * Math.PI * position)));
-        }
-
-        for (int index = 1; index < response.Length; index++)
-        {
-            response[index] = response[index - 1] + response[index];
-        }
-
-        float scale = 1f / response[^1];
-        for (int index = 0; index < response.Length; index++)
-        {
-            response[index] *= scale;
-        }
-
-        return response;
     }
 
     private void AddMark(

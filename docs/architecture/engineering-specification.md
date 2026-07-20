@@ -1441,9 +1441,13 @@ coverage and implementation.
 CE QRM is produced only by probabilistically created interfering CW stations.
 Enabling QRM when the block's trigger does not create a station must not add
 an aggregate tone or otherwise change that block's receiver output. XPlat
-enforces this no-trigger invariant, but QRM trigger ownership, station
-construction, messages, levels, pitch, speed, retries, and lifetime remain
-pending retained acceptance coverage and implementation.
+enforces this no-trigger invariant and implements the CE trigger order,
+pooled station construction, message families, levels, pitch, speed, retry
+state, and bounded lifetime. The retained seed-1843 case certifies the first
+positive construction and same-block waveform. Retry distributions, complete
+lifetime, overlapping stations, normal-caller interaction, RIT, QSK, and
+runtime toggling still require their dedicated live acceptance cases before
+the broader QRM obligation can be promoted.
 
 ### 14.3 Renderer ownership
 
@@ -2654,23 +2658,77 @@ caller. The internal parity-only
 session ID at the engine wrapper plus exact revision and simulation block. It
 rejects automatic timing and stale boundaries, runs on the session worker,
 does not advance simulation or consume random values, and is absent from
-`IMorseRunnerClient`, snapshots, gRPC, and UX contracts. Before QRM production
-exists it returns an explicit empty observation.
+`IMorseRunnerClient`, snapshots, gRPC, and UX contracts. It returns the first
+active QRM station in chronological receiver-source order, or an explicit
+empty observation when no QRM station exists.
 
-The authored fixture is intentionally XPlat-red at row three, `station`, with
-code `audio-qrm-first-triggered-station-mismatch`. The constructor replay and
-clean receiver row match CE, but the empty internal observation reports no
-station. The QRM-enabled block consequently remains equal to clean and the
-authoritative random stream does not consume constructor ordinals 1025 through
-1032. The unchanged target is the red-to-green acceptance boundary for the
-future implementation.
+Production evaluates the QRM trigger after complex hiss and all enabled QRN
+work. A successful trigger eagerly consumes the CE constructor sequence,
+appends a pooled QRM source to the shared chronological receiver-source list,
+and mixes the new source in that same block. `StationReferenceCatalog` owns
+the mutable contest call catalog used by both normal and QRM callers. It
+preserves WPX/HST empty-list fallback and HST deletion, ARRL DX side
+partitioning and invalid-DXCC retry deletion, and NAQP deferred validation and
+retry deletion.
+
+QRM messages use fixed string segments rather than render-time concatenation.
+`LegacyMorseEnvelopeCursor` treats those segments as one logical message,
+applies the standard keyer for every contest except SST, streams the exact CE
+ramp and spacing samples, and includes zero padding through the complete final
+512-sample block. One immutable keying profile owns the shared ramp pair.
+Pooled stations retain only cursor and oscillator state, and the session
+reuses one 512-sample envelope scratch block. Activation, block rendering,
+timeout processing, retry preparation, and release allocate no memory on the
+session render path.
+
+`LegacyStationMixer` resets binary32 BFO phase for every transmission,
+advances it with the CE positive-only wrap, preserves the binary32
+`BFO - RitPhase` intermediate, evaluates the per-sample RIT term and separate
+cosine and sine contributions in binary64, and casts each receiver
+accumulation once to binary32. All QRM sources use the same block-start RIT
+phase. The session advances and wraps RIT once after chronological source
+mixing and before local-monitor and receiver processing. Applying that shared
+RIT phase to normal caller and QRN sources remains a broader receiver-mixing
+parity item.
+
+The QRM pool is sized before rendering from the active catalog and actual
+operator callsign. If `BLong` is the maximum 30-WPM padded long-CQ block count
+and `BInitial` is the maximum padded initial-message block count, the exact
+structural bound is:
+
+`BInitial + 4 * (129 + BLong)`
+
+There can be at most one new QRM source per block. The bound covers five
+transmissions, four maximum 129-block retry timeouts, the active contest's
+longest catalog call, the operator-call QSY message, and the `P29SX`
+MASTER.DTA empty-list fallback. Caller additions reserve their own slot plus
+all QRN and QRM slots, so an active trigger never grows the chronological
+source list.
+
+After audio reaches the sink, all remote receiver sources tick in reverse
+chronological order. Normal caller rendering is separated from its timeout and
+state-transition tick so shared random draws remain ordered with QRM retry
+draws. A completed QRM transmission clears its message text,
+decrements patience, and either releases immediately or draws the CE limited
+Gaussian retry timeout. Each silent block decrements that timeout. Reaching
+zero prepares the contest long CQ at the tick boundary, and its first sample
+is rendered in the following block. QRM sources remain excluded from public
+caller snapshots, counts, operator-input matching, scoring, and events.
+
+The retained immutable evidence remains XPlat-red at row three, `station`,
+with code `audio-qrm-first-triggered-station-mismatch`, recording the required
+preimplementation failure. The unchanged production target now passes all ten
+fixture rows exactly. It observes one internal station, consumes constructor
+ordinals 1025 through 1032, reproduces the QRM receiver hash and sample-310
+divergence, and reaches terminal bits `3f519e01`.
 
 This case certifies one successful first-block trigger, eager constructor draw
 order, one catalog selection, one level, pitch, speed, message, envelope
 length, same-block audibility, and terminal checkpoint. It does not certify
 trigger-rate statistics, other messages or distributions, retry and timeout
 behavior, complete lifetime, overlapping QRM stations, normal-station
-interaction, RIT, or runtime toggling. The
+interaction (including active-QRM callsign collision suppression), RIT, or
+runtime toggling. The
 `audio.qrm-interfering-cw-stations` obligation remains partial.
 
 The authored
@@ -2926,12 +2984,15 @@ Current Phase 3 implementation inventory, not parity certification:
   post-render lifetime boundary. Other burst durations, overlapping bursts,
   caller and QRM interaction, runtime QRN toggling, and RIT rotation remain
   uncertified. QSK and LID paths still use deterministic XPlat behavior rather
-  than certified CE behavior. Setting carriage for QSB, flutter, and QRM
-  exists, but their incorrect session-global receiver applications have been
-  removed and the CE station construction and application paths are not
-  implemented yet. The audit found further differences in audio ordering,
-  signal models, remaining random-source ownership, and cross-feature draw
-  ordering, so these paths are not CE-equivalent yet.
+  than certified CE behavior. QSB and flutter setting carriage exists, but
+  their CE per-station construction and application paths are not implemented
+  yet. Positive QRM now uses pooled CE-style station construction and
+  same-block receiver mixing for the first-trigger boundary described above,
+  while retry/lifetime, overlap, normal-caller interaction, RIT, QSK, and
+  runtime toggling remain partial or uncertified. The audit found further
+  differences in audio ordering, signal models, remaining random-source
+  ownership, and cross-feature draw ordering, so these broader paths are not
+  CE-equivalent yet.
 - Immutable QSO records, score and multiplier behavior, radio controls,
   versioned settings, one-way INI import, atomic persistence, and
   platform-specific application paths are implemented.

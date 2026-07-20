@@ -75,17 +75,19 @@ internal sealed class EngineSession : IAsyncDisposable
     private const int CommandCapacity = 256;
     private const int SubscriberCapacity = 64;
     private const int EventHistoryCapacity = 256;
+    private const double QrmTriggerProbability = 0.0002d;
     private readonly Guid _engineEpoch;
     private readonly SessionId _sessionId;
     private readonly SessionSettings _settings;
     private readonly IAudioSink _audioSink;
     private readonly LegacyRandom _random;
+    private readonly LegacyRandomEffects _randomEffects;
     private readonly StationReferenceCatalog _stationCatalog;
     private readonly List<SimulatedStation> _stations = [];
-    private readonly List<ReceiverSource> _receiverSources =
-        new(QrnBurstStation.MaximumConcurrentStations);
+    private readonly List<ReceiverSource> _receiverSources;
     private readonly QrnBurstStation[] _qrnBurstPool =
         new QrnBurstStation[QrnBurstStation.MaximumConcurrentStations];
+    private readonly QrmStation[] _qrmStationPool;
     private readonly Channel<WorkItem> _commands;
     private readonly Dictionary<RequestId, RequestRecord> _requests = [];
     private readonly List<Subscriber> _subscribers = [];
@@ -101,6 +103,8 @@ internal sealed class EngineSession : IAsyncDisposable
     private readonly float[] _receiverReal =
         new float[CompatibilityProfile.BlockSize];
     private readonly float[] _receiverImaginary =
+        new float[CompatibilityProfile.BlockSize];
+    private readonly float[] _qrmEnvelopeBuffer =
         new float[CompatibilityProfile.BlockSize];
     private readonly MorseToneRenderer _toneRenderer;
     private readonly LegacyReceiverPipeline _receiverPipeline;
@@ -126,6 +130,7 @@ internal sealed class EngineSession : IAsyncDisposable
     private int _currentWordsPerMinute;
     private int _currentBandwidthHz;
     private int _ritOffsetHz;
+    private float _ritPhase;
     private int _qsoCount;
     private int _score;
     private int _nextStationSerial = 1;
@@ -154,7 +159,44 @@ internal sealed class EngineSession : IAsyncDisposable
         _automaticTiming = options.AutomaticTiming;
         _blockPeriod = options.BlockPeriod;
         _random = new(settings.Seed);
-        _stationCatalog = StationReferenceCatalog.Load(settings.ContestId);
+        _randomEffects = new(_random);
+        _stationCatalog = settings.Qrm
+            ? StationReferenceCatalog.Load(
+                settings.ContestId,
+                settings.StationCall)
+            : StationReferenceCatalog.Load(settings.ContestId);
+        if (settings.Qrm)
+        {
+            var qrmKeyingProfile = new LegacyMorseKeyingProfile(
+                CompatibilityProfile.SampleRate,
+                CompatibilityProfile.BlockSize,
+                settings.ContestId.Value == "scSst"
+                    ? LegacyMorseKeyingMode.SstFarnsworth
+                    : LegacyMorseKeyingMode.Standard);
+            int qrmCapacity =
+                QrmStation.CalculateMaximumConcurrentStations(
+                    qrmKeyingProfile,
+                    _stationCatalog,
+                    settings.ContestId,
+                    settings.StationCall);
+            _qrmStationPool = new QrmStation[qrmCapacity];
+            for (int index = 0;
+                 index < _qrmStationPool.Length;
+                 index++)
+            {
+                _qrmStationPool[index] =
+                    new QrmStation(qrmKeyingProfile);
+            }
+        }
+        else
+        {
+            _qrmStationPool = [];
+        }
+
+        _receiverSources = new(
+            checked(
+                QrnBurstStation.MaximumConcurrentStations
+                + _qrmStationPool.Length));
         _receiverNoiseGenerator = new(_random);
         for (int index = 0; index < _qrnBurstPool.Length; index++)
         {
@@ -759,8 +801,38 @@ internal sealed class EngineSession : IAsyncDisposable
             return;
         }
 
+        int activeCount = 0;
+        QrmStation? observedStation = null;
+        for (int index = 0; index < _receiverSources.Count; index++)
+        {
+            QrmStation? station =
+                _receiverSources[index].QrmStation;
+            if (station is null || !station.IsActive)
+            {
+                continue;
+            }
+
+            activeCount++;
+            observedStation ??= station;
+        }
+
         observation.Completion.TrySetResult(
-            QrmStationParityObservation.Empty);
+            activeCount == 0
+                ? QrmStationParityObservation.Empty
+                : new(
+                    activeCount,
+                    observedStation!.IsSending,
+                    observedStation.MyCall,
+                    observedStation.HisCall,
+                    observedStation.R1,
+                    observedStation.Amplitude,
+                    observedStation.PitchOffsetHz,
+                    observedStation.SendingWordsPerMinute,
+                    observedStation.CharacterWordsPerMinute,
+                    observedStation.MessageSet,
+                    observedStation.MessageText,
+                    observedStation.EnvelopeSampleCount,
+                    observedStation.SendPosition));
     }
 
     private CommandResult ApplyStart()
@@ -881,31 +953,30 @@ internal sealed class EngineSession : IAsyncDisposable
                     continue;
                 }
 
+                if (source.QrmStation is QrmStation qrmStation)
+                {
+                    qrmStation.MixNextBlock(
+                        _qrmEnvelopeBuffer,
+                        _receiverReal,
+                        _receiverImaginary,
+                        _ritOffsetHz,
+                        _ritPhase);
+                    continue;
+                }
+
                 SimulatedStation station = source.Caller
                     ?? throw new InvalidOperationException(
                         "The receiver source has no station.");
-                StationState priorStationState = station.State;
-                station.AdvanceBlock(
+                station.RenderBlock(
                     _receiverReal,
                     _receiverImaginary,
                     mixOutput: _settings.Qsk || !operatorIsSending);
-                if (priorStationState != StationState.Sending
-                    && station.State == StationState.Sending)
-                {
-                    PublishEvent(
-                        SessionEventKind.StationReplyStarted,
-                        station.Identity.Callsign
-                        + "|"
-                        + station.LastReplyText);
-                }
-                else if (priorStationState == StationState.Sending
-                    && station.State == StationState.Listening)
-                {
-                    PublishEvent(
-                        SessionEventKind.StationReplyCompleted,
-                        station.Identity.Callsign);
-                }
             }
+            _ritPhase = LegacyStationMixer.AdvanceRitPhase(
+                _ritPhase,
+                CompatibilityProfile.BlockSize,
+                _ritOffsetHz,
+                CompatibilityProfile.SampleRate);
             _receiverPipeline.Process(
                 _receiverReal,
                 _receiverImaginary,
@@ -915,7 +986,7 @@ internal sealed class EngineSession : IAsyncDisposable
                 _renderBuffer,
                 _simulationBlock,
                 _lifetime.Token);
-            ReleaseCompletedQrnBursts();
+            TickReceiverSources();
             _simulationBlock++;
             _renderedSamples += CompatibilityProfile.BlockSize;
             _revision++;
@@ -945,6 +1016,12 @@ internal sealed class EngineSession : IAsyncDisposable
         {
             AddQrnBurst();
         }
+
+        if (_settings.Qrm
+            && _random.NextDouble() < QrmTriggerProbability)
+        {
+            AddQrmStation();
+        }
     }
 
     private void AddQrnBurst()
@@ -966,19 +1043,78 @@ internal sealed class EngineSession : IAsyncDisposable
             "The CE QRN burst concurrency bound was exceeded.");
     }
 
-    private void ReleaseCompletedQrnBursts()
+    private void AddQrmStation()
     {
-        for (int index = _receiverSources.Count - 1; index >= 0; index--)
+        for (int index = 0; index < _qrmStationPool.Length; index++)
         {
-            QrnBurstStation? burst =
-                _receiverSources[index].QrnBurst;
-            if (burst is null || !burst.HasRenderedEnvelope)
+            QrmStation station = _qrmStationPool[index];
+            if (station.IsActive)
             {
                 continue;
             }
 
-            burst.Release();
-            RemoveReceiverSourceAt(index);
+            station.Activate(
+                _random,
+                _randomEffects,
+                _stationCatalog,
+                _settings.ContestId,
+                _settings.RunModeId,
+                _settings.StationCall);
+            AddReceiverSource(ReceiverSource.FromQrmStation(station));
+            return;
+        }
+
+        throw new InvalidOperationException(
+            "The CE QRM station concurrency bound was exceeded.");
+    }
+
+    private void TickReceiverSources()
+    {
+        for (int index = _receiverSources.Count - 1; index >= 0; index--)
+        {
+            ReceiverSource source = _receiverSources[index];
+            if (source.Caller is SimulatedStation caller)
+            {
+                StationBlockTransition transition = caller.Tick();
+                if (transition == StationBlockTransition.ReplyStarted)
+                {
+                    PublishEvent(
+                        SessionEventKind.StationReplyStarted,
+                        caller.Identity.Callsign
+                        + "|"
+                        + caller.LastReplyText);
+                }
+                else if (transition
+                    == StationBlockTransition.ReplyCompleted)
+                {
+                    PublishEvent(
+                        SessionEventKind.StationReplyCompleted,
+                        caller.Identity.Callsign);
+                }
+
+                continue;
+            }
+
+            if (source.QrmStation is QrmStation qrmStation)
+            {
+                if (!qrmStation.Tick(
+                        _randomEffects,
+                        _settings.ContestId))
+                {
+                    continue;
+                }
+
+                qrmStation.Release();
+                RemoveReceiverSourceAt(index);
+                continue;
+            }
+
+            if (source.QrnBurst is QrnBurstStation qrnBurst
+                && qrnBurst.HasRenderedEnvelope)
+            {
+                qrnBurst.Release();
+                RemoveReceiverSourceAt(index);
+            }
         }
     }
 
@@ -987,7 +1123,7 @@ internal sealed class EngineSession : IAsyncDisposable
         if (_receiverSources.Count == _receiverSources.Capacity)
         {
             throw new InvalidOperationException(
-                "The reserved QRN receiver capacity was exhausted.");
+                "The reserved receiver-source capacity was exhausted.");
         }
 
         _receiverSources.Add(source);
@@ -998,7 +1134,8 @@ internal sealed class EngineSession : IAsyncDisposable
         int requiredCapacity = checked(
             _stations.Count
             + 1
-            + QrnBurstStation.MaximumConcurrentStations);
+            + QrnBurstStation.MaximumConcurrentStations
+            + _qrmStationPool.Length);
         if (_receiverSources.Capacity >= requiredCapacity)
         {
             return;
@@ -2044,13 +2181,15 @@ internal sealed class EngineSession : IAsyncDisposable
 
     private readonly record struct ReceiverSource(
         SimulatedStation? Caller,
-        QrnBurstStation? QrnBurst)
+        QrnBurstStation? QrnBurst,
+        QrmStation? QrmStation)
     {
         public static ReceiverSource FromCaller(
             SimulatedStation caller) =>
             new(
                 caller
                     ?? throw new ArgumentNullException(nameof(caller)),
+                null,
                 null);
 
         public static ReceiverSource FromQrnBurst(
@@ -2058,7 +2197,16 @@ internal sealed class EngineSession : IAsyncDisposable
             new(
                 null,
                 burst
-                    ?? throw new ArgumentNullException(nameof(burst)));
+                    ?? throw new ArgumentNullException(nameof(burst)),
+                null);
+
+        public static ReceiverSource FromQrmStation(
+            QrmStation station) =>
+            new(
+                null,
+                null,
+                station
+                    ?? throw new ArgumentNullException(nameof(station)));
     }
 
     private abstract record WorkItem;

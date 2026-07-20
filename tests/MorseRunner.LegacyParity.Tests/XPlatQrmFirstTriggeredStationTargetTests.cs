@@ -102,7 +102,7 @@ public sealed class XPlatQrmFirstTriggeredStationTargetTests
 
     [Fact]
     [Trait("Category", "ParityInfrastructure")]
-    public async Task CurrentProductionIsRedAtInternalStationRow()
+    public async Task CurrentProductionMatchesPinnedStationBehavior()
     {
         ParityCertificationCase definition =
             ParityCertificationCase.LoadForInspection(
@@ -114,42 +114,15 @@ public sealed class XPlatQrmFirstTriggeredStationTargetTests
                     definition.Scenario,
                     TestContext.Current.CancellationToken);
 
-        Assert.Equal(ParityTargetOutcome.Failed, observation.Outcome);
-        Assert.Equal(
-            XPlatQrmFirstTriggeredStationTarget
-                .FunctionalDivergenceCode,
-            observation.FailureCode);
+        Assert.Equal(ParityTargetOutcome.Passed, observation.Outcome);
+        Assert.Null(observation.FailureCode);
         Assert.Equal(
             XPlatQrmFirstTriggeredStationTarget.EvidenceSource,
             observation.EvidenceSource);
         Assert.Equal(
-            3,
-            FirstMismatch(
-                definition.Scenario.ExpectedValues,
-                observation.Values));
-        Assert.Equal(
-            definition.Scenario.ExpectedValues.Take(3),
-            observation.Values.Take(3),
+            definition.Scenario.ExpectedValues,
+            observation.Values,
             StringComparer.Ordinal);
-        Assert.StartsWith(
-            "station|count=0|class=none|state=none|",
-            observation.Values[3],
-            StringComparison.Ordinal);
-        Assert.Equal(
-            definition.Scenario.ExpectedValues[6],
-            observation.Values[6]);
-        Assert.EndsWith(
-            "|exact-equal=true|first-divergence=-1"
-                + "|clean-float-sha256="
-                + "3ba44162f2959aeeaa6599059e97033d9"
-                + "42258e3a2e0dc33cbb07defbb12a4c5"
-                + "|qrm-float-sha256="
-                + "3ba44162f2959aeeaa6599059e97033d9"
-                + "42258e3a2e0dc33cbb07defbb12a4c5"
-                + "|station-counts=0,0"
-                + "|pick-station-calls=0,0|get-call-calls=0,0",
-            observation.Values[8],
-            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -176,7 +149,7 @@ public sealed class XPlatQrmFirstTriggeredStationTargetTests
             first[9],
             StringComparison.Ordinal);
         Assert.EndsWith(
-            "|qrm-single-bits=38e1bf40",
+            "|qrm-single-bits=3f519e01",
             first[9],
             StringComparison.Ordinal);
     }
@@ -254,24 +227,6 @@ public sealed class XPlatQrmFirstTriggeredStationTargetTests
             MorseRunner.Domain.DomainErrorCodes.UnsupportedCapability,
             observation.FailureCode);
         Assert.Empty(observation.Values);
-    }
-
-    private static int FirstMismatch(
-        IReadOnlyList<string> expected,
-        IReadOnlyList<string> actual)
-    {
-        int count = Math.Min(expected.Count, actual.Count);
-        for (int index = 0; index < count; index++)
-        {
-            if (!StringComparer.Ordinal.Equals(
-                    expected[index],
-                    actual[index]))
-            {
-                return index;
-            }
-        }
-
-        return expected.Count == actual.Count ? -1 : count;
     }
 
     private static QrmFirstTriggeredStationInput ValidInput()

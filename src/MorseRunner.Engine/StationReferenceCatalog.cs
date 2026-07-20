@@ -8,6 +8,9 @@ namespace MorseRunner.Engine;
 
 internal sealed class StationReferenceCatalog
 {
+    private const string EmptyMasterDataFallbackCallsign = "P29SX";
+    private static readonly ContestDxccDatabase Dxcc = new();
+
     private static readonly Dictionary<string, string> ContestFiles =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
@@ -25,14 +28,42 @@ internal sealed class StationReferenceCatalog
             ["scArrlSS"] = "SSCW.txt",
         };
 
-    private readonly IReadOnlyList<ReferenceRow> _rows;
+    private readonly ContestId _contestId;
+    private readonly bool? _homeCallIsLocal;
+    private readonly List<ReferenceRow> _rows;
 
-    private StationReferenceCatalog(IReadOnlyList<ReferenceRow> rows)
+    private StationReferenceCatalog(
+        ContestId contestId,
+        IEnumerable<ReferenceRow> rows,
+        bool? homeCallIsLocal)
     {
-        _rows = rows;
+        _contestId = contestId;
+        _homeCallIsLocal = homeCallIsLocal;
+        _rows = [.. rows];
     }
 
-    public static StationReferenceCatalog Load(ContestId contestId)
+    public int QrmCallsignCount => _rows.Count;
+
+    public int QrmEnvelopeBoundCallsignCount =>
+        _rows.Count + (UsesMasterCallList ? 1 : 0);
+
+    private bool UsesMasterCallList =>
+        _contestId.Value is "scWpx" or "scHst";
+
+    public static StationReferenceCatalog Load(ContestId contestId) =>
+        LoadCore(contestId, stationCall: null);
+
+    public static StationReferenceCatalog Load(
+        ContestId contestId,
+        string stationCall)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(stationCall);
+        return LoadCore(contestId, stationCall);
+    }
+
+    private static StationReferenceCatalog LoadCore(
+        ContestId contestId,
+        string? stationCall)
     {
         string canonicalName = ContestFiles[contestId.Value];
         using Stream stream = OpenResource(canonicalName);
@@ -41,13 +72,96 @@ internal sealed class StationReferenceCatalog
             StringComparison.OrdinalIgnoreCase)
                 ? ReadMasterData(stream)
                 : ReadCallHistory(stream);
+        if (contestId.Value == "scNaQp")
+        {
+            rows = rows
+                .Where(IsValidNaqpHistoryRow)
+                .ToArray();
+        }
+
+        bool? homeCallIsLocal = stationCall is null
+            ? null
+            : contestId.Value switch
+            {
+                "scArrlDx" => IsArrlDxHomeCallLocal(stationCall),
+                "scNaQp" => IsNaqpCallLocal(
+                    stationCall,
+                    useFallback: true),
+                _ => null,
+            };
+        if (contestId.Value == "scArrlDx"
+            && homeCallIsLocal.HasValue)
+        {
+            rows = rows
+                .Where(
+                    row => homeCallIsLocal.Value
+                        ? row.HasValue("Power")
+                        : row.HasValue("State"))
+                .ToArray();
+        }
+
+        if (homeCallIsLocal.HasValue
+            && contestId.Value is "scArrlDx" or "scNaQp")
+        {
+            foreach (ReferenceRow row in rows)
+            {
+                CacheQrmDxccMetadata(contestId, row);
+            }
+        }
+
         if (rows.Length == 0)
         {
             throw new InvalidDataException(
                 $"Packaged station reference '{canonicalName}' is empty.");
         }
 
-        return new(rows);
+        return new(contestId, rows, homeCallIsLocal);
+    }
+
+    public string GetQrmCallsignAt(int index) => _rows[index].Call;
+
+    public string GetQrmEnvelopeBoundCallsignAt(int index)
+    {
+        if ((uint)index < (uint)_rows.Count)
+        {
+            return GetQrmCallsignAt(index);
+        }
+
+        return UsesMasterCallList && index == _rows.Count
+            ? EmptyMasterDataFallbackCallsign
+            : throw new ArgumentOutOfRangeException(nameof(index));
+    }
+
+    public string PickCallsignForQrm(
+        LegacyRandom random,
+        RunModeId runModeId)
+    {
+        ArgumentNullException.ThrowIfNull(random);
+        RequireConfiguredHomeCall();
+        if (_rows.Count == 0)
+        {
+            return UsesMasterCallList
+                ? EmptyMasterDataFallbackCallsign
+                : throw new InvalidOperationException(
+                    $"Contest '{_contestId.Value}' has no QRM callsigns.");
+        }
+
+        int selectedIndex = random.Next(_rows.Count);
+        while (_rows.Count > 1
+               && !PrepareEligibleQrmCall(_rows[selectedIndex]))
+        {
+            _rows.RemoveAt(selectedIndex);
+            selectedIndex = random.Next(_rows.Count);
+        }
+
+        string selected = _rows[selectedIndex].Call;
+        if (runModeId.Value == "rmHst"
+            && _contestId.Value is "scWpx" or "scHst")
+        {
+            _rows.RemoveAt(selectedIndex);
+        }
+
+        return selected;
     }
 
     public StationIdentity Pick(
@@ -108,6 +222,133 @@ internal sealed class StationReferenceCatalog
             row.Get("Prec", fallback: string.Empty),
             ParseInt(row.Get("CK", fallback: string.Empty)),
             row.Get("Sect", fallback: string.Empty));
+    }
+
+    private void RequireConfiguredHomeCall()
+    {
+        if (_contestId.Value is "scArrlDx" or "scNaQp"
+            && !_homeCallIsLocal.HasValue)
+        {
+            throw new InvalidOperationException(
+                $"Contest '{_contestId.Value}' requires the station call "
+                + "when loading a QRM callsign catalog.");
+        }
+    }
+
+    private bool PrepareEligibleQrmCall(ReferenceRow row)
+    {
+        if (_contestId.Value == "scArrlDx")
+        {
+            return row.QrmDxccEligible;
+        }
+
+        if (_contestId.Value != "scNaQp")
+        {
+            return true;
+        }
+
+        if (!row.QrmDxccEligible)
+        {
+            return false;
+        }
+
+        row.ApplyQrmNaqpStateRepair();
+
+        return _homeCallIsLocal == true || row.QrmNaqpLocal;
+    }
+
+    private static void CacheQrmDxccMetadata(
+        ContestId contestId,
+        ReferenceRow row)
+    {
+        bool found = Dxcc.TryFind(
+            row.Call,
+            out ContestDxccRecord? record);
+        if (contestId.Value == "scArrlDx")
+        {
+            row.SetQrmDxccMetadata(
+                eligible: found,
+                naqpLocal: false,
+                naqpStateRepair: null);
+            return;
+        }
+
+        bool callIsLocal = found
+            && record is not null
+            && (record.Continent == "NA"
+                || record.Entity == "Hawaii");
+        string? stateRepair = null;
+        bool eligible = found;
+        if (eligible && callIsLocal && !row.HasValue("State"))
+        {
+            bool simplePrefix = !record!.PrefixPattern.Contains(
+                "()|,[]*+-",
+                StringComparison.Ordinal);
+            eligible = simplePrefix;
+            if (simplePrefix)
+            {
+                stateRepair = record.PrefixPattern;
+            }
+        }
+
+        row.SetQrmDxccMetadata(
+            eligible,
+            callIsLocal,
+            stateRepair);
+    }
+
+    private static bool IsValidNaqpHistoryRow(ReferenceRow row)
+    {
+        string name = row.Get("Name");
+        return name.Length is > 0 and <= 12;
+    }
+
+    private static bool IsArrlDxHomeCallLocal(string call)
+    {
+        if (Dxcc.TryFind(call, out ContestDxccRecord? record)
+            && record is not null)
+        {
+            return record.Entity is
+                "United States of America" or "Canada";
+        }
+
+        string normalized = call.ToUpperInvariant();
+        return normalized.StartsWith('A')
+            || normalized.StartsWith('K')
+            || normalized.StartsWith('N')
+            || normalized.StartsWith('W')
+            || normalized.StartsWith(
+                "VE",
+                StringComparison.Ordinal);
+    }
+
+    private static bool IsNaqpCallLocal(
+        string call,
+        bool useFallback)
+    {
+        if (Dxcc.TryFind(call, out ContestDxccRecord? record)
+            && record is not null)
+        {
+            return record.Continent == "NA"
+                || record.Entity == "Hawaii";
+        }
+
+        if (!useFallback)
+        {
+            return false;
+        }
+
+        string normalized = call.ToUpperInvariant();
+        return normalized.StartsWith('A')
+            || normalized.StartsWith('K')
+            || normalized.StartsWith('N')
+            || normalized.StartsWith('W')
+            || normalized.StartsWith(
+                "VE",
+                StringComparison.Ordinal)
+            || normalized.StartsWith(
+                "XE",
+                StringComparison.Ordinal);
     }
 
     private static Stream OpenResource(string canonicalName)
@@ -285,6 +526,12 @@ internal sealed class StationReferenceCatalog
         string Call,
         IReadOnlyDictionary<string, string> Fields)
     {
+        public bool QrmDxccEligible { get; private set; }
+
+        public bool QrmNaqpLocal { get; private set; }
+
+        public string? QrmNaqpStateRepair { get; private set; }
+
         public string Get(
             string first,
             string? second = null,
@@ -302,6 +549,44 @@ internal sealed class StationReferenceCatalog
             }
 
             return fallback;
+        }
+
+        public bool HasValue(string key)
+        {
+            return Fields.TryGetValue(key, out string? value)
+                && !string.IsNullOrWhiteSpace(value);
+        }
+
+        public void Set(string key, string value)
+        {
+            if (Fields is not Dictionary<string, string> mutable)
+            {
+                throw new InvalidOperationException(
+                    "The station reference row is immutable.");
+            }
+
+            mutable[key] = value;
+        }
+
+        public void SetQrmDxccMetadata(
+            bool eligible,
+            bool naqpLocal,
+            string? naqpStateRepair)
+        {
+            QrmDxccEligible = eligible;
+            QrmNaqpLocal = naqpLocal;
+            QrmNaqpStateRepair = naqpStateRepair;
+        }
+
+        public void ApplyQrmNaqpStateRepair()
+        {
+            if (QrmNaqpStateRepair is not string stateRepair)
+            {
+                return;
+            }
+
+            Set("State", stateRepair);
+            QrmNaqpStateRepair = null;
         }
     }
 }

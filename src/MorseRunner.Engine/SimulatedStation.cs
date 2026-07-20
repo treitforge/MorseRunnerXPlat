@@ -11,6 +11,7 @@ public sealed class SimulatedStation
         new float[CompatibilityProfile.BlockSize];
     private double _bfoPhase;
     private int _timeoutBlocks = int.MaxValue;
+    private bool _transmissionCompletedInRenderedBlock;
 
     public SimulatedStation(
         StationIdentity identity,
@@ -140,55 +141,73 @@ public sealed class SimulatedStation
         }
     }
 
-    public void AdvanceBlock(
+    internal void RenderBlock(
         Span<float> receiverReal,
         Span<float> receiverImaginary,
         bool mixOutput = true)
     {
-        if (State == StationState.Sending)
+        _transmissionCompletedInRenderedBlock = false;
+        if (State != StationState.Sending)
         {
-            bool hadAudio = _renderer.HasPendingAudio;
-            _renderer.RenderEnvelope(_scratch);
-            if (mixOutput)
-            {
-                double phaseStep =
-                    2d * Math.PI * PitchOffsetHz
-                    / CompatibilityProfile.SampleRate;
-                for (int index = 0; index < receiverReal.Length; index++)
-                {
-                    float amplitude = _scratch[index] * 36_000f;
-                    receiverReal[index] +=
-                        amplitude * (float)Math.Cos(_bfoPhase);
-                    receiverImaginary[index] -=
-                        amplitude * (float)Math.Sin(_bfoPhase);
-                    _bfoPhase += phaseStep;
-                    if (_bfoPhase >= 2d * Math.PI)
-                    {
-                        _bfoPhase -= 2d * Math.PI;
-                    }
-                    else if (_bfoPhase <= -2d * Math.PI)
-                    {
-                        _bfoPhase += 2d * Math.PI;
-                    }
-                }
-            }
-
-            if (hadAudio && !_renderer.HasPendingAudio)
-            {
-                FinishTransmission();
-            }
-
             return;
         }
 
-        if (_timeoutBlocks != int.MaxValue)
+        bool hadAudio = _renderer.HasPendingAudio;
+        _renderer.RenderEnvelope(_scratch);
+        if (mixOutput)
         {
-            _timeoutBlocks--;
-            if (_timeoutBlocks == 0)
+            double phaseStep =
+                2d * Math.PI * PitchOffsetHz
+                / CompatibilityProfile.SampleRate;
+            for (int index = 0; index < receiverReal.Length; index++)
             {
-                ExpireTimeout();
+                float amplitude = _scratch[index] * 36_000f;
+                receiverReal[index] +=
+                    amplitude * (float)Math.Cos(_bfoPhase);
+                receiverImaginary[index] -=
+                    amplitude * (float)Math.Sin(_bfoPhase);
+                _bfoPhase += phaseStep;
+                if (_bfoPhase >= 2d * Math.PI)
+                {
+                    _bfoPhase -= 2d * Math.PI;
+                }
+                else if (_bfoPhase <= -2d * Math.PI)
+                {
+                    _bfoPhase += 2d * Math.PI;
+                }
             }
         }
+
+        _transmissionCompletedInRenderedBlock =
+            hadAudio && !_renderer.HasPendingAudio;
+    }
+
+    internal StationBlockTransition Tick()
+    {
+        if (State == StationState.Sending
+            && _transmissionCompletedInRenderedBlock)
+        {
+            _transmissionCompletedInRenderedBlock = false;
+            FinishTransmission();
+            return StationBlockTransition.ReplyCompleted;
+        }
+
+        if (State == StationState.Sending
+            || _timeoutBlocks == int.MaxValue)
+        {
+            return StationBlockTransition.None;
+        }
+
+        _timeoutBlocks--;
+        if (_timeoutBlocks != 0)
+        {
+            return StationBlockTransition.None;
+        }
+
+        ExpireTimeout();
+        return State == StationState.Sending
+            ? StationBlockTransition.ReplyStarted
+            : StationBlockTransition.None;
     }
 
     public void ExpireTimeout()
@@ -219,6 +238,7 @@ public sealed class SimulatedStation
 
     public void FinishTransmission()
     {
+        _transmissionCompletedInRenderedBlock = false;
         State = StationState.Listening;
         _timeoutBlocks = Operator.GetReplyTimeout(WordsPerMinute);
     }
@@ -299,6 +319,13 @@ public sealed class SimulatedStation
 
     private static string ToCutNumbers(string value) =>
         value.Replace('9', 'N').Replace('0', 'T');
+}
+
+internal enum StationBlockTransition
+{
+    None,
+    ReplyStarted,
+    ReplyCompleted,
 }
 
 public sealed record StationIdentity(
