@@ -460,6 +460,7 @@
         "audio.deterministic-random-primitives-seed-12345",
         "audio.flutter-no-station-noise-invariance-seed-12345",
         "audio.qrm-no-trigger-invariance-seed-12345",
+        "audio.qrn-background-sparse-impulses-seed-12345",
         "audio.qsb-no-station-noise-invariance-seed-12345",
         "audio.receiver-hiss-shared-random-checkpoint-seed-12345"
       ]
@@ -658,7 +659,7 @@
     {"id": "audio.rit-affects-rendered-stations", "capabilityId": "audio-dsp.legacy-processing", "behavior": "RIT changes each station's audible offset using CE range, steps, and block-boundary timing.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.runtime-bandwidth-updates-filters", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Runtime bandwidth changes replace or update receiver filters at the CE-equivalent block boundary.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.qrm-interfering-cw-stations", "capabilityId": "simulation.legacy-effects", "behavior": "QRM uses CE-equivalent randomized interfering CW stations, messages, levels, pitches, speeds, retries, and lifetimes.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "StnColl.pas", "QrmStn.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.stncoll.tstations.addqrm", "legacy.sim.routine.qrmstn.tqrmstation.createstation", "legacy.sim.routine.qrmstn.tqrmstation.processevent", "legacy.sim.routine.qrmstn.tqrmstation.sendtext"], "acceptanceStatus": "partial", "caseIds": ["audio.qrm-no-trigger-invariance-seed-12345"]},
-    {"id": "audio.qrn-impulses-and-burst-stations", "capabilityId": "simulation.legacy-effects", "behavior": "QRN produces CE sparse impulses and burst stations before receiver filtering and AGC.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.qrn-impulses-and-burst-stations", "capabilityId": "simulation.legacy-effects", "behavior": "QRN produces CE sparse impulses and burst stations before receiver filtering and AGC.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "StnColl.pas", "QrnStn.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.stncoll.tstations.addqrn", "legacy.sim.routine.qrnstn.tqrnstation.createstation", "legacy.sim.routine.qrnstn.tqrnstation.processevent"], "acceptanceStatus": "partial", "caseIds": ["audio.qrn-background-sparse-impulses-seed-12345"]},
     {"id": "audio.qsb-independent-per-station", "capabilityId": "simulation.legacy-effects", "behavior": "Every remote station has an independent CE-distributed QSB process without fading the receiver noise floor.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "DxStn.pas", "Qsb.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.dxstn.tdxstation.getblock", "legacy.support.effect.routine.qsb.tqsb.applyto"], "acceptanceStatus": "partial", "caseIds": ["audio.qsb-no-station-noise-invariance-seed-12345"]},
     {"id": "audio.flutter-fast-per-station-qsb", "capabilityId": "simulation.legacy-effects", "behavior": "Flutter is the CE probabilistic fast per-station QSB mode rather than a global multiplier.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "DxStn.pas", "Qsb.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.dxstn.tdxstation.createstation", "legacy.sim.routine.dxstn.tdxstation.getblock", "legacy.support.effect.routine.qsb.tqsb.applyto"], "acceptanceStatus": "partial", "caseIds": ["audio.flutter-no-station-noise-invariance-seed-12345"]},
     {"id": "audio.station-level-and-pitch-distributions", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Remote station amplitude and pitch use CE distributions and deterministic draw ordering.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -1042,6 +1043,119 @@
       "failureCode": "audio-qrm-no-trigger-invariance-mismatch",
       "fixture": "tests/parity/fixtures/legacy/audio-qrm-no-trigger-invariance-seed-12345.json",
       "evidence": "tests/parity/evidence/audio-qrm-no-trigger-invariance-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "audio.qrn-background-sparse-impulses-seed-12345",
+      "capabilityId": "simulation.legacy-effects",
+      "obligationIds": [
+        "audio.qrn-impulses-and-burst-stations"
+      ],
+      "behavior": "For two fresh station-free CE receiver runs at the fixed compatibility vector, enabling QRN consumes one trigger draw per raw complex-noise sample, replaces the real component at the six source-order replay-derived indexes 92, 248, 323, 482, 488, and 507, consumes one value draw for each replacement, and consumes a final burst trigger that creates no TQrnStation. The live QRN receiver output differs from clean output first at normalized sample 310 after CE receiver filtering, modulation, and AGC. The XPlat production engine must reproduce the exact clean and QRN blocks, station counts, and terminal shared-stream sentinels.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v14",
+        "source": "tests/parity/legacy-oracle/v14/LegacyOracle.lpr",
+        "sourceSha256": "3108813d8edb8cbb5c49a05bfc61c69523451d99cfa2b90dc795237977533822",
+        "buildRecipe": "tests/parity/legacy-oracle/v14/build-recipe.json",
+        "buildRecipeSha256": "ca5cbb10cc27ea068fbeaf33b33dc8afd84b2e0ee0a853421f102dc0f061ad38"
+      },
+      "legacySources": [
+        "Contest.pas",
+        "StnColl.pas",
+        "QrnStn.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.sim.routine.contest.tcontest.getaudio",
+        "legacy.sim.routine.stncoll.tstations.addqrn",
+        "legacy.sim.routine.qrnstn.tqrnstation.createstation",
+        "legacy.sim.routine.qrnstn.tqrnstation.processevent"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "Each fresh CE runtime uses CQ WPX, rmStop, seed 12345, 11025 Hz, 512 samples per complete block, 500 Hz bandwidth, 600 Hz pitch, no normal DX stations, no operator transmission, and QSB, flutter, QRM, QSK, and LIDs disabled. The paired runs differ only in Ini.Qrn.",
+        "After contest construction, each CE run executes the real MainForm.SetBw path with handleless controls and resets RandSeed to 12345 immediately before its first GetAudio request.",
+        "Each CE run executes and verifies five real one-Single zero startup requests through TContest.GetAudio without resetting RandSeed, then captures exactly one complete receiver block through the same live method.",
+        "A content-bound replay of Contest.pas source order consumes the 1024 complex-hiss draws, records QRN trigger ordinals 1116, 1273, 1349, 1509, 1516, and 1536, and records replacement-value ordinals 1117, 1274, 1350, 1510, 1517, and 1537. The resulting raw replacement indexes and values are replay-derived, while the live TContest.GetAudio hashes and terminal sentinels corroborate the complete observable CE path without instrumenting pre-filter state.",
+        "The live CE clean block hash is 6b468ab13ccc1accb6ec587b8a51d27ca23eb80b20bce034106e547ad3565378. The live CE QRN block hash is 16375b39a2a153bc44f33449bad640084f8dbed67c6b8bb9ccb3dec094be5435, and its first final-output divergence from clean is sample 310 after the two receiver filters, modulation, AGC, normalization, and clamping.",
+        "The QRN burst trigger is replay-derived ordinal 1542 with value 0.486590252, so the live block must retain zero stations. Immediately after each live GetAudio call, CE records the next shared-stream value: clean ordinal 1024 has Single bits 3e320354, and QRN ordinal 1543 has Single bits 3f43412e.",
+        "The XPlat adapter creates two fresh production MorseRunnerEngine and EngineSession instances with automatic timing disabled, starts and immediately aborts each rmStop session, verifies no audio before one explicit simulation-block advance and zero active stations, captures each complete block through the actual IAudioSink, then obtains one guarded terminal checkpoint from the authoritative session random source.",
+        "This narrow no-burst case proves first-block background impulse probability, replacement semantics, source-order draw ownership, final receiver output, no-burst station count, and terminal sentinels only. Triggered TQrnStation construction, duration, envelope impulses, amplitude, same-block audibility, ticking, destruction, later blocks, and runtime toggling remain uncovered, so audio.qrn-impulses-and-burst-stations remains partial."
+      ],
+      "input": {
+        "scenario": "audio.qrn-background-sparse-impulses-seed-12345",
+        "sampleRate": 11025,
+        "blockSize": 512,
+        "seed": 12345,
+        "bandwidthHz": 500,
+        "pitchHz": 600,
+        "startupRequestCount": 5,
+        "comparedBlockCount": 1,
+        "probeSampleIndexes": [
+          0,
+          91,
+          92,
+          93,
+          248,
+          309,
+          310,
+          311,
+          323,
+          482,
+          488,
+          507,
+          511
+        ],
+        "replacementSampleIndexes": [
+          92,
+          248,
+          323,
+          482,
+          488,
+          507
+        ],
+        "triggerRandomOrdinals": [
+          1116,
+          1273,
+          1349,
+          1509,
+          1516,
+          1536
+        ],
+        "replacementRandomOrdinals": [
+          1117,
+          1274,
+          1350,
+          1510,
+          1517,
+          1537
+        ],
+        "burstTriggerRandomOrdinal": 1542,
+        "cleanTerminalRandomOrdinal": 1024,
+        "qrnTerminalRandomOrdinal": 1543
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatQrnBackgroundSparseImpulsesTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 7,
+        "observedValuesSha256": "91f28ad40a7bb8f11cf6ca8ab819873656239e28e30b0cdda09e4cd8302b86e8",
+        "firstDivergence": "The zero-based first mismatch is ordinal 3, qrn-block[0]. XPlat draws QRN-enabled receiver hiss and its continuous post-receiver noise from an effect-specific stream instead of applying CE's six sparse real-component replacements on the authoritative shared stream before receiver processing. Later rows also expose the wrong terminal shared-stream position.",
+        "functionalDivergenceCode": "audio-qrn-background-sparse-impulses-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "audio-qrn-background-sparse-impulses-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/audio-qrn-background-sparse-impulses-seed-12345.json",
+      "evidence": "tests/parity/evidence/audio-qrn-background-sparse-impulses-seed-12345.baseline.json",
       "firstGreenCommit": null
     },
     {

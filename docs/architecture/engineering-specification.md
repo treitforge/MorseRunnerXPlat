@@ -2515,10 +2515,11 @@ authoritative session stream. On the certified QRN-disabled path, production
 CE checkpoint bits `3e320354`; the retained red evidence remains immutable.
 
 This narrow vector proves only ownership and draw order for receiver hiss in
-the first complete block. It does not cover later blocks or ordering across
-QRN, QRM, station construction, QSB, flutter, call selection, or exchanges.
-Those require separate checkpointed live vectors, so
-`audio.single-seeded-random-stream` remains partial.
+the first complete block. The first-block QRN background transition is covered
+by the separate case below. Later blocks and ordering across QRN burst-station
+construction, QRM, normal station construction, QSB, flutter, call selection,
+and exchanges remain uncovered, so `audio.single-seeded-random-stream`
+remains partial.
 
 The authored
 `audio.qsb-no-station-noise-invariance-seed-12345` case narrows the first QSB
@@ -2604,6 +2605,61 @@ This case does not certify positive QRM construction, construction probability
 and draw ownership, a shared-random sentinel, message selection, levels,
 pitch, WPM, same-block audibility, retries, or station lifetime. Those require
 separate live cases, so `audio.qrm-interfering-cw-stations` remains partial.
+
+The authored
+`audio.qrn-background-sparse-impulses-seed-12345` case narrows the first QRN
+boundary to one station-free complete receiver block. Its pinned v14 CE
+adapter creates two fresh actual `TContest.GetAudio` runtimes for CQ WPX in
+`rmStop` with seed 12345, 11025 Hz audio, a 512-sample block, 500 Hz
+bandwidth, 600 Hz pitch, no normal DX stations or operator transmission, and
+QSB, flutter, QRM, QSK, and LIDs disabled. The runs differ only in `Ini.Qrn`.
+Each executes the real handleless `MainForm.SetBw` path, resets `RandSeed`
+immediately before audio framing, verifies five actual one-`Single` zero
+startup requests, and captures the first complete block through the live
+method.
+
+The content-bound source-order replay consumes CE's 1024 complex-hiss draws,
+then one QRN trigger for each of the 512 raw samples. Seed 12345 selects six
+real-component replacement indexes: 92, 248, 323, 482, 488, and 507. Their
+trigger ordinals are 1116, 1273, 1349, 1509, 1516, and 1536, and their
+replacement-value ordinals are 1117, 1274, 1350, 1510, 1517, and 1537. These
+raw indexes and decision values are replay-derived from the content-bound
+`Contest.pas` source order. They are not presented as direct pre-filter
+instrumentation. The actual live `TContest.GetAudio` block, station count,
+final-output probes, and terminal sentinel corroborate the complete
+observable path.
+
+The replay-derived burst trigger is ordinal 1542 with value 0.486590252, so
+the actual CE station collection remains empty. The clean block raw-`Single`
+SHA-256 is
+`6b468ab13ccc1accb6ec587b8a51d27ca23eb80b20bce034106e547ad3565378`.
+The QRN block hash is
+`16375b39a2a153bc44f33449bad640084f8dbed67c6b8bb9ccb3dec094be5435`,
+and its first live normalized output divergence from clean is sample 310
+after both receiver filters, modulation, AGC, normalization, and clamping.
+An actual final `Random` call after each live block records clean next ordinal
+1024 as binary32 bits `3e320354` and QRN next ordinal 1543 as bits `3f43412e`.
+
+The XPlat adapter performs the paired capture through two fresh actual
+`MorseRunnerEngine` and `EngineSession` sessions and the production
+`IAudioSink` port. After validating each final public snapshot, it requests
+one guarded terminal value from the authoritative session random source. The
+authoring test is legacy-green/XPlat-red with first row divergence at
+`qrn-block[0]` and code
+`audio-qrn-background-sparse-impulses-mismatch`. Production currently draws
+QRN-enabled receiver hiss from an effect-specific stream and adds continuous
+post-receiver noise, rather than using CE's shared-stream sparse
+real-component replacements before receiver processing. No retained XPlat
+evidence is created by case authoring; evidence capture is a separate review
+and promotion step.
+
+This case covers first-block background trigger probability, replacement
+semantics, source-order draw ownership, final receiver output, the no-burst
+station count, and terminal sentinels. It does not certify a triggered
+`TQrnStation`, duration and amplitude distributions, burst-envelope impulses,
+same-block audibility, station ticking and destruction, later blocks, or
+runtime toggling. The `audio.qrn-impulses-and-burst-stations` obligation
+therefore remains partial.
 
 The `audio.deterministic-random-primitives-seed-12345` case executes the pinned CE
 `RndFunc.pas` routines and the XPlat production `LegacyRandom` and
