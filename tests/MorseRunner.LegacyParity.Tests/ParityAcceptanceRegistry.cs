@@ -25,6 +25,19 @@ public static class ParityAcceptanceRegistry
                     static () => new LegacyOracleTarget(),
                     static () =>
                         new XPlatRandomPrimitivesTarget()),
+            [XPlatFlutterNoStationNoiseInvarianceTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatFlutterNoStationNoiseInvarianceTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatFlutterNoStationNoiseInvarianceTarget),
+                    XPlatFlutterNoStationNoiseInvarianceTarget
+                        .FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = FlutterNoStationNoiseInvarianceInput.Parse(
+                            scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () =>
+                        new XPlatFlutterNoStationNoiseInvarianceTarget()),
             [XPlatQsbNoStationNoiseInvarianceTarget.ParityId] =
                 new ParityAcceptanceRegistration(
                     XPlatQsbNoStationNoiseInvarianceTarget.ParityId,

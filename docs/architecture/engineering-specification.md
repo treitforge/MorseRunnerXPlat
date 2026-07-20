@@ -2488,6 +2488,28 @@ independent envelopes, distribution parameters, random-stream ownership,
 runtime toggling, or flutter. The `audio.qsb-independent-per-station`
 obligation therefore remains partial.
 
+The authored
+`audio.flutter-no-station-noise-invariance-seed-12345` case narrows the first
+flutter acceptance boundary to station-free receiver audio. Its pinned CE
+adapter creates two fresh `TContest.GetAudio` runtimes with the same seed,
+normal `SetBw` configuration, five verified startup requests, two complete
+blocks, no stations or operator transmission, and `Ini.Qsb` false. The runs
+differ only in `Ini.Flutter`. Because the runtime constructs no `TDxStation`,
+CE never reaches the station constructor's probabilistic fast-bandwidth branch,
+`TDxStation.GetBlock`, or `TQsb.ApplyTo`; both normalized block sequences and
+their aggregate raw-`Single` hash remain bit-for-bit identical. The XPlat
+adapter performs the same paired capture through fresh production engine
+sessions and `IAudioSink`.
+
+The current XPlat session-global post-receiver flutter multiplier changes the
+station-free hiss, so the authored case remains `legacy-green-xplat-red` with
+divergence code `audio-flutter-no-station-noise-invariance-mismatch` until red
+evidence is retained and production flutter ownership is corrected. This case
+does not certify positive per-station ownership, QSB gating, the 30 percent
+fast-mode selection, bandwidth distribution, draw order, independent
+envelopes, or runtime toggling. The
+`audio.flutter-fast-per-station-qsb` obligation therefore remains partial.
+
 The `audio.deterministic-random-primitives-seed-12345` case executes the pinned CE
 `RndFunc.pas` routines and the XPlat production `LegacyRandom` and
 `LegacyRandomEffects` primitives with seed 12345. Each primitive group starts
