@@ -74,7 +74,8 @@ public sealed class XPlatDspTarget : IParityTarget
             sampleRate: 11_025,
             blockSize: 512,
             bandwidthHz: 500,
-            requestedCarrierHz: 600);
+            requestedCarrierHz: 600,
+            initialAbsoluteRequestCount: 0);
         var keyer = new MorseKeyer(sampleRate: 11_025, blockSize: 512);
         keyer.SetWordsPerMinute(30);
         float[] envelope = keyer.CreateEnvelope(

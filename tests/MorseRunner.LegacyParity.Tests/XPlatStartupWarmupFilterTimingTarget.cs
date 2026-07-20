@@ -1,6 +1,8 @@
+using System.Collections.Immutable;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using MiniAudioExNET;
 using MorseRunner.Audio;
 using MorseRunner.Domain;
 using MorseRunner.Engine;
@@ -19,6 +21,8 @@ public sealed class XPlatStartupWarmupFilterTimingTarget : IParityTarget
         + "+MorseRunner.Dsp.LegacyReceiverPipeline"
         + "+MorseRunner.Engine.IAudioSink.InitializeAsync"
         + "+MorseRunner.Engine.IAudioSink.WriteAsync"
+        + "+MorseRunner.Audio.PhysicalAudioSink.FillDeviceFreeDiagnostics"
+        + "+MorseRunner.Audio.PhysicalAudioPlaybackCoordinator.FillInterleaved"
         + "+MorseRunner.Audio.PhysicalAudioSink.GetDiagnostics";
 
     private const string EmptySha256 =
@@ -64,15 +68,93 @@ public sealed class XPlatStartupWarmupFilterTimingTarget : IParityTarget
         CancellationToken cancellationToken)
     {
         await using var physicalSink = new PhysicalAudioSink();
-        PhysicalAudioSinkDiagnostics physicalDiagnostics =
-            physicalSink.GetDiagnostics();
         CapturedAudioBlock[] blocks = await CaptureAsync(
             input,
             cancellationToken);
+        ImmutableArray<PhysicalAudioSinkStartupFrame> startupFraming =
+            CapturePhysicalStartupFraming(
+                physicalSink,
+                input,
+                blocks[0].Samples);
         return Normalize(
             input,
-            physicalDiagnostics.StartupFraming,
+            startupFraming,
             blocks);
+    }
+
+    private static
+        ImmutableArray<PhysicalAudioSinkStartupFrame>
+        CapturePhysicalStartupFraming(
+            PhysicalAudioSink physicalSink,
+            StartupWarmupFilterTimingInput input,
+            ReadOnlySpan<float> firstCanonicalBlock)
+    {
+        int outputSampleCount = checked(
+            input.StartupRequestCount + input.BlockSize);
+        IntPtr outputMemory = Marshal.AllocHGlobal(
+            checked(outputSampleCount * sizeof(float)));
+        try
+        {
+            var output = new AudioBuffer<float>(
+                outputMemory,
+                outputSampleCount);
+            bool complete = physicalSink.FillDeviceFreeDiagnostics(
+                firstCanonicalBlock,
+                output,
+                checked((ulong)outputSampleCount),
+                channels: 1);
+            if (!complete)
+            {
+                throw new InvalidOperationException(
+                    "The device-free physical startup callback "
+                    + "did not contain the complete prefix and "
+                    + "canonical block.");
+            }
+
+            for (int index = 0;
+                 index < input.StartupRequestCount;
+                 index++)
+            {
+                if (BitConverter.SingleToUInt32Bits(output[index]) != 0)
+                {
+                    throw new InvalidOperationException(
+                        "The device-free physical startup prefix "
+                        + "was not positive binary32 zero.");
+                }
+            }
+
+            for (int index = 0; index < input.BlockSize; index++)
+            {
+                if (BitConverter.SingleToUInt32Bits(
+                        output[input.StartupRequestCount + index])
+                    != BitConverter.SingleToUInt32Bits(
+                        firstCanonicalBlock[index]))
+                {
+                    throw new InvalidOperationException(
+                        "The device-free physical startup callback "
+                        + "did not preserve the canonical block "
+                        + "boundary.");
+                }
+            }
+
+            PhysicalAudioSinkDiagnostics diagnostics =
+                physicalSink.GetDiagnostics();
+            if (diagnostics.QueuedBlocks != 0
+                || diagnostics.CallbackCount != 0
+                || diagnostics.LastSimulationBlock != -1)
+            {
+                throw new InvalidOperationException(
+                    "The device-free physical startup observation "
+                    + "changed physical callback or engine-write "
+                    + "diagnostics.");
+            }
+
+            return diagnostics.StartupFraming;
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(outputMemory);
+        }
     }
 
     internal static async Task<CapturedAudioBlock[]> CaptureAsync(

@@ -13,14 +13,18 @@ public sealed class LegacyReceiverPipeline
     private LegacyMovingAverageFilter _standbyFilter;
     private readonly LegacyModulator _modulator;
     private readonly LegacyAutomaticGainControl _agc = new();
-    private int _blockNumber;
+    private int _absoluteRequestCount;
 
     public LegacyReceiverPipeline(
         int sampleRate,
         int blockSize,
         int bandwidthHz,
-        int requestedCarrierHz)
+        int requestedCarrierHz,
+        int initialAbsoluteRequestCount)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(
+            initialAbsoluteRequestCount);
+
         int points = (int)MathF.Round(
             0.7f * sampleRate / bandwidthHz);
         float gainDb = 10f * MathF.Log10(500f / bandwidthHz);
@@ -33,6 +37,7 @@ public sealed class LegacyReceiverPipeline
         _filteredImaginary = new float[blockSize];
         _modulated = new float[blockSize];
         _agcOutput = new float[blockSize];
+        _absoluteRequestCount = initialAbsoluteRequestCount;
     }
 
     public float EffectiveCarrierHz => _modulator.EffectiveCarrierHz;
@@ -75,8 +80,8 @@ public sealed class LegacyReceiverPipeline
             imaginaryInput,
             _filteredReal,
             _filteredImaginary);
-        _blockNumber++;
-        if ((_blockNumber % 10) == 0)
+        _absoluteRequestCount++;
+        if ((_absoluteRequestCount % 10) == 0)
         {
             (_activeFilter, _standbyFilter) =
                 (_standbyFilter, _activeFilter);

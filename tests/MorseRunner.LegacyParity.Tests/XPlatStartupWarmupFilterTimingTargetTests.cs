@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Reflection;
 using System.Text.Json;
 using MorseRunner.Audio;
 using MorseRunner.Domain;
@@ -14,7 +13,7 @@ public sealed class XPlatStartupWarmupFilterTimingTargetTests
     [Fact]
     [Trait("Category", "ParityInfrastructure")]
     public async Task
-        CurrentXPlatRowsPinPhysicalFramingAndFilterPhaseRed()
+        CurrentXPlatRowsMatchCePhysicalFramingAndFilterPhase()
     {
         ParityCertificationCase definition =
             ParityCertificationCase.LoadForInspection(
@@ -26,14 +25,19 @@ public sealed class XPlatStartupWarmupFilterTimingTargetTests
                     definition.Scenario,
                     TestContext.Current.CancellationToken);
 
-        Assert.Equal(ParityTargetOutcome.Failed, observation.Outcome);
-        Assert.Equal(
-            XPlatStartupWarmupFilterTimingTarget
-                .FunctionalDivergenceCode,
-            observation.FailureCode);
+        Assert.Equal(ParityTargetOutcome.Passed, observation.Outcome);
+        Assert.Null(observation.FailureCode);
         Assert.Equal(
             XPlatStartupWarmupFilterTimingTarget.EvidenceSource,
             observation.EvidenceSource);
+        Assert.Contains(
+            "PhysicalAudioSink.FillDeviceFreeDiagnostics",
+            observation.EvidenceSource,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "PhysicalAudioPlaybackCoordinator.FillInterleaved",
+            observation.EvidenceSource,
+            StringComparison.Ordinal);
         Assert.Contains(
             "MorseRunner.Audio.PhysicalAudioSink.GetDiagnostics",
             observation.EvidenceSource,
@@ -42,7 +46,7 @@ public sealed class XPlatStartupWarmupFilterTimingTargetTests
             StartupWarmupFilterTimingInput.ExpectedValueCount,
             observation.Values.Count);
         Assert.Equal(
-            1,
+            -1,
             FindFirstDivergence(
                 definition.Scenario.ExpectedValues,
                 observation.Values));
@@ -51,28 +55,23 @@ public sealed class XPlatStartupWarmupFilterTimingTargetTests
                 + "|sample-counts=1,1,1,1",
             definition.Scenario.ExpectedValues[1]);
         Assert.Equal(
-            "prefill|request-count=0|absolute-requests=none"
-                + "|sample-counts=none",
+            definition.Scenario.ExpectedValues[1],
             observation.Values[1]);
         Assert.Equal(
-            "warmup|request-count=0|all-one-zero-single=false"
-                + "|first-full-absolute-request=1"
-                + "|first-full-block-number=0",
+            "warmup|request-count=5|all-one-zero-single=true"
+                + "|first-full-absolute-request=6"
+                + "|first-full-block-number=6",
             observation.Values[2]);
         Assert.Equal(
-            "startup[0]|absolute-request=absent|sample-count=0"
-                + "|bits=absent"
-                + "|float-sha256="
-                + "e3b0c44298fc1c149afbf4c8996fb924"
-                + "27ae41e4649b934ca495991b7852b855",
+            definition.Scenario.ExpectedValues[3],
             observation.Values[3]);
         Assert.Equal(
             definition.Scenario.ExpectedValues
                 .Skip(FirstFullRowIndex)
-                .Take(15),
+                .Take(16),
             observation.Values
                 .Skip(FirstFullRowIndex)
-                .Take(15),
+                .Take(16),
             StringComparer.Ordinal);
         Assert.EndsWith(
             "|float-sha256="
@@ -81,26 +80,20 @@ public sealed class XPlatStartupWarmupFilterTimingTargetTests
             definition.Scenario.ExpectedValues[
                 FirstFullRowIndex + 15],
             StringComparison.Ordinal);
-        Assert.EndsWith(
-            "|float-sha256="
-                + "4ca2b76989eed860af1b624d912105072"
-                + "2a9478976f6bbee76e94e80b6a68787",
-            observation.Values[FirstFullRowIndex + 15],
-            StringComparison.Ordinal);
         Assert.StartsWith(
-            "aggregate|sample-count=8192|",
+            "aggregate|sample-count=8197|",
             observation.Values[^1],
             StringComparison.Ordinal);
         Assert.Equal(
-            "0429b1abcb2e4783275b5c6bbd9aaf51"
-                + "24603d962d73d7e5f6cb99766a8eb3c2",
+            "1ee1a92146433ae17d508856803b69785"
+                + "759d2de39f9c80a1126d46496b7d08e",
             ParityObservedValuesDigest.Compute(observation.Values));
     }
 
     [Fact]
     [Trait("Category", "ParityInfrastructure")]
     public async Task
-        FreshPhysicalSinkReportsEmptyStartupFramingWithoutDeviceInitialization()
+        FreshPhysicalSinkReportsNoUnexecutedStartupFraming()
     {
         await using var sink = new PhysicalAudioSink();
 
@@ -118,7 +111,7 @@ public sealed class XPlatStartupWarmupFilterTimingTargetTests
 
     [Fact]
     [Trait("Category", "ParityInfrastructure")]
-    public async Task CurrentProductionEmptyFramingKeepsPinnedRedDigest()
+    public async Task CurrentProductionObservationMatchesPinnedCeDigest()
     {
         string[] rows =
             await XPlatStartupWarmupFilterTimingTarget.ObserveAsync(
@@ -126,12 +119,12 @@ public sealed class XPlatStartupWarmupFilterTimingTargetTests
                 TestContext.Current.CancellationToken);
 
         Assert.Equal(
-            "prefill|request-count=0|absolute-requests=none"
-                + "|sample-counts=none",
+            "prefill|request-count=4|absolute-requests=1-4"
+                + "|sample-counts=1,1,1,1",
             rows[1]);
         Assert.Equal(
-            "0429b1abcb2e4783275b5c6bbd9aaf51"
-                + "24603d962d73d7e5f6cb99766a8eb3c2",
+            "1ee1a92146433ae17d508856803b69785"
+                + "759d2de39f9c80a1126d46496b7d08e",
             ParityObservedValuesDigest.Compute(rows));
     }
 
@@ -199,7 +192,7 @@ public sealed class XPlatStartupWarmupFilterTimingTargetTests
     [Fact]
     [Trait("Category", "ParityInfrastructure")]
     public async Task
-        PhaseAlignedInvestigationMatchesCeAndFirstDiffersAtSample310()
+        PublicEngineCaptureMatchesCeReceiverPhase()
     {
         ParityCertificationCase definition =
             ParityCertificationCase.LoadForInspection(
@@ -226,7 +219,7 @@ public sealed class XPlatStartupWarmupFilterTimingTargetTests
             cePhaseRows,
             StringComparer.Ordinal);
         for (int blockIndex = 0;
-             blockIndex < input.FullBlockCount - 1;
+             blockIndex < input.FullBlockCount;
              blockIndex++)
         {
             Assert.Equal(
@@ -235,8 +228,8 @@ public sealed class XPlatStartupWarmupFilterTimingTargetTests
         }
 
         Assert.Equal(
-            "4ca2b76989eed860af1b624d912105072"
-                + "2a9478976f6bbee76e94e80b6a68787",
+            "5c1ac8a4e8b722df949ace13e7cf1689"
+                + "c1e200061f0af23e6a382c00057ddf9c",
             XPlatStartupWarmupFilterTimingTarget
                 .ComputeRawSingleSha256(
                     currentBlocks[^1].Samples));
@@ -247,7 +240,7 @@ public sealed class XPlatStartupWarmupFilterTimingTargetTests
                 .ComputeRawSingleSha256(
                     cePhaseBlocks[^1].Samples));
         Assert.Equal(
-            310,
+            -1,
             FindFirstSampleDivergence(
                 currentBlocks[^1].Samples,
                 cePhaseBlocks[^1].Samples));
@@ -270,12 +263,12 @@ public sealed class XPlatStartupWarmupFilterTimingTargetTests
         string[] firstRows =
             XPlatStartupWarmupFilterTimingTarget.Normalize(
                 input,
-                ImmutableArray<PhysicalAudioSinkStartupFrame>.Empty,
+                CreateCeStartupFraming(input),
                 first);
         string[] secondRows =
             XPlatStartupWarmupFilterTimingTarget.Normalize(
                 input,
-                ImmutableArray<PhysicalAudioSinkStartupFrame>.Empty,
+                CreateCeStartupFraming(input),
                 second);
 
         Assert.Equal(firstRows, secondRows, StringComparer.Ordinal);
@@ -519,13 +512,8 @@ public sealed class XPlatStartupWarmupFilterTimingTargetTests
             input.SampleRate,
             input.BlockSize,
             input.BandwidthHz,
-            input.PitchHz);
-        FieldInfo? blockNumberField =
-            typeof(LegacyReceiverPipeline).GetField(
-                "_blockNumber",
-                BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.NotNull(blockNumberField);
-        blockNumberField.SetValue(pipeline, initialBlockNumber);
+            input.PitchHz,
+            initialBlockNumber);
 
         var random = new LegacyRandom(input.Seed);
         var real = new float[input.BlockSize];

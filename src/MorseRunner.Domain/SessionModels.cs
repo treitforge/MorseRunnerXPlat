@@ -4,6 +4,8 @@ public static class CompatibilityProfile
 {
     public const int SampleRate = 11_025;
     public const int BlockSize = 512;
+    public const int AudioStartupPrefillRequestCount = 4;
+    public const int AudioStartupRequestCount = 5;
 }
 
 public enum SessionState

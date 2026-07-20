@@ -1509,19 +1509,37 @@ requests followed by one completion-driven refill. On a fresh run,
 `TContest.GetAudio` returns one zero `Single` for absolute requests 1 through 5;
 request 6 is the first 512-sample receiver block. The receiver swaps its
 parallel moving-average filter roles after absolute blocks 10 and 20, so logical
-DSP phase must retain the five-request offset. Physical startup and prefill
-framing belong to `PhysicalAudioSink` metadata and its device contract. Warmup
-samples must never be inserted into engine-rendered blocks, WAV output, raw
-capture, or null sinks. Runtime bandwidth changes are outside this fixed-vector
-contract. Stop/restart continuity remains separately pending because CE resets
-the block number and repeats warmup requests while preserving filter histories
-and roles, modulator phase, AGC memory, and RIT phase. The normal Run path
-clears remote stations before restarting.
+DSP phase retains the five-request offset by constructing the production
+receiver with an initial absolute request count of five. Physical startup and
+prefill framing belong only to `PhysicalAudioSink` and its device contract. A
+per-session playback coordinator presents five one-sample zero logical frames
+before presenting canonical engine audio. The first four are marked as
+synchronous prefill and the fifth as completion-driven. Diagnostics expose only
+logical frames that the coordinator has actually consumed. They never report
+the planned prefix as completed before the playback path executes. These
+logical frames do not enter the canonical audio-block queue, advance simulation
+time, consume random values, or update the last rendered simulation block. A
+preallocated one-block staging buffer prevents the five-sample prefix from
+holding a canonical queue slot past its normal producer boundary. Queue
+diagnostics continue to include any partially consumed staged canonical block,
+but never count the five prefix samples. The logical frames may share a native
+callback because portable audio backends do not expose CE's WinMM buffer
+lifecycle.
 
-The fresh-start fixed vector certifies the device-independent physical framing
-contract and receiver phase. It does not certify WAV, raw, or null adapter
-exclusion; those sinks require dedicated acceptance vectors before that part of
-the contract can be promoted.
+Warmup samples must never be inserted into engine-rendered blocks, WAV output,
+raw capture, or null sinks. Runtime bandwidth changes are outside this
+fixed-vector contract. Stop/restart continuity remains separately pending
+because CE resets the block number and repeats warmup requests while preserving
+filter histories and roles, modulator phase, AGC memory, and RIT phase. The
+normal Run path clears remote stations before restarting.
+
+The fresh-start fixed vector executes the production playback coordinator
+against a device-free native-shaped output buffer, verifies the five prefix
+samples and their transition into the first canonical engine block, and
+certifies the receiver phase separately. It does not certify a particular
+portable backend callback size or callback count. It also does not certify WAV,
+raw, or null adapter exclusion; those sinks require dedicated acceptance
+vectors before that part of the contract can be promoted.
 
 Local sidetone remains separate from receiver audio until the final monitor
 boundary. The default monitor level is the legacy `0 dB`. A lower monitor level
@@ -1542,7 +1560,10 @@ On unrecoverable physical-device failure:
 5. Allow device reselection and resume.
 
 The UX must not silently continue a contest whose audio the operator cannot
-hear.
+hear. Physical device recovery preserves cumulative diagnostic counters while
+starting a new health generation, so faults from an earlier device generation
+do not immediately pause a successful recovery. Recovery preserves consumed
+fresh-run startup-prefix state and does not replay the five logical frames.
 
 ### 14.6 WAV and null sinks
 

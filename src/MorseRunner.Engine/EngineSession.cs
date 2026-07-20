@@ -171,7 +171,8 @@ internal sealed class EngineSession : IAsyncDisposable
             CompatibilityProfile.SampleRate,
             CompatibilityProfile.BlockSize,
             settings.BandwidthHz,
-            settings.PitchHz);
+            settings.PitchHz,
+            CompatibilityProfile.AudioStartupRequestCount);
         _commands = Channel.CreateBounded<WorkItem>(
             new BoundedChannelOptions(CommandCapacity)
             {
