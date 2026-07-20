@@ -1512,19 +1512,28 @@ parallel moving-average filter roles after absolute blocks 10 and 20, so logical
 DSP phase retains the five-request offset by constructing the production
 receiver with an initial absolute request count of five. Physical startup and
 prefill framing belong only to `PhysicalAudioSink` and its device contract. A
-per-session playback coordinator presents five one-sample zero logical frames
-before presenting canonical engine audio. The first four are marked as
-synchronous prefill and the fifth as completion-driven. Diagnostics expose only
-logical frames that the coordinator has actually consumed. They never report
-the planned prefix as completed before the playback path executes. These
-logical frames do not enter the canonical audio-block queue, advance simulation
-time, consume random values, or update the last rendered simulation block. A
-preallocated one-block staging buffer prevents the five-sample prefix from
-holding a canonical queue slot past its normal producer boundary. Queue
+per-session playback coordinator has two explicit, idempotent presentation
+phases. Physical initialization and device-free parity preparation execute the
+four synchronous one-positive-zero-`Single` prefill presentations. The private
+fill core shared by the native `OnAudioRead` path and the device-free parity
+seam executes the fifth completion-driven presentation when a positive frame
+count first arrives. It then drains the five positive-zero samples before
+presenting canonical engine audio. A zero-frame fill does not execute the
+completion-driven presentation. Diagnostics derive each request's origin from
+the completed phase state: a fresh coordinator reports zero requests,
+synchronous preparation reports exactly requests 1 through 4 as prefill, and
+the first positive fill reports request 5 as completion-driven. They never
+infer a completed origin from a planned frame index or from prefix consumption.
+These logical frames do not enter the canonical audio-block queue, advance
+simulation time, consume random values, or update the last rendered simulation
+block. A preallocated one-block staging buffer prevents the five-sample prefix
+from holding a canonical queue slot past its normal producer boundary. Queue
 diagnostics continue to include any partially consumed staged canonical block,
-but never count the five prefix samples. The logical frames may share a native
-callback because portable audio backends do not expose CE's WinMM buffer
-lifecycle.
+but never count the five prefix samples. Recovery reuses the same coordinator,
+so neither presentation phase nor drained prefix samples replay. A new session
+creates a fresh coordinator and executes a fresh synchronous prefill phase. The
+logical frames may share a native callback because portable audio backends do
+not expose CE's WinMM buffer lifecycle.
 
 Warmup samples must never be inserted into engine-rendered blocks, WAV output,
 raw capture, or null sinks. Runtime bandwidth changes are outside this
@@ -1533,10 +1542,15 @@ because CE resets the block number and repeats warmup requests while preserving
 filter histories and roles, modulator phase, AGC memory, and RIT phase. The
 normal Run path clears remote stations before restarting.
 
-The fresh-start fixed vector executes the production playback coordinator
-against a device-free native-shaped output buffer, verifies the five prefix
-samples and their transition into the first canonical engine block, and
-certifies the receiver phase separately. It does not certify a particular
+The fresh-start fixed vector first proves that fresh physical diagnostics are
+empty, executes the same synchronous preparation used by physical
+initialization, and proves the intermediate four-request state. It then
+executes the shared production fill core against a device-free native-shaped
+output buffer, proves the fifth request's completion-driven origin, verifies
+the five prefix samples and their transition into the first canonical engine
+block, and certifies the receiver phase separately. These observations leave
+the canonical queue empty and do not change callback, underrun, drop, fault,
+or last-rendered-block diagnostics. The vector does not certify a particular
 portable backend callback size or callback count. It also does not certify WAV,
 raw, or null adapter exclusion; those sinks require dedicated acceptance
 vectors before that part of the contract can be promoted.

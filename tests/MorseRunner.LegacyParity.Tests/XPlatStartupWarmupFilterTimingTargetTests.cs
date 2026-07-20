@@ -31,7 +31,25 @@ public sealed class XPlatStartupWarmupFilterTimingTargetTests
             XPlatStartupWarmupFilterTimingTarget.EvidenceSource,
             observation.EvidenceSource);
         Assert.Contains(
+            "PhysicalAudioSink.PrepareDeviceFreeDiagnostics",
+            observation.EvidenceSource,
+            StringComparison.Ordinal);
+        Assert.Contains(
             "PhysicalAudioSink.FillDeviceFreeDiagnostics",
+            observation.EvidenceSource,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "PhysicalAudioSink.FillPlaybackCore",
+            observation.EvidenceSource,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "PhysicalAudioPlaybackCoordinator"
+                + ".PresentSynchronousStartupPrefill",
+            observation.EvidenceSource,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "PhysicalAudioPlaybackCoordinator"
+                + ".PresentCompletionDrivenStartup",
             observation.EvidenceSource,
             StringComparison.Ordinal);
         Assert.Contains(

@@ -86,6 +86,39 @@ public sealed class PhysicalAudioSink :
             .ToArray();
     }
 
+    internal void PrepareDeviceFreeDiagnostics(int canonicalBlockSize)
+    {
+        if (canonicalBlockSize != CompatibilityProfile.BlockSize)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(canonicalBlockSize),
+                "Device-free diagnostics require the canonical "
+                + "audio block size.");
+        }
+
+        lock (ContextGate)
+        {
+            EnsureDeviceFreeDiagnosticState();
+            if (_playbackCoordinator is null)
+            {
+                PreparePlaybackState(
+                    default,
+                    AudioStreamFormat.Compatibility);
+            }
+            else if (_playbackCoordinator.CanonicalBlockSize
+                != canonicalBlockSize)
+            {
+                throw new InvalidOperationException(
+                    "The device-free diagnostic block size changed.");
+            }
+            else
+            {
+                _playbackCoordinator
+                    .PresentSynchronousStartupPrefill();
+            }
+        }
+    }
+
     internal bool FillDeviceFreeDiagnostics(
         ReadOnlySpan<float> canonicalBlock,
         AudioBuffer<float> output,
@@ -101,35 +134,16 @@ public sealed class PhysicalAudioSink :
 
         lock (ContextGate)
         {
-            PhysicalAudioSinkState state =
-                (PhysicalAudioSinkState)Volatile.Read(ref _state);
-            ObjectDisposedException.ThrowIf(
-                state == PhysicalAudioSinkState.Disposed,
-                this);
-            if (state != PhysicalAudioSinkState.Created
-                || _source is not null
-                || Volatile.Read(ref _physicalInitializationAttempted) != 0)
-            {
-                throw new InvalidOperationException(
-                    "Device-free diagnostics require a new, uninitialized sink.");
-            }
-
+            EnsureDeviceFreeDiagnosticState();
             PhysicalAudioPlaybackCoordinator? playbackCoordinator =
                 _playbackCoordinator;
             if (playbackCoordinator is null)
             {
-                playbackCoordinator =
-                    new PhysicalAudioPlaybackCoordinator(
-                        canonicalBlock.Length);
-                Volatile.Write(
-                    ref _playbackCoordinator,
-                    playbackCoordinator);
-                _format = AudioStreamFormat.Compatibility;
-                _queue = new AudioBlockQueue(
-                    _options.QueueDepth,
-                    canonicalBlock.Length);
+                throw new InvalidOperationException(
+                    "Device-free diagnostics require explicit "
+                    + "startup preparation.");
             }
-            else if (playbackCoordinator.CanonicalBlockSize
+            if (playbackCoordinator.CanonicalBlockSize
                 != canonicalBlock.Length)
             {
                 throw new InvalidOperationException(
@@ -145,11 +159,27 @@ public sealed class PhysicalAudioSink :
                     "The device-free diagnostic queue is full.");
             }
 
-            return playbackCoordinator.FillInterleaved(
-                queue,
+            return FillPlaybackCore(
                 output,
                 frameCount,
                 channels);
+        }
+    }
+
+    private void EnsureDeviceFreeDiagnosticState()
+    {
+        PhysicalAudioSinkState state =
+            (PhysicalAudioSinkState)Volatile.Read(ref _state);
+        ObjectDisposedException.ThrowIf(
+            state == PhysicalAudioSinkState.Disposed,
+            this);
+        if (state != PhysicalAudioSinkState.Created
+            || _source is not null
+            || Volatile.Read(ref _physicalInitializationAttempted) != 0)
+        {
+            throw new InvalidOperationException(
+                "Device-free diagnostics require a new, "
+                + "uninitialized sink.");
         }
     }
 
@@ -292,6 +322,7 @@ public sealed class PhysicalAudioSink :
         _queue = new AudioBlockQueue(
             _options.QueueDepth,
             format.BlockSize);
+        playbackCoordinator.PresentSynchronousStartupPrefill();
         return playbackCoordinator;
     }
 
@@ -409,8 +440,7 @@ public sealed class PhysicalAudioSink :
     {
         try
         {
-            if (!_playbackCoordinator!.FillInterleaved(
-                    _queue!,
+            if (!FillPlaybackCore(
                     output,
                     frameCount,
                     channels))
@@ -434,6 +464,30 @@ public sealed class PhysicalAudioSink :
                 output[index] = 0f;
             }
         }
+    }
+
+    private bool FillPlaybackCore(
+        AudioBuffer<float> output,
+        ulong frameCount,
+        int channels)
+    {
+        PhysicalAudioPlaybackCoordinator playbackCoordinator =
+            _playbackCoordinator
+            ?? throw new InvalidOperationException(
+                "Physical playback has not been prepared.");
+        AudioBlockQueue queue = _queue
+            ?? throw new InvalidOperationException(
+                "The physical playback queue is unavailable.");
+        if (frameCount > 0)
+        {
+            playbackCoordinator.PresentCompletionDrivenStartup();
+        }
+
+        return playbackCoordinator.FillInterleaved(
+            queue,
+            output,
+            frameCount,
+            channels);
     }
 
     private void ReleaseContext(PhysicalAudioSinkState finalState)

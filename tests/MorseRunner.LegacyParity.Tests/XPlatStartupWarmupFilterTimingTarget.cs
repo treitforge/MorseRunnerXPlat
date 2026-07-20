@@ -21,7 +21,13 @@ public sealed class XPlatStartupWarmupFilterTimingTarget : IParityTarget
         + "+MorseRunner.Dsp.LegacyReceiverPipeline"
         + "+MorseRunner.Engine.IAudioSink.InitializeAsync"
         + "+MorseRunner.Engine.IAudioSink.WriteAsync"
+        + "+MorseRunner.Audio.PhysicalAudioSink.PrepareDeviceFreeDiagnostics"
         + "+MorseRunner.Audio.PhysicalAudioSink.FillDeviceFreeDiagnostics"
+        + "+MorseRunner.Audio.PhysicalAudioSink.FillPlaybackCore"
+        + "+MorseRunner.Audio.PhysicalAudioPlaybackCoordinator"
+        + ".PresentSynchronousStartupPrefill"
+        + "+MorseRunner.Audio.PhysicalAudioPlaybackCoordinator"
+        + ".PresentCompletionDrivenStartup"
         + "+MorseRunner.Audio.PhysicalAudioPlaybackCoordinator.FillInterleaved"
         + "+MorseRunner.Audio.PhysicalAudioSink.GetDiagnostics";
 
@@ -95,6 +101,24 @@ public sealed class XPlatStartupWarmupFilterTimingTarget : IParityTarget
             checked(outputSampleCount * sizeof(float)));
         try
         {
+            PhysicalAudioSinkDiagnostics freshDiagnostics =
+                physicalSink.GetDiagnostics();
+            ValidatePhysicalStartupPhase(
+                freshDiagnostics,
+                expectedRequestCount: 0,
+                expectedSynchronousRequestCount: 0,
+                "fresh");
+
+            physicalSink.PrepareDeviceFreeDiagnostics(
+                input.BlockSize);
+            PhysicalAudioSinkDiagnostics preparedDiagnostics =
+                physicalSink.GetDiagnostics();
+            ValidatePhysicalStartupPhase(
+                preparedDiagnostics,
+                input.PrefillRequestCount,
+                input.PrefillRequestCount,
+                "synchronous prefill");
+
             var output = new AudioBuffer<float>(
                 outputMemory,
                 outputSampleCount);
@@ -139,21 +163,63 @@ public sealed class XPlatStartupWarmupFilterTimingTarget : IParityTarget
 
             PhysicalAudioSinkDiagnostics diagnostics =
                 physicalSink.GetDiagnostics();
-            if (diagnostics.QueuedBlocks != 0
-                || diagnostics.CallbackCount != 0
-                || diagnostics.LastSimulationBlock != -1)
-            {
-                throw new InvalidOperationException(
-                    "The device-free physical startup observation "
-                    + "changed physical callback or engine-write "
-                    + "diagnostics.");
-            }
+            ValidatePhysicalStartupPhase(
+                diagnostics,
+                input.StartupRequestCount,
+                input.PrefillRequestCount,
+                "completion-driven refill");
 
             return diagnostics.StartupFraming;
         }
         finally
         {
             Marshal.FreeHGlobal(outputMemory);
+        }
+    }
+
+    private static void ValidatePhysicalStartupPhase(
+        PhysicalAudioSinkDiagnostics diagnostics,
+        int expectedRequestCount,
+        int expectedSynchronousRequestCount,
+        string phase)
+    {
+        if (diagnostics.State != PhysicalAudioSinkState.Created
+            || diagnostics.QueuedBlocks != 0
+            || diagnostics.CallbackCount != 0
+            || diagnostics.UnderrunCount != 0
+            || diagnostics.DroppedBlockCount != 0
+            || diagnostics.CallbackFaultCount != 0
+            || diagnostics.LastSimulationBlock != -1
+            || diagnostics.StartupFraming.IsDefault
+            || diagnostics.StartupFraming.Length
+                != expectedRequestCount)
+        {
+            throw new InvalidOperationException(
+                "The device-free physical startup " + phase
+                + " phase changed unrelated diagnostics or observed "
+                + "the wrong request count.");
+        }
+
+        for (int index = 0;
+             index < diagnostics.StartupFraming.Length;
+             index++)
+        {
+            PhysicalAudioSinkStartupFrame frame =
+                diagnostics.StartupFraming[index];
+            bool expectedSynchronous =
+                index < expectedSynchronousRequestCount;
+            if (frame.LogicalRequestNumber != index + 1
+                || frame.IsSynchronousPrefill
+                    != expectedSynchronous
+                || frame.Samples.Length != 1
+                || BitConverter.SingleToUInt32Bits(
+                    frame.Samples[0]) != 0)
+            {
+                throw new InvalidOperationException(
+                    "The device-free physical startup " + phase
+                    + " phase reported a request that was not "
+                    + "executed by that origin.");
+            }
         }
     }
 
