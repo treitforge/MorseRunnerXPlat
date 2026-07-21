@@ -79,8 +79,10 @@
         "linux",
         "macos"
       ],
-      "acceptanceStatus": "not-authored",
-      "caseIds": []
+      "acceptanceStatus": "partial",
+      "caseIds": [
+        "session.hst-invalid-start-settings"
+      ]
     },
     {
       "id": "catalog.contest-definitions",
@@ -741,7 +743,7 @@
     {"id": "contest.sweepstakes-complete-truth-model", "capabilityId": "contest.legacy-implementations", "behavior": "Sweepstakes models serial, weighted precedence, own call, check, section, copied values, truth, and errors.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.arrldx-naqp-home-filtering-and-location", "capabilityId": "contest.legacy-implementations", "behavior": "ARRL DX and NAQP apply CE home-call filtering and dynamic location or exchange derivation.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["DualExchContest.pas", "ArrlDx.pas", "NaQp.pas"], "legacySurfaceSelectors": ["legacy.support.contest.routine.dualexchcontest.tdualexchcontest.getexchangetypes", "legacy.support.contest.routine.arrldx.tarrldx.onsetmycall", "legacy.support.contest.routine.naqp.tncjnaqp.getexchangetypes", "legacy.support.contest.routine.naqp.tncjnaqp.iscalllocaltocontest", "legacy.support.contest.routine.naqp.tncjnaqp.onsetmycall"], "acceptanceStatus": "partial", "caseIds": ["contest.dynamic-exchange-type-locality-matrix"]},
     {"id": "contest.wpx-hst-station-serial-generation", "capabilityId": "contest.legacy-implementations", "behavior": "WPX and HST station serials use CE elapsed-time, skill, and random behavior.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Station.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.station.serialnrcustomrange", "legacy.sim.routine.station.tstation.nrastext"], "acceptanceStatus": "partial", "caseIds": ["contest.wpx-custom-range-remote-exchange-format-seed-12345"]},
-    {"id": "session.hst-wpx-start-constraints", "capabilityId": "session.run-mode-enumeration", "behavior": "HST and WPX start constraints, forced settings, activity, bandwidth, duration, and valid serial rules match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "session.hst-wpx-start-constraints", "capabilityId": "session.run-mode-enumeration", "behavior": "HST and WPX start constraints, forced settings, activity, bandwidth, duration, and valid serial rules match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.pas", "Ini.pas"], "legacySurfaceSelectors": ["legacy.main.handler.runbtnclick", "legacy.main.handler.runmnuclick", "legacy.ini.run-mode.rmhst", "legacy.ini.setting.station.serialnr"], "acceptanceStatus": "partial", "caseIds": ["session.hst-invalid-start-settings"]},
     {"id": "engine.station-delay-lifetime-and-call-pool-rules", "capabilityId": "simulation.state-models", "behavior": "Single-call delay, caller lifetime, patience, retry, Gaussian WPM, calls-from-keyer, station-ID rate, and HST call-pool removal match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "engine.midmessage-append-correction-and-abort", "capabilityId": "simulation.runtime-routines", "behavior": "Mid-message append, unsent callsign correction, and abort completion preserve CE timing and station notification.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "engine.confidence-lid-repeat-and-f12-branches", "capabilityId": "simulation.runtime-routines", "behavior": "Confidence, LID, Sweepstakes correction, call-and-number repeat, and F12 probability branches match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -5624,6 +5626,70 @@
       "failureCode": "settings-duration-full-range-mismatch",
       "fixture": "tests/parity/fixtures/legacy/settings-duration-full-range.json",
       "evidence": "tests/parity/evidence/settings-duration-full-range.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "session.hst-invalid-start-settings",
+      "capabilityId": "session.run-mode-enumeration",
+      "obligationIds": [
+        "session.hst-wpx-start-constraints"
+      ],
+      "behavior": "HST competition start is rejected when either the HST contest or Start of Contest serial-number mode is not selected.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v70",
+        "source": "tests/parity/legacy-oracle/v70/LegacyOracle.lpr",
+        "sourceSha256": "ade51c46ca49b1ce4933a38fc5ff1138dac7e92f48fe327fbe0684bb69bc00c8",
+        "buildRecipe": "tests/parity/legacy-oracle/v70/build-recipe.json",
+        "buildRecipeSha256": "b289bcd8e300802123ab3a3a0d7720990648bed16b0e9721b42cf1ccddbfe774"
+      },
+      "legacySources": [
+        "Main.pas",
+        "Ini.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.main.handler.runbtnclick",
+        "legacy.main.handler.runmnuclick",
+        "legacy.ini.run-mode.rmhst",
+        "legacy.ini.setting.station.serialnr"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The live v70 oracle invokes TMainForm.Run for each invalid HST setup through the headless CE widget set.",
+        "Each attempt begins in rmStop with seed 12345 and changes exactly one required HST setup value.",
+        "The XPlat target submits equivalent immutable SessionSettings directly to the authoritative engine.",
+        "Valid HST start, competition forced settings, and WPX competition behavior remain separate acceptance boundaries."
+      ],
+      "input": {
+        "correctContestId": "scHst",
+        "requiredSerialMode": "snStartContest",
+        "scenario": "session.hst-invalid-start-settings",
+        "seed": 12345,
+        "wrongContestId": "scWpx",
+        "wrongSerialMode": "snMidContest"
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatHstStartConstraintsTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 2,
+        "observedValuesSha256": "2c8783c110c7989c232f3d13440cdbf5e75ef7bf84380ab5f7754e42aed95ae2",
+        "firstDivergence": "The first attempt is expected to differ because CE remains stopped when rmHst is requested with scWpx, while XPlat initially creates the session. The second attempt independently proves the serial-range constraint.",
+        "functionalDivergenceCode": "session-hst-invalid-start-settings-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "session-hst-invalid-start-settings-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/session-hst-invalid-start-settings.json",
+      "evidence": "tests/parity/evidence/session-hst-invalid-start-settings.baseline.json",
       "firstGreenCommit": null
     }
   ]

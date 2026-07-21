@@ -1,0 +1,8 @@
+{
+  "correctContestId": "scHst",
+  "requiredSerialMode": "snStartContest",
+  "scenario": "session.hst-invalid-start-settings",
+  "seed": 12345,
+  "wrongContestId": "scWpx",
+  "wrongSerialMode": "snMidContest"
+}
