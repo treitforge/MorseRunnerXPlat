@@ -1786,7 +1786,9 @@ client. Both targets start `rmSingle` at 30 WPM. Before implementation,
 `TuiApplication.HandleAsync` reaches only 31 WPM through
 `IMorseRunnerClient`, while the pinned v47 CE observation reaches 32 WPM.
 Negative steps, HST rounding, persisted custom steps, bounds, and display
-remain separate acceptance boundaries.
+remain separate acceptance boundaries. Production TUI now sends +2 WPM and
+-2 WPM for its default speed actions; the positive action matches the pinned
+v47 observation exactly.
 
 ### 14.5 Device failure
 

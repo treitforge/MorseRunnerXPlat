@@ -363,10 +363,10 @@ public sealed class TuiApplication : IDisposable
                 await AdjustAsync(RadioControl.Bandwidth, -50, cancellationToken);
                 break;
             case TuiActionKind.SpeedUp:
-                await AdjustAsync(RadioControl.Speed, 1, cancellationToken);
+                await AdjustAsync(RadioControl.Speed, 2, cancellationToken);
                 break;
             case TuiActionKind.SpeedDown:
-                await AdjustAsync(RadioControl.Speed, -1, cancellationToken);
+                await AdjustAsync(RadioControl.Speed, -2, cancellationToken);
                 break;
             case TuiActionKind.NextContest:
                 ChangeSetup(

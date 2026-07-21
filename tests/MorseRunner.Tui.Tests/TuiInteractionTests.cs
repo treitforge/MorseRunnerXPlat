@@ -87,6 +87,29 @@ public sealed class TuiInteractionTests
     }
 
     [Fact]
+    public async Task SpeedUpUsesCeDefaultTwoWpmStep()
+    {
+        await using InProcessMorseRunnerClient client =
+            InProcessMorseRunnerClient.CreateDefault();
+        using var application = new TuiApplication(client, isHosted: false);
+        application.State.WordsPerMinute = 30;
+        CancellationToken cancellationToken =
+            TestContext.Current.CancellationToken;
+        await application.InitializeAsync(cancellationToken);
+        await application.HandleAsync(
+            new(TuiActionKind.StartSingle),
+            cancellationToken);
+
+        await application.HandleAsync(
+            new(TuiActionKind.SpeedUp),
+            cancellationToken);
+
+        SessionSnapshot snapshot = Assert.IsType<SessionSnapshot>(
+            application.State.Snapshot);
+        Assert.Equal(32, snapshot.CurrentWordsPerMinute);
+    }
+
+    [Fact]
     public void RendererAdaptsToCompactAndWideTerminals()
     {
         var state = new TuiState
