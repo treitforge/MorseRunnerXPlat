@@ -1944,7 +1944,8 @@ verifies an effective step of 20 WPM, and reaches 50 WPM from 30 through the
 real `TMainForm.FormKeyDown` PageUp path. Before implementation, production
 Avalonia retains the 21 WPM step and reaches 51 WPM. TUI, malformed values,
 PageDown, HST precedence, and direct menu choices remain separate acceptance
-boundaries.
+boundaries. Production Avalonia now clamps the loaded persisted step to CE's
+complete 1 through 20 range before using or preserving it.
 
 ### 14.5 Device failure
 

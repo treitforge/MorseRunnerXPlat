@@ -833,12 +833,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         IReadOnlyDictionary<string, string> values = result.Document.Values;
         StationCall = Get(values, "Station.Call", StationCall);
         WordsPerMinute = GetInt(values, "Station.Wpm", WordsPerMinute);
-        _wpmStepRate = Math.Max(
-            1,
+        _wpmStepRate = Math.Clamp(
             GetInt(
                 values,
                 "Settings.WpmStepRate",
-                _wpmStepRate));
+                _wpmStepRate),
+            1,
+            20);
         PitchHz = GetInt(values, "Station.Pitch", PitchHz);
         BandwidthHz = GetInt(values, "Station.BandWidth", BandwidthHz);
         Activity = GetInt(values, "Band.Activity", Activity);
