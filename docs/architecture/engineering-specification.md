@@ -1766,6 +1766,8 @@ real handleless `TMainForm.Panel8MouseDown` path once, moving RIT from 0 Hz to
 +50 Hz. Before implementation, `TuiApplication.HandleAsync` sends only +10 Hz
 through `IMorseRunnerClient`. The negative TUI action, HST, persisted custom
 steps, reset, and displayed state remain separate acceptance boundaries.
+Production TUI now sends +50 Hz and -50 Hz for its default RIT actions; the
+positive action matches the pinned v45 observation exactly.
 
 ### 14.5 Device failure
 

@@ -65,6 +65,28 @@ public sealed class TuiInteractionTests
     }
 
     [Fact]
+    public async Task RitUpUsesCeDefaultFiftyHertzStep()
+    {
+        await using InProcessMorseRunnerClient client =
+            InProcessMorseRunnerClient.CreateDefault();
+        using var application = new TuiApplication(client, isHosted: false);
+        CancellationToken cancellationToken =
+            TestContext.Current.CancellationToken;
+        await application.InitializeAsync(cancellationToken);
+        await application.HandleAsync(
+            new(TuiActionKind.StartSingle),
+            cancellationToken);
+
+        await application.HandleAsync(
+            new(TuiActionKind.RitUp),
+            cancellationToken);
+
+        SessionSnapshot snapshot = Assert.IsType<SessionSnapshot>(
+            application.State.Snapshot);
+        Assert.Equal(50, snapshot.RitOffsetHz);
+    }
+
+    [Fact]
     public void RendererAdaptsToCompactAndWideTerminals()
     {
         var state = new TuiState

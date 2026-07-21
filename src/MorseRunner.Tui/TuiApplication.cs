@@ -351,10 +351,10 @@ public sealed class TuiApplication : IDisposable
                 await SendAsync(OperatorIntent.Abort, cancellationToken);
                 break;
             case TuiActionKind.RitUp:
-                await AdjustAsync(RadioControl.Rit, 10, cancellationToken);
+                await AdjustAsync(RadioControl.Rit, 50, cancellationToken);
                 break;
             case TuiActionKind.RitDown:
-                await AdjustAsync(RadioControl.Rit, -10, cancellationToken);
+                await AdjustAsync(RadioControl.Rit, -50, cancellationToken);
                 break;
             case TuiActionKind.BandwidthUp:
                 await AdjustAsync(RadioControl.Bandwidth, 50, cancellationToken);
