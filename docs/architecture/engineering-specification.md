@@ -1780,6 +1780,14 @@ remain separate acceptance boundaries. Production Avalonia now sends +2 WPM
 and -2 WPM for its default speed commands; the positive command matches the
 pinned v46 observation exactly.
 
+The authored `ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345`
+case applies the same CE PageUp oracle semantics to the production terminal
+client. Both targets start `rmSingle` at 30 WPM. Before implementation,
+`TuiApplication.HandleAsync` reaches only 31 WPM through
+`IMorseRunnerClient`, while the pinned v47 CE observation reaches 32 WPM.
+Negative steps, HST rounding, persisted custom steps, bounds, and display
+remain separate acceptance boundaries.
+
 ### 14.5 Device failure
 
 On unrecoverable physical-device failure:
