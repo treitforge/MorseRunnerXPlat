@@ -1899,7 +1899,9 @@ invokes the real `TMainForm.FormKeyDown` PageDown path and reaches 23 WPM.
 Before implementation, production Avalonia loads and preserves the custom
 step but `SpeedDownCommand` still subtracts its fixed two-WPM default and
 reaches 28 WPM. TUI, lower-bound clamping, HST precedence, and direct menu
-choices remain separate acceptance boundaries.
+choices remain separate acceptance boundaries. Production Avalonia now
+subtracts the persisted step for non-HST PageDown while retaining the
+independent HST five-WPM boundary calculation.
 
 ### 14.5 Device failure
 

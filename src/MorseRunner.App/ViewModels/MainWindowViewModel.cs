@@ -1252,7 +1252,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     {
         int delta = SelectedRunMode.Id.Value == "rmHst"
             ? (((WordsPerMinute + 4) / 5) * 5 - 5) - WordsPerMinute
-            : -2;
+            : -_wpmStepRate;
         return AdjustRadioAsync(RadioControl.Speed, delta);
     }
 
