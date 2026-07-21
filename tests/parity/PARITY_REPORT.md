@@ -110,15 +110,15 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Partially authored capabilities: 6
 - Not-authored capabilities: 18
 - Behavioral obligations: 123
-- Source-bound obligations: 25
-- Pending source bindings: 98
+- Source-bound obligations: 26
+- Pending source bindings: 97
 - Complete obligations: 0
-- Partially authored obligations: 25
-- Not-authored obligations: 98
+- Partially authored obligations: 26
+- Not-authored obligations: 97
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 59
+- Active acceptance cases: 60
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 59
+- Legacy-green/XPlat-red cases: 60
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
@@ -138,7 +138,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `audio-dsp.legacy-processing` | Legacy portable keying and DSP processing | `partial` | 10 | 131 | 0 | `VCL/Crc32.pas`<br>`VCL/FarnsKeyer.pas`<br>`VCL/Mixers.pas`<br>`VCL/MorseKey.pas`<br>`VCL/MorseTbl.pas`<br>`VCL/MovAvg.pas`<br>`VCL/QuickAvg.pas`<br>`VCL/SndTypes.pas`<br>`VCL/VolumCtl.pas` |
 | `audio.legacy-adapters` | Legacy sound output, buffering, and WAV adapters | `not-authored` | 0 | 85 | 0 | `VCL/BaseComp.pas`<br>`VCL/SndCustm.pas`<br>`VCL/SndOut.pas`<br>`VCL/WavFile.pas` |
 | `ux.legacy-vcl-components` | Legacy VCL-only hint and volume controls | `not-authored` | 0 | 36 | 9 | `VCL/PermHint.pas`<br>`VCL/VolmSldr.pas` |
-| `contest.legacy-implementations` | Legacy contest-specific implementations | `partial` | 17 | 215 | 0 | `ACAG.pas`<br>`ALLJA.pas`<br>`ArrlDx.pas`<br>`ArrlFd.pas`<br>`ArrlSS.pas`<br>`CqWpx.pas`<br>`CqWW.pas`<br>`CWOPS.pas`<br>`CWSST.pas`<br>`DualExchContest.pas`<br>`IaruHf.pas`<br>`NaQp.pas` |
+| `contest.legacy-implementations` | Legacy contest-specific implementations | `partial` | 18 | 215 | 0 | `ACAG.pas`<br>`ALLJA.pas`<br>`ArrlDx.pas`<br>`ArrlFd.pas`<br>`ArrlSS.pas`<br>`CqWpx.pas`<br>`CqWW.pas`<br>`CWOPS.pas`<br>`CWSST.pas`<br>`DualExchContest.pas`<br>`IaruHf.pas`<br>`NaQp.pas` |
 | `data.legacy-parsers` | Legacy call, prefix, exchange, and serial data parsers | `not-authored` | 0 | 477 | 0 | `CallLst.pas`<br>`DXCC.pas`<br>`ExchFields.pas`<br>`SerNRGen.pas`<br>`Util/ArrlSections.pas`<br>`Util/CallsignUtils.pas`<br>`Util/Lexer.pas`<br>`Util/SSExchParser.pas`<br>`ACAG.pas`<br>`ALLJA.pas`<br>`ArrlDx.pas`<br>`ArrlFd.pas`<br>`ArrlSS.pas`<br>`CqWW.pas`<br>`CWOPS.pas`<br>`CWSST.pas`<br>`IaruHf.pas`<br>`Main.pas`<br>`NaQp.pas`<br>`Test/SSLexerTest.pas` |
 | `simulation.legacy-effects` | Legacy QSB and random effects | `partial` | 10 | 15 | 6 | `Qsb.pas`<br>`RndFunc.pas` |
 | `ux.score-dialog` | Legacy score dialog | `not-authored` | 0 | 5 | 0 | `ScoreDlg.pas` |
@@ -197,7 +197,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `engine.start-silent-empty-enter-cq` | `simulation.runtime-routines` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | Start is silent and an empty Enter initiates the appropriate CE contest CQ. |
 | `engine.contest-specific-cq-tu-and-station-id` | `contest.legacy-implementations` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | CQ, TU, operator call insertion, and periodic station-ID messages match each CE contest. |
 | `contest.full-remote-exchange-formatting` | `contest.legacy-implementations` | `bound` | `partial` | 14 | `windows`, `linux`, `macos` | Remote exchanges retain and format every CE contest identity field, cut number, repeat, and correction variant. |
-| `contest.required-exchange-fields-all-contests` | `contest.legacy-implementations` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | CWT, SST, Field Day, NAQP, Sweepstakes, WPX, HST, and all other contests include every required CE exchange field. |
+| `contest.required-exchange-fields-all-contests` | `contest.legacy-implementations` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | CWT, SST, Field Day, NAQP, Sweepstakes, WPX, HST, and all other contests include every required CE exchange field. |
 | `contest.allja-acag-truth-column-mapping` | `contest.legacy-implementations` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | ALLJA and ACAG station truth use the correct CE data columns without serial fallback. |
 | `contest.sweepstakes-complete-truth-model` | `contest.legacy-implementations` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Sweepstakes models serial, weighted precedence, own call, check, section, copied values, truth, and errors. |
 | `contest.arrldx-naqp-home-filtering-and-location` | `contest.legacy-implementations` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | ARRL DX and NAQP apply CE home-call filtering and dynamic location or exchange derivation. |
@@ -343,6 +343,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `ux.wpm-step-upper-clamp-page-up-from-21-seed-12345` | `ux.keyboard-workflows` | `ux.wpm-default-page-up-step` | `legacy-green-xplat-red` | `ux-WPM-step-upper-clamp-mismatch` | `pass` | `fail` |
 | `ux.tui-wpm-step-upper-clamp-page-up-from-21-seed-12345` | `ux.keyboard-workflows` | `ux.wpm-default-page-up-step` | `legacy-green-xplat-red` | `ux-TUI-WPM-step-upper-clamp-mismatch` | `pass` | `fail` |
 | `catalog.contest-definition-metadata-ce-order` | `catalog.contest-definitions` | `catalog.contest-metadata-and-defaults` | `legacy-green-xplat-red` | `catalog-contest-definition-metadata-mismatch` | `pass` | `fail` |
+| `contest.invalid-own-exchange-messages-ce-order` | `contest.legacy-implementations` | `contest.required-exchange-fields-all-contests` | `legacy-green-xplat-red` | `contest-invalid-own-exchange-message-mismatch` | `pass` | `fail` |
 
 ## Retained noncertifying observations
 

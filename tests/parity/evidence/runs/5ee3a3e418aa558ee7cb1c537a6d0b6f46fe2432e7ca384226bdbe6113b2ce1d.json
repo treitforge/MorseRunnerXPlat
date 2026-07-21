@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "target": "legacy",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "0996076c0f42c295e44c92527ee57d60a485fa4d",
+      "tree": "c1033c1712ccdfbb0e98bedf4107dcacce47cf52",
+      "clean": true
+    },
+    "legacy": {
+      "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+      "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+      "clean": true
+    }
+  },
+  "expectedParityIds": [
+    "contest.invalid-own-exchange-messages-ce-order"
+  ],
+  "results": [
+    {
+      "parityId": "contest.invalid-own-exchange-messages-ce-order",
+      "acceptanceTestName": "parity:contest.invalid-own-exchange-messages-ce-order()",
+      "target": "legacy",
+      "adapter": "LegacyOracleTarget",
+      "caseDefinitionSha256": "f1cf0628eef36cd07158b1b14c3d7fd103e5834f2ca4496f55619ac6c0b26578",
+      "fixtureSha256": "3d2a91ad68909a0d7c4579dd10d86bb1530365dfee98ae746266bdc9d50a6843",
+      "outcome": "passed",
+      "failureCode": null,
+      "evidenceSource": "tests/parity/legacy-oracle/v64/LegacyOracle.lpr",
+      "observedValues": [
+        "contest|ordinal=0|id=scWpx|valid=false|error=Invalid exchange: \u0027\u0027 - expecting \u0027RST \u003Cserial\u003E\u0027 (e.g. 5NN #|123).",
+        "contest|ordinal=1|id=scCwt|valid=false|error=Invalid exchange: \u0027\u0027 - expecting \u0027\u003Cop name\u003E \u003CCWOPS Number|State|Country\u003E\u0027 (e.g. DAVID 123).",
+        "contest|ordinal=2|id=scFieldDay|valid=false|error=Invalid exchange: \u0027\u0027 - expecting \u0027\u003Cclass\u003E \u003Csection\u003E\u0027 (e.g. 3A OR).",
+        "contest|ordinal=3|id=scNaQp|valid=false|error=Invalid exchange: \u0027\u0027 - expecting \u0027\u003Cname\u003E [\u003Cstate|prov|dxcc-entity\u003E]\u0027 (e.g. ALEX ON).",
+        "contest|ordinal=4|id=scHst|valid=false|error=Invalid exchange: \u0027\u0027 - expecting \u0027RST \u003Cserial\u003E\u0027 (e.g. 5NN #).",
+        "contest|ordinal=5|id=scCQWW|valid=false|error=Invalid exchange: \u0027\u0027 - expecting \u0027RST \u003Ccq-zone\u003E\u0027 (e.g. 5NN 3).",
+        "contest|ordinal=6|id=scArrlDx|valid=false|error=Invalid exchange: \u0027\u0027 - expecting \u0027RST \u003Cstate|province|power\u003E\u0027 (e.g. 5NN ON).",
+        "contest|ordinal=7|id=scSst|valid=false|error=Invalid exchange: \u0027\u0027 - expecting \u0027\u003Cop name\u003E \u003CState|Prov|DX\u003E\u0027 (e.g. BRUCE MA).",
+        "contest|ordinal=8|id=scAllJa|valid=false|error=Invalid exchange: \u0027\u0027 - expecting \u0027RST \u003CPref\u003E\u003CPower\u003E\u0027 (e.g. 5NN 10H).",
+        "contest|ordinal=9|id=scAcag|valid=false|error=Invalid exchange: \u0027\u0027 - expecting \u0027RST \u003CCity|Gun|Ku\u003E\u003CPower\u003E\u0027 (e.g. 5NN 1002H).",
+        "contest|ordinal=10|id=scIaruHf|valid=false|error=Invalid exchange: \u0027\u0027 - expecting \u0027RST \u003CItu-zone|IARU Society\u003E\u0027 (e.g. 5NN 6).",
+        "contest|ordinal=11|id=scArrlSS|valid=false|error=Invalid exchange: \u0027\u0027 - expecting \u0027[#|123] \u003Cprecedence\u003E \u003Ccheck\u003E \u003Csection\u003E\u0027 (e.g. A 72 OR)."
+      ],
+      "observedValueCount": 12,
+      "observedValuesSha256": "76a0b772cab598d384793e9bc607ff9dfa1e13cb1b67da85c719e657bb2899e9",
+      "firstDivergence": null,
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v64",
+        "source": "tests/parity/legacy-oracle/v64/LegacyOracle.lpr",
+        "sourceSha256": "6a6f3c4cd141dcf05197567042d897c14c380d3e3557f194e8d627c29d58c0ed",
+        "buildRecipe": "tests/parity/legacy-oracle/v64/build-recipe.json",
+        "buildRecipeSha256": "5c79b78ddbbe7dc315813ac008922326ef94494fa9b02aea33cd2349b0d6c9af",
+        "registrySha256": "8a7dbb42d0bb35782017de5edb0b4b40bcf4cd667262587ef21549b6439c13fe",
+        "executableSha256": "7864664a688a8ca7ac6359d6754cc258108019c71ff546aba0da059c7afe3bde",
+        "provenance": "artifacts/legacy-oracle/builds/legacy-oracle-v64/0391d6ba5e2c9ca2eeeb20ef13f2f9b7188517d34339898915832265c78ed44b/1fce3bee5b8d4ac4ba48eb5f49c6f880/LegacyOracle.provenance.json",
+        "provenanceSha256": "6672a9a04726456d413eb3e44908c67b992f96b8b2bf877e586f464ab7f20e60"
+      },
+      "executionCount": 1
+    }
+  ]
+}
