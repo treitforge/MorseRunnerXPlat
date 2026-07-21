@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "target": "legacy",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "128c44c5040bcf5f16aad7b62614b49af010b970",
+      "tree": "4255c85c88bfff0fc754216a1af285c48f3c8c6d",
+      "clean": true
+    },
+    "legacy": {
+      "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+      "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+      "clean": true
+    }
+  },
+  "expectedParityIds": [
+    "audio.rit-upper-clamp-extra-click-second-caller-block-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "audio.rit-upper-clamp-extra-click-second-caller-block-seed-12345",
+      "acceptanceTestName": "parity:audio.rit-upper-clamp-extra-click-second-caller-block-seed-12345()",
+      "target": "legacy",
+      "adapter": "LegacyOracleTarget",
+      "caseDefinitionSha256": "e6f75d6cd4487b541f6796801fcb3b09dc973be2d96797ffe4024d9057ad471e",
+      "fixtureSha256": "67881babee38b313e93137dcbd26be8573969dbc62daaf7c19627123b553b900",
+      "outcome": "passed",
+      "failureCode": null,
+      "evidenceSource": "tests/parity/legacy-oracle/v43/LegacyOracle.lpr",
+      "observedValues": [
+        "configuration|run-mode=rmStop|seed=12345|sample-rate=11025|block-size=512|startup-requests=5|absolute-blocks=6,7|rit-step-hz=50|fixed-clicks=10|clamped-clicks=11|upper-bound-hz=500|fixed-result-hz=500|clamped-result-hz=500|change-before-absolute-block=7|handler=TMainForm.Panel8MouseDown|qrn=false|qrm=false|qsb=false|flutter=false|qsk=false|lids=false",
+        "remote-station|class=TScriptedStation|pitch-offset-hz=360|amplitude=18000|message=TEST TEST|rendered-samples=1024|probe-sample-indexes=0,1,2,148,149,150,255,310,384,509,510,511",
+        "rit-before-upper-bound-block[0]|probe-bits=00000000,00000000,00000000,00000000,00000000,00000000,00000000,b850d0b5,3a14b64f,bdc640b0,bd0b0f0c,3d0cba45|peak=0.160339519|rms=0.039045393|float-sha256=2ed89f5a0efa340a7546fed86add29ed234bf16925cec59d797c41ca9a217ccb",
+        "rit-plus-500-block[1]|probe-bits=3db633f1,3debccf4,3dda374c,3dbfa71d,3de2177b,3dc603b0,bd7ffa6b,bbb23967,be2bdf5c,bdbb3448,bc5fca32,3d886648|peak=0.317302436|rms=0.139334744|float-sha256=d22adaeb4130e08c7d2e8adeb9e37779ddd22e0b1967f9b875e66624ead5ffc3",
+        "rit-extra-click-clamped-block[1]|probe-bits=3db633f1,3debccf4,3dda374c,3dbfa71d,3de2177b,3dc603b0,bd7ffa6b,bbb23967,be2bdf5c,bdbb3448,bc5fca32,3d886648|peak=0.317302436|rms=0.139334744|float-sha256=d22adaeb4130e08c7d2e8adeb9e37779ddd22e0b1967f9b875e66624ead5ffc3",
+        "comparison|exact-equal=true|first-divergence=-1|rit-plus-500-float-sha256=d22adaeb4130e08c7d2e8adeb9e37779ddd22e0b1967f9b875e66624ead5ffc3|rit-extra-click-float-sha256=d22adaeb4130e08c7d2e8adeb9e37779ddd22e0b1967f9b875e66624ead5ffc3",
+        "terminal-random|ordinal=2048|rit-plus-500-single-bits=3f53fd06|rit-extra-click-single-bits=3f53fd06"
+      ],
+      "observedValueCount": 7,
+      "observedValuesSha256": "ab65b4a12612f8fa697e6a18acfafb68c292531d48a48a91ccab532fe3e8f04d",
+      "firstDivergence": null,
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v43",
+        "source": "tests/parity/legacy-oracle/v43/LegacyOracle.lpr",
+        "sourceSha256": "d57a16e232d2d2ef02118246d3c7b90ea4cda1ae89c782c2bd399972def41d24",
+        "buildRecipe": "tests/parity/legacy-oracle/v43/build-recipe.json",
+        "buildRecipeSha256": "ce27dd176df342a0c995ff9c3543b0c09067003018cdbc4e9af3bba25c6276ae",
+        "registrySha256": "351a538921a51bf170ac0258a710f16156f81eb935db95ea4e0977605e791409",
+        "executableSha256": "02fb2c85e6ed3c8b3071849ae1e3ad0cd6ab244fce649afce21b52ac3f1565b0",
+        "provenance": "artifacts/legacy-oracle/builds/legacy-oracle-v43/9300a49964e5b6c664af0640f9bd340302d5289aab0d5c3a607d4f7bc9c21fec/9bd480edde7747dfb7181dd07493be49/LegacyOracle.provenance.json",
+        "provenanceSha256": "1a8ef8e245b0b14f49108ac607a43752b21f5781289ec02ec22b6d21bd0acb71"
+      },
+      "executionCount": 1
+    }
+  ]
+}
