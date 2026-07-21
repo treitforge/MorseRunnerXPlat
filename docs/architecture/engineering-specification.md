@@ -1853,7 +1853,9 @@ WPM. The v53 CE oracle invokes the real `TMainForm.FormKeyDown` PageDown path
 and rounds downward to 30 WPM. Before implementation, the production
 Avalonia `SpeedDownCommand` sends its fixed non-HST two-WPM adjustment and
 reaches 31 WPM. Exact-boundary changes, TUI PageDown, persisted custom steps,
-and direct menu choices remain separate acceptance boundaries.
+and direct menu choices remain separate acceptance boundaries. Production
+Avalonia now computes PageDown's delta from the current authoritative WPM in
+`rmHst`, and the fixed vector matches the pinned v53 observation exactly.
 
 ### 14.5 Device failure
 

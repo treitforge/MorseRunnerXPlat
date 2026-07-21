@@ -251,7 +251,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         SpeedUpCommand = new AsyncCommand(
             AdjustSpeedUpAsync,
             () => _sessionState is SessionState.Running or SessionState.Paused);
-        SpeedDownCommand = CreateRadioCommand(RadioControl.Speed, -2);
+        SpeedDownCommand = new AsyncCommand(
+            AdjustSpeedDownAsync,
+            () => _sessionState is SessionState.Running or SessionState.Paused);
         ShowScoreCommand = new AsyncCommand(ShowScoreAsync);
         ExportJsonCommand = new AsyncCommand(
             () => ExportResultAsync(ResultExportFormat.Json),
@@ -1238,6 +1240,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         int delta = SelectedRunMode.Id.Value == "rmHst"
             ? ((WordsPerMinute / 5) * 5 + 5) - WordsPerMinute
             : 2;
+        return AdjustRadioAsync(RadioControl.Speed, delta);
+    }
+
+    private Task AdjustSpeedDownAsync()
+    {
+        int delta = SelectedRunMode.Id.Value == "rmHst"
+            ? (((WordsPerMinute + 4) / 5) * 5 - 5) - WordsPerMinute
+            : -2;
         return AdjustRadioAsync(RadioControl.Speed, delta);
     }
 

@@ -138,6 +138,21 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task SpeedDownRoundsToPreviousFiveWpmBoundaryInHstMode()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault())
+        {
+            WordsPerMinute = 33,
+        };
+        await viewModel.StartHstCommand.ExecuteAsync(null);
+
+        await viewModel.SpeedDownCommand.ExecuteAsync(null);
+
+        Assert.Equal(30, viewModel.WordsPerMinute);
+    }
+
+    [Fact]
     public async Task OperatorIntentAndQsoLoggingUseSemanticClientCommands()
     {
         await using var viewModel = new MainWindowViewModel(
