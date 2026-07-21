@@ -5639,9 +5639,9 @@
         "adapterId": "LegacyOracleTarget",
         "versionId": "legacy-oracle-v70",
         "source": "tests/parity/legacy-oracle/v70/LegacyOracle.lpr",
-        "sourceSha256": "ade51c46ca49b1ce4933a38fc5ff1138dac7e92f48fe327fbe0684bb69bc00c8",
+        "sourceSha256": "4cc7705a915a899ec0a5bd7271fb32dbc941fdd3203372c51a712823eb20417a",
         "buildRecipe": "tests/parity/legacy-oracle/v70/build-recipe.json",
-        "buildRecipeSha256": "b289bcd8e300802123ab3a3a0d7720990648bed16b0e9721b42cf1ccddbfe774"
+        "buildRecipeSha256": "0bed180dbfba1e2223b2bf1b47fba6059eeef3cd0eb4c7b49baae8c7927d83f9"
       },
       "legacySources": [
         "Main.pas",

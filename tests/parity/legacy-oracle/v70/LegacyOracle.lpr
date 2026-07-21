@@ -2180,6 +2180,14 @@ begin
   end;
 end;
 
+function OracleMessageBox(
+  Text: PChar;
+  Caption: PChar;
+  Flags: Longint): Integer;
+begin
+  Result := IDOK;
+end;
+
 procedure ObserveHstStartConstraints(
   const Values: TStrings;
   const Input: TJSONObject);
@@ -2202,6 +2210,7 @@ begin
     raise Exception.Create(
       'HST start-constraint input does not match its pinned contract');
 
+  MessageBoxFunction := @OracleMessageBox;
   MainForm := TMainForm.CreateNew(nil);
   try
     Ini.RunMode := rmStop;
@@ -2237,6 +2246,7 @@ begin
   if Values.Count <> 2 then
     raise Exception.Create(
       'HST start-constraint capture emitted an invalid row count');
+  MessageBoxFunction := nil;
 end;
 
 var
