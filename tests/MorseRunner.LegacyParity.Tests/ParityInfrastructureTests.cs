@@ -84,6 +84,7 @@ public sealed class ParityInfrastructureTests
                 "contest.full-cut-numeric-remote-exchange-format-seed-12345",
                 "contest.hst-remote-exchange-format-seed-12345",
                 "contest.jarl-random-cut-remote-exchange-format-seed-12345",
+                "contest.lid-serial-correction-remote-exchange-format-seed-16",
                 "contest.naqp-remote-exchange-format-seed-12345",
                 "contest.rare-rst-error-remote-exchange-format-seed-12345",
                 "contest.sst-remote-exchange-format-seed-12345",
@@ -119,6 +120,7 @@ public sealed class ParityInfrastructureTests
                 "contest.full-cut-numeric-remote-exchange-format-seed-12345",
                 "contest.hst-remote-exchange-format-seed-12345",
                 "contest.jarl-random-cut-remote-exchange-format-seed-12345",
+                "contest.lid-serial-correction-remote-exchange-format-seed-16",
                 "contest.naqp-remote-exchange-format-seed-12345",
                 "contest.rare-rst-error-remote-exchange-format-seed-12345",
                 "contest.sst-remote-exchange-format-seed-12345",
@@ -236,6 +238,11 @@ public sealed class ParityInfrastructureTests
             ParityAcceptanceRegistry
                 .Get(
                     "contest.rare-rst-error-remote-exchange-format-seed-12345")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatLidSerialCorrectionRemoteExchangeFormatTarget>(
+            ParityAcceptanceRegistry
+                .Get(
+                    "contest.lid-serial-correction-remote-exchange-format-seed-16")
                 .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatHstRemoteExchangeFormatTarget>(
             ParityAcceptanceRegistry

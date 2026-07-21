@@ -403,6 +403,7 @@
         "contest.arrldx-high-r1-power-remote-exchange-format-seed-12345",
         "contest.full-cut-numeric-remote-exchange-format-seed-12345",
         "contest.jarl-random-cut-remote-exchange-format-seed-12345",
+        "contest.lid-serial-correction-remote-exchange-format-seed-16",
         "contest.rare-rst-error-remote-exchange-format-seed-12345",
         "contest.hst-remote-exchange-format-seed-12345",
         "contest.naqp-remote-exchange-format-seed-12345",
@@ -699,7 +700,7 @@
     {"id": "engine.event-driven-poisson-caller-arrivals", "capabilityId": "simulation.runtime-routines", "behavior": "Caller creation follows completed CQ, TU, and MyCall events with CE Poisson and no-stop rules.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "engine.start-silent-empty-enter-cq", "capabilityId": "simulation.runtime-routines", "behavior": "Start is silent and an empty Enter initiates the appropriate CE contest CQ.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.pas", "Contest.pas", "MyStn.pas"], "legacySurfaceSelectors": ["legacy.integration.command-line-path.main-pas.tmainform.run", "legacy.sim.routine.contest.tcontest.sendmsg", "legacy.sim.routine.mystn.tmystation.sendtext"], "acceptanceStatus": "partial", "caseIds": ["engine.start-silent-empty-enter-cq-seed-12345"]},
     {"id": "engine.contest-specific-cq-tu-and-station-id", "capabilityId": "contest.legacy-implementations", "behavior": "CQ, TU, operator call insertion, and periodic station-ID messages match each CE contest.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Contest.pas", "MyStn.pas", "CWOPS.pas", "ArrlFd.pas", "CWSST.pas", "ArrlSS.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.settings.stationidrate", "legacy.sim.routine.contest.tcontest.sendmsg", "legacy.sim.routine.contest.tcontest.onmefinishedsending", "legacy.sim.routine.contest.tcontest.onsaveqsocomplete", "legacy.sim.routine.contest.tcontest.onstationidsent", "legacy.sim.routine.mystn.tmystation.sendtext", "legacy.support.contest.routine.cwops.tcwops.sendmsg", "legacy.support.contest.routine.arrlfd.tarrlfieldday.sendmsg", "legacy.support.contest.routine.cwsst.tcwsst.sendmsg", "legacy.support.contest.routine.arrlss.tsweepstakes.sendmsg"], "acceptanceStatus": "partial", "caseIds": ["engine.contest-specific-cq-tu-station-id-seed-12345"]},
-    {"id": "contest.full-remote-exchange-formatting", "capabilityId": "contest.legacy-implementations", "behavior": "Remote exchanges retain and format every CE contest identity field, cut number, repeat, and correction variant.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "Station.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getexchangetypes", "legacy.sim.routine.contest.tcontest.getsentexchtypes", "legacy.sim.routine.station.tstation.nrastext"], "acceptanceStatus": "partial", "caseIds": ["contest.cwt-remote-exchange-format-seed-12345", "contest.default-two-field-remote-exchange-format-seed-12345", "contest.arrldx-high-r1-power-remote-exchange-format-seed-12345", "contest.full-cut-numeric-remote-exchange-format-seed-12345", "contest.jarl-random-cut-remote-exchange-format-seed-12345", "contest.rare-rst-error-remote-exchange-format-seed-12345", "contest.hst-remote-exchange-format-seed-12345", "contest.naqp-remote-exchange-format-seed-12345", "contest.fieldday-remote-exchange-format-seed-12345", "contest.sst-remote-exchange-format-seed-12345", "contest.sweepstakes-remote-exchange-format-seed-12345", "contest.wpx-midcontest-remote-exchange-format-seed-12345"]},
+    {"id": "contest.full-remote-exchange-formatting", "capabilityId": "contest.legacy-implementations", "behavior": "Remote exchanges retain and format every CE contest identity field, cut number, repeat, and correction variant.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "Station.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getexchangetypes", "legacy.sim.routine.contest.tcontest.getsentexchtypes", "legacy.sim.routine.station.tstation.nrastext"], "acceptanceStatus": "partial", "caseIds": ["contest.cwt-remote-exchange-format-seed-12345", "contest.default-two-field-remote-exchange-format-seed-12345", "contest.arrldx-high-r1-power-remote-exchange-format-seed-12345", "contest.full-cut-numeric-remote-exchange-format-seed-12345", "contest.jarl-random-cut-remote-exchange-format-seed-12345", "contest.lid-serial-correction-remote-exchange-format-seed-16", "contest.rare-rst-error-remote-exchange-format-seed-12345", "contest.hst-remote-exchange-format-seed-12345", "contest.naqp-remote-exchange-format-seed-12345", "contest.fieldday-remote-exchange-format-seed-12345", "contest.sst-remote-exchange-format-seed-12345", "contest.sweepstakes-remote-exchange-format-seed-12345", "contest.wpx-midcontest-remote-exchange-format-seed-12345"]},
     {"id": "contest.required-exchange-fields-all-contests", "capabilityId": "contest.legacy-implementations", "behavior": "CWT, SST, Field Day, NAQP, Sweepstakes, WPX, HST, and all other contests include every required CE exchange field.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.allja-acag-truth-column-mapping", "capabilityId": "contest.legacy-implementations", "behavior": "ALLJA and ACAG station truth use the correct CE data columns without serial fallback.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.sweepstakes-complete-truth-model", "capabilityId": "contest.legacy-implementations", "behavior": "Sweepstakes models serial, weighted precedence, own call, check, section, copied values, truth, and errors.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -2477,6 +2478,73 @@
       "failureCode": "contest-jarl-random-cut-remote-exchange-format-mismatch",
       "fixture": "tests/parity/fixtures/legacy/contest-jarl-random-cut-remote-exchange-format-seed-12345.json",
       "evidence": "tests/parity/evidence/contest-jarl-random-cut-remote-exchange-format-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "contest.lid-serial-correction-remote-exchange-format-seed-16",
+      "capabilityId": "contest.legacy-implementations",
+      "obligationIds": [
+        "contest.full-remote-exchange-formatting"
+      ],
+      "behavior": "For a fixed WPX LID station with its one-shot serial-error state armed at the production creation checkpoint, CE changes an eligible final serial digit by one, appends EEEEE and the correct three-digit serial, clears the state, and then applies the ordinary RST and cut-number decisions in their exact order.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v35",
+        "source": "tests/parity/legacy-oracle/v35/LegacyOracle.lpr",
+        "sourceSha256": "bb9df50426442eb2bfce1a869ada4dcb1d46d809ac09fc8fb58b5d00353b749f",
+        "buildRecipe": "tests/parity/legacy-oracle/v35/build-recipe.json",
+        "buildRecipeSha256": "cc33e4129f0eaaf82795abd4fd254be77cdf8f282f57452b8cc1cab931011c6d"
+      },
+      "legacySources": [
+        "Station.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.sim.routine.station.tstation.nrastext"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The handleless CE runtime selects scWpx and rmWpx with local station W7SST, remote station K1ABC, seed 16, RST 599, serial 123, and LIDs enabled.",
+        "The formatter checkpoint begins after raw draw nine. Both targets consume R1 at draw one, the operator response and skill choices at draws two and three, and the station-creation LID decision at draw four. Seed 16 makes draw four less than 0.1.",
+        "The remaining production candidate setup consumes draws five through nine before exchange formatting. R1 rounds to 223 thousandths and guards the candidate creation checkpoint.",
+        "A parity-only TStation subclass arms the protected one-shot state and exposes the NrAsText result without substituting the serial corruption or final formatted text.",
+        "The XPlat adapter uses production SimulatedStation.CreateCandidate with LIDs enabled and observes the production exchange formatter through its internal parity-only seam. XPlat currently consumes but discards the draw-four decision.",
+        "The final serial digit 3 is eligible for corruption. Formatter draw ten is at least 0.5, so CE increments it to 4, appends EEEEE 123, and produces 5NN124EEEEE 123 after subsequent RST and numeric-cut decisions.",
+        "Ineligible final digits, the decrement branch, repeated formatter calls, automatic creation coverage across all run modes, and reply-prefix rendering remain pending, so the obligation remains partial."
+      ],
+      "input": {
+        "scenario": "contest.lid-serial-correction-remote-exchange-format-seed-16",
+        "runModeId": "rmWpx",
+        "stationCall": "W7SST",
+        "remoteCall": "K1ABC",
+        "rst": 599,
+        "serial": 123,
+        "formatterCheckpointDraw": 9,
+        "r1Milli": 223,
+        "lids": true,
+        "seed": 16
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatLidSerialCorrectionRemoteExchangeFormatTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 2,
+        "observedValuesSha256": "aa1b52d81ef7be2d84e05b3caead4fdda0a3f4335921beb9d8fd689e445cb668",
+        "firstDivergence": "The zero-based first mismatch is ordinal 1, scWpx. CE retains the LID creation decision and formats 5NN124EEEEE 123, while XPlat consumes but discards that decision and formats the ordinary 5NN123 exchange.",
+        "functionalDivergenceCode": "contest-lid-serial-correction-remote-exchange-format-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "contest-lid-serial-correction-remote-exchange-format-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/contest-lid-serial-correction-remote-exchange-format-seed-16.json",
+      "evidence": "tests/parity/evidence/contest-lid-serial-correction-remote-exchange-format-seed-16.baseline.json",
       "firstGreenCommit": null
     },
     {
