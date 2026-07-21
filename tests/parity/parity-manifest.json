@@ -127,7 +127,8 @@
         "settings.duration-full-range",
         "settings.clean-profile-ce-defaults",
         "settings.ce-encoding-translation",
-        "settings.production-legacy-import"
+        "settings.production-legacy-import",
+        "settings.preserve-legacy-values"
       ]
     },
     {
@@ -783,7 +784,7 @@
     {"id": "ux.legacy-component-runtime-behavior", "capabilityId": "ux.legacy-vcl-components", "behavior": "Every legacy hint, volume, and UI component behavior remains functionally available through the cross-platform UX.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "settings.production-startup-legacy-import", "capabilityId": "configuration.persisted-settings", "behavior": "Production startup invokes CE settings migration when appropriate.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.station.call", "legacy.ini.setting.station.pitch"], "acceptanceStatus": "partial", "caseIds": ["settings.production-legacy-import"]},
     {"id": "settings.ce-encoding-semantics", "capabilityId": "configuration.persisted-settings", "behavior": "Migration translates CE indexes, ordinals, zero-or-one booleans, IDs, Hz values, duration, block size, and contest exchanges.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas", "Main.lfm"], "legacySurfaceSelectors": ["legacy.ini.setting.station.pitch", "legacy.ini.setting.station.bandwidth", "legacy.ini.setting.contest.simcontest", "legacy.ini.setting.contest.defaultrunmode", "legacy.ini.setting.station.serialnr", "legacy.ini.setting.system.bufsize", "legacy.ini.setting.contest.duration", "legacy.ini.setting.contest.competitionduration", "legacy.ini.setting.station.selfmonvolume", "legacy.ini.setting.settings.wpmsteprate", "legacy.ini.setting.settings.ritstepincr", "legacy.ini.setting.settings.singlecallstartdelay", "legacy.ini.setting.station.cqwpxexchange", "legacy.ini.setting.station.qsk", "legacy.ini.setting.station.savewav", "legacy.ini.setting.band.qsb", "legacy.ini.setting.band.qrm", "legacy.ini.setting.band.qrn", "legacy.ini.setting.band.flutter", "legacy.ini.setting.band.lids", "legacy.ini.setting.system.showcallsigninfo"], "acceptanceStatus": "partial", "caseIds": ["settings.ce-encoding-translation"]},
-    {"id": "settings.preserve-unknown-and-unconsumed-values", "capabilityId": "configuration.persisted-settings", "behavior": "Migration and save preserve unknown or unconsumed CE values and are idempotent.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "settings.preserve-unknown-and-unconsumed-values", "capabilityId": "configuration.persisted-settings", "behavior": "Migration and save preserve unknown or unconsumed CE values and are idempotent.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.station.callsfromkeyer", "legacy.ini.setting.station.call"], "acceptanceStatus": "partial", "caseIds": ["settings.preserve-legacy-values"]},
     {"id": "settings.clean-profile-core-defaults", "capabilityId": "configuration.persisted-settings", "behavior": "Clean-profile call, WPM, activity, duration, pitch, bandwidth, and related defaults match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas", "Main.lfm"], "legacySurfaceSelectors": ["legacy.ini.setting.station.call", "legacy.ini.setting.station.name", "legacy.ini.setting.station.wpm", "legacy.ini.setting.station.pitch", "legacy.ini.setting.station.bandwidth", "legacy.ini.setting.station.cwminrxspeed", "legacy.ini.setting.station.cwmaxrxspeed", "legacy.ini.setting.station.serialnr", "legacy.ini.setting.station.selfmonvolume", "legacy.ini.setting.station.qsk", "legacy.ini.setting.band.activity", "legacy.ini.setting.band.qsb", "legacy.ini.setting.band.qrm", "legacy.ini.setting.band.qrn", "legacy.ini.setting.band.flutter", "legacy.ini.setting.band.lids", "legacy.ini.setting.contest.duration", "legacy.ini.setting.contest.competitionduration", "legacy.ini.setting.contest.simcontest", "legacy.ini.setting.contest.defaultrunmode", "legacy.ini.setting.settings.stationidrate"], "acceptanceStatus": "partial", "caseIds": ["settings.clean-profile-ce-defaults"]},
     {"id": "settings.full-duration-range", "capabilityId": "configuration.persisted-settings", "behavior": "Every CE duration from 1 through 240 minutes is accepted and persists without hidden clamping.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.dfm", "Main.pas", "Ini.pas"], "legacySurfaceSelectors": ["legacy.main.object.spinedit2", "legacy.main.event-binding.spinedit2.onchange", "legacy.main.handler.spinedit2change", "legacy.ini.setting.contest.duration"], "acceptanceStatus": "partial", "caseIds": ["settings.duration-full-range"]},
     {"id": "data.replaceable-reference-root-and-fallback", "capabilityId": "data.files-and-operational-paths", "behavior": "Users can replace CE reference data through an explicit root with packaged fallback and equivalent discovery.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -5970,6 +5971,62 @@
       "failureCode": "settings-production-legacy-import-mismatch",
       "fixture": "tests/parity/fixtures/legacy/settings-production-legacy-import.json",
       "evidence": "tests/parity/evidence/settings-production-legacy-import.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "settings.preserve-legacy-values",
+      "capabilityId": "configuration.persisted-settings",
+      "obligationIds": [
+        "settings.preserve-unknown-and-unconsumed-values"
+      ],
+      "behavior": "An unknown legacy value and a known read-only CE value survive import, a project-owned settings update, and restart while the updated consumed value wins.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v75",
+        "source": "tests/parity/legacy-oracle/v75/LegacyOracle.lpr",
+        "sourceSha256": "dd6619c512a3c797d51e74fe5d3d105641650ddac646c20ad5d44a8c752901cc",
+        "buildRecipe": "tests/parity/legacy-oracle/v75/build-recipe.json",
+        "buildRecipeSha256": "3397dcea3d2633c3c2c02c830a0122728d0f3f35f59fe451ee62e8fec5171b14"
+      },
+      "legacySources": [
+        "Ini.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.ini.setting.station.callsfromkeyer",
+        "legacy.ini.setting.station.call"
+      ],
+      "preconditions": [
+        "The live CE adapter loads an INI containing an unknown section value plus the read-only CallsFromKeyer setting, mutates the station call, and executes Ini.ToIni before rereading the file.",
+        "The XPlat target imports the equivalent document, saves a consumed call update through SettingsStore, and reloads project-owned JSON.",
+        "Value preservation is required; byte-for-byte retention of INI comments, whitespace, and ordering is outside this behavioral boundary.",
+        "Obsolete delete-on-load keys, malformed values, and every-key completeness remain separate acceptance boundaries."
+      ],
+      "input": {
+        "scenario": "settings.preserve-legacy-values",
+        "seed": 12345
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatPreserveLegacyValuesTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 1,
+        "observedValuesSha256": "c4e792d9cf8a8908a044e5726676a0e4c497351fd058b623a54458e5c59303da",
+        "firstDivergence": "The unknown Future.Mystery value is initially absent because LegacySettingsImporter drops keys outside LegacySettingSchema.",
+        "functionalDivergenceCode": "settings-preserve-legacy-values-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "settings-preserve-legacy-values-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/settings-preserve-legacy-values.json",
+      "evidence": "tests/parity/evidence/settings-preserve-legacy-values.baseline.json",
       "firstGreenCommit": null
     }
   ]
