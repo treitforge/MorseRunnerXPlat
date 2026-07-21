@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "a0fba6da0a5bbbb8ee91bc28b064eab4d29944e8",
+      "tree": "9bffd3b35fe13de7b92bd36b8dbc46ccf6079a5a",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "ux.rit-default-up-command-step-50-hz-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "ux.rit-default-up-command-step-50-hz-seed-12345",
+      "acceptanceTestName": "parity:ux.rit-default-up-command-step-50-hz-seed-12345()",
+      "target": "xplat",
+      "adapter": "XPlatAvaloniaRitUpStepTarget",
+      "caseDefinitionSha256": "04843aa90a9f482404700a3d54f7263ade79729897720fe3495eb516a7564720",
+      "fixtureSha256": "cf37396c37770305a815322211bc66b4c8c8868ba95216b85da36187d241be7b",
+      "outcome": "functional-divergence",
+      "failureCode": "ux-RIT-default-up-step-mismatch",
+      "evidenceSource": "MorseRunner.App.ViewModels.MainWindowViewModel.RitUpCommand\u002BMorseRunner.Client.InProcessMorseRunnerClient\u002BMorseRunner.Engine.EngineSession.ApplyRadioControl",
+      "observedValues": [
+        "configuration|run-mode=rmStop|seed=12345|default-step-hz=50|action=up|handler=TMainForm.Panel8MouseDown",
+        "rit-before|hz=0",
+        "rit-after-default-up|hz=10|delta-hz=10"
+      ],
+      "observedValueCount": 3,
+      "observedValuesSha256": "17f8735285cd267625af597d44741640991338fff59097741c99fa8aadf6e026",
+      "firstDivergence": {
+        "index": 2,
+        "expected": "rit-after-default-up|hz=50|delta-hz=50",
+        "actual": "rit-after-default-up|hz=10|delta-hz=10"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}

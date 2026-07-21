@@ -22,7 +22,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Mapped legacy surfaces: 3668
 - Unmapped legacy surfaces: 0
 - Pending audit surfaces: 0
-- Overlapping case surface/platform assignments: 267
+- Overlapping case surface/platform assignments: 270
 
 | Category | Discovered surfaces |
 |---|---:|
@@ -110,15 +110,15 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Partially authored capabilities: 5
 - Not-authored capabilities: 19
 - Behavioral obligations: 119
-- Source-bound obligations: 19
-- Pending source bindings: 100
+- Source-bound obligations: 20
+- Pending source bindings: 99
 - Complete obligations: 0
-- Partially authored obligations: 19
-- Not-authored obligations: 100
+- Partially authored obligations: 20
+- Not-authored obligations: 99
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 39
+- Active acceptance cases: 40
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 39
+- Legacy-green/XPlat-red cases: 40
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
@@ -129,8 +129,8 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `configuration.persisted-settings` | Legacy persisted settings | `not-authored` | 0 | 60 | 0 | `Ini.pas:345-548` |
 | `ux.main-form-objects` | Legacy main-form objects | `not-authored` | 0 | 79 | 0 | `Main.dfm:1-1988` |
 | `ux.main-menu-commands` | Legacy main-menu commands | `not-authored` | 0 | 129 | 0 | `Main.dfm:964-1579` |
-| `ux.main-form-events` | Legacy main-form event bindings and handlers | `not-authored` | 0 | 229 | 3 | `Main.dfm:1-1988`<br>`Main.pas:452-2867` |
-| `ux.keyboard-workflows` | Legacy shortcuts and keyboard branches | `partial` | 1 | 53 | 0 | `Main.dfm:1000-1579`<br>`Main.pas:629-947` |
+| `ux.main-form-events` | Legacy main-form event bindings and handlers | `not-authored` | 0 | 229 | 6 | `Main.dfm:1-1988`<br>`Main.pas:452-2867` |
+| `ux.keyboard-workflows` | Legacy shortcuts and keyboard branches | `partial` | 2 | 53 | 0 | `Main.dfm:1000-1579`<br>`Main.pas:629-947` |
 | `logging.qso-model` | Legacy QSO record and error model | `not-authored` | 0 | 47 | 0 | `Log.pas:48-82` |
 | `logging.scoring-rate-and-results` | Legacy logging, scoring, rate, correction, and result paths | `not-authored` | 0 | 55 | 0 | `Log.pas:147-1137` |
 | `simulation.state-models` | Legacy simulation state models and transitions | `not-authored` | 0 | 66 | 0 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
@@ -225,7 +225,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `ux.punctuation-and-modified-enter-logging` | `ux.keyboard-workflows` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Punctuation and modified Enter preserve CE TU, log-only, wrong-QSO, and field-clearing workflows. |
 | `ux.f9-explicit-pileup-action` | `ux.main-menu-commands` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | F9 and Run Pile-Up explicitly start Pile-Up regardless of the selected run-mode control. |
 | `ux.live-settings-send-semantic-commands` | `ux.main-menu-commands` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Every live QSK, effect, activity, speed, pitch, bandwidth, and monitor change reaches the engine through the client. |
-| `ux.rit-wpm-bandwidth-ranges-and-steps` | `ux.keyboard-workflows` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | RIT, WPM, and bandwidth ranges, increments, clamping, and displayed engine state match CE. |
+| `ux.rit-wpm-bandwidth-ranges-and-steps` | `ux.keyboard-workflows` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | RIT, WPM, and bandwidth ranges, increments, clamping, and displayed engine state match CE. |
 | `ux.shortcut-labels-and-score-wipe-commands` | `ux.main-menu-commands` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Visible shortcut labels and commands consistently distinguish F11 Wipe from Ctrl+F11 Score. |
 | `ux.plus-equals-keypad-and-layouts` | `ux.keyboard-workflows` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Physical plus, equals, keypad Add, and international layouts invoke only the CE-equivalent completion actions. |
 | `ux.keyboard-and-pointer-tuning-workflows` | `ux.keyboard-workflows` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | All CE key-down, key-up, shortcut, mouse-wheel, tuning-reset, and monitor-reset workflows are available. |
@@ -319,6 +319,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `contest.wpx-midcontest-remote-exchange-format-seed-12345` | `contest.legacy-implementations` | `contest.full-remote-exchange-formatting` | `legacy-green-xplat-red` | `contest-wpx-midcontest-remote-exchange-format-mismatch` | `pass` | `fail` |
 | `contest.exchange-shapes` | `contest.legacy-implementations` | `contest.exchange-shapes-and-constructor-metadata` | `legacy-green-xplat-red` | `contest-exchange-shape-mismatch` | `pass` | `fail` |
 | `ux.enter-esm-partial-call-message-selection-live` | `ux.keyboard-workflows` | `ux.enter-esm-partial-call-message-selection` | `legacy-green-xplat-red` | `ux-enter-esm-partial-call-message-selection-mismatch` | `pass` | `fail` |
+| `ux.rit-default-up-command-step-50-hz-seed-12345` | `ux.keyboard-workflows` | `ux.rit-wpm-bandwidth-ranges-and-steps` | `legacy-green-xplat-red` | `ux-RIT-default-up-step-mismatch` | `pass` | `fail` |
 
 ## Retained noncertifying observations
 
