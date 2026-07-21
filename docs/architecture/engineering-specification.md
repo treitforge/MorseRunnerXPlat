@@ -1937,6 +1937,15 @@ the CE lower load clamp before using or preserving the persisted step. Values
 above CE's upper bound remain unmodified until their separate acceptance
 boundary is implemented.
 
+The authored `ux.wpm-step-upper-clamp-page-up-from-21-seed-12345` case pins
+CE's upper load clamp for the persisted WPM step. The v61 CE oracle writes
+`WpmStepRate=21` beside the executable, invokes the real `Ini.FromIni` path,
+verifies an effective step of 20 WPM, and reaches 50 WPM from 30 through the
+real `TMainForm.FormKeyDown` PageUp path. Before implementation, production
+Avalonia retains the 21 WPM step and reaches 51 WPM. TUI, malformed values,
+PageDown, HST precedence, and direct menu choices remain separate acceptance
+boundaries.
+
 ### 14.5 Device failure
 
 On unrecoverable physical-device failure:
