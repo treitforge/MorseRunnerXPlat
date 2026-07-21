@@ -214,6 +214,58 @@ public sealed class TuiInteractionTests
     }
 
     [Fact]
+    public async Task SpeedUpClampsPersistedWpmStepToCeUpperBound()
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            $"MorseRunner-Tui-{Guid.NewGuid():N}");
+        try
+        {
+            var paths = new ApplicationPaths(root);
+            paths.EnsureWritableDirectories();
+            var store = new SettingsStore(
+                Path.Combine(paths.Settings, "settings.json"));
+            CancellationToken cancellationToken =
+                TestContext.Current.CancellationToken;
+            await store.SaveAsync(
+                new SettingsDocument(
+                    SettingsDocument.CurrentSchemaVersion,
+                    new Dictionary<string, string>(
+                        StringComparer.OrdinalIgnoreCase)
+                    {
+                        ["Settings.WpmStepRate"] = "21",
+                    }),
+                cancellationToken);
+            await using InProcessMorseRunnerClient client =
+                InProcessMorseRunnerClient.CreateDefault();
+            using var application = new TuiApplication(
+                client,
+                isHosted: false,
+                paths);
+            application.State.WordsPerMinute = 30;
+            await application.InitializeAsync(cancellationToken);
+            await application.HandleAsync(
+                new(TuiActionKind.StartSingle),
+                cancellationToken);
+
+            await application.HandleAsync(
+                new(TuiActionKind.SpeedUp),
+                cancellationToken);
+
+            SessionSnapshot snapshot = Assert.IsType<SessionSnapshot>(
+                application.State.Snapshot);
+            Assert.Equal(50, snapshot.CurrentWordsPerMinute);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task SpeedDownUsesPersistedCustomWpmStep()
     {
         string root = Path.Combine(

@@ -1393,12 +1393,13 @@ public sealed class TuiApplication : IDisposable
             values,
             "Station.Wpm",
             State.WordsPerMinute);
-        _wpmStepRate = Math.Max(
-            1,
+        _wpmStepRate = Math.Clamp(
             GetInt(
                 values,
                 "Settings.WpmStepRate",
-                _wpmStepRate));
+                _wpmStepRate),
+            1,
+            20);
         State.PitchHz = GetInt(values, "Station.Pitch", State.PitchHz);
         State.BandwidthHz = GetInt(
             values,

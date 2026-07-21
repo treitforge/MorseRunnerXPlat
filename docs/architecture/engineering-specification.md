@@ -1966,7 +1966,8 @@ oracle loads `WpmStepRate=21` through the real `Ini.FromIni` path, clamps it to
 20, and reaches 50 WPM from 30 through PageUp. Before implementation, the
 production TUI retains the 21 WPM step and reaches 51 WPM. Malformed values,
 PageDown, HST precedence, and direct menu choices remain separate acceptance
-boundaries.
+boundaries. Production TUI now clamps the loaded persisted step to CE's
+complete 1 through 20 range before using or preserving it.
 
 ### 14.5 Device failure
 
