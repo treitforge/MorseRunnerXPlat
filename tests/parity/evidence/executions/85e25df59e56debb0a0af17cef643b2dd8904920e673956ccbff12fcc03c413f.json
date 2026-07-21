@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "target": "XPlat",
+  "platform": "windows",
+  "operatingSystem": "Microsoft Windows 10.0.26200",
+  "architecture": "x64",
+  "runtimeIdentifier": "win-x64",
+  "revision": "bd6454b86117666d802a295fa0b5869f201a6109",
+  "tree": "11aed88439fd331cc4e3b34f6aff1dde47dc3a9b",
+  "resultSha256": "0ce90fcd38f121ea3c62688c75629d5c5de1281f6ceba22c4ca59ea79651ca5b",
+  "testReportSha256": "1108644e06aaaf60a79cb5aab6de7ef703d4db939e941f52e4815df8de00eeda",
+  "testProcessExitCode": 2,
+  "wrapper": {
+    "completed": true,
+    "correlationValidated": true,
+    "exitCode": 0
+  },
+  "functionalDivergences": [
+    {
+      "caseId": "settings.production-legacy-import",
+      "failureCode": "settings-production-legacy-import-mismatch"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "bd6454b86117666d802a295fa0b5869f201a6109",
+      "tree": "11aed88439fd331cc4e3b34f6aff1dde47dc3a9b",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "settings.production-legacy-import"
+  ],
+  "results": [
+    {
+      "parityId": "settings.production-legacy-import",
+      "acceptanceTestName": "parity:settings.production-legacy-import()",
+      "target": "xplat",
+      "adapter": "XPlatProductionLegacyImportTarget",
+      "caseDefinitionSha256": "7cb21a473db5ee40cc15bf1618b716b553bb6eb249db1c20fa60631aa5bb67f6",
+      "fixtureSha256": "29df30aeca708a8c169949e78cbd704ff9c9b8dcdbcb5e7eeb1f445941964e27",
+      "outcome": "functional-divergence",
+      "failureCode": "settings-production-legacy-import-mismatch",
+      "evidenceSource": "Production Avalonia and TUI startup settings paths",
+      "observedValues": [
+        "startup-import|surface=avalonia|station-call=VE3NEA|pitch-hz=450",
+        "startup-import|surface=tui|station-call=VE3NEA|pitch-hz=450"
+      ],
+      "observedValueCount": 2,
+      "observedValuesSha256": "46b865921c66ab346e99fca1d0e9a20da84c94ad278ffca9d00930f632a192b4",
+      "firstDivergence": {
+        "index": 0,
+        "expected": "startup-import|surface=avalonia|station-call=K7ABC|pitch-hz=600",
+        "actual": "startup-import|surface=avalonia|station-call=VE3NEA|pitch-hz=450"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}
