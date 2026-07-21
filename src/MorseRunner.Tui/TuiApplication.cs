@@ -369,7 +369,10 @@ public sealed class TuiApplication : IDisposable
                     cancellationToken);
                 break;
             case TuiActionKind.SpeedDown:
-                await AdjustAsync(RadioControl.Speed, -2, cancellationToken);
+                await AdjustAsync(
+                    RadioControl.Speed,
+                    GetSpeedDownDelta(),
+                    cancellationToken);
                 break;
             case TuiActionKind.NextContest:
                 ChangeSetup(
@@ -754,6 +757,15 @@ public sealed class TuiApplication : IDisposable
             ? ((snapshot.CurrentWordsPerMinute / 5) * 5 + 5)
                 - snapshot.CurrentWordsPerMinute
             : 2;
+    }
+
+    private int GetSpeedDownDelta()
+    {
+        SessionSnapshot? snapshot = State.Snapshot;
+        return snapshot?.RunModeId.Value == "rmHst"
+            ? (((snapshot.CurrentWordsPerMinute + 4) / 5) * 5 - 5)
+                - snapshot.CurrentWordsPerMinute
+            : -2;
     }
 
     private async Task ExecuteStateCommandAsync(
