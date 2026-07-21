@@ -403,6 +403,7 @@
         "contest.naqp-remote-exchange-format-seed-12345",
         "contest.fieldday-remote-exchange-format-seed-12345",
         "contest.sst-remote-exchange-format-seed-12345",
+        "contest.sweepstakes-remote-exchange-format-seed-12345",
         "contest.wpx-custom-range-remote-exchange-format-seed-12345",
         "contest.wpx-midcontest-remote-exchange-format-seed-12345",
         "contest.exchange-shapes",
@@ -693,7 +694,7 @@
     {"id": "engine.event-driven-poisson-caller-arrivals", "capabilityId": "simulation.runtime-routines", "behavior": "Caller creation follows completed CQ, TU, and MyCall events with CE Poisson and no-stop rules.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "engine.start-silent-empty-enter-cq", "capabilityId": "simulation.runtime-routines", "behavior": "Start is silent and an empty Enter initiates the appropriate CE contest CQ.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.pas", "Contest.pas", "MyStn.pas"], "legacySurfaceSelectors": ["legacy.integration.command-line-path.main-pas.tmainform.run", "legacy.sim.routine.contest.tcontest.sendmsg", "legacy.sim.routine.mystn.tmystation.sendtext"], "acceptanceStatus": "partial", "caseIds": ["engine.start-silent-empty-enter-cq-seed-12345"]},
     {"id": "engine.contest-specific-cq-tu-and-station-id", "capabilityId": "contest.legacy-implementations", "behavior": "CQ, TU, operator call insertion, and periodic station-ID messages match each CE contest.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Contest.pas", "MyStn.pas", "CWOPS.pas", "ArrlFd.pas", "CWSST.pas", "ArrlSS.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.settings.stationidrate", "legacy.sim.routine.contest.tcontest.sendmsg", "legacy.sim.routine.contest.tcontest.onmefinishedsending", "legacy.sim.routine.contest.tcontest.onsaveqsocomplete", "legacy.sim.routine.contest.tcontest.onstationidsent", "legacy.sim.routine.mystn.tmystation.sendtext", "legacy.support.contest.routine.cwops.tcwops.sendmsg", "legacy.support.contest.routine.arrlfd.tarrlfieldday.sendmsg", "legacy.support.contest.routine.cwsst.tcwsst.sendmsg", "legacy.support.contest.routine.arrlss.tsweepstakes.sendmsg"], "acceptanceStatus": "partial", "caseIds": ["engine.contest-specific-cq-tu-station-id-seed-12345"]},
-    {"id": "contest.full-remote-exchange-formatting", "capabilityId": "contest.legacy-implementations", "behavior": "Remote exchanges retain and format every CE contest identity field, cut number, repeat, and correction variant.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "Station.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getexchangetypes", "legacy.sim.routine.contest.tcontest.getsentexchtypes", "legacy.sim.routine.station.tstation.nrastext"], "acceptanceStatus": "partial", "caseIds": ["contest.cwt-remote-exchange-format-seed-12345", "contest.hst-remote-exchange-format-seed-12345", "contest.naqp-remote-exchange-format-seed-12345", "contest.fieldday-remote-exchange-format-seed-12345", "contest.sst-remote-exchange-format-seed-12345", "contest.wpx-midcontest-remote-exchange-format-seed-12345"]},
+    {"id": "contest.full-remote-exchange-formatting", "capabilityId": "contest.legacy-implementations", "behavior": "Remote exchanges retain and format every CE contest identity field, cut number, repeat, and correction variant.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "Station.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getexchangetypes", "legacy.sim.routine.contest.tcontest.getsentexchtypes", "legacy.sim.routine.station.tstation.nrastext"], "acceptanceStatus": "partial", "caseIds": ["contest.cwt-remote-exchange-format-seed-12345", "contest.hst-remote-exchange-format-seed-12345", "contest.naqp-remote-exchange-format-seed-12345", "contest.fieldday-remote-exchange-format-seed-12345", "contest.sst-remote-exchange-format-seed-12345", "contest.sweepstakes-remote-exchange-format-seed-12345", "contest.wpx-midcontest-remote-exchange-format-seed-12345"]},
     {"id": "contest.required-exchange-fields-all-contests", "capabilityId": "contest.legacy-implementations", "behavior": "CWT, SST, Field Day, NAQP, Sweepstakes, WPX, HST, and all other contests include every required CE exchange field.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.allja-acag-truth-column-mapping", "capabilityId": "contest.legacy-implementations", "behavior": "ALLJA and ACAG station truth use the correct CE data columns without serial fallback.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.sweepstakes-complete-truth-model", "capabilityId": "contest.legacy-implementations", "behavior": "Sweepstakes models serial, weighted precedence, own call, check, section, copied values, truth, and errors.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -2462,6 +2463,72 @@
       "failureCode": "contest-sst-remote-exchange-format-mismatch",
       "fixture": "tests/parity/fixtures/legacy/contest-sst-remote-exchange-format-seed-12345.json",
       "evidence": "tests/parity/evidence/contest-sst-remote-exchange-format-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "contest.sweepstakes-remote-exchange-format-seed-12345",
+      "capabilityId": "contest.legacy-implementations",
+      "obligationIds": [
+        "contest.full-remote-exchange-formatting"
+      ],
+      "behavior": "For a fixed ARRL Sweepstakes remote station, the CE TStation.NrAsText path formats serial and precedence, the remote callsign, then check and section as the exact exchange 123 A K1ABC 72 OR. The vector isolates remote Sweepstakes exchange composition before reply prefixes, repeats, LID errors, or CW rendering.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v29",
+        "source": "tests/parity/legacy-oracle/v29/LegacyOracle.lpr",
+        "sourceSha256": "8968778e75066335e8681e349ff9c1efac2eca8ed2f39bdab18a8b3d9371182c",
+        "buildRecipe": "tests/parity/legacy-oracle/v29/build-recipe.json",
+        "buildRecipeSha256": "a63cbbb7ef07a16997eb597b04d32d181c06a182748fb8c7a09d6b2a4f52f6ff"
+      },
+      "legacySources": [
+        "Contest.pas",
+        "Station.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.sim.routine.contest.tcontest.getexchangetypes",
+        "legacy.sim.routine.contest.tcontest.getsentexchtypes",
+        "legacy.sim.routine.station.tstation.nrastext"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The handleless CE runtime selects scArrlSS and rmPileup with local station W7SST, remote station K1ABC, seed 12345, RST 599, serial and precedence field 123 A, and check and section field 72 OR.",
+        "A parity-only TStation subclass exposes the protected NrAsText result without selecting a StationMessage, applying reply-prefix probability, encoding CW, or allocating a control handle.",
+        "The XPlat adapter observes the production SimulatedStation exchange formatter through an internal parity-only seam after passing the same contest identity and StationIdentity fields.",
+        "This vector covers only the remote Sweepstakes exchange composition branch. The local-station serial prefix, malformed fields, repeats, correction text, LID errors, and random reply prefixes remain pending, so the obligation remains partial."
+      ],
+      "input": {
+        "scenario": "contest.sweepstakes-remote-exchange-format-seed-12345",
+        "contestId": "scArrlSS",
+        "runModeId": "rmPileup",
+        "stationCall": "W7SST",
+        "remoteCall": "K1ABC",
+        "rst": 599,
+        "exchange1": "123 A",
+        "exchange2": "72 OR",
+        "seed": 12345
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatSweepstakesRemoteExchangeFormatTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 2,
+        "observedValuesSha256": "573f5fef126a6a1a41458de9b0bb39b25af60bab60735a5f8f9f04781e7a9fa7",
+        "firstDivergence": "The zero-based first mismatch is ordinal 1, remote-exchange. CE formats 123 A K1ABC 72 OR, while XPlat ignores exchange field one and the remote callsign and formats 5NN72 OR.",
+        "functionalDivergenceCode": "contest-sweepstakes-remote-exchange-format-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "contest-sweepstakes-remote-exchange-format-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/contest-sweepstakes-remote-exchange-format-seed-12345.json",
+      "evidence": "tests/parity/evidence/contest-sweepstakes-remote-exchange-format-seed-12345.baseline.json",
       "firstGreenCommit": null
     },
     {

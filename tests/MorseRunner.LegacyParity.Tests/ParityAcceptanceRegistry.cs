@@ -211,6 +211,19 @@ public static class ParityAcceptanceRegistry
                     static () => new LegacyOracleTarget(),
                     static () =>
                         new XPlatSstRemoteExchangeFormatTarget()),
+            [XPlatSweepstakesRemoteExchangeFormatTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatSweepstakesRemoteExchangeFormatTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatSweepstakesRemoteExchangeFormatTarget),
+                    XPlatSweepstakesRemoteExchangeFormatTarget
+                        .FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = SweepstakesRemoteExchangeFormatInput.Parse(
+                            scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () =>
+                        new XPlatSweepstakesRemoteExchangeFormatTarget()),
             [XPlatWpxMidContestRemoteExchangeFormatTarget.ParityId] =
                 new ParityAcceptanceRegistration(
                     XPlatWpxMidContestRemoteExchangeFormatTarget.ParityId,
