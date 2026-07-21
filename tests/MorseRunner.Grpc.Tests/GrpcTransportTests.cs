@@ -11,6 +11,28 @@ namespace MorseRunner.Grpc.Tests;
 public sealed class GrpcTransportTests
 {
     [Fact]
+    public void ContestDefinitionMetadataMapsWithoutLoss()
+    {
+        ContestDefinition expected = ContestCatalog.Get(new("scCwt"));
+
+        ContestDefinitionMessage actual =
+            TransportMapper.ToTransport(expected);
+
+        Assert.Equal(expected.Id.Value, actual.Id);
+        Assert.Equal(expected.Key, actual.Key);
+        Assert.Equal(expected.DisplayName, actual.DisplayName);
+        Assert.Equal(expected.ExchangeType1, actual.ExchangeType1);
+        Assert.Equal(expected.ExchangeType2, actual.ExchangeType2);
+        Assert.Equal(expected.ExchangeCaption1, actual.ExchangeCaption1);
+        Assert.Equal(expected.ExchangeCaption2, actual.ExchangeCaption2);
+        Assert.Equal(
+            expected.ExchangeFieldEditable,
+            actual.ExchangeFieldEditable);
+        Assert.Equal(expected.ExchangeDefault, actual.ExchangeDefault);
+        Assert.Equal(expected.ValidationMessage, actual.ValidationMessage);
+    }
+
+    [Fact]
     public void AdvancedSessionSettingsRoundTripWithoutLoss()
     {
         SessionSettings expected = SessionSettings.CreateDefault(42) with

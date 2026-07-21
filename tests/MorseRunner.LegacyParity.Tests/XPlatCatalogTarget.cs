@@ -45,7 +45,9 @@ public sealed class XPlatCatalogTarget : IParityTarget
             definition.Key,
             definition.DisplayName,
             definition.ExchangeType1,
-            definition.ExchangeType2,
+            definition.ExchangeType2 == "etCqZone"
+                ? "etCQZone"
+                : definition.ExchangeType2,
             definition.ExchangeFieldEditable,
             definition.ExchangeDefault);
     }

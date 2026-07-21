@@ -58,13 +58,13 @@ public sealed class XPlatContestDefinitionMetadataTarget : IParityTarget
             "name=" + definition.DisplayName,
             "exchange1=" + definition.ExchangeType1,
             "exchange2=" + definition.ExchangeType2,
-            "caption1=<missing>",
-            "caption2=<missing>",
+            "caption1=" + definition.ExchangeCaption1,
+            "caption2=" + definition.ExchangeCaption2,
             "editable=" + (definition.ExchangeFieldEditable
                 ? "true"
                 : "false"),
             "default=" + definition.ExchangeDefault,
-            "message=<missing>");
+            "message=" + definition.ValidationMessage);
     }
 }
 

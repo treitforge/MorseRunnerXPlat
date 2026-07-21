@@ -2047,6 +2047,10 @@ It is not the default Avalonia execution path.
 - `GetDefaultSettings`
 - `GetDataStatus`
 
+`ContestDefinitionMessage` carries the complete shared catalog metadata,
+including both exchange captions and the CE validation message. Fields 8, 9,
+and 10 add those values without changing the existing field numbers.
+
 #### SessionService
 
 - `CreateSession`

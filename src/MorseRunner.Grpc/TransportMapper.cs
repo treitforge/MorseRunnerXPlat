@@ -50,6 +50,9 @@ public static class TransportMapper
             ExchangeType2 = value.ExchangeType2,
             ExchangeFieldEditable = value.ExchangeFieldEditable,
             ExchangeDefault = value.ExchangeDefault,
+            ExchangeCaption1 = value.ExchangeCaption1,
+            ExchangeCaption2 = value.ExchangeCaption2,
+            ValidationMessage = value.ValidationMessage,
         };
 
     public static Contract.SessionSettingsMessage ToTransport(
