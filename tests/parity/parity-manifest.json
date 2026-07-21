@@ -322,6 +322,7 @@
       ],
       "acceptanceStatus": "partial",
       "caseIds": [
+        "audio.bandwidth-runtime-narrow-second-cq-block-seed-12345",
         "audio.operator-monitor-minus-60db-mute-first-cq-block-seed-12345",
         "audio.operator-monitor-runtime-mute-second-cq-block-seed-12345",
         "audio.qsk-receiver-ducking-first-cq-block-seed-12345",
@@ -683,7 +684,7 @@
     {"id": "audio.deterministic-random-primitives", "capabilityId": "simulation.legacy-effects", "behavior": "MT19937 output and every CE random distribution primitive produce deterministic numeric vectors for reviewed seeds.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["RndFunc.pas"], "legacySurfaceSelectors": ["legacy.support.effect.routine.rndfunc.rndfunc.rndgausslim", "legacy.support.effect.routine.rndfunc.rndfunc.rndnormal", "legacy.support.effect.routine.rndfunc.rndfunc.rndpoisson", "legacy.support.effect.routine.rndfunc.rndfunc.rndrayleigh", "legacy.support.effect.routine.rndfunc.rndfunc.rnduniform", "legacy.support.effect.routine.rndfunc.rndfunc.rndushaped"], "acceptanceStatus": "partial", "caseIds": ["audio.deterministic-random-primitives-seed-12345"]},
     {"id": "audio.qsk-receiver-ducking-and-recovery", "capabilityId": "audio-dsp.legacy-processing", "behavior": "QSK applies CE-equivalent receiver ducking and recovery around local transmissions.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "MyStn.pas", "Station.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.contest.tcontest.sendmsg", "legacy.sim.routine.mystn.tmystation.getblock", "legacy.sim.routine.station.tstation.sendmsg"], "acceptanceStatus": "partial", "caseIds": ["audio.qsk-receiver-ducking-first-cq-block-seed-12345", "audio.qsk-runtime-enable-second-cq-block-seed-12345"]},
     {"id": "audio.rit-affects-rendered-stations", "capabilityId": "audio-dsp.legacy-processing", "behavior": "RIT changes each station's audible offset using CE range, steps, and block-boundary timing.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "audio.runtime-bandwidth-updates-filters", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Runtime bandwidth changes replace or update receiver filters at the CE-equivalent block boundary.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.runtime-bandwidth-updates-filters", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Runtime bandwidth changes replace or update receiver filters at the CE-equivalent block boundary.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.pas", "Contest.pas", "VCL/MovAvg.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.vcl.dsp.routine.movavg.tmovingaverage.setgaindb", "legacy.vcl.dsp.routine.movavg.tmovingaverage.setpoints"], "acceptanceStatus": "partial", "caseIds": ["audio.bandwidth-runtime-narrow-second-cq-block-seed-12345"]},
     {"id": "audio.qrm-interfering-cw-stations", "capabilityId": "simulation.legacy-effects", "behavior": "QRM uses CE-equivalent randomized interfering CW stations, messages, levels, pitches, speeds, retries, and lifetimes.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "StnColl.pas", "QrmStn.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.stncoll.tstations.addqrm", "legacy.sim.routine.qrmstn.tqrmstation.createstation", "legacy.sim.routine.qrmstn.tqrmstation.processevent", "legacy.sim.routine.qrmstn.tqrmstation.sendtext"], "acceptanceStatus": "partial", "caseIds": ["audio.qrm-caller-collision-retry-limit-seed-24680", "audio.qrm-first-triggered-station-seed-1843", "audio.qrm-no-trigger-invariance-seed-12345"]},
     {"id": "audio.qrn-impulses-and-burst-stations", "capabilityId": "simulation.legacy-effects", "behavior": "QRN produces CE sparse impulses and burst stations before receiver filtering and AGC.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "Station.pas", "StnColl.pas", "QrnStn.pas", "RndFunc.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.station.tstation.getblock", "legacy.sim.routine.station.tstation.tick", "legacy.sim.routine.stncoll.tstations.addqrn", "legacy.sim.routine.qrnstn.tqrnstation.createstation", "legacy.sim.routine.qrnstn.tqrnstation.processevent", "legacy.support.effect.routine.rndfunc.rndfunc.secondstoblocks"], "acceptanceStatus": "partial", "caseIds": ["audio.qrn-background-sparse-impulses-seed-12345", "audio.qrn-burst-station-lifecycle-seed-1903"]},
     {"id": "audio.qsb-independent-per-station", "capabilityId": "simulation.legacy-effects", "behavior": "Every remote station has an independent CE-distributed QSB process without fading the receiver noise floor.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "DxStn.pas", "Qsb.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.dxstn.tdxstation.getblock", "legacy.support.effect.routine.qsb.tqsb.applyto"], "acceptanceStatus": "partial", "caseIds": ["audio.qsb-no-station-noise-invariance-seed-12345", "audio.qsb-runtime-toggle-active-station-seed-12345"]},
@@ -836,6 +837,92 @@
     {"id": "lifecycle.unit-initialization-finalization-order", "capabilityId": "lifecycle.legacy-unit-hooks", "behavior": "Legacy initialization and finalization hooks execute with equivalent order, registration, cleanup, state, and failures.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []}
   ],
   "cases": [
+    {
+      "id": "audio.bandwidth-runtime-narrow-second-cq-block-seed-12345",
+      "capabilityId": "audio-dsp.legacy-processing",
+      "obligationIds": [
+        "audio.runtime-bandwidth-updates-filters"
+      ],
+      "behavior": "For the fixed CE compatibility vector, narrowing receiver bandwidth from 500 Hz to 250 Hz between the first and second locally transmitted CQ blocks resets and reconfigures both receiver filters at the next block boundary without consuming random values or resetting modulator and AGC state.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v41",
+        "source": "tests/parity/legacy-oracle/v41/LegacyOracle.lpr",
+        "sourceSha256": "5b5da01e8b16ceb2baa822aafdb2a5feae209ebb670de6af0e46964f0db9ea47",
+        "buildRecipe": "tests/parity/legacy-oracle/v41/build-recipe.json",
+        "buildRecipeSha256": "aed61e38ccfa32631e90ec58bf91824f1416f99a32ff2a6a0aa70418511c975f"
+      },
+      "legacySources": [
+        "Main.pas",
+        "Contest.pas",
+        "VCL/MovAvg.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.sim.routine.contest.tcontest.getaudio",
+        "legacy.vcl.dsp.routine.movavg.tmovingaverage.setgaindb",
+        "legacy.vcl.dsp.routine.movavg.tmovingaverage.setpoints"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "Each target uses a fresh CQ WPX rmStop session with station call W7SST, seed 12345, 11025 Hz, 512 samples per block, 500 Hz initial bandwidth, 600 Hz pitch, 30 WPM, zero dB monitor level, no remote stations, and QRN, QRM, QSB, flutter, QSK, and LIDs disabled.",
+        "The CE target performs and verifies five one-Single startup requests, resets RandSeed to 12345 immediately before sending the real msgCQ text CQ W7SST TEST, and captures two normalized blocks through TContest.GetAudio.",
+        "The CE runtime calls TMainForm.SetBw with the reachable 250 Hz menu index after the first full request and before the second. Assigning TMovingAverage.Points resets both live filter histories, then SetBw applies the CE gain to both filters. Modulator and AGC state remain continuous.",
+        "Before implementation, the XPlat target starts two production manual-timing sessions, sends OperatorIntent.Cq, advances each session one block, and submits the production RadioControl.Bandwidth command only in the runtime-change path. The snapshot reaches 250 Hz while the active receiver filters remain configured at 500 Hz.",
+        "Both observations use the same authoritative terminal random value at ordinal 2048 because a bandwidth mutation consumes no random values.",
+        "The case pins one live 500 Hz to 250 Hz change and the immediately following local-transmission block. Wider transitions, repeated changes, filter-swap boundaries, remote receiver signals, client transport, and UX mutation remain pending, so the obligation remains partial."
+      ],
+      "input": {
+        "scenario": "audio.bandwidth-runtime-narrow-second-cq-block-seed-12345",
+        "sampleRate": 11025,
+        "blockSize": 512,
+        "seed": 12345,
+        "startupRequestCount": 5,
+        "terminalRandomOrdinal": 2048,
+        "initialBandwidthHz": 500,
+        "runtimeBandwidthHz": 250,
+        "pitchHz": 600,
+        "monitorLevelDb": 0,
+        "stationCall": "W7SST",
+        "messageText": "CQ W7SST TEST",
+        "probeSampleIndexes": [
+          0,
+          1,
+          2,
+          148,
+          149,
+          150,
+          255,
+          310,
+          384,
+          509,
+          510,
+          511
+        ]
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatRuntimeBandwidthChangeTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 7,
+        "observedValuesSha256": "0b4d120185f6ba02ee99dd4d6916da71982e2967e9271a035d4053b3200540a6",
+        "firstDivergence": "The zero-based first mismatch is ordinal 4, bandwidth-runtime-250-block[1]. CE calls TMainForm.SetBw before absolute block 7, resets and reconfigures both receiver filters, first diverges from fixed 500 Hz at sample 173, and emits hash 7c95262971abcf6acf2f0324fd5b7ffc33c46032ba66111709f445f6a9bd8275. XPlat accepts the bandwidth command and reports 250 Hz in the snapshot but leaves its receiver filters at 500 Hz, so it emits the fixed hash 98ed32d957fef5ee62e50a0a04cb063f4c027a9770d4a9e30b27c60dec52e234. Both terminal random checkpoints match.",
+        "functionalDivergenceCode": "audio-runtime-bandwidth-change-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "audio-runtime-bandwidth-change-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/audio-bandwidth-runtime-narrow-second-cq-block-seed-12345.json",
+      "evidence": "tests/parity/evidence/audio-bandwidth-runtime-narrow-second-cq-block-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
     {
       "id": "audio.deterministic-random-primitives-seed-12345",
       "capabilityId": "simulation.legacy-effects",

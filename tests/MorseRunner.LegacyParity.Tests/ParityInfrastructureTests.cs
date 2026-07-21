@@ -63,6 +63,7 @@ public sealed class ParityInfrastructureTests
     {
         Assert.Equal(
             [
+                "audio.bandwidth-runtime-narrow-second-cq-block-seed-12345",
                 "audio.deterministic-random-primitives-seed-12345",
                 "audio.flutter-no-station-noise-invariance-seed-12345",
                 "audio.operator-monitor-minus-60db-mute-first-cq-block-seed-12345",
@@ -104,6 +105,7 @@ public sealed class ParityInfrastructureTests
             StringComparer.Ordinal);
         Assert.Equal(
             [
+                "audio.bandwidth-runtime-narrow-second-cq-block-seed-12345",
                 "audio.deterministic-random-primitives-seed-12345",
                 "audio.flutter-no-station-noise-invariance-seed-12345",
                 "audio.operator-monitor-minus-60db-mute-first-cq-block-seed-12345",

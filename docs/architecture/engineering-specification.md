@@ -1690,6 +1690,22 @@ the next block and matches the pinned CE runtime-on hash without changing the
 random checkpoint. Client transport carries the command and snapshot state;
 desktop and terminal runtime mutation remain pending.
 
+The authored
+`audio.bandwidth-runtime-narrow-second-cq-block-seed-12345` case pins a live
+CE receiver-bandwidth change from 500 Hz to 250 Hz after the first CQ block
+and before the second. `TMainForm.SetBw` changes `Points` and `GainDb` on both
+moving-average filters. The `Points` setters reset both filter histories while
+the modulator and AGC remain continuous. The common first block has hash
+`7d925cbba9a0bb2e86a48c5a1777c347cfed68080a559446d8e3ed3c9d6af4ee`.
+The fixed-500 Hz second block has hash
+`98ed32d957fef5ee62e50a0a04cb063f4c027a9770d4a9e30b27c60dec52e234`.
+The runtime-250 Hz block first diverges at sample 173 and has hash
+`7c95262971abcf6acf2f0324fd5b7ffc33c46032ba66111709f445f6a9bd8275`.
+Both paths retain the ordinal-2048 random checkpoint `3f53fd06`. The retained
+pre-implementation XPlat path accepts the semantic bandwidth command and
+reports 250 Hz in its snapshot, but renders the fixed-500 Hz hash because its
+receiver filters are not reconfigured.
+
 ### 14.5 Device failure
 
 On unrecoverable physical-device failure:
