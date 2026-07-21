@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "463968621b3f15482f01df7346722849f3c8bf7f",
+      "tree": "dcd13d5895c0f99ab7d53a3d4e4adc99a72deaee",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345",
+      "acceptanceTestName": "parity:ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345()",
+      "target": "xplat",
+      "adapter": "XPlatTuiWpmSetupUpperRangeTarget",
+      "caseDefinitionSha256": "20e0728f267decc4a3b8dc251b197db887ef6cbed62663f5e7fc6dcde50b507e",
+      "fixtureSha256": "0384996568b7759874f15423463ddb0ede5b5334b4edf0b5e7c3c20aa1631917",
+      "outcome": "functional-divergence",
+      "failureCode": "ux-TUI-WPM-setup-upper-range-mismatch",
+      "evidenceSource": "MorseRunner.Tui.TuiApplication.HandleSettingsActionAsync\u002BMorseRunner.Tui.TuiApplication.AdjustCurrentSetting",
+      "observedValues": [
+        "configuration|seed=12345|initial-wpm=100|settings-increment-wpm=1|control-min-wpm=10|control-max-wpm=120|handler=TMainForm.SetWpm",
+        "wpm-before|wpm=100",
+        "wpm-after-settings-increment|wpm=100|delta-wpm=0"
+      ],
+      "observedValueCount": 3,
+      "observedValuesSha256": "fe4e2d67184913b4ecb14f5029d4a33c7537d7e4d4994e9bbfc48fb3efeb4cef",
+      "firstDivergence": {
+        "index": 2,
+        "expected": "wpm-after-settings-increment|wpm=101|delta-wpm=1",
+        "actual": "wpm-after-settings-increment|wpm=100|delta-wpm=0"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}

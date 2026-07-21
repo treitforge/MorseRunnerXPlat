@@ -22,7 +22,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Mapped legacy surfaces: 3668
 - Unmapped legacy surfaces: 0
 - Pending audit surfaces: 0
-- Overlapping case surface/platform assignments: 288
+- Overlapping case surface/platform assignments: 294
 
 | Category | Discovered surfaces |
 |---|---:|
@@ -116,9 +116,9 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Partially authored obligations: 22
 - Not-authored obligations: 99
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 44
+- Active acceptance cases: 45
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 44
+- Legacy-green/XPlat-red cases: 45
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
@@ -127,10 +127,10 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `session.run-mode-enumeration` | Legacy run mode enumeration | `not-authored` | 0 | 5 | 0 | `Ini.pas:31` |
 | `catalog.contest-definitions` | Legacy contest definitions | `not-authored` | 0 | 12 | 0 | `Ini.pas:99-222` |
 | `configuration.persisted-settings` | Legacy persisted settings | `not-authored` | 0 | 60 | 6 | `Ini.pas:345-548` |
-| `ux.main-form-objects` | Legacy main-form objects | `not-authored` | 0 | 79 | 0 | `Main.dfm:1-1988` |
+| `ux.main-form-objects` | Legacy main-form objects | `not-authored` | 0 | 79 | 3 | `Main.dfm:1-1988` |
 | `ux.main-menu-commands` | Legacy main-menu commands | `not-authored` | 0 | 129 | 0 | `Main.dfm:964-1579` |
 | `ux.main-form-events` | Legacy main-form event bindings and handlers | `not-authored` | 0 | 229 | 18 | `Main.dfm:1-1988`<br>`Main.pas:452-2867` |
-| `ux.keyboard-workflows` | Legacy shortcuts and keyboard branches | `partial` | 6 | 53 | 0 | `Main.dfm:1000-1579`<br>`Main.pas:629-947` |
+| `ux.keyboard-workflows` | Legacy shortcuts and keyboard branches | `partial` | 7 | 53 | 0 | `Main.dfm:1000-1579`<br>`Main.pas:629-947` |
 | `logging.qso-model` | Legacy QSO record and error model | `not-authored` | 0 | 47 | 0 | `Log.pas:48-82` |
 | `logging.scoring-rate-and-results` | Legacy logging, scoring, rate, correction, and result paths | `not-authored` | 0 | 55 | 0 | `Log.pas:147-1137` |
 | `simulation.state-models` | Legacy simulation state models and transitions | `not-authored` | 0 | 66 | 0 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
@@ -143,7 +143,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `simulation.legacy-effects` | Legacy QSB and random effects | `partial` | 10 | 15 | 6 | `Qsb.pas`<br>`RndFunc.pas` |
 | `ux.score-dialog` | Legacy score dialog | `not-authored` | 0 | 5 | 0 | `ScoreDlg.pas` |
 | `data.files-and-operational-paths` | Legacy data files, recording, export, and failure paths | `not-authored` | 0 | 164 | 0 | `Ini.pas`<br>`Main.pas`<br>`Log.pas`<br>`Station.pas`<br>`VCL`<br>`contest and data support units`<br>`bundled data and application resource files`<br>`Lazarus/build.ps1`<br>`tools/make-install.sh`<br>`ACAG.pas`<br>`ALLJA.pas`<br>`ArrlDx.pas`<br>`ArrlFd.pas`<br>`ArrlSS.pas`<br>`CallLst.pas`<br>`CqWW.pas`<br>`CWOPS.pas`<br>`CWSST.pas`<br>`DXCC.pas`<br>`IaruHf.pas`<br>`NaQp.pas` |
-| `ux.legacy-form-definitions` | Legacy Lazarus and Delphi form definitions | `not-authored` | 0 | 410 | 0 | `Main.lfm`<br>`Main.pas`<br>`ScoreDlg.dfm`<br>`ScoreDlg.lfm`<br>`ScoreDlg.pas` |
+| `ux.legacy-form-definitions` | Legacy Lazarus and Delphi form definitions | `not-authored` | 0 | 410 | 3 | `Main.lfm`<br>`Main.pas`<br>`ScoreDlg.dfm`<br>`ScoreDlg.lfm`<br>`ScoreDlg.pas` |
 | `build.legacy-project-metadata` | Legacy project, package, and deployment metadata | `not-authored` | 0 | 201 | 0 | `Lazarus/tests/RegexSmokeTest.lpr`<br>`MRCE.groupproj`<br>`MorseRunner.deployproj`<br>`MorseRunner.dpr`<br>`MorseRunner.dproj`<br>`MorseRunner.lpi`<br>`MorseRunner.lpr`<br>`Test/UnitTests.dpr`<br>`Test/UnitTests.dproj`<br>`VCL/MorseRunnerVcl.dpk`<br>`VCL/MorseRunnerVcl.dproj` |
 | `quality.legacy-tests-and-smoke` | Legacy unit and smoke test contracts | `not-authored` | 0 | 1077 | 0 | `Lazarus/tests/RegexSmokeTest.lpr`<br>`Test/CallsignUtilsTest.pas`<br>`Test/DxOperTest.pas`<br>`Test/DxccListTest.pas`<br>`Test/LexerTest.pas`<br>`Test/MySSExchTest.pas`<br>`Test/SSExchParserTest.pas`<br>`Test/SSLexerTest.pas` |
 | `lifecycle.legacy-unit-hooks` | Legacy Pascal unit lifecycle hooks | `not-authored` | 0 | 12 | 0 | `ArrlFd.pas`<br>`Log.pas`<br>`Test/CallsignUtilsTest.pas`<br>`Test/DxOperTest.pas`<br>`Test/DxccListTest.pas`<br>`Test/LexerTest.pas`<br>`Test/MySSExchTest.pas`<br>`Test/SSExchParserTest.pas`<br>`Test/SSLexerTest.pas`<br>`Util/CallsignUtils.pas` |
@@ -272,7 +272,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `release.cli-help-version-exit-codes` | `build.legacy-project-metadata` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | CLI help, version, validation failures, runtime failures, and successful commands expose stable documented output and exit codes in packaged builds. |
 | `lifecycle.unit-initialization-finalization-order` | `lifecycle.legacy-unit-hooks` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Legacy initialization and finalization hooks execute with equivalent order, registration, cleanup, state, and failures. |
 | `ux.wpm-default-page-up-step` | `ux.keyboard-workflows` | `bound` | `partial` | 2 | `windows`, `linux`, `macos` | The default non-HST PageUp workflow applies CE's persisted WPM step to authoritative engine state. |
-| `ux.wpm-upper-range-and-clamp` | `ux.keyboard-workflows` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | The CW-speed input and live PageUp workflow expose and enforce CE's 120 WPM upper bound. |
+| `ux.wpm-upper-range-and-clamp` | `ux.keyboard-workflows` | `bound` | `partial` | 2 | `windows`, `linux`, `macos` | The CW-speed input and live PageUp workflow expose and enforce CE's 120 WPM upper bound. |
 
 ## Rich-artifact evidence blockers
 
@@ -326,6 +326,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `ux.wpm-default-page-up-command-step-2-wpm-seed-12345` | `ux.keyboard-workflows` | `ux.wpm-default-page-up-step` | `legacy-green-xplat-red` | `ux-WPM-default-page-up-step-mismatch` | `pass` | `fail` |
 | `ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345` | `ux.keyboard-workflows` | `ux.wpm-default-page-up-step` | `legacy-green-xplat-red` | `ux-TUI-WPM-default-page-up-step-mismatch` | `pass` | `fail` |
 | `ux.wpm-upper-clamp-extra-page-up-from-118-seed-12345` | `ux.keyboard-workflows` | `ux.wpm-upper-range-and-clamp` | `legacy-green-xplat-red` | `ux-WPM-upper-clamp-mismatch` | `pass` | `fail` |
+| `ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345` | `ux.keyboard-workflows` | `ux.wpm-upper-range-and-clamp` | `legacy-green-xplat-red` | `ux-TUI-WPM-setup-upper-range-mismatch` | `pass` | `fail` |
 
 ## Retained noncertifying observations
 
