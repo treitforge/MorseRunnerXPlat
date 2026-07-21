@@ -198,6 +198,32 @@ public sealed class SimulatedStation
             customSerialNumberMinimumDigits);
     }
 
+    internal static SimulatedStation CreateScriptedForParity(
+        StationIdentity identity,
+        int wordsPerMinute,
+        int pitchOffsetHz,
+        float amplitude,
+        OperatorRunMode runMode,
+        string message)
+    {
+        ArgumentNullException.ThrowIfNull(identity);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(wordsPerMinute);
+        if (!float.IsFinite(amplitude) || amplitude <= 0f)
+        {
+            throw new ArgumentOutOfRangeException(nameof(amplitude));
+        }
+
+        var station = new SimulatedStation(
+            identity,
+            wordsPerMinute,
+            pitchOffsetHz,
+            new LegacyRandom(1),
+            runMode);
+        station.Amplitude = amplitude;
+        station.StartScriptedTransmissionForParity(message);
+        return station;
+    }
+
     public static SimulatedStation CreateReadyCaller(
         StationIdentity identity,
         int wordsPerMinute,

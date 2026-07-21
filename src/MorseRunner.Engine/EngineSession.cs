@@ -669,6 +669,71 @@ internal sealed class EngineSession : IAsyncDisposable
             + "observation completed.");
     }
 
+    internal async Task AddScriptedStationForParityAsync(
+        long expectedRevision,
+        long expectedSimulationBlock,
+        string stationCall,
+        string message,
+        int wordsPerMinute,
+        int pitchOffsetHz,
+        float amplitude,
+        CancellationToken cancellationToken)
+    {
+        if (_automaticTiming)
+        {
+            throw new InvalidOperationException(
+                "Scripted station parity setup requires manual timing.");
+        }
+
+        ArgumentOutOfRangeException.ThrowIfNegative(expectedRevision);
+        ArgumentOutOfRangeException.ThrowIfNegative(
+            expectedSimulationBlock);
+        ArgumentException.ThrowIfNullOrWhiteSpace(stationCall);
+        ArgumentException.ThrowIfNullOrWhiteSpace(message);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(wordsPerMinute);
+        if (!float.IsFinite(amplitude) || amplitude <= 0f)
+        {
+            throw new ArgumentOutOfRangeException(nameof(amplitude));
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        TaskCompletionSource completion = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        if (!_commands.Writer.TryWrite(
+                new ScriptedStationSetupWorkItem(
+                    expectedRevision,
+                    expectedSimulationBlock,
+                    stationCall,
+                    message,
+                    wordsPerMinute,
+                    pitchOffsetHz,
+                    amplitude,
+                    completion)))
+        {
+            throw new InvalidOperationException(
+                "Could not enqueue the scripted station parity setup.");
+        }
+
+        Task completed = await Task.WhenAny(completion.Task, _worker);
+        if (completion.Task.IsCompleted)
+        {
+            await completion.Task;
+            return;
+        }
+
+        if (completed == _worker && _worker.IsFaulted)
+        {
+            throw new InvalidOperationException(
+                "The session faulted before the scripted station "
+                + "parity setup completed.",
+                _worker.Exception);
+        }
+
+        throw new InvalidOperationException(
+            "The session stopped before the scripted station parity "
+            + "setup completed.");
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
@@ -792,6 +857,9 @@ internal sealed class EngineSession : IAsyncDisposable
                 return true;
             case QsbRuntimeObservationWorkItem observation:
                 ApplyQsbRuntimeObservation(observation);
+                return true;
+            case ScriptedStationSetupWorkItem setup:
+                ApplyScriptedStationSetup(setup);
                 return true;
             case CloseWorkItem close:
                 ApplyClose(close.Completion);
@@ -1185,6 +1253,49 @@ internal sealed class EngineSession : IAsyncDisposable
 
         observation.Completion.TrySetResult(
             new(blocks, _random.NextSingle()));
+    }
+
+    private void ApplyScriptedStationSetup(
+        ScriptedStationSetupWorkItem setup)
+    {
+        if (_revision != setup.ExpectedRevision
+            || _simulationBlock != setup.ExpectedSimulationBlock
+            || _state != SessionState.Running
+            || _settings.Qrm
+            || _settings.Qrn
+            || _qsbEnabled
+            || _settings.Flutter
+            || _qskEnabled
+            || _settings.Lids
+            || _stations.Count != 0
+            || _receiverSources.Count != 0
+            || _hasCreatedStation)
+        {
+            setup.Completion.TrySetException(
+                new InvalidOperationException(
+                    "The scripted station parity setup requires the "
+                    + "fresh CE-compatible running configuration."));
+            return;
+        }
+
+        SimulatedStation station =
+            SimulatedStation.CreateScriptedForParity(
+                new(
+                    setup.StationCall,
+                    "599",
+                    1,
+                    string.Empty,
+                    string.Empty),
+                setup.WordsPerMinute,
+                setup.PitchOffsetHz,
+                setup.Amplitude,
+                ToOperatorRunMode(_settings.RunModeId),
+                setup.Message);
+        _stations.Add(station);
+        _hasCreatedStation = true;
+        ReserveReceiverCapacityForCaller();
+        AddReceiverSource(ReceiverSource.FromCaller(station));
+        setup.Completion.TrySetResult();
     }
 
     private CommandResult ApplyStart()
@@ -2787,6 +2898,17 @@ internal sealed class EngineSession : IAsyncDisposable
         int ToggleAfterBlockCount,
         bool RuntimeToggle,
         TaskCompletionSource<QsbRuntimeParityObservation> Completion)
+        : WorkItem;
+
+    private sealed record ScriptedStationSetupWorkItem(
+        long ExpectedRevision,
+        long ExpectedSimulationBlock,
+        string StationCall,
+        string Message,
+        int WordsPerMinute,
+        int PitchOffsetHz,
+        float Amplitude,
+        TaskCompletionSource Completion)
         : WorkItem;
 
     private sealed record CloseWorkItem(

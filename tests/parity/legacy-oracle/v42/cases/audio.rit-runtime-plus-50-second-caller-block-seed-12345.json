@@ -1,0 +1,13 @@
+{
+  "blockSize": 512,
+  "messageText": "TEST TEST",
+  "probeSampleIndexes": [0, 1, 2, 148, 149, 150, 255, 310, 384, 509, 510, 511],
+  "remoteAmplitude": 18000,
+  "remotePitchHz": 360,
+  "runtimeRitHz": 50,
+  "sampleRate": 11025,
+  "scenario": "audio.rit-runtime-plus-50-second-caller-block-seed-12345",
+  "seed": 12345,
+  "startupRequestCount": 5,
+  "terminalRandomOrdinal": 2048
+}

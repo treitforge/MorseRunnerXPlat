@@ -1710,6 +1710,24 @@ filter-swap phase, modulator, and AGC, and calculates filter points and gain in
 the same double-precision-then-Single order as CE. The runtime path matches the
 pinned 250 Hz hash and ordinal-2048 random checkpoint exactly.
 
+The authored
+`audio.rit-runtime-plus-50-second-caller-block-seed-12345` case pins a live
+CE RIT change from 0 Hz to +50 Hz after the first scripted remote-station block
+and before the second. The v42 oracle invokes the real
+`TMainForm.Panel8MouseDown` handler, then `TContest.GetAudio` subtracts the
+shared RIT phase and per-sample RIT step from the station BFO. The common first
+block has hash
+`2ed89f5a0efa340a7546fed86add29ed234bf16925cec59d797c41ca9a217ccb`.
+The fixed-0 Hz second block has hash
+`690d977c8da212a55f2ac866aec81510dd1ea3164ffd4d5f555782a5db2f9ec0`.
+The runtime-+50 Hz block first diverges at sample 152 and has hash
+`2b2ce5e6e0c58f1ab1813a1c7727088a50aae43e3f7f69aba07d1a34401bef0c`.
+Both paths retain the ordinal-2048 random checkpoint `3f53fd06`. The authored
+XPlat target accepts and snapshots the semantic RIT command, but the normal
+`SimulatedStation` render path does not yet apply RIT. Negative offsets, clamp
+and step variants, reset, multiple stations, transport, and UX mutation remain
+separate acceptance boundaries.
+
 ### 14.5 Device failure
 
 On unrecoverable physical-device failure:

@@ -231,6 +231,30 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
                 blockCount,
                 toggleAfterBlockCount,
                 runtimeToggle,
+            cancellationToken);
+    }
+
+    internal Task AddScriptedStationForParityAsync(
+        SessionId sessionId,
+        long expectedRevision,
+        long expectedSimulationBlock,
+        string stationCall,
+        string message,
+        int wordsPerMinute,
+        int pitchOffsetHz,
+        float amplitude,
+        CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        return GetSession(sessionId)
+            .AddScriptedStationForParityAsync(
+                expectedRevision,
+                expectedSimulationBlock,
+                stationCall,
+                message,
+                wordsPerMinute,
+                pitchOffsetHz,
+                amplitude,
                 cancellationToken);
     }
 

@@ -13,6 +13,16 @@ public static class ParityAcceptanceRegistry
         new Dictionary<string, ParityAcceptanceRegistration>(
             StringComparer.Ordinal)
         {
+            [XPlatRuntimeRitChangeTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatRuntimeRitChangeTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatRuntimeRitChangeTarget),
+                    XPlatRuntimeRitChangeTarget.FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = RuntimeRitChangeInput.Parse(scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () => new XPlatRuntimeRitChangeTarget()),
             [XPlatRuntimeBandwidthChangeTarget.ParityId] =
                 new ParityAcceptanceRegistration(
                     XPlatRuntimeBandwidthChangeTarget.ParityId,
