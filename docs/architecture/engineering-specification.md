@@ -1932,7 +1932,10 @@ client. The v60 CE oracle reaches 31 WPM after loading `WpmStepRate=0` through
 the real `Ini.FromIni` path. Before implementation, the production TUI loads
 the zero value unchanged and remains at 30 WPM after its SpeedUp action. The
 upper load clamp, malformed values, PageDown, HST precedence, and direct menu
-choices remain separate acceptance boundaries.
+choices remain separate acceptance boundaries. Production TUI now applies
+the CE lower load clamp before using or preserving the persisted step. Values
+above CE's upper bound remain unmodified until their separate acceptance
+boundary is implemented.
 
 ### 14.5 Device failure
 
