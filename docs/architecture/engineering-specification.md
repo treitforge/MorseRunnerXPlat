@@ -2727,6 +2727,18 @@ and location with one separating space. Missing or malformed fields, other
 contest formats, repeats, correction variants, LID errors, and random reply
 prefixes remain within the partial obligation.
 
+The authored `contest.sweepstakes-remote-exchange-format-seed-12345` case
+extends the same obligation through the remote ARRL Sweepstakes composition
+branch. Its pinned CE v29 adapter fixes serial and precedence at `123 A`, the
+remote call at `K1ABC`, and check and section at `72 OR`, and observes the exact
+`123 A K1ABC 72 OR` exchange. Retained red evidence records
+`contest-sweepstakes-remote-exchange-format-mismatch`, where XPlat discarded
+the first field and remote call and produced `5NN72 OR`. Production simulated
+Sweepstakes stations now place their callsign between the two retained
+exchange fields. The local-station serial prefix, malformed fields, repeats,
+correction variants, LID errors, and random reply prefixes remain within the
+partial obligation.
+
 The authored
 `audio.flutter-no-station-noise-invariance-seed-12345` case narrows the first
 flutter acceptance boundary to station-free receiver audio. Its pinned CE

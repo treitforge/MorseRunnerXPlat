@@ -115,6 +115,28 @@ public sealed class SimulationAndScoringTests
         Assert.Equal("BRUCE MA", station.ObserveExchangeForParity());
     }
 
+    [Fact]
+    public void SweepstakesRemoteExchangeIncludesCallsignBetweenExchangeFields()
+    {
+        var station = new SimulatedStation(
+            new StationIdentity(
+                "K1ABC",
+                "599",
+                Number: 123,
+                "123 A",
+                "72 OR"),
+            wordsPerMinute: 25,
+            pitchOffsetHz: 0,
+            new LegacyRandom(12_345),
+            OperatorRunMode.Pileup,
+            sweepstakes: true,
+            contestId: new("scArrlSS"));
+
+        Assert.Equal(
+            "123 A K1ABC 72 OR",
+            station.ObserveExchangeForParity());
+    }
+
     [Theory]
     [InlineData("CO", "DAVID CO")]
     [InlineData("", "DAVID")]
