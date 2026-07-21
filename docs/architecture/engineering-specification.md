@@ -1091,7 +1091,10 @@ is applied on the session loop, clamped to the CE range from `-60 dB` through
 `0 dB`, and converted to the CE monitor gain before the next simulation block.
 Snapshots expose the current monitor level. The external transport appends
 `RADIO_CONTROL_MESSAGE_MONITOR_LEVEL` and `current_monitor_level_db`; older
-clients continue to ignore the additive snapshot field.
+clients continue to ignore the additive snapshot field. The desktop monitor
+slider remains enabled while a session is running or paused, snaps to its
+five-dB ticks, and serializes semantic adjustments through
+`IMorseRunnerClient`. Setup-only station controls remain disabled.
 
 #### Hosted control
 
@@ -1642,7 +1645,8 @@ evidence records the former XPlat gap, where both runs kept the full monitor
 level and emitted the fixed-full second block. Production now applies the
 semantic monitor-level command on the session loop before the next block. The
 runtime-muted path matches the pinned CE second-block hash without changing the
-random checkpoint. Desktop mutation of this runtime control remains pending.
+random checkpoint. The desktop exposes the same live command through its
+monitor slider.
 
 The authored
 `audio.qsk-receiver-ducking-first-cq-block-seed-12345` case pins fresh QSK-off

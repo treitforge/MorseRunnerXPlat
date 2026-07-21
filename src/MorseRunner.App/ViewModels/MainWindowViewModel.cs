@@ -113,6 +113,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private readonly DxccDatabase _dxccDatabase;
     private readonly SynchronizationContext? _uiContext;
     private readonly object _snapshotApplicationGate = new();
+    private readonly SemaphoreSlim _monitorLevelUpdateGate = new(1, 1);
     private readonly CancellationTokenSource _lifetime = new();
     private SessionId? _sessionId;
     private SessionId? _recordedResultSessionId;
@@ -145,6 +146,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private int _ritOffsetHz;
     private int _activity = 5;
     private double _monitorLevel;
+    private double _appliedMonitorLevelDb;
     private int _receiveSpeedBelowWpm;
     private int _receiveSpeedAboveWpm;
     private int _customSerialNumberMinimum = 1;
@@ -354,6 +356,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             or SessionState.Created
             or SessionState.Completed;
 
+    public bool IsMonitorLevelEnabled =>
+        IsSetupEnabled
+        || _sessionState is SessionState.Running or SessionState.Paused;
+
     public string Status
     {
         get => _status;
@@ -466,6 +472,65 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     {
         get => _monitorLevel;
         set => SetField(ref _monitorLevel, Math.Clamp(value, -60d, 0d));
+    }
+
+    public async Task SetMonitorLevelAsync(double requestedLevelDb)
+    {
+        double requested = Math.Round(
+            Math.Clamp(requestedLevelDb, -60d, 0d),
+            MidpointRounding.AwayFromZero);
+        MonitorLevel = requested;
+        if (_sessionState is not (SessionState.Running or SessionState.Paused))
+        {
+            return;
+        }
+
+        try
+        {
+            await _monitorLevelUpdateGate.WaitAsync(_lifetime.Token);
+        }
+        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
+        {
+            return;
+        }
+
+        try
+        {
+            if (_sessionState is not (
+                    SessionState.Running or SessionState.Paused))
+            {
+                return;
+            }
+
+            int delta = checked((int)(requested - _appliedMonitorLevelDb));
+            if (delta == 0)
+            {
+                return;
+            }
+
+            CommandResult result = await ExecuteAsync(
+                new AdjustRadioControlCommand(
+                    RequestId.New(),
+                    _sessionId!.Value,
+                    DesktopClientId,
+                    RadioControl.MonitorLevel,
+                    delta));
+            Status = result.Accepted
+                ? $"Adjusted monitor level to {requested:+0;-0;0} dB."
+                : result.Message ?? "Monitor level adjustment was rejected.";
+            await RefreshAsync();
+        }
+        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            Status = $"Monitor level adjustment failed: {exception.Message}";
+        }
+        finally
+        {
+            _monitorLevelUpdateGate.Release();
+        }
     }
 
     public int ReceiveSpeedBelowWpm
@@ -1500,6 +1565,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         _sessionState = snapshot.State;
         OnPropertyChanged(nameof(SessionStateLabel));
         OnPropertyChanged(nameof(IsSetupEnabled));
+        OnPropertyChanged(nameof(IsMonitorLevelEnabled));
         SimulationBlock = snapshot.SimulationBlock;
         Elapsed = snapshot.ElapsedSimulationTime.ToString(
             @"mm\:ss\.fff",
@@ -1526,6 +1592,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         WordsPerMinute = snapshot.CurrentWordsPerMinute;
         BandwidthHz = snapshot.CurrentBandwidthHz;
         RitOffsetHz = snapshot.RitOffsetHz;
+        _appliedMonitorLevelDb = snapshot.CurrentMonitorLevelDb;
+        MonitorLevel = snapshot.CurrentMonitorLevelDb;
         AudioHealth = snapshot.AudioOutputHealthy
             ? $"Healthy, {snapshot.AudioQueuedBlocks} blocks queued"
             : $"Needs attention, {snapshot.AudioUnderrunCount} underruns";

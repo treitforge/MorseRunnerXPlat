@@ -174,8 +174,9 @@
             VerticalScrollBarVisibility="Auto">
           <StackPanel Spacing="14">
           <Border Classes="card">
-            <StackPanel Spacing="11" IsEnabled="{Binding IsSetupEnabled}">
+            <StackPanel Spacing="11">
               <TextBlock Classes="eyebrow" Text="STATION" />
+              <StackPanel Spacing="11" IsEnabled="{Binding IsSetupEnabled}">
               <TextBlock Foreground="#91A6B8" Text="Contest" />
               <ComboBox
                   x:Name="ContestSelector"
@@ -307,16 +308,23 @@
                   Maximum="600"
                   TickFrequency="50"
                   Value="{Binding BandwidthHz}" />
+              </StackPanel>
               <TextBlock Foreground="#91A6B8" Text="Monitor Level" />
               <Slider
                   x:Name="MonitorSlider"
                   AutomationProperties.Name="Monitor audio level"
+                  IsEnabled="{Binding IsMonitorLevelEnabled}"
+                  IsSnapToTickEnabled="True"
                   Minimum="-60"
                   Maximum="0"
                   TickFrequency="5"
                   ToolTip.Tip="Monitor level in dB"
-                  Value="{Binding MonitorLevel}" />
-              <CheckBox Content="QSK" IsChecked="{Binding Qsk}" />
+                  Value="{Binding MonitorLevel}"
+                  ValueChanged="MonitorLevelChanged" />
+              <CheckBox
+                  Content="QSK"
+                  IsChecked="{Binding Qsk}"
+                  IsEnabled="{Binding IsSetupEnabled}" />
             </StackPanel>
           </Border>
 

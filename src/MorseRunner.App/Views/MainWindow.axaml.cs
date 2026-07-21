@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
@@ -84,6 +85,13 @@ public sealed partial class MainWindow : Window
     private void FocusSetupClick(object? sender, RoutedEventArgs args)
     {
         this.FindControl<TextBox>("StationCallBox")?.Focus();
+    }
+
+    private async void MonitorLevelChanged(
+        object? sender,
+        RangeBaseValueChangedEventArgs args)
+    {
+        await ViewModel.SetMonitorLevelAsync(args.NewValue);
     }
 
     private void KeyboardHelpClick(object? sender, RoutedEventArgs args)

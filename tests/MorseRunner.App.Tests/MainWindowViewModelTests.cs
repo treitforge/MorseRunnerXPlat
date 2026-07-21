@@ -63,6 +63,22 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task MonitorLevelCanBeAdjustedThroughTheLiveClientBoundary()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+        await viewModel.StartCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.IsMonitorLevelEnabled);
+        Task firstAdjustment = viewModel.SetMonitorLevelAsync(-5d);
+        Task latestAdjustment = viewModel.SetMonitorLevelAsync(-60d);
+        await Task.WhenAll(firstAdjustment, latestAdjustment);
+
+        Assert.Equal(-60d, viewModel.MonitorLevel);
+        Assert.Contains("-60 dB", viewModel.Status, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task OperatorIntentAndQsoLoggingUseSemanticClientCommands()
     {
         await using var viewModel = new MainWindowViewModel(
