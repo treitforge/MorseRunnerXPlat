@@ -4,7 +4,7 @@
   "versionId": "legacy-oracle-v36",
   "sourceClosure": {
     "oracleSource": "tests/parity/legacy-oracle/v36/LegacyOracle.lpr",
-    "oracleSourceSha256": "eda9afc04b2015c764057c787cda1a458ae426e246facd457b270af0d6b3715b",
+    "oracleSourceSha256": "87967c86e710c8a3b809e867d9e2c5f80f096bc05422ed0eca0ea8f41e176d09",
     "legacyRevision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
     "legacyTree": "a44212bfee5b1eebfd0129459d476736775adf36",
     "legacyBundleSha256": "1d9fcafb3adb0227aba360bc1884b5c32d2c1e8210448e646a4104f142b07772",

@@ -2492,9 +2492,9 @@
         "adapterId": "LegacyOracleTarget",
         "versionId": "legacy-oracle-v36",
         "source": "tests/parity/legacy-oracle/v36/LegacyOracle.lpr",
-        "sourceSha256": "eda9afc04b2015c764057c787cda1a458ae426e246facd457b270af0d6b3715b",
+        "sourceSha256": "87967c86e710c8a3b809e867d9e2c5f80f096bc05422ed0eca0ea8f41e176d09",
         "buildRecipe": "tests/parity/legacy-oracle/v36/build-recipe.json",
-        "buildRecipeSha256": "abed3c098216ae77f8d0854bfe3b927ebfe2956c5d5e371fe618cfcbd26e97f3"
+        "buildRecipeSha256": "362ce81a6faef17ec204e86c7c871edb4b402da7e5134d31a3dc4b999ad04884"
       },
       "legacySources": [
         "Contest.pas",
@@ -2507,10 +2507,10 @@
       "preconditions": [
         "The pinned CE oracle and toolchain fingerprint are available.",
         "The handleless CE runtime selects scCQWW and rmPileup with local station W7SST, remote station K1ABC, seed 12345, RST 599, CQ zone 10, and retained R1 equal to 0.930.",
-        "Both targets begin exchange formatting after raw draw seven. The production XPlat candidate path reaches the same checkpoint and verifies R1 rounds to 930 thousandths.",
-        "CE draw eight is the remote RST-error decision. Draws nine and ten evaluate the two short-circuit remote zero branches before the CQ-zone exclusion prevents either substitution.",
+        "Both targets begin exchange formatting after raw draw 2465. The production XPlat candidate path reaches that checkpoint after R1, operator, QSB initialization, level, and pitch setup, and verifies R1 rounds to 930 thousandths.",
+        "CE draw 2466 is the remote RST-error decision. Draws 2467 and 2468 evaluate the two short-circuit remote zero branches before the CQ-zone exclusion prevents either substitution.",
         "Because R1 is at least 0.70, the CQ-zone full-cut branch does not replace 1 with A. Both targets therefore format 5NN 10, isolating the stream-consumption difference.",
-        "The parity adapters then observe the next authoritative random value as IEEE 754 Single bits without supplying any formatter decisions. CE returns draw eleven as 3f18759e, while current XPlat returns unconsumed draw eight as 3f539151.",
+        "The parity adapters then observe the next authoritative random value as IEEE 754 Single bits without supplying any formatter decisions. CE returns draw 2469 as 3f1506e1, while current XPlat returns unconsumed draw 2466 as 3f626e2f.",
         "Other R1 checkpoints, CQ zones with zeroes, rare RST outcomes, repeated formatter calls, and downstream station behavior remain pending, so the obligation remains partial."
       ],
       "input": {
@@ -2520,7 +2520,7 @@
         "remoteCall": "K1ABC",
         "rst": 599,
         "cqwwZone": "10",
-        "formatterCheckpointDraw": 7,
+        "formatterCheckpointDraw": 2465,
         "r1Milli": 930,
         "seed": 12345
       },
@@ -2531,8 +2531,8 @@
       "assertions": {
         "fixtureComparison": "exact",
         "observedValueCount": 3,
-        "observedValuesSha256": "b8ef3bae10461d846080165f642333a987b12840e2aa3d21b33aaa41b37bdc16",
-        "firstDivergence": "The formatted CQ WW row matches at ordinal 1. The first mismatch is ordinal 2: CE consumes draws eight through ten and observes draw eleven as Single bits 3f18759e, while XPlat consumes no formatter draws and observes draw eight as 3f539151.",
+        "observedValuesSha256": "24a0f902b18ab24dbe40d4d0c26a330ab535982427601e7dd222e66ef2a4d264",
+        "firstDivergence": "The formatted CQ WW row matches at ordinal 1. The first mismatch is ordinal 2: CE consumes draws 2466 through 2468 and observes draw 2469 as Single bits 3f1506e1, while XPlat consumes no formatter draws and observes draw 2466 as 3f626e2f.",
         "functionalDivergenceCode": "contest-cqww-random-consumption-remote-exchange-format-mismatch"
       },
       "platforms": [

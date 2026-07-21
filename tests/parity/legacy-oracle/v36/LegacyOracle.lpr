@@ -60,7 +60,7 @@ const
   ExpectedRemoteCall = 'K1ABC';
   ExpectedRst = 599;
   ExpectedCqwwZone = '10';
-  ExpectedFormatterCheckpointDraw = 7;
+  ExpectedFormatterCheckpointDraw = 2465;
   ExpectedR1Milli = 930;
   ExpectedSeed = 12345;
   ExpectedStationIdRate = 3;
@@ -1122,8 +1122,8 @@ begin
       + '|formatted=' + FormattedExchange);
     Values.Add(
       'shared-random-checkpoint'
-      + '|draw-count-before-checkpoint=10'
-      + '|ordinal=10'
+      + '|draw-count-before-checkpoint=2468'
+      + '|ordinal=2468'
       + '|single-bits=' + SingleBits(Random));
   finally
     StationValue.Free;

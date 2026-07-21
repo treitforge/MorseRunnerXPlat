@@ -102,8 +102,8 @@ public sealed class XPlatCqwwRandomConsumptionRemoteExchangeFormatTarget :
             + $"|exchange2={input.CqwwZone}"
             + $"|formatted={formatted}",
             "shared-random-checkpoint"
-            + "|draw-count-before-checkpoint=10"
-            + "|ordinal=10"
+            + "|draw-count-before-checkpoint=2468"
+            + "|ordinal=2468"
             + $"|single-bits={checkpointBits}",
         ];
     }
@@ -170,7 +170,7 @@ internal sealed record CqwwRandomConsumptionRemoteExchangeFormatInput(
             || result.RemoteCall != "K1ABC"
             || result.Rst != 599
             || result.CqwwZone != "10"
-            || result.FormatterCheckpointDraw != 7
+            || result.FormatterCheckpointDraw != 2465
             || result.R1Milli != 930
             || result.Seed != 12345
             || scenario.ExpectedValues.Count != 3)
