@@ -88,6 +88,7 @@ public sealed class ParityInfrastructureTests
                 "contest.cqww-random-consumption-remote-exchange-format-seed-12345",
                 "contest.cwt-remote-exchange-format-seed-12345",
                 "contest.default-two-field-remote-exchange-format-seed-12345",
+                "contest.dynamic-exchange-type-locality-matrix",
                 "contest.exchange-shapes",
                 "contest.fieldday-remote-exchange-format-seed-12345",
                 "contest.full-cut-numeric-remote-exchange-format-seed-12345",
@@ -154,6 +155,7 @@ public sealed class ParityInfrastructureTests
                 "contest.cqww-random-consumption-remote-exchange-format-seed-12345",
                 "contest.cwt-remote-exchange-format-seed-12345",
                 "contest.default-two-field-remote-exchange-format-seed-12345",
+                "contest.dynamic-exchange-type-locality-matrix",
                 "contest.exchange-shapes",
                 "contest.fieldday-remote-exchange-format-seed-12345",
                 "contest.full-cut-numeric-remote-exchange-format-seed-12345",
@@ -199,6 +201,10 @@ public sealed class ParityInfrastructureTests
     [Trait("Category", "ParityInfrastructure")]
     public void CaseIdSelectsItsExactXPlatAdapter()
     {
+        Assert.IsType<XPlatDynamicExchangeTypeLocalityTarget>(
+            ParityAcceptanceRegistry
+                .Get("contest.dynamic-exchange-type-locality-matrix")
+                .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatOwnExchangeTokenizationTarget>(
             ParityAcceptanceRegistry
                 .Get("contest.own-exchange-tokenization-boundaries")

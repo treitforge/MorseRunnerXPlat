@@ -1389,6 +1389,14 @@ validator consumes the complete input and rejects trailing tokens. The pinned
 ARRL DX state/province alphabet is the W7SST baseline and does not replace the
 separate locality-dependent exchange-type selection rules.
 
+The schema-v3 `contest.dynamic-exchange-type-locality-matrix` case runs 12
+manifest-supplied inputs through `legacy-oracle-v66`. Its first eight rows pin
+the complete ARRL DX home-locality, station-kind, and message-direction truth
+table. Its final four rows pin NAQP sender locality and the received-message
+remote-callsign override. Call-history partitioning and invalid-home-call error
+text remain separate boundaries so this decision-table case stays fast and
+deterministic.
+
 ### 13.4 Extensibility
 
 New built-in contests register through a catalog. Runtime plug-in loading is

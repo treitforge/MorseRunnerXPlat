@@ -442,6 +442,7 @@
         "contest.wpx-custom-range-remote-exchange-format-seed-12345",
         "contest.wpx-midcontest-remote-exchange-format-seed-12345",
         "contest.exchange-shapes",
+        "contest.dynamic-exchange-type-locality-matrix",
         "contest.invalid-own-exchange-messages-ce-order",
         "contest.own-exchange-tokenization-boundaries",
         "engine.contest-specific-cq-tu-station-id-seed-12345"
@@ -735,7 +736,7 @@
     {"id": "contest.required-exchange-fields-all-contests", "capabilityId": "contest.legacy-implementations", "behavior": "CWT, SST, Field Day, NAQP, Sweepstakes, WPX, HST, and all other contests include every required CE exchange field.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["ArrlSS.pas"], "legacySurfaceSelectors": ["legacy.support.contest.routine.arrlss.tsweepstakes.validatemyexchange"], "acceptanceStatus": "partial", "caseIds": ["contest.invalid-own-exchange-messages-ce-order", "contest.own-exchange-tokenization-boundaries"]},
     {"id": "contest.allja-acag-truth-column-mapping", "capabilityId": "contest.legacy-implementations", "behavior": "ALLJA and ACAG station truth use the correct CE data columns without serial fallback.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.sweepstakes-complete-truth-model", "capabilityId": "contest.legacy-implementations", "behavior": "Sweepstakes models serial, weighted precedence, own call, check, section, copied values, truth, and errors.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "contest.arrldx-naqp-home-filtering-and-location", "capabilityId": "contest.legacy-implementations", "behavior": "ARRL DX and NAQP apply CE home-call filtering and dynamic location or exchange derivation.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "contest.arrldx-naqp-home-filtering-and-location", "capabilityId": "contest.legacy-implementations", "behavior": "ARRL DX and NAQP apply CE home-call filtering and dynamic location or exchange derivation.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["DualExchContest.pas", "ArrlDx.pas", "NaQp.pas"], "legacySurfaceSelectors": ["legacy.support.contest.routine.dualexchcontest.tdualexchcontest.getexchangetypes", "legacy.support.contest.routine.arrldx.tarrldx.onsetmycall", "legacy.support.contest.routine.naqp.tncjnaqp.getexchangetypes", "legacy.support.contest.routine.naqp.tncjnaqp.iscalllocaltocontest", "legacy.support.contest.routine.naqp.tncjnaqp.onsetmycall"], "acceptanceStatus": "partial", "caseIds": ["contest.dynamic-exchange-type-locality-matrix"]},
     {"id": "contest.wpx-hst-station-serial-generation", "capabilityId": "contest.legacy-implementations", "behavior": "WPX and HST station serials use CE elapsed-time, skill, and random behavior.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Station.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.station.serialnrcustomrange", "legacy.sim.routine.station.tstation.nrastext"], "acceptanceStatus": "partial", "caseIds": ["contest.wpx-custom-range-remote-exchange-format-seed-12345"]},
     {"id": "session.hst-wpx-start-constraints", "capabilityId": "session.run-mode-enumeration", "behavior": "HST and WPX start constraints, forced settings, activity, bandwidth, duration, and valid serial rules match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "engine.station-delay-lifetime-and-call-pool-rules", "capabilityId": "simulation.state-models", "behavior": "Single-call delay, caller lifetime, patience, retry, Gaussian WPM, calls-from-keyer, station-ID rate, and HST call-pool removal match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -5345,6 +5346,82 @@
       "failureCode": "contest-own-exchange-tokenization-mismatch",
       "fixture": "tests/parity/fixtures/legacy/contest-own-exchange-tokenization-boundaries.json",
       "evidence": "tests/parity/evidence/contest-own-exchange-tokenization-boundaries.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "contest.dynamic-exchange-type-locality-matrix",
+      "capabilityId": "contest.legacy-implementations",
+      "obligationIds": [
+        "contest.arrldx-naqp-home-filtering-and-location"
+      ],
+      "behavior": "CE dynamically chooses ARRL DX state/province or power and NAQP local or non-North-American exchange fields from home-call locality, station kind, message direction, and the remote callsign.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v66",
+        "source": "tests/parity/legacy-oracle/v66/LegacyOracle.lpr",
+        "sourceSha256": "655ebd3c61c722ad02d6d192a97cc11dfc339bdeb59481140a48223c9692badc",
+        "buildRecipe": "tests/parity/legacy-oracle/v66/build-recipe.json",
+        "buildRecipeSha256": "e61a7fe6bb27d097b3132952e43d744553296f049413b3221431770baa7b9331"
+      },
+      "legacySources": [
+        "DualExchContest.pas",
+        "ArrlDx.pas",
+        "NaQp.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.support.contest.routine.dualexchcontest.tdualexchcontest.getexchangetypes",
+        "legacy.support.contest.routine.arrldx.tarrldx.onsetmycall",
+        "legacy.support.contest.routine.naqp.tncjnaqp.getexchangetypes",
+        "legacy.support.contest.routine.naqp.tncjnaqp.iscalllocaltocontest",
+        "legacy.support.contest.routine.naqp.tncjnaqp.onsetmycall"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The live v66 oracle initializes the real DXCC database and creates a fresh ARRL DX or NAQP contest for every vector.",
+        "W7SST is the local baseline and F6ABC is the non-local baseline for both contests.",
+        "The first eight vectors cover the complete ARRL DX home-locality, station-kind, and message-direction truth table.",
+        "The final four vectors cover NAQP sender locality and the received-message remote-callsign override.",
+        "Call-history partitioning, invalid-home-call error text, and received-entry optionality remain separately testable boundaries."
+      ],
+      "input": {
+        "scenario": "contest.dynamic-exchange-type-locality-matrix",
+        "vectors": [
+          {"contestId": "scArrlDx", "homeCall": "W7SST", "stationKind": "skMyStation", "requestedMsgType": "mtSendMsg", "stationCall": "W7SST", "remoteCall": ""},
+          {"contestId": "scArrlDx", "homeCall": "W7SST", "stationKind": "skMyStation", "requestedMsgType": "mtRecvMsg", "stationCall": "W7SST", "remoteCall": "F6ABC"},
+          {"contestId": "scArrlDx", "homeCall": "W7SST", "stationKind": "skDxStation", "requestedMsgType": "mtSendMsg", "stationCall": "F6ABC", "remoteCall": ""},
+          {"contestId": "scArrlDx", "homeCall": "W7SST", "stationKind": "skDxStation", "requestedMsgType": "mtRecvMsg", "stationCall": "F6ABC", "remoteCall": "W7SST"},
+          {"contestId": "scArrlDx", "homeCall": "F6ABC", "stationKind": "skMyStation", "requestedMsgType": "mtSendMsg", "stationCall": "F6ABC", "remoteCall": ""},
+          {"contestId": "scArrlDx", "homeCall": "F6ABC", "stationKind": "skMyStation", "requestedMsgType": "mtRecvMsg", "stationCall": "F6ABC", "remoteCall": "W7SST"},
+          {"contestId": "scArrlDx", "homeCall": "F6ABC", "stationKind": "skDxStation", "requestedMsgType": "mtSendMsg", "stationCall": "W7SST", "remoteCall": ""},
+          {"contestId": "scArrlDx", "homeCall": "F6ABC", "stationKind": "skDxStation", "requestedMsgType": "mtRecvMsg", "stationCall": "W7SST", "remoteCall": "F6ABC"},
+          {"contestId": "scNaQp", "homeCall": "W7SST", "stationKind": "skMyStation", "requestedMsgType": "mtSendMsg", "stationCall": "W7SST", "remoteCall": ""},
+          {"contestId": "scNaQp", "homeCall": "F6ABC", "stationKind": "skMyStation", "requestedMsgType": "mtSendMsg", "stationCall": "F6ABC", "remoteCall": ""},
+          {"contestId": "scNaQp", "homeCall": "F6ABC", "stationKind": "skMyStation", "requestedMsgType": "mtRecvMsg", "stationCall": "F6ABC", "remoteCall": "W7SST"},
+          {"contestId": "scNaQp", "homeCall": "W7SST", "stationKind": "skMyStation", "requestedMsgType": "mtRecvMsg", "stationCall": "W7SST", "remoteCall": "F6ABC"}
+        ]
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatDynamicExchangeTypeLocalityTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 12,
+        "observedValuesSha256": "f5064c39269eaeb3792c7589bf7d84dbed82f4b8f3e88b2389123285d87eee01",
+        "firstDivergence": "The zero-based first mismatch is expected in row 1. A local ARRL DX operator receives power from a simulated DX station, while XPlat initially exposes only its static state/province baseline pair.",
+        "functionalDivergenceCode": "contest-dynamic-exchange-type-locality-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "contest-dynamic-exchange-type-locality-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/contest-dynamic-exchange-type-locality-matrix.json",
+      "evidence": "tests/parity/evidence/contest-dynamic-exchange-type-locality-matrix.baseline.json",
       "firstGreenCommit": null
     }
   ]
