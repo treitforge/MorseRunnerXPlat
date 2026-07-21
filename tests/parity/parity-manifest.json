@@ -119,8 +119,10 @@
         "linux",
         "macos"
       ],
-      "acceptanceStatus": "not-authored",
-      "caseIds": []
+      "acceptanceStatus": "partial",
+      "caseIds": [
+        "settings.duration-full-range"
+      ]
     },
     {
       "id": "ux.main-form-objects",
