@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "c549ffc049b819566b5415b2febb335543fa30a0",
+      "tree": "0e349211ad8a49e3c7becce79550593687198bb3",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "contest.sweepstakes-remote-exchange-format-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "contest.sweepstakes-remote-exchange-format-seed-12345",
+      "acceptanceTestName": "parity:contest.sweepstakes-remote-exchange-format-seed-12345()",
+      "target": "xplat",
+      "adapter": "XPlatSweepstakesRemoteExchangeFormatTarget",
+      "caseDefinitionSha256": "43341b24f2d9d6c9fbe8bb184729d3ab823011c5959fbb63cae4fa359ad1804a",
+      "fixtureSha256": "18de328a59f5b58c189ef29dc1069a98f804ad13d44045d16d96d4a0970ccdeb",
+      "outcome": "functional-divergence",
+      "failureCode": "contest-sweepstakes-remote-exchange-format-mismatch",
+      "evidenceSource": "MorseRunner.Engine.SimulatedStation.ObserveExchangeForParity",
+      "observedValues": [
+        "configuration|scenario=contest.sweepstakes-remote-exchange-format-seed-12345|station=W7SST|seed=12345|contest=scArrlSS|run-mode=rmPileup",
+        "remote-exchange|call=K1ABC|rst=599|exchange1=123 A|exchange2=72 OR|formatted=5NN72 OR"
+      ],
+      "observedValueCount": 2,
+      "observedValuesSha256": "bf4a920a5b6e9f5bad5771f0839ad7a7ccfc712fb54ddf329098bada76b20c96",
+      "firstDivergence": {
+        "index": 1,
+        "expected": "remote-exchange|call=K1ABC|rst=599|exchange1=123 A|exchange2=72 OR|formatted=123 A K1ABC 72 OR",
+        "actual": "remote-exchange|call=K1ABC|rst=599|exchange1=123 A|exchange2=72 OR|formatted=5NN72 OR"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}
