@@ -1617,7 +1617,23 @@ Retained red evidence records
 calculation, which left a nonzero `0.001` endpoint. Production now applies the
 CE slider conversion, power curve, and low-level linear rolloff in the same
 order. It matches both pinned block hashes and the shared random checkpoint.
-Intermediate low-level slider values and runtime changes remain pending.
+Intermediate low-level slider values and other runtime transitions remain
+pending.
+
+The authored
+`audio.operator-monitor-runtime-mute-second-cq-block-seed-12345` case pins a
+live CE monitor change from `0 dB` to `-60 dB` after the first CQ block and
+before the second. The first block retains hash
+`7d925cbba9a0bb2e86a48c5a1777c347cfed68080a559446d8e3ed3c9d6af4ee`.
+With filter, modulator, and AGC state continuous, the fixed-full second block
+has hash
+`98ed32d957fef5ee62e50a0a04cb063f4c027a9770d4a9e30b27c60dec52e234`,
+while the runtime-muted second block has hash
+`4d62f0d47d5d84552b1e30ae49c93f6ac69c5ebb9edad4cd655bfa5eec01e3a2`.
+Both paths retain the ordinal-2048 random checkpoint `3f53fd06`. XPlat has no
+runtime monitor command yet, so retained red evidence must record the
+fixed-full second block for the requested runtime-muted path before production
+support is added.
 
 The authored
 `audio.qsk-receiver-ducking-first-cq-block-seed-12345` case pins fresh QSK-off

@@ -420,6 +420,19 @@ public static class ParityAcceptanceRegistry
                     static () => new LegacyOracleTarget(),
                     static () =>
                         new XPlatOperatorMonitorMuteTarget()),
+            [XPlatOperatorMonitorRuntimeChangeTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatOperatorMonitorRuntimeChangeTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatOperatorMonitorRuntimeChangeTarget),
+                    XPlatOperatorMonitorRuntimeChangeTarget
+                        .FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = OperatorMonitorRuntimeChangeInput.Parse(
+                            scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () =>
+                        new XPlatOperatorMonitorRuntimeChangeTarget()),
             ["contest.exchange-shapes"] =
                 new ParityAcceptanceRegistration(
                     "contest.exchange-shapes",
