@@ -94,7 +94,7 @@ internal sealed record WavPcm16BitExactInput(
         JsonElement input = scenario.Input;
         RequireExactProperties(
             input,
-            ["scenario", "sampleRate", "pcmSamples"],
+            ["pcmSamples", "sampleRate", "scenario"],
             scenario.Id);
         if (input.GetProperty("scenario").GetString()
                 != XPlatWavPcm16BitExactTarget.ParityId
