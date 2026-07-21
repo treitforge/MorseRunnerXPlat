@@ -36,6 +36,10 @@ public sealed class XPlatTuiHstWpmPageUpTarget : IParityTarget
             InProcessMorseRunnerClient.CreateDefault();
         using var application = new TuiApplication(client, isHosted: false);
         application.State.WordsPerMinute = input.InitialWpm;
+        application.State.ContestIndex = ContestCatalog.All
+            .Select((contest, index) => (contest, index))
+            .Single(item => item.contest.Id.Value == "scHst")
+            .index;
         await application.InitializeAsync(cancellationToken);
         await application.HandleAsync(
             new(TuiActionKind.StartHst),

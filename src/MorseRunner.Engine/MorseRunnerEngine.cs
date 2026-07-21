@@ -356,6 +356,16 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
                 "The run mode is not supported.",
                 nameof(settings));
         }
+
+        if (settings.RunModeId.Value == "rmHst"
+            && (settings.ContestId.Value != "scHst"
+                || settings.SerialNumberRange
+                    != SerialNumberRangeMode.StartOfContest))
+        {
+            throw new ArgumentException(
+                "HST competition mode requires the HST contest and the Start of Contest serial-number range.",
+                nameof(settings));
+        }
     }
 
     private static int DecimalDigitCount(int value) =>

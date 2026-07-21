@@ -1009,6 +1009,11 @@ At minimum, `SessionSettings` includes:
 Settings that would invalidate deterministic behavior or DSP state are
 immutable after `Ready`. Runtime controls are changed through commands.
 
+Session creation enforces CE competition prerequisites before allocating a
+session or audio sink. In particular, `rmHst` requires contest `scHst` and the
+`StartOfContest` serial-number range. A request that violates either condition
+is rejected without a lifecycle transition, event, or snapshot.
+
 ## 10. Commands and ordering
 
 ### 10.1 Command envelope

@@ -37,6 +37,8 @@ public sealed class XPlatAvaloniaHstWpmPageUpTarget : IParityTarget
             InProcessMorseRunnerClient.CreateDefault());
         viewModel.Seed = input.Seed;
         viewModel.WordsPerMinute = input.InitialWpm;
+        viewModel.SelectedContest = viewModel.Contests.Single(
+            contest => contest.Id.Value == "scHst");
         await viewModel.StartHstCommand.ExecuteAsync(null);
         int before = viewModel.WordsPerMinute;
         await viewModel.SpeedUpCommand.ExecuteAsync(null);

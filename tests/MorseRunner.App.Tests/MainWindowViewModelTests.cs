@@ -278,6 +278,8 @@ public sealed class MainWindowViewModelTests
         {
             WordsPerMinute = 32,
         };
+        viewModel.SelectedContest = viewModel.Contests.Single(
+            contest => contest.Id.Value == "scHst");
         await viewModel.StartHstCommand.ExecuteAsync(null);
 
         await viewModel.SpeedUpCommand.ExecuteAsync(null);
@@ -293,6 +295,8 @@ public sealed class MainWindowViewModelTests
         {
             WordsPerMinute = 33,
         };
+        viewModel.SelectedContest = viewModel.Contests.Single(
+            contest => contest.Id.Value == "scHst");
         await viewModel.StartHstCommand.ExecuteAsync(null);
 
         await viewModel.SpeedDownCommand.ExecuteAsync(null);

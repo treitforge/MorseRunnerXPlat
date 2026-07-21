@@ -51,6 +51,49 @@ public sealed class SessionLoopTests
                 TestContext.Current.CancellationToken));
     }
 
+    [Theory]
+    [InlineData("scWpx", SerialNumberRangeMode.StartOfContest)]
+    [InlineData("scHst", SerialNumberRangeMode.MidContest)]
+    public async Task HstModeRejectsInvalidContestOrSerialRange(
+        string contestId,
+        SerialNumberRangeMode serialNumberRange)
+    {
+        await using var engine = new MorseRunnerEngine();
+
+        ArgumentException exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => engine.CreateSessionAsync(
+                new SessionSettings(
+                    12_345,
+                    new ContestId(contestId),
+                    new RunModeId("rmHst"),
+                    DurationBlocks: 0)
+                {
+                    SerialNumberRange = serialNumberRange,
+                },
+                TestContext.Current.CancellationToken));
+
+        Assert.Contains("HST competition mode requires", exception.Message);
+    }
+
+    [Fact]
+    public async Task HstModeAcceptsRequiredContestAndSerialRange()
+    {
+        await using var engine = new MorseRunnerEngine();
+
+        SessionHandle handle = await engine.CreateSessionAsync(
+            new SessionSettings(
+                12_345,
+                new ContestId("scHst"),
+                new RunModeId("rmHst"),
+                DurationBlocks: 0)
+            {
+                SerialNumberRange = SerialNumberRangeMode.StartOfContest,
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(SessionState.Ready, handle.State);
+    }
+
     [Fact]
     public async Task SeededSessionAdvancesOnlyOnTheSessionWorker()
     {

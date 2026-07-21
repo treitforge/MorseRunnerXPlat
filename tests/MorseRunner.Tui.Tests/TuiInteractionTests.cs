@@ -324,6 +324,10 @@ public sealed class TuiInteractionTests
             InProcessMorseRunnerClient.CreateDefault();
         using var application = new TuiApplication(client, isHosted: false);
         application.State.WordsPerMinute = 32;
+        application.State.ContestIndex = ContestCatalog.All
+            .Select((contest, index) => (contest, index))
+            .Single(item => item.contest.Id.Value == "scHst")
+            .index;
         CancellationToken cancellationToken =
             TestContext.Current.CancellationToken;
         await application.InitializeAsync(cancellationToken);
@@ -347,6 +351,10 @@ public sealed class TuiInteractionTests
             InProcessMorseRunnerClient.CreateDefault();
         using var application = new TuiApplication(client, isHosted: false);
         application.State.WordsPerMinute = 33;
+        application.State.ContestIndex = ContestCatalog.All
+            .Select((contest, index) => (contest, index))
+            .Single(item => item.contest.Id.Value == "scHst")
+            .index;
         CancellationToken cancellationToken =
             TestContext.Current.CancellationToken;
         await application.InitializeAsync(cancellationToken);
