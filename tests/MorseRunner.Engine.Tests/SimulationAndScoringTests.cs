@@ -215,6 +215,37 @@ public sealed class SimulationAndScoringTests
         Assert.Equal(expected, station.ObserveExchangeForParity());
     }
 
+    [Fact]
+    public void ArrlDxHigherR1PowerKeepsLeadingDoubleZeroCut()
+    {
+        var random = new LegacyRandom(12_345);
+        var station = SimulatedStation.CreateCandidate(
+            () => new StationIdentity(
+                "JA1ABC",
+                "599",
+                Number: 0,
+                "599",
+                "100"),
+            () => 25,
+            random,
+            new LegacyRandomEffects(random),
+            OperatorRunMode.Pileup,
+            lids: false,
+            sweepstakes: false,
+            flutter: false,
+            new ContestId("scArrlDx"),
+            SerialNumberRangeMode.StartOfContest,
+            customSerialNumberMinimum: 1,
+            customSerialNumberMinimumDigits: 2);
+
+        Assert.Equal(
+            930,
+            (int)MathF.Round(
+                station.R1 * 1_000f,
+                MidpointRounding.ToEven));
+        Assert.Equal("5NN 1TT", station.ObserveExchangeForParity());
+    }
+
     [Theory]
     [InlineData("CO", "DAVID CO")]
     [InlineData("", "DAVID")]

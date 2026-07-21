@@ -522,11 +522,9 @@ public sealed class SimulatedStation
             return $"{ToCutNumbers(Identity.Rst)} {zone}";
         }
 
-        if (_contestId.Value == "scArrlDx"
-            && R1 < 0.70f
-            && int.TryParse(Identity.Exchange2, out _))
+        if (_contestId.Value == "scArrlDx")
         {
-            return $"{ToCutNumbers(Identity.Rst)} {ToFullCutNumbers(Identity.Exchange2)}";
+            return FormatArrlDxExchange();
         }
 
         if (_contestId.Value is "scAllJa" or "scAcag")
@@ -534,7 +532,7 @@ public sealed class SimulatedStation
             return FormatJarlExchange();
         }
 
-        if (_contestId.Value is "scArrlDx" or "scIaruHf")
+        if (_contestId.Value == "scIaruHf")
         {
             return $"{ToCutNumbers(Identity.Rst)} {Identity.Exchange2}";
         }
@@ -612,6 +610,42 @@ public sealed class SimulatedStation
         }
 
         return result;
+    }
+
+    private string FormatArrlDxExchange()
+    {
+        string result = $"{Identity.Exchange1} {Identity.Exchange2}";
+        if (Operator.RunMode == OperatorRunMode.Hst)
+        {
+            return result;
+        }
+
+        if (_random.NextDouble() < 0.05d)
+        {
+            result = result.Replace("599", "ENN", StringComparison.Ordinal);
+        }
+
+        result = result.Replace("599", "5NN", StringComparison.Ordinal);
+        if (!int.TryParse(Identity.Exchange2, out _))
+        {
+            return result;
+        }
+
+        result = result
+            .Replace("000", "TTT", StringComparison.Ordinal)
+            .Replace("00", "TT", StringComparison.Ordinal);
+        if (_random.NextDouble() < 0.4d)
+        {
+            result = result.Replace('0', 'O');
+        }
+        else if (_random.NextDouble() < 0.97d)
+        {
+            result = result.Replace('0', 'T');
+        }
+
+        return R1 < 0.70f
+            ? ToFullCutNumbers(result)
+            : result;
     }
 
     internal string ObserveExchangeForParity()

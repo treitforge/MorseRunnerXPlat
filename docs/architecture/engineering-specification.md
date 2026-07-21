@@ -2676,6 +2676,22 @@ cuts, JARL cuts, repeats, correction variants, LID errors, and random reply
 prefixes remain within the partial obligation.
 
 The authored
+`contest.arrldx-high-r1-power-remote-exchange-format-seed-12345` case extends
+the numeric branch through retained `R1` at 0.930. Its pinned CE v33 adapter
+starts the formatter after the seven raw draws consumed by production
+candidate construction. At that checkpoint CQWW zone `10` remains `5NN 10`.
+ARRL DX power `100` becomes `5NN 1TT` because CE replaces leading `000` and
+`00` groups before using `R1` to decide whether to apply the full `1` to `A`
+cut set. Retained red evidence records
+`contest-arrldx-high-r1-power-remote-exchange-format-mismatch`, where XPlat
+instead produced `5NN 100`. Production ARRL DX formatting now retains CE's
+non-HST random RST decision, unconditional leading-zero group replacements,
+short-circuit remote zero-cut decisions, and final below-0.70 full-cut branch
+in their original order. Other checkpoints and numeric fields, repeated
+formatter calls, missing fields, repeats, correction variants, LID errors,
+and random reply prefixes remain within the partial obligation.
+
+The authored
 `contest.jarl-random-cut-remote-exchange-format-seed-12345` case extends the
 same obligation through CE's sequential JARL cut decisions. Its pinned CE v32
 adapter resets `RandSeed` immediately before constructing each station and
