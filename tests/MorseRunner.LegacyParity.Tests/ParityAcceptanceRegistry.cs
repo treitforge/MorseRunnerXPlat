@@ -33,6 +33,17 @@ public static class ParityAcceptanceRegistry
                         _ = TuiCustomWpmStepInput.Parse(scenario),
                     static () => new LegacyOracleTarget(),
                     static () => new XPlatTuiCustomWpmStepTarget()),
+            [XPlatTuiWpmStepLowerClampTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatTuiWpmStepLowerClampTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatTuiWpmStepLowerClampTarget),
+                    XPlatTuiWpmStepLowerClampTarget
+                        .FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = TuiWpmStepLowerClampInput.Parse(scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () => new XPlatTuiWpmStepLowerClampTarget()),
             [XPlatAvaloniaCustomWpmPageDownTarget.ParityId] =
                 new ParityAcceptanceRegistration(
                     XPlatAvaloniaCustomWpmPageDownTarget.ParityId,
