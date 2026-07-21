@@ -81,7 +81,8 @@
       ],
       "acceptanceStatus": "partial",
       "caseIds": [
-        "session.hst-invalid-start-settings"
+        "session.hst-invalid-start-settings",
+        "session.competition-forced-settings"
       ]
     },
     {
@@ -743,7 +744,7 @@
     {"id": "contest.sweepstakes-complete-truth-model", "capabilityId": "contest.legacy-implementations", "behavior": "Sweepstakes models serial, weighted precedence, own call, check, section, copied values, truth, and errors.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.arrldx-naqp-home-filtering-and-location", "capabilityId": "contest.legacy-implementations", "behavior": "ARRL DX and NAQP apply CE home-call filtering and dynamic location or exchange derivation.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["DualExchContest.pas", "ArrlDx.pas", "NaQp.pas"], "legacySurfaceSelectors": ["legacy.support.contest.routine.dualexchcontest.tdualexchcontest.getexchangetypes", "legacy.support.contest.routine.arrldx.tarrldx.onsetmycall", "legacy.support.contest.routine.naqp.tncjnaqp.getexchangetypes", "legacy.support.contest.routine.naqp.tncjnaqp.iscalllocaltocontest", "legacy.support.contest.routine.naqp.tncjnaqp.onsetmycall"], "acceptanceStatus": "partial", "caseIds": ["contest.dynamic-exchange-type-locality-matrix"]},
     {"id": "contest.wpx-hst-station-serial-generation", "capabilityId": "contest.legacy-implementations", "behavior": "WPX and HST station serials use CE elapsed-time, skill, and random behavior.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Station.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.station.serialnrcustomrange", "legacy.sim.routine.station.tstation.nrastext"], "acceptanceStatus": "partial", "caseIds": ["contest.wpx-custom-range-remote-exchange-format-seed-12345"]},
-    {"id": "session.hst-wpx-start-constraints", "capabilityId": "session.run-mode-enumeration", "behavior": "HST and WPX start constraints, forced settings, activity, bandwidth, duration, and valid serial rules match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.pas", "Ini.pas"], "legacySurfaceSelectors": ["legacy.main.handler.runbtnclick", "legacy.main.handler.runmnuclick", "legacy.ini.run-mode.rmhst", "legacy.ini.setting.station.serialnr"], "acceptanceStatus": "partial", "caseIds": ["session.hst-invalid-start-settings"]},
+    {"id": "session.hst-wpx-start-constraints", "capabilityId": "session.run-mode-enumeration", "behavior": "HST and WPX start constraints, forced settings, activity, bandwidth, duration, and valid serial rules match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.pas", "Ini.pas"], "legacySurfaceSelectors": ["legacy.main.handler.runbtnclick", "legacy.main.handler.runmnuclick", "legacy.ini.run-mode.rmwpx", "legacy.ini.run-mode.rmhst", "legacy.ini.setting.contest.competitionduration", "legacy.ini.setting.station.serialnr"], "acceptanceStatus": "partial", "caseIds": ["session.hst-invalid-start-settings", "session.competition-forced-settings"]},
     {"id": "engine.station-delay-lifetime-and-call-pool-rules", "capabilityId": "simulation.state-models", "behavior": "Single-call delay, caller lifetime, patience, retry, Gaussian WPM, calls-from-keyer, station-ID rate, and HST call-pool removal match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "engine.midmessage-append-correction-and-abort", "capabilityId": "simulation.runtime-routines", "behavior": "Mid-message append, unsent callsign correction, and abort completion preserve CE timing and station notification.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "engine.confidence-lid-repeat-and-f12-branches", "capabilityId": "simulation.runtime-routines", "behavior": "Confidence, LID, Sweepstakes correction, call-and-number repeat, and F12 probability branches match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -5690,6 +5691,71 @@
       "failureCode": "session-hst-invalid-start-settings-mismatch",
       "fixture": "tests/parity/fixtures/legacy/session-hst-invalid-start-settings.json",
       "evidence": "tests/parity/evidence/session-hst-invalid-start-settings.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "session.competition-forced-settings",
+      "capabilityId": "session.run-mode-enumeration",
+      "obligationIds": [
+        "session.hst-wpx-start-constraints"
+      ],
+      "behavior": "Valid WPX and HST competition starts replace normal setup values with CE's persisted competition duration and mode-specific condition, activity, and bandwidth settings.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v71",
+        "source": "tests/parity/legacy-oracle/v71/LegacyOracle.lpr",
+        "sourceSha256": "0bc5c97dc78f346f7809c09169cb34cd60648b035f9f7ddb89e028f415c2a26a",
+        "buildRecipe": "tests/parity/legacy-oracle/v71/build-recipe.json",
+        "buildRecipeSha256": "0bc0ad7ec4fe596dbb8ca8061e80d0e638a4fb664d7f1c6e817cc06abcd952f0"
+      },
+      "legacySources": [
+        "Main.pas",
+        "Ini.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.main.handler.runbtnclick",
+        "legacy.main.handler.runmnuclick",
+        "legacy.ini.run-mode.rmwpx",
+        "legacy.ini.run-mode.rmhst",
+        "legacy.ini.setting.contest.competitionduration"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The live v71 oracle executes the isolated WPX and HST normalization branch bound to TMainForm.Run and the CE settings globals, without constructing unrelated logging or physical-audio infrastructure.",
+        "The persisted competition duration is 17 minutes while the normal duration is 30 minutes, proving that the values remain distinct.",
+        "WPX begins with all five competition conditions disabled, while HST begins with them enabled, proving both modes force rather than preserve the submitted toggles.",
+        "Competition completion, result persistence, and disabled-control interaction remain separate acceptance boundaries."
+      ],
+      "input": {
+        "competitionDurationMinutes": 17,
+        "initialActivity": 7,
+        "initialBandwidthHz": 500,
+        "initialDurationMinutes": 30,
+        "scenario": "session.competition-forced-settings",
+        "seed": 12345
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatCompetitionForcedSettingsTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 2,
+        "observedValuesSha256": "5110020e7de03b0638e9a2aab42ad0e261fb989ecb337a6d0d47d5ee28e410d2",
+        "firstDivergence": "The WPX row is expected to differ first because CE forces all five competition conditions on while XPlat initially preserves the disabled values submitted for the session.",
+        "functionalDivergenceCode": "session-competition-forced-settings-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "session-competition-forced-settings-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/session-competition-forced-settings.json",
+      "evidence": "tests/parity/evidence/session-competition-forced-settings.baseline.json",
       "firstGreenCommit": null
     }
   ]

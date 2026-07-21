@@ -1,0 +1,8 @@
+{
+  "competitionDurationMinutes": 17,
+  "initialActivity": 7,
+  "initialBandwidthHz": 500,
+  "initialDurationMinutes": 30,
+  "scenario": "session.competition-forced-settings",
+  "seed": 12345
+}
