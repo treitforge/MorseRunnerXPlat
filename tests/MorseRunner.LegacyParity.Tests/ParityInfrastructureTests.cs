@@ -110,6 +110,7 @@ public sealed class ParityInfrastructureTests
                 "ux.tui-wpm-hst-page-up-rounds-32-to-35-seed-12345",
                 "ux.tui-wpm-setup-lower-clamp-decrement-from-10-seed-12345",
                 "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345",
+                "ux.wpm-custom-page-down-command-step-7-wpm-seed-12345",
                 "ux.wpm-custom-page-up-command-step-7-wpm-seed-12345",
                 "ux.wpm-default-page-up-command-step-2-wpm-seed-12345",
                 "ux.wpm-hst-page-down-rounds-33-to-30-seed-12345",
@@ -167,6 +168,7 @@ public sealed class ParityInfrastructureTests
                 "ux.tui-wpm-hst-page-up-rounds-32-to-35-seed-12345",
                 "ux.tui-wpm-setup-lower-clamp-decrement-from-10-seed-12345",
                 "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345",
+                "ux.wpm-custom-page-down-command-step-7-wpm-seed-12345",
                 "ux.wpm-custom-page-up-command-step-7-wpm-seed-12345",
                 "ux.wpm-default-page-up-command-step-2-wpm-seed-12345",
                 "ux.wpm-hst-page-down-rounds-33-to-30-seed-12345",
@@ -363,6 +365,11 @@ public sealed class ParityInfrastructureTests
             ParityAcceptanceRegistry
                 .Get(
                     "ux.wpm-custom-page-up-command-step-7-wpm-seed-12345")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatAvaloniaCustomWpmPageDownTarget>(
+            ParityAcceptanceRegistry
+                .Get(
+                    "ux.wpm-custom-page-down-command-step-7-wpm-seed-12345")
                 .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatTuiWpmSetupLowerClampTarget>(
             ParityAcceptanceRegistry

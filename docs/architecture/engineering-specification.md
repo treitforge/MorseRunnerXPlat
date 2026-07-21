@@ -1892,6 +1892,15 @@ separate acceptance boundaries. Production TUI now loads and clamps the
 persisted step to CE's 1 through 20 range, applies it to non-HST PageUp, and
 preserves it on save while leaving HST five-WPM rounding independent.
 
+The authored `ux.wpm-custom-page-down-command-step-7-wpm-seed-12345` case
+pins the negative Avalonia custom-step workflow. Both targets start
+`rmSingle` at 30 WPM with `WpmStepRate` configured as 7. The v57 CE oracle
+invokes the real `TMainForm.FormKeyDown` PageDown path and reaches 23 WPM.
+Before implementation, production Avalonia loads and preserves the custom
+step but `SpeedDownCommand` still subtracts its fixed two-WPM default and
+reaches 28 WPM. TUI, lower-bound clamping, HST precedence, and direct menu
+choices remain separate acceptance boundaries.
+
 ### 14.5 Device failure
 
 On unrecoverable physical-device failure:
