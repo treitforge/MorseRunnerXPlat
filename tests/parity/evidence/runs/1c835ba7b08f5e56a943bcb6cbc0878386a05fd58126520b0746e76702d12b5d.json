@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "678c78b6ab46720345b3ba05a42b9dc34bb39ddf",
+      "tree": "70c951ba946413a73ede38a098e4fb4667bd877d",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "ux.tui-wpm-custom-page-up-command-step-7-wpm-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "ux.tui-wpm-custom-page-up-command-step-7-wpm-seed-12345",
+      "acceptanceTestName": "parity:ux.tui-wpm-custom-page-up-command-step-7-wpm-seed-12345()",
+      "target": "xplat",
+      "adapter": "XPlatTuiCustomWpmStepTarget",
+      "caseDefinitionSha256": "aacd3c39e1c01847c38e9681d37e7f4fd04c2c709b1b7d78576271b831fb52d8",
+      "fixtureSha256": "061a9997557456b30c5b7bc364863a886a00ce9d217f015d0680a53dc0c68af0",
+      "outcome": "functional-divergence",
+      "failureCode": "ux-TUI-WPM-custom-page-up-step-mismatch",
+      "evidenceSource": "MorseRunner.Infrastructure.SettingsStore.LoadAsync\u002BMorseRunner.Tui.TuiApplication.HandleAsync\u002BMorseRunner.Client.InProcessMorseRunnerClient\u002BMorseRunner.Engine.EngineSession.ApplyRadioControl",
+      "observedValues": [
+        "configuration|run-mode=rmSingle|seed=12345|initial-wpm=30|custom-step-wpm=7|action=page-up|handler=TMainForm.FormKeyDown",
+        "wpm-before|wpm=30",
+        "wpm-after-custom-page-up|wpm=32|delta-wpm=2"
+      ],
+      "observedValueCount": 3,
+      "observedValuesSha256": "c0c566e96e0425aa1baa74e45e614342e3088124242ac35b7496cd914d877184",
+      "firstDivergence": {
+        "index": 2,
+        "expected": "wpm-after-custom-page-up|wpm=37|delta-wpm=7",
+        "actual": "wpm-after-custom-page-up|wpm=32|delta-wpm=2"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}
