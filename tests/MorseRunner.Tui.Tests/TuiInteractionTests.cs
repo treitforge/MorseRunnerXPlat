@@ -110,6 +110,29 @@ public sealed class TuiInteractionTests
     }
 
     [Fact]
+    public async Task SpeedUpRoundsToNextFiveWpmBoundaryInHstMode()
+    {
+        await using InProcessMorseRunnerClient client =
+            InProcessMorseRunnerClient.CreateDefault();
+        using var application = new TuiApplication(client, isHosted: false);
+        application.State.WordsPerMinute = 32;
+        CancellationToken cancellationToken =
+            TestContext.Current.CancellationToken;
+        await application.InitializeAsync(cancellationToken);
+        await application.HandleAsync(
+            new(TuiActionKind.StartHst),
+            cancellationToken);
+
+        await application.HandleAsync(
+            new(TuiActionKind.SpeedUp),
+            cancellationToken);
+
+        SessionSnapshot snapshot = Assert.IsType<SessionSnapshot>(
+            application.State.Snapshot);
+        Assert.Equal(35, snapshot.CurrentWordsPerMinute);
+    }
+
+    [Fact]
     public async Task SettingsWpmCanEnterCeUpperRange()
     {
         await using InProcessMorseRunnerClient client =

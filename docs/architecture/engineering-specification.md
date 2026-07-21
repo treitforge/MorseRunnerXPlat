@@ -1843,7 +1843,9 @@ Both targets start `rmHst` at 32 WPM. The v52 CE oracle reaches 35 WPM through
 the real `TMainForm.FormKeyDown` path. Before implementation,
 `TuiApplication.HandleAsync` sends its fixed non-HST two-WPM adjustment and
 reaches 34 WPM. HST PageDown, exact-boundary changes, persisted custom steps,
-and direct menu choices remain separate acceptance boundaries.
+and direct menu choices remain separate acceptance boundaries. Production TUI
+now computes PageUp's delta from the current authoritative WPM in `rmHst`, and
+the fixed vector matches the pinned v52 observation exactly.
 
 ### 14.5 Device failure
 

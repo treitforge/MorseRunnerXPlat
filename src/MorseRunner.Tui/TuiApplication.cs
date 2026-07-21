@@ -363,7 +363,10 @@ public sealed class TuiApplication : IDisposable
                 await AdjustAsync(RadioControl.Bandwidth, -50, cancellationToken);
                 break;
             case TuiActionKind.SpeedUp:
-                await AdjustAsync(RadioControl.Speed, 2, cancellationToken);
+                await AdjustAsync(
+                    RadioControl.Speed,
+                    GetSpeedUpDelta(),
+                    cancellationToken);
                 break;
             case TuiActionKind.SpeedDown:
                 await AdjustAsync(RadioControl.Speed, -2, cancellationToken);
@@ -742,6 +745,15 @@ public sealed class TuiApplication : IDisposable
             ? $"Adjusted {control}."
             : result.Message ?? "Adjustment rejected.";
         await RefreshSnapshotAsync(cancellationToken);
+    }
+
+    private int GetSpeedUpDelta()
+    {
+        SessionSnapshot? snapshot = State.Snapshot;
+        return snapshot?.RunModeId.Value == "rmHst"
+            ? ((snapshot.CurrentWordsPerMinute / 5) * 5 + 5)
+                - snapshot.CurrentWordsPerMinute
+            : 2;
     }
 
     private async Task ExecuteStateCommandAsync(
