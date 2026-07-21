@@ -1,0 +1,7 @@
+{
+  "expectedAfterWpm": 30,
+  "initialWpm": 33,
+  "runModeId": "rmHst",
+  "scenario": "ux.wpm-hst-page-down-rounds-33-to-30-seed-12345",
+  "seed": 12345
+}

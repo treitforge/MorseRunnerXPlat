@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "adapterId": "LegacyOracleTarget",
+  "versionId": "legacy-oracle-v53",
+  "sourceClosure": {
+    "oracleSource": "tests/parity/legacy-oracle/v53/LegacyOracle.lpr",
+    "oracleSourceSha256": "5a1e2a4b5dd963acf6612124ff71599f06caa56b6184ac6162d55c94332de2d7",
+    "legacyRevision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+    "legacyTree": "a44212bfee5b1eebfd0129459d476736775adf36",
+    "legacyBundleSha256": "1d9fcafb3adb0227aba360bc1884b5c32d2c1e8210448e646a4104f142b07772",
+    "toolchainFingerprintSha256": "3eb50f2aac396bac975d8f628ad44421318d05179c81a98524802bcf04c8afee"
+  },
+  "invocation": {
+    "compiler": "{toolchainRoot}/fpc/3.2.2/bin/x86_64-win64/fpc.exe",
+    "arguments": [
+      "-n",
+      "-Sgic",
+      "-Xs",
+      "-B",
+      "-Twin64",
+      "-Px86_64",
+      "-MDelphi",
+      "-O2",
+      "-WC",
+      "-dV53_HST_WPM_PAGE_DOWN_ROUNDING",
+      "-Fu{legacyRoot}",
+      "-Fu{legacyRoot}/Lazarus",
+      "-Fu{legacyRoot}/VCL",
+      "-Fu{legacyRoot}/Util",
+      "-Fu{toolchainRoot}/lcl/units/x86_64-win64/nogui",
+      "-Fu{toolchainRoot}/lcl/units/x86_64-win64",
+      "-Fu{toolchainRoot}/components/freetype/lib/x86_64-win64",
+      "-Fu{toolchainRoot}/components/lazutils/lib/x86_64-win64",
+      "-Fu{toolchainRoot}/packager/units/x86_64-win64",
+      "-Fu{toolchainRoot}/fpc/3.2.2/units/x86_64-win64",
+      "-Fu{toolchainRoot}/fpc/3.2.2/units/x86_64-win64/*",
+      "-Fu{toolchainRoot}/fpc/3.2.2/units/x86_64-win64/rtl",
+      "-FD{toolchainRoot}/fpc/3.2.2/bin/x86_64-win64",
+      "-Fl{toolchainRoot}/fpc/3.2.2/lib/x86_64-win64",
+      "-FU{unitOutput}",
+      "-FE{executableOutput}",
+      "-o{executable}",
+      "{source}"
+    ]
+  }
+}

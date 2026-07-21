@@ -1847,6 +1847,14 @@ and direct menu choices remain separate acceptance boundaries. Production TUI
 now computes PageUp's delta from the current authoritative WPM in `rmHst`, and
 the fixed vector matches the pinned v52 observation exactly.
 
+The authored `ux.wpm-hst-page-down-rounds-33-to-30-seed-12345` case pins
+the negative Avalonia HST rounding boundary. Both targets start `rmHst` at 33
+WPM. The v53 CE oracle invokes the real `TMainForm.FormKeyDown` PageDown path
+and rounds downward to 30 WPM. Before implementation, the production
+Avalonia `SpeedDownCommand` sends its fixed non-HST two-WPM adjustment and
+reaches 31 WPM. Exact-boundary changes, TUI PageDown, persisted custom steps,
+and direct menu choices remain separate acceptance boundaries.
+
 ### 14.5 Device failure
 
 On unrecoverable physical-device failure:

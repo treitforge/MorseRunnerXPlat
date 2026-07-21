@@ -204,6 +204,7 @@
         "ux.wpm-default-page-up-command-step-2-wpm-seed-12345",
         "ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345",
         "ux.tui-wpm-hst-page-up-rounds-32-to-35-seed-12345",
+        "ux.wpm-hst-page-down-rounds-33-to-30-seed-12345",
         "ux.wpm-hst-page-up-rounds-32-to-35-seed-12345",
         "ux.wpm-upper-clamp-extra-page-up-from-118-seed-12345",
         "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345",
@@ -849,7 +850,7 @@
     {"id": "ux.wpm-default-page-up-step", "capabilityId": "ux.keyboard-workflows", "behavior": "The default non-HST PageUp workflow applies CE's persisted WPM step to authoritative engine state.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.settings.wpmsteprate", "legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-default-page-up-command-step-2-wpm-seed-12345", "ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345"]},
     {"id": "ux.wpm-upper-range-and-clamp", "capabilityId": "ux.keyboard-workflows", "behavior": "The CW-speed input and live PageUp workflow expose and enforce CE's 120 WPM upper bound.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.dfm", "Main.lfm", "Main.pas"], "legacySurfaceSelectors": ["legacy.main.object.spinedit1", "legacy.form.lfm.main.object.spinedit1", "legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-upper-clamp-extra-page-up-from-118-seed-12345", "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345"]},
     {"id": "ux.wpm-lower-range-and-clamp", "capabilityId": "ux.keyboard-workflows", "behavior": "Every CW-speed setup workflow enforces CE's 10 WPM lower bound.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.dfm", "Main.lfm", "Main.pas"], "legacySurfaceSelectors": ["legacy.main.object.spinedit1", "legacy.form.lfm.main.object.spinedit1"], "acceptanceStatus": "partial", "caseIds": ["ux.tui-wpm-setup-lower-clamp-decrement-from-10-seed-12345"]},
-    {"id": "ux.wpm-hst-five-wpm-rounding", "capabilityId": "ux.keyboard-workflows", "behavior": "HST PageUp and PageDown workflows round CW speed outward to CE's adjacent five-WPM boundary.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.pas"], "legacySurfaceSelectors": ["legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-hst-page-up-rounds-32-to-35-seed-12345", "ux.tui-wpm-hst-page-up-rounds-32-to-35-seed-12345"]}
+    {"id": "ux.wpm-hst-five-wpm-rounding", "capabilityId": "ux.keyboard-workflows", "behavior": "HST PageUp and PageDown workflows round CW speed outward to CE's adjacent five-WPM boundary.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.pas"], "legacySurfaceSelectors": ["legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-hst-page-up-rounds-32-to-35-seed-12345", "ux.tui-wpm-hst-page-up-rounds-32-to-35-seed-12345", "ux.wpm-hst-page-down-rounds-33-to-30-seed-12345"]}
   ],
   "cases": [
     {
@@ -4533,6 +4534,64 @@
       "failureCode": "ux-TUI-WPM-HST-page-up-rounding-mismatch",
       "fixture": "tests/parity/fixtures/legacy/ux-tui-wpm-hst-page-up-rounds-32-to-35-seed-12345.json",
       "evidence": "tests/parity/evidence/ux-tui-wpm-hst-page-up-rounds-32-to-35-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "ux.wpm-hst-page-down-rounds-33-to-30-seed-12345",
+      "capabilityId": "ux.keyboard-workflows",
+      "obligationIds": [
+        "ux.wpm-hst-five-wpm-rounding"
+      ],
+      "behavior": "From 33 WPM in an HST session, one CE PageDown action and the production Avalonia SpeedDownCommand both round downward to 30 WPM.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v53",
+        "source": "tests/parity/legacy-oracle/v53/LegacyOracle.lpr",
+        "sourceSha256": "5a1e2a4b5dd963acf6612124ff71599f06caa56b6184ac6162d55c94332de2d7",
+        "buildRecipe": "tests/parity/legacy-oracle/v53/build-recipe.json",
+        "buildRecipeSha256": "dbb47669ef6fe2bfd5337e6bbdfe3745405a58d591a748058a5b66512896f91f"
+      },
+      "legacySources": [
+        "Main.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.main.handler.formkeydown"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The CE target creates a fresh handleless CQ WPX rmHst runtime, sets WPM to 33, and invokes the real TMainForm.FormKeyDown PageDown path once.",
+        "Before implementation, the XPlat target creates the production MainWindowViewModel over IMorseRunnerClient, starts an rmHst session at 33 WPM, executes the real SpeedDownCommand once, and observes authoritative WPM state.",
+        "This case pins only the negative Avalonia HST rounding boundary. Exact-boundary changes, TUI PageDown, persisted custom steps, and direct menu choices remain separate boundaries."
+      ],
+      "input": {
+        "scenario": "ux.wpm-hst-page-down-rounds-33-to-30-seed-12345",
+        "seed": 12345,
+        "initialWpm": 33,
+        "expectedAfterWpm": 30,
+        "runModeId": "rmHst"
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatAvaloniaHstWpmPageDownTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 3,
+        "observedValuesSha256": "ec43fc2f27b3ffd7c37a79c39b2d6b1ea07b4b23b7a7e894645467436322fb5a",
+        "firstDivergence": "The zero-based first mismatch is expected in wpm-after-hst-page-down. CE reaches 30 WPM, while the production Avalonia command initially reaches 31 WPM.",
+        "functionalDivergenceCode": "ux-WPM-HST-page-down-rounding-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "ux-WPM-HST-page-down-rounding-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/ux-wpm-hst-page-down-rounds-33-to-30-seed-12345.json",
+      "evidence": "tests/parity/evidence/ux-wpm-hst-page-down-rounds-33-to-30-seed-12345.baseline.json",
       "firstGreenCommit": null
     }
   ]
