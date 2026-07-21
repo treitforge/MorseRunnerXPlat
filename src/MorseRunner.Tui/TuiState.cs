@@ -20,7 +20,7 @@ public sealed class TuiState
 
     public int RunModeIndex { get; set; }
 
-    public int DurationIndex { get; set; }
+    public int DurationIndex { get; set; } = 4;
 
     public int ActiveField { get; set; }
 
@@ -53,15 +53,15 @@ public sealed class TuiState
 
     public int SettingsIndex { get; set; }
 
-    public string StationCall { get; set; } = "W7SST";
+    public string StationCall { get; set; } = "VE3NEA";
 
-    public int WordsPerMinute { get; set; } = 30;
+    public int WordsPerMinute { get; set; } = 25;
 
-    public int PitchHz { get; set; } = 600;
+    public int PitchHz { get; set; } = 450;
 
-    public int BandwidthHz { get; set; } = 500;
+    public int BandwidthHz { get; set; } = 550;
 
-    public int Activity { get; set; } = 5;
+    public int Activity { get; set; } = 2;
 
     public int CompetitionDurationMinutes { get; set; } = 60;
 

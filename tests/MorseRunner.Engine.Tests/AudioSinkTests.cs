@@ -174,7 +174,7 @@ public sealed class AudioSinkTests
         var sink = new CapturingAudioSink();
         await using MorseRunnerEngine engine = new(_ => sink);
         SessionHandle handle = await engine.CreateSessionAsync(
-            SessionSettings.CreateDefault(seed: 12_345) with
+            CreateGoldenVectorSettings() with
             {
                 MonitorLevelDb = monitorLevelDb,
                 Qsk = qskEnabled,
@@ -190,7 +190,7 @@ public sealed class AudioSinkTests
         var sink = new CapturingAudioSink();
         await using MorseRunnerEngine engine = new(_ => sink);
         SessionHandle handle = await engine.CreateSessionAsync(
-            SessionSettings.CreateDefault(seed: 12_345) with
+            CreateGoldenVectorSettings() with
             {
                 MonitorLevelDb = monitorLevelDb,
                 Qrm = true,
@@ -225,6 +225,19 @@ public sealed class AudioSinkTests
                 TestContext.Current.CancellationToken)).Accepted);
         return sink.Blocks.Single();
     }
+
+    private static SessionSettings CreateGoldenVectorSettings() =>
+        SessionSettings.CreateDefault(seed: 12_345) with
+        {
+            StationCall = "W7SST",
+            WordsPerMinute = 30,
+            PitchHz = 600,
+            BandwidthHz = 500,
+            Activity = 5,
+            DurationBlocks = 0,
+            ReceiveSpeedBelowWpm = -1,
+            ReceiveSpeedAboveWpm = -1,
+        };
 
     private static async Task StartAndAdvanceAsync(
         MorseRunnerEngine engine,

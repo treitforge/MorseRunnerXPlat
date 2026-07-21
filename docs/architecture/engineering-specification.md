@@ -1011,6 +1011,13 @@ At minimum, `SessionSettings` includes:
 Settings that would invalidate deterministic behavior or DSP state are
 immutable after `Ready`. Runtime controls are changed through commands.
 
+A clean profile uses CE's observable setup defaults: station call `VE3NEA`,
+25 WPM, 450 Hz pitch, 550 Hz receiver bandwidth, activity 2, a 30-minute
+session, a separately persisted 60-minute competition duration, CQ WPX,
+pile-up mode, start-of-contest serial numbers, zero receive-speed offsets,
+station-ID rate 3, zero dB monitor level, and disabled QSK, QSB, QRM, QRN,
+flutter, and LID conditions. The HST operator name starts empty.
+
 Session creation enforces CE competition prerequisites before allocating a
 session or audio sink. In particular, `rmHst` requires contest `scHst` and the
 `StartOfContest` serial-number range. A request that violates either condition

@@ -8,6 +8,32 @@ namespace MorseRunner.App.Tests;
 public sealed class MainWindowViewModelTests
 {
     [Fact]
+    public async Task CleanProfileMatchesCeDefaults()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+
+        Assert.Equal("VE3NEA", viewModel.StationCall);
+        Assert.Equal(25, viewModel.WordsPerMinute);
+        Assert.Equal(450, viewModel.PitchHz);
+        Assert.Equal(550, viewModel.BandwidthHz);
+        Assert.Equal(2, viewModel.Activity);
+        Assert.Equal(30, viewModel.DurationMinutes);
+        Assert.Equal(60, viewModel.CompetitionDurationMinutes);
+        Assert.Equal("scWpx", viewModel.SelectedContest.Id.Value);
+        Assert.Equal("rmPileup", viewModel.SelectedRunMode.Id.Value);
+        Assert.Equal(0, viewModel.ReceiveSpeedBelowWpm);
+        Assert.Equal(0, viewModel.ReceiveSpeedAboveWpm);
+        Assert.Empty(viewModel.HstOperatorName);
+        Assert.False(viewModel.Qsk);
+        Assert.False(viewModel.Qsb);
+        Assert.False(viewModel.Qrm);
+        Assert.False(viewModel.Qrn);
+        Assert.False(viewModel.Flutter);
+        Assert.False(viewModel.Lids);
+    }
+
+    [Fact]
     public async Task RstEntryStartsEmptyAndWipeRestoresEmptyEntryFields()
     {
         await using var viewModel = new MainWindowViewModel(
@@ -32,7 +58,10 @@ public sealed class MainWindowViewModelTests
     public async Task CommandsDriveTheSessionThroughTheClientBoundary()
     {
         await using var viewModel = new MainWindowViewModel(
-            InProcessMorseRunnerClient.CreateDefault());
+            InProcessMorseRunnerClient.CreateDefault())
+        {
+            Activity = 5,
+        };
 
         Assert.True(viewModel.StartCommand.CanExecute(null));
         await viewModel.StartCommand.ExecuteAsync(null);

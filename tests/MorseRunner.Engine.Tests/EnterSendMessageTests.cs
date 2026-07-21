@@ -395,6 +395,7 @@ public sealed class EnterSendMessageTests
             SessionSettings settings = SessionSettings.CreateDefault(12_345)
                 with
             {
+                StationCall = "W7SST",
                 StationIdRate = stationIdRate,
             };
             if (contestId is ContestId selectedContest)

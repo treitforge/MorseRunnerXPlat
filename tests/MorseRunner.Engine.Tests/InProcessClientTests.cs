@@ -15,7 +15,10 @@ public sealed class InProcessClientTests
         EngineInfo info = await client.GetEngineInfoAsync(
             TestContext.Current.CancellationToken);
         SessionHandle handle = await client.CreateSessionAsync(
-            SessionSettings.CreateDefault(seed: 42),
+            SessionSettings.CreateDefault(seed: 42) with
+            {
+                Activity = 5,
+            },
             TestContext.Current.CancellationToken);
         ClientId clientId = new("client-tests");
         await client.ExecuteAsync(

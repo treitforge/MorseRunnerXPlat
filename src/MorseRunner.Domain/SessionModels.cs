@@ -34,15 +34,15 @@ public sealed record SessionSettings(
     RunModeId RunModeId,
     long DurationBlocks)
 {
-    public string StationCall { get; init; } = "W7SST";
+    public string StationCall { get; init; } = "VE3NEA";
 
-    public int WordsPerMinute { get; init; } = 30;
+    public int WordsPerMinute { get; init; } = 25;
 
-    public int PitchHz { get; init; } = 600;
+    public int PitchHz { get; init; } = 450;
 
-    public int BandwidthHz { get; init; } = 500;
+    public int BandwidthHz { get; init; } = 550;
 
-    public int Activity { get; init; } = 5;
+    public int Activity { get; init; } = 2;
 
     public int CompetitionDurationMinutes { get; init; } = 60;
 
@@ -62,9 +62,9 @@ public sealed record SessionSettings(
 
     public double MonitorLevelDb { get; init; }
 
-    public int ReceiveSpeedBelowWpm { get; init; } = -1;
+    public int ReceiveSpeedBelowWpm { get; init; }
 
-    public int ReceiveSpeedAboveWpm { get; init; } = -1;
+    public int ReceiveSpeedAboveWpm { get; init; }
 
     public SerialNumberRangeMode SerialNumberRange { get; init; }
 
@@ -86,7 +86,11 @@ public sealed record SessionSettings(
             seed,
             ContestCatalog.All[0].Id,
             RunModeCatalog.All[1],
-            DurationBlocks: 0);
+            DurationBlocks: checked((long)Math.Ceiling(
+                30
+                * 60d
+                * CompatibilityProfile.SampleRate
+                / CompatibilityProfile.BlockSize)));
     }
 }
 

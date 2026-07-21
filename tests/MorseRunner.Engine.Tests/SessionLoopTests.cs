@@ -106,7 +106,17 @@ public sealed class SessionLoopTests
                 return sink;
             });
         SessionHandle handle = await engine.CreateSessionAsync(
-            SessionSettings.CreateDefault(seed: 12345),
+            SessionSettings.CreateDefault(seed: 12345) with
+            {
+                StationCall = "W7SST",
+                WordsPerMinute = 30,
+                PitchHz = 600,
+                BandwidthHz = 500,
+                Activity = 5,
+                DurationBlocks = 0,
+                ReceiveSpeedBelowWpm = -1,
+                ReceiveSpeedAboveWpm = -1,
+            },
             TestContext.Current.CancellationToken);
 
         CommandResult start = await engine.ExecuteAsync(
@@ -130,11 +140,11 @@ public sealed class SessionLoopTests
         Assert.Equal(SessionState.Running, snapshot.State);
         Assert.Equal(16, snapshot.SimulationBlock);
         Assert.Equal(16 * CompatibilityProfile.BlockSize, snapshot.RenderedSamples);
-        Assert.Equal("K0HMZ", snapshot.LastCaller);
+        Assert.Equal("RA1QY", snapshot.LastCaller);
         Assert.Equal(2, snapshot.ActiveStations?.Count);
         Assert.Contains(
             snapshot.ActiveStations!,
-            station => station.Callsign == "K0HMZ");
+            station => station.Callsign == "RA1QY");
         Assert.Equal(16, sinks[handle.SessionId].BlocksWritten);
         Assert.Equal(
             TimeSpan.FromSeconds(

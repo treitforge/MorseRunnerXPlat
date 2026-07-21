@@ -6,6 +6,31 @@ namespace MorseRunner.Tui.Tests;
 
 public sealed class TuiInteractionTests
 {
+    [Fact]
+    public void CleanProfileMatchesCeDefaults()
+    {
+        var state = new TuiState();
+
+        Assert.Equal("VE3NEA", state.StationCall);
+        Assert.Equal(25, state.WordsPerMinute);
+        Assert.Equal(450, state.PitchHz);
+        Assert.Equal(550, state.BandwidthHz);
+        Assert.Equal(2, state.Activity);
+        Assert.Equal(30, state.DurationMinutes);
+        Assert.Equal(60, state.CompetitionDurationMinutes);
+        Assert.Equal("scWpx", state.Contest.Id.Value);
+        Assert.Equal("rmPileup", state.RunMode.Value);
+        Assert.Equal(0, state.ReceiveSpeedBelowWpm);
+        Assert.Equal(0, state.ReceiveSpeedAboveWpm);
+        Assert.Empty(state.HstOperatorName);
+        Assert.False(state.Qsk);
+        Assert.False(state.Qsb);
+        Assert.False(state.Qrm);
+        Assert.False(state.Qrn);
+        Assert.False(state.Flutter);
+        Assert.False(state.Lids);
+    }
+
     [Theory]
     [InlineData(ConsoleKey.F1, '\0', ConsoleModifiers.None, TuiActionKind.SendCq)]
     [InlineData(ConsoleKey.F9, '\0', ConsoleModifiers.None, TuiActionKind.StartPileup)]
