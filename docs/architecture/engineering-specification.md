@@ -1298,6 +1298,15 @@ The first parity release covers the legacy contest catalog:
 HST may reuse WPX behavior where the legacy application does, but the catalog
 must expose HST as a distinct selectable mode.
 
+The schema-v3 `catalog.contest-definition-metadata-ce-order` acceptance case
+uses the live `legacy-oracle-v63` adapter to observe all twelve
+`Ini.ContestDefinitions` records in declared `TSimContest` order. The catalog
+contract includes the stable ID, INI key, display name, both exchange types,
+both exchange captions, exchange editability, default exchange, and validation
+message. This closes the static metadata boundary only. Contest validation,
+exchange generation, scoring, and run-mode semantics retain their own parity
+cases.
+
 ### 13.2 Contest interfaces
 
 A contest implementation owns:

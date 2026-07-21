@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 2,
+  "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+  "parityId": "catalog.contest-definition-metadata-ce-order",
+  "referenceDefinitionSha256": "663adf3bf230161abb923cf8b6651d394af1b99eab05efeafb696cb29992da23",
+  "oracle": "tests/parity/legacy-oracle/v63/LegacyOracle.lpr",
+  "legacyOracleVersionId": "legacy-oracle-v63",
+  "oracleSourceSha256": "659da8d10a631439468d299e98d02e7f969203967d17985d542ec91875c29ad8",
+  "oracleBuildRecipeSha256": "9bdbb814cf5969569ccece2b5f3beff26760fef6a71d765ed97a54939443b7f8",
+  "oracleExecutableSha256": "1eab473f366a6bd90499d3d1daa0219cb044f1c4e0641f4b8db668fede3f3c69",
+  "toolchain": {
+    "lazarus": "4.6",
+    "fpc": "3.2.2",
+    "target": "x86_64-win64",
+    "compilerSha256": "8ba500bbb84bd7100c169f151082b1461e9241e4491e0f6f38f2376bec49c319",
+    "backendCompilerSha256": "1f33c43b890e2d02e6b07c88401fc47cfcac48e003a29bb58b2e1220ac6a3e22",
+    "lazbuildSha256": "9554983fff43cfe5b5cef9a8374a37ff8a152e2de9c40c5750e723501f6edfd1",
+    "fingerprintSha256": "3eb50f2aac396bac975d8f628ad44421318d05179c81a98524802bcf04c8afee"
+  },
+  "values": [
+    "contest|ordinal=0|id=scWpx|key=CqWpx|name=CQ WPX|exchange1=etRST|exchange2=etSerialNr|caption1=|caption2=|editable=true|default=5NN #|message='RST <serial>' (e.g. 5NN #|123)",
+    "contest|ordinal=1|id=scCwt|key=Cwt|name=CWOPS CWT|exchange1=etOpName|exchange2=etGenericField|caption1=Name|caption2=Exch|editable=true|default=DAVID 123|message='<op name> <CWOPS Number|State|Country>' (e.g. DAVID 123)",
+    "contest|ordinal=2|id=scFieldDay|key=ArrlFd|name=ARRL Field Day|exchange1=etFdClass|exchange2=etArrlSection|caption1=|caption2=|editable=true|default=3A OR|message='<class> <section>' (e.g. 3A OR)",
+    "contest|ordinal=3|id=scNaQp|key=NAQP|name=NCJ NAQP|exchange1=etOpName|exchange2=etNaQpExch2|caption1=|caption2=|editable=true|default=ALEX ON|message='<name> [<state|prov|dxcc-entity>]' (e.g. ALEX ON)",
+    "contest|ordinal=4|id=scHst|key=HST|name=HST (High Speed Test)|exchange1=etRST|exchange2=etSerialNr|caption1=|caption2=|editable=false|default=5NN #|message='RST <serial>' (e.g. 5NN #)",
+    "contest|ordinal=5|id=scCQWW|key=CQWW|name=CQ WW|exchange1=etRST|exchange2=etCqZone|caption1=|caption2=|editable=true|default=5NN 3|message='RST <cq-zone>' (e.g. 5NN 3)",
+    "contest|ordinal=6|id=scArrlDx|key=ArrlDx|name=ARRL DX|exchange1=etRST|exchange2=etStateProv|caption1=|caption2=|editable=true|default=5NN ON|message='RST <state|province|power>' (e.g. 5NN ON)",
+    "contest|ordinal=7|id=scSst|key=Sst|name=K1USN Slow Speed Test|exchange1=etOpName|exchange2=etGenericField|caption1=Name|caption2=State/Prov/DX|editable=true|default=BRUCE MA|message='<op name> <State|Prov|DX>' (e.g. BRUCE MA)",
+    "contest|ordinal=8|id=scAllJa|key=AllJa|name=JARL ALL JA|exchange1=etRST|exchange2=etJaPref|caption1=|caption2=|editable=true|default=5NN 10H|message='RST <Pref><Power>' (e.g. 5NN 10H)",
+    "contest|ordinal=9|id=scAcag|key=Acag|name=JARL ACAG|exchange1=etRST|exchange2=etJaCity|caption1=|caption2=|editable=true|default=5NN 1002H|message='RST <City|Gun|Ku><Power>' (e.g. 5NN 1002H)",
+    "contest|ordinal=10|id=scIaruHf|key=IaruHf|name=IARU HF|exchange1=etRST|exchange2=etGenericField|caption1=RST|caption2=Zone/Soc|editable=true|default=5NN 6|message='RST <Itu-zone|IARU Society>' (e.g. 5NN 6)",
+    "contest|ordinal=11|id=scArrlSS|key=SSCW|name=ARRL Sweepstakes|exchange1=etSSNrPrecedence|exchange2=etSSCheckSection|caption1=|caption2=|editable=true|default=A 72 OR|message='[#|123] <precedence> <check> <section>' (e.g. A 72 OR)"
+  ]
+}

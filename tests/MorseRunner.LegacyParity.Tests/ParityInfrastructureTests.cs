@@ -83,6 +83,7 @@ public sealed class ParityInfrastructureTests
                 "audio.rit-upper-clamp-extra-click-second-caller-block-seed-12345",
                 "audio.sst-farnsworth-envelope-timing",
                 "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
+                "catalog.contest-definition-metadata-ce-order",
                 "contest.arrldx-high-r1-power-remote-exchange-format-seed-12345",
                 "contest.cqww-random-consumption-remote-exchange-format-seed-12345",
                 "contest.cwt-remote-exchange-format-seed-12345",
@@ -146,6 +147,7 @@ public sealed class ParityInfrastructureTests
                 "audio.rit-upper-clamp-extra-click-second-caller-block-seed-12345",
                 "audio.sst-farnsworth-envelope-timing",
                 "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
+                "catalog.contest-definition-metadata-ce-order",
                 "contest.arrldx-high-r1-power-remote-exchange-format-seed-12345",
                 "contest.cqww-random-consumption-remote-exchange-format-seed-12345",
                 "contest.cwt-remote-exchange-format-seed-12345",
@@ -193,6 +195,10 @@ public sealed class ParityInfrastructureTests
     [Trait("Category", "ParityInfrastructure")]
     public void CaseIdSelectsItsExactXPlatAdapter()
     {
+        Assert.IsType<XPlatContestDefinitionMetadataTarget>(
+            ParityAcceptanceRegistry
+                .Get("catalog.contest-definition-metadata-ce-order")
+                .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatRandomPrimitivesTarget>(
             ParityAcceptanceRegistry
                 .Get("audio.deterministic-random-primitives-seed-12345")

@@ -98,8 +98,10 @@
         "linux",
         "macos"
       ],
-      "acceptanceStatus": "not-authored",
-      "caseIds": []
+      "acceptanceStatus": "partial",
+      "caseIds": [
+        "catalog.contest-definition-metadata-ce-order"
+      ]
     },
     {
       "id": "configuration.persisted-settings",
@@ -684,7 +686,7 @@
   ],
   "behavioralObligations": [
     {"id": "catalog.contest-identifiers", "capabilityId": "catalog.contest-enumeration", "behavior": "Every CE contest identifier is present in declaration order and selects the same contest family.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "catalog.contest-metadata-and-defaults", "capabilityId": "catalog.contest-definitions", "behavior": "Every contest exposes CE-equivalent names, exchange types, defaults, and feature flags.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "catalog.contest-metadata-and-defaults", "capabilityId": "catalog.contest-definitions", "behavior": "Every contest exposes CE-equivalent names, exchange types, defaults, and feature flags.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas"], "legacySurfaceSelectors": ["legacy.ini.contest-definition.*"], "acceptanceStatus": "partial", "caseIds": ["catalog.contest-definition-metadata-ce-order"]},
     {"id": "session.run-mode-identifiers", "capabilityId": "session.run-mode-enumeration", "behavior": "Every CE run mode is present and retains its observable selection semantics.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "quality.live-ce-oracle-required", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "Certified parity always executes the pinned CE oracle and never silently substitutes a committed fixture.", "platforms": ["windows"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "quality.xplat-acceptance-target-executes", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "The dedicated XPlat parity target executes every applicable acceptance case exactly once.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -5151,6 +5153,60 @@
       "failureCode": "ux-TUI-WPM-step-upper-clamp-mismatch",
       "fixture": "tests/parity/fixtures/legacy/ux-tui-wpm-step-upper-clamp-page-up-from-21-seed-12345.json",
       "evidence": "tests/parity/evidence/ux-tui-wpm-step-upper-clamp-page-up-from-21-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "catalog.contest-definition-metadata-ce-order",
+      "capabilityId": "catalog.contest-definitions",
+      "obligationIds": [
+        "catalog.contest-metadata-and-defaults"
+      ],
+      "behavior": "All twelve CE contest definitions preserve declaration order, identifiers, keys, names, exchange types, captions, editability, defaults, and validation messages.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v63",
+        "source": "tests/parity/legacy-oracle/v63/LegacyOracle.lpr",
+        "sourceSha256": "659da8d10a631439468d299e98d02e7f969203967d17985d542ec91875c29ad8",
+        "buildRecipe": "tests/parity/legacy-oracle/v63/build-recipe.json",
+        "buildRecipeSha256": "9bdbb814cf5969569ccece2b5f3beff26760fef6a71d765ed97a54939443b7f8"
+      },
+      "legacySources": [
+        "Ini.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.ini.contest-definition.*"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The live v63 oracle reads every Ini.ContestDefinitions entry in declared TSimContest order and verifies each stored enum identity before observation.",
+        "Before implementation, the XPlat catalog exposes identity, key, name, exchange types, editability, and defaults, but does not expose CE exchange captions or validation messages.",
+        "This case pins static contest-definition metadata. Contest-specific validation, scoring, exchange generation, and run-mode behavior remain separate boundaries."
+      ],
+      "input": {
+        "scenario": "catalog.contest-definition-metadata-ce-order"
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatContestDefinitionMetadataTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 12,
+        "observedValuesSha256": "54af0fa514fd9aa70ae024bf46c1df80477ad51419838fed62ccb12760a9094d",
+        "firstDivergence": "The zero-based first mismatch is expected in row 0, CQ WPX. CE exposes empty captions and its validation message, while the production XPlat catalog initially has no caption or validation-message fields.",
+        "functionalDivergenceCode": "catalog-contest-definition-metadata-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "catalog-contest-definition-metadata-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/catalog-contest-definition-metadata-ce-order.json",
+      "evidence": "tests/parity/evidence/catalog-contest-definition-metadata-ce-order.baseline.json",
       "firstGreenCommit": null
     }
   ]

@@ -75,10 +75,24 @@ public sealed class StaticCatalogParityTests
             .GetProperty("items")
             .EnumerateArray()
             .Single(entry => entry.GetProperty("id").GetString() == parityId);
-        Assert.Equal(
-            "not-authored",
-            item.GetProperty("acceptanceStatus").GetString());
-        Assert.Empty(item.GetProperty("caseIds").EnumerateArray());
+        if (parityId == "catalog.contest-definitions")
+        {
+            Assert.Equal(
+                "partial",
+                item.GetProperty("acceptanceStatus").GetString());
+            Assert.Equal(
+                ["catalog.contest-definition-metadata-ce-order"],
+                item.GetProperty("caseIds")
+                    .EnumerateArray()
+                    .Select(caseId => caseId.GetString()));
+        }
+        else
+        {
+            Assert.Equal(
+                "not-authored",
+                item.GetProperty("acceptanceStatus").GetString());
+            Assert.Empty(item.GetProperty("caseIds").EnumerateArray());
+        }
 
         string legacyV1Name = parityId.Replace('.', '-');
         string fixturePath = Path.Combine(
