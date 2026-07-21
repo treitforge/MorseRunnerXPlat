@@ -203,6 +203,7 @@
         "ux.tui-rit-default-up-command-step-50-hz-seed-12345",
         "ux.wpm-default-page-up-command-step-2-wpm-seed-12345",
         "ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345",
+        "ux.tui-wpm-hst-page-up-rounds-32-to-35-seed-12345",
         "ux.wpm-hst-page-up-rounds-32-to-35-seed-12345",
         "ux.wpm-upper-clamp-extra-page-up-from-118-seed-12345",
         "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345",
@@ -848,7 +849,7 @@
     {"id": "ux.wpm-default-page-up-step", "capabilityId": "ux.keyboard-workflows", "behavior": "The default non-HST PageUp workflow applies CE's persisted WPM step to authoritative engine state.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.settings.wpmsteprate", "legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-default-page-up-command-step-2-wpm-seed-12345", "ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345"]},
     {"id": "ux.wpm-upper-range-and-clamp", "capabilityId": "ux.keyboard-workflows", "behavior": "The CW-speed input and live PageUp workflow expose and enforce CE's 120 WPM upper bound.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.dfm", "Main.lfm", "Main.pas"], "legacySurfaceSelectors": ["legacy.main.object.spinedit1", "legacy.form.lfm.main.object.spinedit1", "legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-upper-clamp-extra-page-up-from-118-seed-12345", "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345"]},
     {"id": "ux.wpm-lower-range-and-clamp", "capabilityId": "ux.keyboard-workflows", "behavior": "Every CW-speed setup workflow enforces CE's 10 WPM lower bound.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.dfm", "Main.lfm", "Main.pas"], "legacySurfaceSelectors": ["legacy.main.object.spinedit1", "legacy.form.lfm.main.object.spinedit1"], "acceptanceStatus": "partial", "caseIds": ["ux.tui-wpm-setup-lower-clamp-decrement-from-10-seed-12345"]},
-    {"id": "ux.wpm-hst-five-wpm-rounding", "capabilityId": "ux.keyboard-workflows", "behavior": "HST PageUp and PageDown workflows round CW speed outward to CE's adjacent five-WPM boundary.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.pas"], "legacySurfaceSelectors": ["legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-hst-page-up-rounds-32-to-35-seed-12345"]}
+    {"id": "ux.wpm-hst-five-wpm-rounding", "capabilityId": "ux.keyboard-workflows", "behavior": "HST PageUp and PageDown workflows round CW speed outward to CE's adjacent five-WPM boundary.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.pas"], "legacySurfaceSelectors": ["legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-hst-page-up-rounds-32-to-35-seed-12345", "ux.tui-wpm-hst-page-up-rounds-32-to-35-seed-12345"]}
   ],
   "cases": [
     {
@@ -4474,6 +4475,64 @@
       "failureCode": "ux-WPM-HST-page-up-rounding-mismatch",
       "fixture": "tests/parity/fixtures/legacy/ux-wpm-hst-page-up-rounds-32-to-35-seed-12345.json",
       "evidence": "tests/parity/evidence/ux-wpm-hst-page-up-rounds-32-to-35-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "ux.tui-wpm-hst-page-up-rounds-32-to-35-seed-12345",
+      "capabilityId": "ux.keyboard-workflows",
+      "obligationIds": [
+        "ux.wpm-hst-five-wpm-rounding"
+      ],
+      "behavior": "From 32 WPM in an HST session, one CE PageUp action and the production TUI SpeedUp action both round upward to 35 WPM.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v52",
+        "source": "tests/parity/legacy-oracle/v52/LegacyOracle.lpr",
+        "sourceSha256": "00bf196b14d0209479f7237d0e0e67e16c0aeecf9a052f8cd4b727d505d78c29",
+        "buildRecipe": "tests/parity/legacy-oracle/v52/build-recipe.json",
+        "buildRecipeSha256": "8a448ac61a8aea86d26bfd0984b1e11b2fc9671f89b559493d86792435163225"
+      },
+      "legacySources": [
+        "Main.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.main.handler.formkeydown"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The CE target creates a fresh handleless CQ WPX rmHst runtime, sets WPM to 32, and invokes the real TMainForm.FormKeyDown PageUp path once.",
+        "Before implementation, the XPlat target creates the production TuiApplication over IMorseRunnerClient, starts an rmHst session at 32 WPM, executes the real SpeedUp action once, and observes authoritative WPM state.",
+        "This case pins only the positive TUI HST rounding boundary. HST PageDown, exact-boundary changes, persisted custom steps, and direct menu choices remain separate boundaries."
+      ],
+      "input": {
+        "scenario": "ux.tui-wpm-hst-page-up-rounds-32-to-35-seed-12345",
+        "seed": 12345,
+        "initialWpm": 32,
+        "expectedAfterWpm": 35,
+        "runModeId": "rmHst"
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatTuiHstWpmPageUpTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 3,
+        "observedValuesSha256": "e4eb78b80dd2f6f9b482e51a0810c4bf56d754023a6331e2a232b48a4fc4208e",
+        "firstDivergence": "The zero-based first mismatch is expected in wpm-after-hst-page-up. CE reaches 35 WPM, while the production TUI action initially reaches 34 WPM.",
+        "functionalDivergenceCode": "ux-TUI-WPM-HST-page-up-rounding-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "ux-TUI-WPM-HST-page-up-rounding-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/ux-tui-wpm-hst-page-up-rounds-32-to-35-seed-12345.json",
+      "evidence": "tests/parity/evidence/ux-tui-wpm-hst-page-up-rounds-32-to-35-seed-12345.baseline.json",
       "firstGreenCommit": null
     }
   ]

@@ -105,6 +105,7 @@ public sealed class ParityInfrastructureTests
                 "ux.rit-default-up-command-step-50-hz-seed-12345",
                 "ux.tui-rit-default-up-command-step-50-hz-seed-12345",
                 "ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345",
+                "ux.tui-wpm-hst-page-up-rounds-32-to-35-seed-12345",
                 "ux.tui-wpm-setup-lower-clamp-decrement-from-10-seed-12345",
                 "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345",
                 "ux.wpm-default-page-up-command-step-2-wpm-seed-12345",
@@ -157,6 +158,7 @@ public sealed class ParityInfrastructureTests
                 "ux.rit-default-up-command-step-50-hz-seed-12345",
                 "ux.tui-rit-default-up-command-step-50-hz-seed-12345",
                 "ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345",
+                "ux.tui-wpm-hst-page-up-rounds-32-to-35-seed-12345",
                 "ux.tui-wpm-setup-lower-clamp-decrement-from-10-seed-12345",
                 "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345",
                 "ux.wpm-default-page-up-command-step-2-wpm-seed-12345",
@@ -334,6 +336,10 @@ public sealed class ParityInfrastructureTests
                 .Get(
                     "ux.tui-wpm-setup-upper-range-increment-from-100"
                     + "-seed-12345")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatTuiHstWpmPageUpTarget>(
+            ParityAcceptanceRegistry
+                .Get("ux.tui-wpm-hst-page-up-rounds-32-to-35-seed-12345")
                 .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatTuiWpmSetupLowerClampTarget>(
             ParityAcceptanceRegistry
