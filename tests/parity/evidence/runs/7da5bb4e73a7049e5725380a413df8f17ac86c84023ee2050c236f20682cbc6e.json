@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "ece3f3fa3cc92d399a9ca892da595356734fd554",
+      "tree": "7231d06bf02963b868951e6447a7195bb37f309b",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "contest.arrldx-high-r1-power-remote-exchange-format-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "contest.arrldx-high-r1-power-remote-exchange-format-seed-12345",
+      "acceptanceTestName": "parity:contest.arrldx-high-r1-power-remote-exchange-format-seed-12345()",
+      "target": "xplat",
+      "adapter": "XPlatArrlDxHighR1PowerRemoteExchangeFormatTarget",
+      "caseDefinitionSha256": "aabd393286b03ec81c5954a3122c04a77c66364927d3ffa0030547e3c2366333",
+      "fixtureSha256": "a403e9e63bdd6b9e9366fbe46074bdf785712f62cf0906d5665f5cef156a3101",
+      "outcome": "functional-divergence",
+      "failureCode": "contest-arrldx-high-r1-power-remote-exchange-format-mismatch",
+      "evidenceSource": "MorseRunner.Engine.SimulatedStation.ObserveExchangeForParity",
+      "observedValues": [
+        "configuration|scenario=contest.arrldx-high-r1-power-remote-exchange-format-seed-12345|station=W7SST|seed=12345|formatter-checkpoint-draw=7|r1-milli=930|run-mode=rmPileup",
+        "contest[0]|id=scCQWW|call=K1ABC|rst=599|exchange1=599|exchange2=10|formatted=5NN 10",
+        "contest[1]|id=scArrlDx|call=JA1ABC|rst=599|exchange1=599|exchange2=100|formatted=5NN 100"
+      ],
+      "observedValueCount": 3,
+      "observedValuesSha256": "13bc91e52f2b2355d1828007e473fd088f1b87ac42ec8c29928f6a5bbe76f058",
+      "firstDivergence": {
+        "index": 2,
+        "expected": "contest[1]|id=scArrlDx|call=JA1ABC|rst=599|exchange1=599|exchange2=100|formatted=5NN 1TT",
+        "actual": "contest[1]|id=scArrlDx|call=JA1ABC|rst=599|exchange1=599|exchange2=100|formatted=5NN 100"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}
