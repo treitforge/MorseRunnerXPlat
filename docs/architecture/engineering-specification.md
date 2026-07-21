@@ -1888,7 +1888,9 @@ as 7. The v56 CE oracle reaches 37 WPM through the real
 TUI settings path ignores `Settings.WpmStepRate`, so the SpeedUp action uses
 its fixed two-WPM default and reaches 32 WPM. PageDown, malformed or
 out-of-range setting clamps, HST precedence, and direct menu choices remain
-separate acceptance boundaries.
+separate acceptance boundaries. Production TUI now loads and clamps the
+persisted step to CE's 1 through 20 range, applies it to non-HST PageUp, and
+preserves it on save while leaving HST five-WPM rounding independent.
 
 ### 14.5 Device failure
 

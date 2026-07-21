@@ -36,6 +36,7 @@ public sealed class TuiApplication : IDisposable
     private int _lastFrameWidth;
     private int _lastFrameHeight;
     private long _lastRenderTimestamp;
+    private int _wpmStepRate = 2;
     private bool _quit;
     private volatile bool _dirty = true;
 
@@ -756,7 +757,7 @@ public sealed class TuiApplication : IDisposable
         return snapshot?.RunModeId.Value == "rmHst"
             ? ((snapshot.CurrentWordsPerMinute / 5) * 5 + 5)
                 - snapshot.CurrentWordsPerMinute
-            : 2;
+            : _wpmStepRate;
     }
 
     private int GetSpeedDownDelta()
@@ -1120,6 +1121,8 @@ public sealed class TuiApplication : IDisposable
             ["Station.Call"] = State.StationCall,
             ["Station.Wpm"] = State.WordsPerMinute.ToString(
                 CultureInfo.InvariantCulture),
+            ["Settings.WpmStepRate"] = _wpmStepRate.ToString(
+                CultureInfo.InvariantCulture),
             ["Station.Pitch"] = State.PitchHz.ToString(
                 CultureInfo.InvariantCulture),
             ["Station.BandWidth"] = State.BandwidthHz.ToString(
@@ -1390,6 +1393,10 @@ public sealed class TuiApplication : IDisposable
             values,
             "Station.Wpm",
             State.WordsPerMinute);
+        _wpmStepRate = Math.Clamp(
+            GetInt(values, "Settings.WpmStepRate", _wpmStepRate),
+            1,
+            20);
         State.PitchHz = GetInt(values, "Station.Pitch", State.PitchHz);
         State.BandwidthHz = GetInt(
             values,
