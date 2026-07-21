@@ -374,8 +374,8 @@
         "linux",
         "macos"
       ],
-      "acceptanceStatus": "not-authored",
-      "caseIds": []
+      "acceptanceStatus": "partial",
+      "caseIds": ["audio.wav-pcm16-bit-exact"]
     },
     {
       "id": "ux.legacy-vcl-components",
