@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "adapterId": "LegacyOracleTarget",
+  "versionId": "legacy-oracle-v63",
+  "source": "tests/parity/legacy-oracle/v63/LegacyOracle.lpr",
+  "sourceSha256": "659da8d10a631439468d299e98d02e7f969203967d17985d542ec91875c29ad8",
+  "buildRecipe": "tests/parity/legacy-oracle/v63/build-recipe.json",
+  "buildRecipeSha256": "9bdbb814cf5969569ccece2b5f3beff26760fef6a71d765ed97a54939443b7f8",
+  "selectedCaseIds": [
+    "catalog.contest-definition-metadata-ce-order"
+  ],
+  "reference": {
+    "definition": "C:\\Users\\randy\\Git\\MorseRunnerXPlat\\tests\\parity\\legacy-reference.json",
+    "definitionSha256": "663adf3bf230161abb923cf8b6651d394af1b99eab05efeafb696cb29992da23",
+    "bundle": "C:\\Users\\randy\\Git\\MorseRunnerXPlat\\tests\\parity\\legacy-reference.bundle",
+    "bundleSha256": "1d9fcafb3adb0227aba360bc1884b5c32d2c1e8210448e646a4104f142b07772"
+  },
+  "legacy": {
+    "repository": "https://github.com/w7sst/MorseRunner.git",
+    "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+    "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+    "root": "C:\\Users\\randy\\Git\\MorseRunnerXPlat\\artifacts\\legacy-reference",
+    "clean": true
+  },
+  "xplat": {
+    "revision": "e074309126d7464b21091d828eef1c2e1a6ee266",
+    "tree": "38deb797f9d7e248523ae6b663058ad86df4a48b",
+    "clean": true
+  },
+  "oracle": {
+    "source": "tests/parity/legacy-oracle/v63/LegacyOracle.lpr",
+    "sourcePath": "C:\\Users\\randy\\Git\\MorseRunnerXPlat\\tests\\parity\\legacy-oracle\\v63\\LegacyOracle.lpr",
+    "sourceSha256": "659da8d10a631439468d299e98d02e7f969203967d17985d542ec91875c29ad8",
+    "buildRecipe": "tests/parity/legacy-oracle/v63/build-recipe.json",
+    "buildRecipePath": "C:\\Users\\randy\\Git\\MorseRunnerXPlat\\tests\\parity\\legacy-oracle\\v63\\build-recipe.json",
+    "buildRecipeSha256": "9bdbb814cf5969569ccece2b5f3beff26760fef6a71d765ed97a54939443b7f8",
+    "executable": "C:\\Users\\randy\\Git\\MorseRunnerXPlat\\artifacts\\legacy-oracle\\builds\\legacy-oracle-v63\\8496884903e9ab3804ea1bbdbb7d70dd4f6d220c75c87297f3caeafbd11f0321\\2b580f89e5fe4de2b5911b39868a9c06\\bin\\LegacyOracle.exe",
+    "executableSha256": "1eab473f366a6bd90499d3d1daa0219cb044f1c4e0641f4b8db668fede3f3c69",
+    "length": 2899456
+  },
+  "toolchain": {
+    "root": "C:\\lazarus",
+    "lazarusVersion": "4.6",
+    "fpcVersion": "3.2.2",
+    "targetCpu": "x86_64",
+    "targetOs": "win64",
+    "compiler": "C:\\lazarus\\fpc\\3.2.2\\bin\\x86_64-win64\\fpc.exe",
+    "compilerSha256": "8ba500bbb84bd7100c169f151082b1461e9241e4491e0f6f38f2376bec49c319",
+    "backendCompiler": "C:\\lazarus\\fpc\\3.2.2\\bin\\x86_64-win64\\ppcx64.exe",
+    "backendCompilerSha256": "1f33c43b890e2d02e6b07c88401fc47cfcac48e003a29bb58b2e1220ac6a3e22",
+    "lazbuild": "C:\\lazarus\\lazbuild.exe",
+    "lazbuildSha256": "9554983fff43cfe5b5cef9a8374a37ff8a152e2de9c40c5750e723501f6edfd1",
+    "fingerprint": {
+      "schemaVersion": 1,
+      "canonicalization": "utf8-lf-nul-lowercase-relative-path-v1",
+      "roots": [
+        "components/freetype/lib/x86_64-win64",
+        "components/lazutils/lib/x86_64-win64",
+        "fpc/3.2.2",
+        "lazbuild.exe",
+        "lcl/units/x86_64-win64",
+        "packager/units/x86_64-win64"
+      ],
+      "aggregateSha256": "3eb50f2aac396bac975d8f628ad44421318d05179c81a98524802bcf04c8afee",
+      "fileCount": 14553,
+      "byteCount": 786527370
+    }
+  },
+  "build": {
+    "script": "C:\\Users\\randy\\Git\\MorseRunnerXPlat\\tests\\parity\\Build-LegacyOracle.ps1",
+    "scriptSha256": "f3c953dd7a5bce1dfc07522cedfabd53d58d714f0dcf20871a8f3bed39590c8c",
+    "arguments": [
+      "-n",
+      "-Sgic",
+      "-Xs",
+      "-B",
+      "-Twin64",
+      "-Px86_64",
+      "-MDelphi",
+      "-O2",
+      "-FuC:\\Users\\randy\\Git\\MorseRunnerXPlat\\artifacts\\legacy-reference",
+      "-FuC:\\Users\\randy\\Git\\MorseRunnerXPlat\\artifacts\\legacy-reference/Lazarus",
+      "-FuC:\\Users\\randy\\Git\\MorseRunnerXPlat\\artifacts\\legacy-reference/VCL",
+      "-FuC:\\Users\\randy\\Git\\MorseRunnerXPlat\\artifacts\\legacy-reference/Util",
+      "-FuC:\\lazarus/lcl/units/x86_64-win64/win32",
+      "-FuC:\\lazarus/lcl/units/x86_64-win64",
+      "-FuC:\\lazarus/components/freetype/lib/x86_64-win64",
+      "-FuC:\\lazarus/components/lazutils/lib/x86_64-win64",
+      "-FuC:\\lazarus/packager/units/x86_64-win64",
+      "-FuC:\\lazarus/fpc/3.2.2/units/x86_64-win64",
+      "-FuC:\\lazarus/fpc/3.2.2/units/x86_64-win64/*",
+      "-FuC:\\lazarus/fpc/3.2.2/units/x86_64-win64/rtl",
+      "-FDC:\\lazarus/fpc/3.2.2/bin/x86_64-win64",
+      "-FlC:\\lazarus/fpc/3.2.2/lib/x86_64-win64",
+      "-FUC:\\Users\\randy\\Git\\MorseRunnerXPlat\\artifacts\\legacy-oracle\\builds\\legacy-oracle-v63\\8496884903e9ab3804ea1bbdbb7d70dd4f6d220c75c87297f3caeafbd11f0321\\2b580f89e5fe4de2b5911b39868a9c06\\units",
+      "-FEC:\\Users\\randy\\Git\\MorseRunnerXPlat\\artifacts\\legacy-oracle\\builds\\legacy-oracle-v63\\8496884903e9ab3804ea1bbdbb7d70dd4f6d220c75c87297f3caeafbd11f0321\\2b580f89e5fe4de2b5911b39868a9c06\\bin",
+      "-oC:\\Users\\randy\\Git\\MorseRunnerXPlat\\artifacts\\legacy-oracle\\builds\\legacy-oracle-v63\\8496884903e9ab3804ea1bbdbb7d70dd4f6d220c75c87297f3caeafbd11f0321\\2b580f89e5fe4de2b5911b39868a9c06\\bin\\LegacyOracle.exe",
+      "C:\\Users\\randy\\Git\\MorseRunnerXPlat\\tests\\parity\\legacy-oracle\\v63\\LegacyOracle.lpr"
+    ],
+    "invocation": {
+      "compiler": "C:\\lazarus\\fpc\\3.2.2\\bin\\x86_64-win64\\fpc.exe",
+      "options": [
+        "-n",
+        "-Sgic",
+        "-Xs",
+        "-B",
+        "-Twin64",
+        "-Px86_64",
+        "-MDelphi",
+        "-O2"
+      ],
+      "unitSearchPaths": [
+        "C:\\Users\\randy\\Git\\MorseRunnerXPlat\\artifacts\\legacy-reference",
+        "C:\\Users\\randy\\Git\\MorseRunnerXPlat\\artifacts\\legacy-reference/Lazarus",
+        "C:\\Users\\randy\\Git\\MorseRunnerXPlat\\artifacts\\legacy-reference/VCL",
+        "C:\\Users\\randy\\Git\\MorseRunnerXPlat\\artifacts\\legacy-reference/Util",
+        "C:\\lazarus/lcl/units/x86_64-win64/win32",
+        "C:\\lazarus/lcl/units/x86_64-win64",
+        "C:\\lazarus/components/freetype/lib/x86_64-win64",
+        "C:\\lazarus/components/lazutils/lib/x86_64-win64",
+        "C:\\lazarus/packager/units/x86_64-win64",
+        "C:\\lazarus/fpc/3.2.2/units/x86_64-win64",
+        "C:\\lazarus/fpc/3.2.2/units/x86_64-win64/*",
+        "C:\\lazarus/fpc/3.2.2/units/x86_64-win64/rtl"
+      ],
+      "toolSearchPaths": [
+        "C:\\lazarus/fpc/3.2.2/bin/x86_64-win64"
+      ],
+      "librarySearchPaths": [
+        "C:\\lazarus/fpc/3.2.2/lib/x86_64-win64"
+      ],
+      "unitOutputPath": "C:\\Users\\randy\\Git\\MorseRunnerXPlat\\artifacts\\legacy-oracle\\builds\\legacy-oracle-v63\\8496884903e9ab3804ea1bbdbb7d70dd4f6d220c75c87297f3caeafbd11f0321\\2b580f89e5fe4de2b5911b39868a9c06\\units",
+      "executableOutputPath": "C:\\Users\\randy\\Git\\MorseRunnerXPlat\\artifacts\\legacy-oracle\\builds\\legacy-oracle-v63\\8496884903e9ab3804ea1bbdbb7d70dd4f6d220c75c87297f3caeafbd11f0321\\2b580f89e5fe4de2b5911b39868a9c06\\bin",
+      "outputExecutable": "C:\\Users\\randy\\Git\\MorseRunnerXPlat\\artifacts\\legacy-oracle\\builds\\legacy-oracle-v63\\8496884903e9ab3804ea1bbdbb7d70dd4f6d220c75c87297f3caeafbd11f0321\\2b580f89e5fe4de2b5911b39868a9c06\\bin\\LegacyOracle.exe",
+      "source": "C:\\Users\\randy\\Git\\MorseRunnerXPlat\\tests\\parity\\legacy-oracle\\v63\\LegacyOracle.lpr"
+    },
+    "builtAtUtc": "2026-07-21T18:45:27.7705764Z"
+  },
+  "manifest": {
+    "path": "C:\\Users\\randy\\Git\\MorseRunnerXPlat\\tests\\parity\\parity-manifest.json",
+    "sha256": "e943632742c9e41f3ad0a65a0c777e025707cd5de03cfcad274e55797cf52930"
+  },
+  "observations": [
+    {
+      "scenario": "catalog.contest-definition-metadata-ce-order",
+      "valueCount": 12,
+      "outputSha256": "4ecbca10578fd4dd97aa13cb6ce2828cb51430f40b8ed2971d44d23e43a7da7b"
+    }
+  ]
+}

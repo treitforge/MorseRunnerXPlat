@@ -107,25 +107,25 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 
 - Manifest capabilities: 24
 - Complete capabilities: 0
-- Partially authored capabilities: 5
-- Not-authored capabilities: 19
+- Partially authored capabilities: 6
+- Not-authored capabilities: 18
 - Behavioral obligations: 123
-- Source-bound obligations: 24
-- Pending source bindings: 99
+- Source-bound obligations: 25
+- Pending source bindings: 98
 - Complete obligations: 0
-- Partially authored obligations: 24
-- Not-authored obligations: 99
+- Partially authored obligations: 25
+- Not-authored obligations: 98
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 58
+- Active acceptance cases: 59
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 58
+- Legacy-green/XPlat-red cases: 59
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
 |---|---|---|---:|---:|---:|---|
 | `catalog.contest-enumeration` | Legacy contest enumeration | `not-authored` | 0 | 12 | 0 | `Ini.pas:28-30` |
 | `session.run-mode-enumeration` | Legacy run mode enumeration | `not-authored` | 0 | 5 | 0 | `Ini.pas:31` |
-| `catalog.contest-definitions` | Legacy contest definitions | `not-authored` | 0 | 12 | 0 | `Ini.pas:99-222` |
+| `catalog.contest-definitions` | Legacy contest definitions | `partial` | 1 | 12 | 0 | `Ini.pas:99-222` |
 | `configuration.persisted-settings` | Legacy persisted settings | `not-authored` | 0 | 60 | 30 | `Ini.pas:345-548` |
 | `ux.main-form-objects` | Legacy main-form objects | `not-authored` | 0 | 79 | 6 | `Main.dfm:1-1988` |
 | `ux.main-menu-commands` | Legacy main-menu commands | `not-authored` | 0 | 129 | 0 | `Main.dfm:964-1579` |
@@ -153,7 +153,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | Obligation ID | Capability | Binding | Status | Cases | Platforms | Required behavior |
 |---|---|---|---|---:|---|---|
 | `catalog.contest-identifiers` | `catalog.contest-enumeration` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Every CE contest identifier is present in declaration order and selects the same contest family. |
-| `catalog.contest-metadata-and-defaults` | `catalog.contest-definitions` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Every contest exposes CE-equivalent names, exchange types, defaults, and feature flags. |
+| `catalog.contest-metadata-and-defaults` | `catalog.contest-definitions` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | Every contest exposes CE-equivalent names, exchange types, defaults, and feature flags. |
 | `session.run-mode-identifiers` | `session.run-mode-enumeration` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Every CE run mode is present and retains its observable selection semantics. |
 | `quality.live-ce-oracle-required` | `quality.legacy-tests-and-smoke` | `pending` | `not-authored` | 0 | `windows` | Certified parity always executes the pinned CE oracle and never silently substitutes a committed fixture. |
 | `quality.xplat-acceptance-target-executes` | `quality.legacy-tests-and-smoke` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | The dedicated XPlat parity target executes every applicable acceptance case exactly once. |
@@ -342,6 +342,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `ux.tui-wpm-step-lower-clamp-page-up-from-zero-seed-12345` | `ux.keyboard-workflows` | `ux.wpm-default-page-up-step` | `legacy-green-xplat-red` | `ux-TUI-WPM-step-lower-clamp-mismatch` | `pass` | `fail` |
 | `ux.wpm-step-upper-clamp-page-up-from-21-seed-12345` | `ux.keyboard-workflows` | `ux.wpm-default-page-up-step` | `legacy-green-xplat-red` | `ux-WPM-step-upper-clamp-mismatch` | `pass` | `fail` |
 | `ux.tui-wpm-step-upper-clamp-page-up-from-21-seed-12345` | `ux.keyboard-workflows` | `ux.wpm-default-page-up-step` | `legacy-green-xplat-red` | `ux-TUI-WPM-step-upper-clamp-mismatch` | `pass` | `fail` |
+| `catalog.contest-definition-metadata-ce-order` | `catalog.contest-definitions` | `catalog.contest-metadata-and-defaults` | `legacy-green-xplat-red` | `catalog-contest-definition-metadata-mismatch` | `pass` | `fail` |
 
 ## Retained noncertifying observations
 

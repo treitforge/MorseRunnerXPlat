@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "e074309126d7464b21091d828eef1c2e1a6ee266",
+      "tree": "38deb797f9d7e248523ae6b663058ad86df4a48b",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "catalog.contest-definition-metadata-ce-order"
+  ],
+  "results": [
+    {
+      "parityId": "catalog.contest-definition-metadata-ce-order",
+      "acceptanceTestName": "parity:catalog.contest-definition-metadata-ce-order()",
+      "target": "xplat",
+      "adapter": "XPlatContestDefinitionMetadataTarget",
+      "caseDefinitionSha256": "b4d03092036d7d95854d5e54bdf23d95d119500a51df14f66596c4668ad2b332",
+      "fixtureSha256": "16cf2b75c16177c493276dd1b469d43a6f70386e3cb5dd7c7ca0e2fde209f50a",
+      "outcome": "functional-divergence",
+      "failureCode": "catalog-contest-definition-metadata-mismatch",
+      "evidenceSource": "MorseRunner.Domain.ContestCatalog",
+      "observedValues": [
+        "contest|ordinal=0|id=scWpx|key=CqWpx|name=CQ WPX|exchange1=etRST|exchange2=etSerialNr|caption1=\u003Cmissing\u003E|caption2=\u003Cmissing\u003E|editable=true|default=5NN #|message=\u003Cmissing\u003E",
+        "contest|ordinal=1|id=scCwt|key=Cwt|name=CWOPS CWT|exchange1=etOpName|exchange2=etGenericField|caption1=\u003Cmissing\u003E|caption2=\u003Cmissing\u003E|editable=true|default=DAVID 123|message=\u003Cmissing\u003E",
+        "contest|ordinal=2|id=scFieldDay|key=ArrlFd|name=ARRL Field Day|exchange1=etFdClass|exchange2=etArrlSection|caption1=\u003Cmissing\u003E|caption2=\u003Cmissing\u003E|editable=true|default=3A OR|message=\u003Cmissing\u003E",
+        "contest|ordinal=3|id=scNaQp|key=NAQP|name=NCJ NAQP|exchange1=etOpName|exchange2=etNaQpExch2|caption1=\u003Cmissing\u003E|caption2=\u003Cmissing\u003E|editable=true|default=ALEX ON|message=\u003Cmissing\u003E",
+        "contest|ordinal=4|id=scHst|key=HST|name=HST (High Speed Test)|exchange1=etRST|exchange2=etSerialNr|caption1=\u003Cmissing\u003E|caption2=\u003Cmissing\u003E|editable=false|default=5NN #|message=\u003Cmissing\u003E",
+        "contest|ordinal=5|id=scCQWW|key=CQWW|name=CQ WW|exchange1=etRST|exchange2=etCQZone|caption1=\u003Cmissing\u003E|caption2=\u003Cmissing\u003E|editable=true|default=5NN 3|message=\u003Cmissing\u003E",
+        "contest|ordinal=6|id=scArrlDx|key=ArrlDx|name=ARRL DX|exchange1=etRST|exchange2=etStateProv|caption1=\u003Cmissing\u003E|caption2=\u003Cmissing\u003E|editable=true|default=5NN ON|message=\u003Cmissing\u003E",
+        "contest|ordinal=7|id=scSst|key=Sst|name=K1USN Slow Speed Test|exchange1=etOpName|exchange2=etGenericField|caption1=\u003Cmissing\u003E|caption2=\u003Cmissing\u003E|editable=true|default=BRUCE MA|message=\u003Cmissing\u003E",
+        "contest|ordinal=8|id=scAllJa|key=AllJa|name=JARL ALL JA|exchange1=etRST|exchange2=etJaPref|caption1=\u003Cmissing\u003E|caption2=\u003Cmissing\u003E|editable=true|default=5NN 10H|message=\u003Cmissing\u003E",
+        "contest|ordinal=9|id=scAcag|key=Acag|name=JARL ACAG|exchange1=etRST|exchange2=etJaCity|caption1=\u003Cmissing\u003E|caption2=\u003Cmissing\u003E|editable=true|default=5NN 1002H|message=\u003Cmissing\u003E",
+        "contest|ordinal=10|id=scIaruHf|key=IaruHf|name=IARU HF|exchange1=etRST|exchange2=etGenericField|caption1=\u003Cmissing\u003E|caption2=\u003Cmissing\u003E|editable=true|default=5NN 6|message=\u003Cmissing\u003E",
+        "contest|ordinal=11|id=scArrlSS|key=SSCW|name=ARRL Sweepstakes|exchange1=etSSNrPrecedence|exchange2=etSSCheckSection|caption1=\u003Cmissing\u003E|caption2=\u003Cmissing\u003E|editable=true|default=A 72 OR|message=\u003Cmissing\u003E"
+      ],
+      "observedValueCount": 12,
+      "observedValuesSha256": "1b5a74b7e9a86711472ff998787402c4371d607aa84fe01252e461efc842e75a",
+      "firstDivergence": {
+        "index": 0,
+        "expected": "contest|ordinal=0|id=scWpx|key=CqWpx|name=CQ WPX|exchange1=etRST|exchange2=etSerialNr|caption1=|caption2=|editable=true|default=5NN #|message=\u0027RST \u003Cserial\u003E\u0027 (e.g. 5NN #|123)",
+        "actual": "contest|ordinal=0|id=scWpx|key=CqWpx|name=CQ WPX|exchange1=etRST|exchange2=etSerialNr|caption1=\u003Cmissing\u003E|caption2=\u003Cmissing\u003E|editable=true|default=5NN #|message=\u003Cmissing\u003E"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}
