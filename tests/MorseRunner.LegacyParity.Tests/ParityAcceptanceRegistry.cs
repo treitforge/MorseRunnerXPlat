@@ -13,6 +13,17 @@ public static class ParityAcceptanceRegistry
         new Dictionary<string, ParityAcceptanceRegistration>(
             StringComparer.Ordinal)
         {
+            [XPlatOwnExchangeTokenizationTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatOwnExchangeTokenizationTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatOwnExchangeTokenizationTarget),
+                    XPlatOwnExchangeTokenizationTarget
+                        .FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = OwnExchangeTokenizationInput.Parse(scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () => new XPlatOwnExchangeTokenizationTarget()),
             [XPlatInvalidOwnExchangeMessagesTarget.ParityId] =
                 new ParityAcceptanceRegistration(
                     XPlatInvalidOwnExchangeMessagesTarget.ParityId,

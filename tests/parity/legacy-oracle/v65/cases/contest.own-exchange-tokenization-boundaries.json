@@ -1,0 +1,28 @@
+{
+  "scenario": "contest.own-exchange-tokenization-boundaries",
+  "vectors": [
+    {"contestId": "scWpx", "exchange": "5NN # EXTRA"},
+    {"contestId": "scCwt", "exchange": "DAVID 123 EXTRA"},
+    {"contestId": "scFieldDay", "exchange": "3A OR EXTRA"},
+    {"contestId": "scNaQp", "exchange": "ALEX ON EXTRA"},
+    {"contestId": "scHst", "exchange": "5NN # EXTRA"},
+    {"contestId": "scCQWW", "exchange": "5NN 3 EXTRA"},
+    {"contestId": "scArrlDx", "exchange": "5NN ON EXTRA"},
+    {"contestId": "scSst", "exchange": "BRUCE MA EXTRA"},
+    {"contestId": "scAllJa", "exchange": "5NN 10H EXTRA"},
+    {"contestId": "scAcag", "exchange": "5NN 1002H EXTRA"},
+    {"contestId": "scIaruHf", "exchange": "5NN 6 EXTRA"},
+    {"contestId": "scArrlSS", "exchange": "A 72 OR EXTRA"},
+    {"contestId": "scCwt", "exchange": "DAVID"},
+    {"contestId": "scNaQp", "exchange": "ALEX"},
+    {"contestId": "scSst", "exchange": "BRUCE"},
+    {"contestId": "scIaruHf", "exchange": "5NN"},
+    {"contestId": "scAllJa", "exchange": "5NN H"},
+    {"contestId": "scAcag", "exchange": "5NN H"},
+    {"contestId": "scArrlDx", "exchange": "5NN KW"},
+    {"contestId": "scArrlSS", "exchange": "A 72OR"},
+    {"contestId": "scArrlSS", "exchange": "A 72 OREGON"},
+    {"contestId": "scArrlSS", "exchange": "A 72 OR"},
+    {"contestId": "scWpx", "exchange": "5NN #"}
+  ]
+}

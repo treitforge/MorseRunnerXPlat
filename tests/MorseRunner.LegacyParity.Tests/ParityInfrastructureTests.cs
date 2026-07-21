@@ -96,6 +96,7 @@ public sealed class ParityInfrastructureTests
                 "contest.jarl-random-cut-remote-exchange-format-seed-12345",
                 "contest.lid-serial-correction-remote-exchange-format-seed-16",
                 "contest.naqp-remote-exchange-format-seed-12345",
+                "contest.own-exchange-tokenization-boundaries",
                 "contest.rare-rst-error-remote-exchange-format-seed-12345",
                 "contest.sst-remote-exchange-format-seed-12345",
                 "contest.sweepstakes-remote-exchange-format-seed-12345",
@@ -161,6 +162,7 @@ public sealed class ParityInfrastructureTests
                 "contest.jarl-random-cut-remote-exchange-format-seed-12345",
                 "contest.lid-serial-correction-remote-exchange-format-seed-16",
                 "contest.naqp-remote-exchange-format-seed-12345",
+                "contest.own-exchange-tokenization-boundaries",
                 "contest.rare-rst-error-remote-exchange-format-seed-12345",
                 "contest.sst-remote-exchange-format-seed-12345",
                 "contest.sweepstakes-remote-exchange-format-seed-12345",
@@ -197,6 +199,10 @@ public sealed class ParityInfrastructureTests
     [Trait("Category", "ParityInfrastructure")]
     public void CaseIdSelectsItsExactXPlatAdapter()
     {
+        Assert.IsType<XPlatOwnExchangeTokenizationTarget>(
+            ParityAcceptanceRegistry
+                .Get("contest.own-exchange-tokenization-boundaries")
+                .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatInvalidOwnExchangeMessagesTarget>(
             ParityAcceptanceRegistry
                 .Get("contest.invalid-own-exchange-messages-ce-order")

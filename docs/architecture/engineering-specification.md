@@ -1374,6 +1374,15 @@ The production `ContestQsoRules` validator consumes the same catalog validation
 message used by the catalog and transport surfaces, avoiding a second
 contest-message table.
 
+The schema-v3 `contest.own-exchange-tokenization-boundaries` case runs 23
+manifest-supplied inputs through `legacy-oracle-v65`. It covers the base CE
+validator's first-two-token behavior, empty generic and NAQP second-field
+rejection, Japanese power-only forms, the W7SST ARRL DX baseline, and the
+Sweepstakes override's whole-input separator and section-length rules. Two
+valid controls guard the adapter setup. Lowercase UI normalization, maximum
+edit lengths, locality-dependent exchange-type selection, and
+received-exchange validation remain separate vectors.
+
 ### 13.4 Extensibility
 
 New built-in contests register through a catalog. Runtime plug-in loading is
