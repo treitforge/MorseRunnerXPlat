@@ -520,10 +520,7 @@ public sealed class SimulatedStation
 
         if (_contestId.Value == "scCQWW")
         {
-            string zone = R1 < 0.70f
-                ? ToFullCutNumbers(Identity.Exchange2)
-                : Identity.Exchange2;
-            return $"{ToCutNumbers(Identity.Rst)} {zone}";
+            return FormatCqwwExchange();
         }
 
         if (_contestId.Value == "scArrlDx")
@@ -719,6 +716,34 @@ public sealed class SimulatedStation
         {
             result = result.Replace('0', 'T');
         }
+
+        return R1 < 0.70f
+            ? ToFullCutNumbers(result)
+            : result;
+    }
+
+    private string FormatCqwwExchange()
+    {
+        string result = $"{Identity.Exchange1} {Identity.Exchange2}";
+        if (Operator.RunMode != OperatorRunMode.Hst
+            && _random.NextDouble() < 0.05d)
+        {
+            result = result.Replace("599", "ENN", StringComparison.Ordinal);
+        }
+
+        result = result.Replace("599", "5NN", StringComparison.Ordinal);
+        if (Operator.RunMode == OperatorRunMode.Hst)
+        {
+            return result;
+        }
+
+        result = result
+            .Replace("000", "TTT", StringComparison.Ordinal)
+            .Replace("00", "TT", StringComparison.Ordinal);
+
+        // CE evaluates both random operands before the CQ-zone exclusions.
+        _ = _random.NextDouble();
+        _ = _random.NextDouble();
 
         return R1 < 0.70f
             ? ToFullCutNumbers(result)

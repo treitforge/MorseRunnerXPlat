@@ -247,6 +247,40 @@ public sealed class SimulationAndScoringTests
     }
 
     [Fact]
+    public void CqwwHigherR1ConsumesSuppressedRemoteCutDecisions()
+    {
+        var random = new LegacyRandom(12_345);
+        var station = SimulatedStation.CreateCandidate(
+            () => new StationIdentity(
+                "K1ABC",
+                "599",
+                Number: 0,
+                "599",
+                "10"),
+            () => 25,
+            random,
+            new LegacyRandomEffects(random),
+            OperatorRunMode.Pileup,
+            lids: false,
+            sweepstakes: false,
+            flutter: false,
+            new ContestId("scCQWW"),
+            SerialNumberRangeMode.StartOfContest,
+            customSerialNumberMinimum: 1,
+            customSerialNumberMinimumDigits: 2);
+
+        Assert.Equal(
+            930,
+            (int)MathF.Round(
+                station.R1 * 1_000f,
+                MidpointRounding.ToEven));
+        Assert.Equal("5NN 10", station.ObserveExchangeForParity());
+        Assert.Equal(
+            0x3F15_06E1U,
+            BitConverter.SingleToUInt32Bits(random.NextSingle()));
+    }
+
+    [Fact]
     public void IaruHeadquartersExchangeUsesRareRemoteRstErrorDraw()
     {
         var random = new LegacyRandom(12_345);

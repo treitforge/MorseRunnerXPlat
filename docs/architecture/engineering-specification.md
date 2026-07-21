@@ -2739,6 +2739,24 @@ consume the ordinary RST and numeric-cut draws in CE order. Ineligible serial
 digits, other creation checkpoints, reply prefixes, and additional LID
 operator branches remain within the partial obligation.
 
+The authored
+`contest.cqww-random-consumption-remote-exchange-format-seed-12345` case
+extends the formatter through CE's suppressed CQ-zone cut decisions. Its
+pinned CE v36 adapter constructs the production candidate through raw draw
+2465 with retained `R1` at 0.930. Formatting consumes draw 2466 for the rare
+remote RST error and draws 2467 and 2468 for the two zero-cut conditions. The
+CQ-zone exclusions prevent either zero substitution, so the exchange remains
+`5NN 10`, while the next shared value is draw 2469 with binary32 bits
+`3f1506e1`. Retained red evidence records
+`contest-cqww-random-consumption-remote-exchange-format-mismatch`, where XPlat
+produced the same visible exchange without consuming any formatter draws and
+returned draw 2466 with bits `3f626e2f`. Production CQ WW formatting now
+retains CE's RST decision, leading-zero replacements, both excluded cut
+decisions, and below-0.70 full-cut branch in their original order. Other
+candidate checkpoints, local-station formatting, repeated formatter calls,
+reply prefixes, and LID operator branches remain within the partial
+obligation.
+
 The authored `contest.naqp-remote-exchange-format-seed-12345` case extends
 that obligation through the nonempty NAQP name and location branch. Its pinned
 CE v23 adapter uses the same protected `TStation.NrAsText` observation boundary
