@@ -18,6 +18,7 @@
     <ProjectReference Include="..\..\src\MorseRunner.Dsp\MorseRunner.Dsp.csproj" />
     <ProjectReference Include="..\..\src\MorseRunner.Engine\MorseRunner.Engine.csproj" />
     <ProjectReference Include="..\..\src\MorseRunner.Infrastructure\MorseRunner.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\MorseRunner.Tui\MorseRunner.Tui.csproj" />
   </ItemGroup>
 
   <ItemGroup>

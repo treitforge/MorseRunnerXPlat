@@ -1,0 +1,7 @@
+{
+  "defaultRitStepHz": 50,
+  "expectedAfterHz": 50,
+  "runModeId": "rmSingle",
+  "scenario": "ux.tui-rit-default-up-command-step-50-hz-seed-12345",
+  "seed": 12345
+}
