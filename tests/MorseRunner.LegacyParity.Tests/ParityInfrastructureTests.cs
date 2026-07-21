@@ -65,6 +65,7 @@ public sealed class ParityInfrastructureTests
             [
                 "audio.deterministic-random-primitives-seed-12345",
                 "audio.flutter-no-station-noise-invariance-seed-12345",
+                "audio.operator-monitor-minus-60db-mute-first-cq-block-seed-12345",
                 "audio.qrm-caller-collision-retry-limit-seed-24680",
                 "audio.qrm-first-triggered-station-seed-1843",
                 "audio.qrm-no-trigger-invariance-seed-12345",
@@ -103,6 +104,7 @@ public sealed class ParityInfrastructureTests
             [
                 "audio.deterministic-random-primitives-seed-12345",
                 "audio.flutter-no-station-noise-invariance-seed-12345",
+                "audio.operator-monitor-minus-60db-mute-first-cq-block-seed-12345",
                 "audio.qrm-caller-collision-retry-limit-seed-24680",
                 "audio.qrm-first-triggered-station-seed-1843",
                 "audio.qrm-no-trigger-invariance-seed-12345",

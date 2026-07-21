@@ -322,6 +322,7 @@
       ],
       "acceptanceStatus": "partial",
       "caseIds": [
+        "audio.operator-monitor-minus-60db-mute-first-cq-block-seed-12345",
         "audio.qsk-receiver-ducking-first-cq-block-seed-12345",
         "audio.realistic-hiss-noise-floor",
         "audio.sst-farnsworth-envelope-timing",
@@ -669,7 +670,7 @@
     {"id": "quality.complete-legacy-inventory", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "The inventory covers CE forms, projects, resources, generated files, tests, commands, data, and failure paths.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.oracle-active-contest-selection", "capabilityId": "contest.legacy-implementations", "behavior": "The CE oracle selects each ActiveContest before observing contest-dependent metadata or behavior.", "platforms": ["windows"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "quality.behavioral-not-structural-evidence", "capabilityId": "quality.legacy-tests-and-smoke", "behavior": "UX, settings, data, adapters, and runtime features are certified by executed behavior rather than source tokens or filenames.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "audio.operator-sidetone-pipeline", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Local sidetone is mixed at the CE pipeline stage and level before filtering, modulation, and AGC.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.operator-sidetone-pipeline", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Local sidetone is mixed at the CE pipeline stage and level before filtering, modulation, and AGC.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "MyStn.pas", "Station.pas", "VCL/VolmSldr.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.mystn.tmystation.getblock", "legacy.sim.routine.station.tstation.sendmsg", "legacy.vcl.ui.property.volmsldr.tvolumeslider.db", "legacy.vcl.ui.routine.volmsldr.tvolumeslider.setdb", "legacy.vcl.ui.property.volmsldr.tvolumeslider.value"], "acceptanceStatus": "partial", "caseIds": ["audio.operator-monitor-minus-60db-mute-first-cq-block-seed-12345"]},
     {"id": "audio.non-farnsworth-symbols-timing-and-ramps", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Non-Farnsworth Morse symbols, cut numbers, unit timing, five millisecond ramps, and mark-space transitions match CE exactly.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.moving-average-receiver-filter-numerics", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Every CE moving-average receiver stage, reset, cascade order, and filter-swap numeric vector matches exactly.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.carrier-quantization-and-modulator-numerics", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Carrier frequency quantization, phase advance, quadrature modulation signs, and modulator numeric vectors match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -1980,6 +1981,96 @@
       "failureCode": "audio-receiver-hiss-shared-random-checkpoint-mismatch",
       "fixture": "tests/parity/fixtures/legacy/audio-receiver-hiss-shared-random-checkpoint-seed-12345.json",
       "evidence": "tests/parity/evidence/audio-receiver-hiss-shared-random-checkpoint-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "audio.operator-monitor-minus-60db-mute-first-cq-block-seed-12345",
+      "capabilityId": "audio-dsp.legacy-processing",
+      "obligationIds": [
+        "audio.operator-sidetone-pipeline"
+      ],
+      "behavior": "For the fixed CE compatibility vector, the zero dB and minus 60 dB monitor endpoints use the same pre-filter local-envelope path, but the minus 60 dB endpoint applies CE's linear low-level rolloff and produces an exactly muted first CQ block without changing shared random consumption.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v38",
+        "source": "tests/parity/legacy-oracle/v38/LegacyOracle.lpr",
+        "sourceSha256": "9478880b28b8e01eb98b45142db892612e7a90eac05d70b294827bbfeb403cc4",
+        "buildRecipe": "tests/parity/legacy-oracle/v38/build-recipe.json",
+        "buildRecipeSha256": "986b71cb2e9ef84610f72f1dc9cb2a45e00d8e8c1f72c578c31cf2851990cf99"
+      },
+      "legacySources": [
+        "Contest.pas",
+        "MyStn.pas",
+        "Station.pas",
+        "VCL/VolmSldr.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.sim.routine.contest.tcontest.getaudio",
+        "legacy.sim.routine.mystn.tmystation.getblock",
+        "legacy.sim.routine.station.tstation.sendmsg",
+        "legacy.vcl.ui.property.volmsldr.tvolumeslider.db",
+        "legacy.vcl.ui.routine.volmsldr.tvolumeslider.setdb",
+        "legacy.vcl.ui.property.volmsldr.tvolumeslider.value"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "Each target uses a fresh CQ WPX rmStop session with station call W7SST, seed 12345, 11025 Hz, 512 samples per block, 500 Hz bandwidth, 600 Hz pitch, 30 WPM, QSK disabled, no remote stations, and QRN, QRM, QSB, flutter, and LIDs disabled.",
+        "The CE target performs and verifies five one-Single startup requests, resets RandSeed to 12345 immediately before the first full request, sends the real msgCQ text CQ W7SST TEST, and captures the normalized first block through TContest.GetAudio.",
+        "Fresh runs set TVolumeSlider.Db to zero dB and minus 60 dB before startup. CE's GetAudio monitor gain calculation uses the slider Value and applies its below-minus-57 dB linear rolloff.",
+        "The XPlat target starts a production manual-timing engine session for each level, sends OperatorIntent.Cq, advances exactly one block, and captures it through IAudioSink.",
+        "Both levels observe the same authoritative terminal random value at ordinal 1024 because monitor gain consumes no random values.",
+        "The case pins the two slider endpoints and first locally transmitted block. Intermediate low-level rolloff values, runtime level changes, later blocks, other messages, QSK interaction, and physical-device volume remain pending, so the obligation remains partial."
+      ],
+      "input": {
+        "scenario": "audio.operator-monitor-minus-60db-mute-first-cq-block-seed-12345",
+        "sampleRate": 11025,
+        "blockSize": 512,
+        "seed": 12345,
+        "startupRequestCount": 5,
+        "terminalRandomOrdinal": 1024,
+        "bandwidthHz": 500,
+        "pitchHz": 600,
+        "fullMonitorLevelDb": 0,
+        "mutedMonitorLevelDb": -60,
+        "stationCall": "W7SST",
+        "messageText": "CQ W7SST TEST",
+        "probeSampleIndexes": [
+          0,
+          1,
+          2,
+          148,
+          149,
+          150,
+          255,
+          310,
+          384,
+          509,
+          510,
+          511
+        ]
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatOperatorMonitorMuteTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 6,
+        "observedValuesSha256": "8a03f309690f00959ba9b635acd70a78ca4679860ea7dc386736cd8599843a0c",
+        "firstDivergence": "The zero-based first mismatch is ordinal 3, monitor-muted-block[0]. CE's below-minus-57 dB slider rolloff makes the minus 60 dB block zero magnitude with signed-zero hash b73ce67d7f6a60efbc46929d114471b7e79ddaee5b5a60a350a2c6a0a3ce3e6a. XPlat currently retains linear gain 0.001 and emits peak 0.011649197 with hash 0d9ca0e8e8c1ab13582ba7f44b3b780efc2e3c49a94f199c5be82f5c2f22a0ca. Both terminal random checkpoints match.",
+        "functionalDivergenceCode": "audio-operator-monitor-minus-60db-mute-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "audio-operator-monitor-minus-60db-mute-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/audio-operator-monitor-minus-60db-mute-first-cq-block-seed-12345.json",
+      "evidence": "tests/parity/evidence/audio-operator-monitor-minus-60db-mute-first-cq-block-seed-12345.baseline.json",
       "firstGreenCommit": null
     },
     {

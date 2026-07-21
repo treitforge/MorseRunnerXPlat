@@ -1602,6 +1602,20 @@ starts at one for each block. Each local sample may immediately reduce it to
 receiver sample are then combined independently in both complex channels.
 QSK consumes no random values.
 
+CE derives monitor gain from `TVolumeSlider.Value` as
+`10 ^ ((value - 1) * 3)`. Below slider value `0.05`, it multiplies that gain by
+`value * 60`, making the `-60 dB` endpoint exactly zero. The authored
+`audio.operator-monitor-minus-60db-mute-first-cq-block-seed-12345` case pins
+fresh `0 dB` and `-60 dB` first-CQ blocks through the real CE monitor, filter,
+modulator, and AGC path. The full block retains hash
+`7d925cbba9a0bb2e86a48c5a1777c347cfed68080a559446d8e3ed3c9d6af4ee`.
+The muted block has zero magnitude while its raw binary32 bytes retain signed
+zero and hash
+`b73ce67d7f6a60efbc46929d114471b7e79ddaee5b5a60a350a2c6a0a3ce3e6a`.
+The current XPlat gain calculation leaves a nonzero `0.001` endpoint, so the
+new case records a functional divergence before implementation. Intermediate
+low-level slider values and runtime changes remain pending.
+
 The authored
 `audio.qsk-receiver-ducking-first-cq-block-seed-12345` case pins fresh QSK-off
 and QSK-on first-CQ blocks from the real CE `TContest.GetAudio` path, including

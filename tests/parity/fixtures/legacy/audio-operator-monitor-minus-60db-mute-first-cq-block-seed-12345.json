@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 2,
+  "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+  "parityId": "audio.operator-monitor-minus-60db-mute-first-cq-block-seed-12345",
+  "referenceDefinitionSha256": "663adf3bf230161abb923cf8b6651d394af1b99eab05efeafb696cb29992da23",
+  "oracle": "tests/parity/legacy-oracle/v38/LegacyOracle.lpr",
+  "legacyOracleVersionId": "legacy-oracle-v38",
+  "oracleSourceSha256": "9478880b28b8e01eb98b45142db892612e7a90eac05d70b294827bbfeb403cc4",
+  "oracleBuildRecipeSha256": "986b71cb2e9ef84610f72f1dc9cb2a45e00d8e8c1f72c578c31cf2851990cf99",
+  "oracleExecutableSha256": "e5608c4642f4ba30675e9ce18cc7d60be1dc8d58c4614c4c33e68b346655181d",
+  "toolchain": {
+    "lazarus": "4.6",
+    "fpc": "3.2.2",
+    "target": "x86_64-win64",
+    "compilerSha256": "8ba500bbb84bd7100c169f151082b1461e9241e4491e0f6f38f2376bec49c319",
+    "backendCompilerSha256": "1f33c43b890e2d02e6b07c88401fc47cfcac48e003a29bb58b2e1220ac6a3e22",
+    "lazbuildSha256": "9554983fff43cfe5b5cef9a8374a37ff8a152e2de9c40c5750e723501f6edfd1",
+    "fingerprintSha256": "3eb50f2aac396bac975d8f628ad44421318d05179c81a98524802bcf04c8afee"
+  },
+  "values": [
+    "configuration|run-mode=rmStop|seed=12345|sample-rate=11025|block-size=512|startup-requests=5|absolute-block=6|bandwidth-hz=500|pitch-hz=600|station-call=W7SST|monitor-levels-db=0,-60|qrn=false|qrm=false|qsb=false|flutter=false|qsk=false|lids=false",
+    "local-message|text=CQ W7SST TEST|rendered-local-samples=512|probe-sample-indexes=0,1,2,148,149,150,255,310,384,509,510,511",
+    "monitor-full-block[0]|probe-bits=00000000,00000000,00000000,00000000,00000000,00000000,00000000,af1ef2fe,bc1821a0,be84929e,bd5ab8c9,3e22613d|peak=0.610351741|rms=0.184583975|float-sha256=7d925cbba9a0bb2e86a48c5a1777c347cfed68080a559446d8e3ed3c9d6af4ee",
+    "monitor-muted-block[0]|probe-bits=00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000|peak=0.000000000|rms=0.000000000|float-sha256=b73ce67d7f6a60efbc46929d114471b7e79ddaee5b5a60a350a2c6a0a3ce3e6a",
+    "comparison|exact-equal=false|first-divergence=310|monitor-full-float-sha256=7d925cbba9a0bb2e86a48c5a1777c347cfed68080a559446d8e3ed3c9d6af4ee|monitor-muted-float-sha256=b73ce67d7f6a60efbc46929d114471b7e79ddaee5b5a60a350a2c6a0a3ce3e6a",
+    "terminal-random|ordinal=1024|monitor-full-single-bits=3e320354|monitor-muted-single-bits=3e320354"
+  ]
+}
