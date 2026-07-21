@@ -164,6 +164,33 @@ public sealed class SimulationAndScoringTests
     }
 
     [Theory]
+    [InlineData("scAllJa", "109H", "5NN 1ONH")]
+    [InlineData("scAcag", "1009H", "5NN 1TTNH")]
+    public void JarlRemoteExchangeUsesStationRandomAtCeCheckpoint(
+        string contestId,
+        string exchange2,
+        string expected)
+    {
+        var random = new LegacyRandom(12_345);
+        var station = new SimulatedStation(
+            new StationIdentity(
+                "JA1ABC",
+                "599",
+                Number: 0,
+                "599",
+                exchange2),
+            wordsPerMinute: 25,
+            pitchOffsetHz: 0,
+            random,
+            OperatorRunMode.Pileup,
+            contestId: new(contestId));
+
+        _ = random.NextDouble();
+
+        Assert.Equal(expected, station.ObserveExchangeForParity());
+    }
+
+    [Theory]
     [InlineData("scCQWW", "K1ABC", "10", "5NN AT")]
     [InlineData("scArrlDx", "JA1ABC", "100", "5NN ATT")]
     public void FullCutNumericRemoteExchangeUsesRetainedR1(

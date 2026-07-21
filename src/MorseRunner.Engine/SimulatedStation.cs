@@ -7,6 +7,7 @@ namespace MorseRunner.Engine;
 public sealed class SimulatedStation
 {
     private readonly MorseToneRenderer _renderer;
+    private readonly LegacyRandom _random;
     private readonly ContestId _contestId;
     private readonly SerialNumberRangeMode _serialNumberRange;
     private readonly int _customSerialNumberMinimum;
@@ -34,6 +35,7 @@ public sealed class SimulatedStation
         int customSerialNumberMinimumDigits = 2)
     {
         Identity = identity ?? throw new ArgumentNullException(nameof(identity));
+        _random = random ?? throw new ArgumentNullException(nameof(random));
         _contestId = contestId ?? new("scWpx");
         _serialNumberRange = serialNumberRange;
         _customSerialNumberMinimum = customSerialNumberMinimum;
@@ -43,7 +45,7 @@ public sealed class SimulatedStation
         Operator = new(
             identity.Callsign,
             initialOperatorState,
-            random,
+            _random,
             runMode,
             lids,
             sweepstakes);
@@ -87,6 +89,7 @@ public sealed class SimulatedStation
         int wordsPerMinute,
         int characterWordsPerMinute,
         int pitchOffsetHz,
+        LegacyRandom random,
         SimulatedOperator simulatedOperator,
         QsbProcessor qsb,
         float r1,
@@ -97,6 +100,7 @@ public sealed class SimulatedStation
         int customSerialNumberMinimumDigits)
     {
         Identity = identity;
+        _random = random;
         _contestId = contestId;
         _serialNumberRange = serialNumberRange;
         _customSerialNumberMinimum = customSerialNumberMinimum;
@@ -179,6 +183,7 @@ public sealed class SimulatedStation
             wordsPerMinute,
             wordsPerMinute,
             pitchOffsetHz,
+            random,
             simulatedOperator,
             qsb,
             r1,
@@ -524,7 +529,12 @@ public sealed class SimulatedStation
             return $"{ToCutNumbers(Identity.Rst)} {ToFullCutNumbers(Identity.Exchange2)}";
         }
 
-        if (_contestId.Value is "scArrlDx" or "scAllJa" or "scAcag" or "scIaruHf")
+        if (_contestId.Value is "scAllJa" or "scAcag")
+        {
+            return FormatJarlExchange();
+        }
+
+        if (_contestId.Value is "scArrlDx" or "scIaruHf")
         {
             return $"{ToCutNumbers(Identity.Rst)} {Identity.Exchange2}";
         }
@@ -569,6 +579,39 @@ public sealed class SimulatedStation
         return string.IsNullOrWhiteSpace(exchange)
             ? rst
             : rst + exchange;
+    }
+
+    private string FormatJarlExchange()
+    {
+        string result = $"{Identity.Exchange1} {Identity.Exchange2}";
+        if (Operator.RunMode == OperatorRunMode.Hst)
+        {
+            return result;
+        }
+
+        if (_random.NextDouble() < 0.05d)
+        {
+            result = result.Replace("599", "ENN", StringComparison.Ordinal);
+        }
+
+        result = result.Replace("599", "5NN", StringComparison.Ordinal);
+        if (_random.NextDouble() < 0.4d)
+        {
+            result = result
+                .Replace("00", "TT", StringComparison.Ordinal)
+                .Replace('0', 'O');
+        }
+        else if (_random.NextDouble() < 0.8d)
+        {
+            result = result.Replace('0', 'T');
+        }
+
+        if (_random.NextDouble() < 0.1d)
+        {
+            result = result.Replace('9', 'N');
+        }
+
+        return result;
     }
 
     internal string ObserveExchangeForParity()

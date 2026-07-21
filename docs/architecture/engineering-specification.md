@@ -2675,6 +2675,25 @@ ARRL DX power when retained `R1` is below 0.70. Higher-`R1` probabilistic power
 cuts, JARL cuts, repeats, correction variants, LID errors, and random reply
 prefixes remain within the partial obligation.
 
+The authored
+`contest.jarl-random-cut-remote-exchange-format-seed-12345` case extends the
+same obligation through CE's sequential JARL cut decisions. Its pinned CE v32
+adapter resets `RandSeed` immediately before constructing each station and
+exposes the formatter after exactly three raw draws. At that checkpoint CE
+keeps the ordinary `5NN`, selects the under-0.4 zero branch, applies `00` to
+`TT` before converting remaining zeroes to `O`, and then selects the
+independent under-0.1 nine branch. The exact ALL JA and ACAG results are
+`5NN 1ONH` and `5NN 1TTNH`. Retained red evidence records
+`contest-jarl-random-cut-remote-exchange-format-mismatch`, where XPlat
+produced uncut `5NN 109H` and `5NN 1009H`. Production simulated stations now
+retain the same session-owned `LegacyRandom` instance already supplied to the
+station operator and consume no draw merely to retain it. ALL JA and ACAG
+formatting outside HST mode consumes the rare RST-error draw, the CE
+short-circuit zero draws, and the independent nine draw in their original
+order. Other checkpoints, repeated formatter calls, higher-`R1` ARRL DX
+power, missing fields, repeats, correction variants, LID errors, and random
+reply prefixes remain within the partial obligation.
+
 The authored `contest.naqp-remote-exchange-format-seed-12345` case extends
 that obligation through the nonempty NAQP name and location branch. Its pinned
 CE v23 adapter uses the same protected `TStation.NrAsText` observation boundary
