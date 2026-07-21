@@ -22,7 +22,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Mapped legacy surfaces: 3668
 - Unmapped legacy surfaces: 0
 - Pending audit surfaces: 0
-- Overlapping case surface/platform assignments: 249
+- Overlapping case surface/platform assignments: 255
 
 | Category | Discovered surfaces |
 |---|---:|
@@ -110,15 +110,15 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Partially authored capabilities: 5
 - Not-authored capabilities: 19
 - Behavioral obligations: 119
-- Source-bound obligations: 18
-- Pending source bindings: 101
+- Source-bound obligations: 19
+- Pending source bindings: 100
 - Complete obligations: 0
-- Partially authored obligations: 18
-- Not-authored obligations: 101
+- Partially authored obligations: 19
+- Not-authored obligations: 100
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 37
+- Active acceptance cases: 38
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 37
+- Legacy-green/XPlat-red cases: 38
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
@@ -134,8 +134,8 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `logging.qso-model` | Legacy QSO record and error model | `not-authored` | 0 | 47 | 0 | `Log.pas:48-82` |
 | `logging.scoring-rate-and-results` | Legacy logging, scoring, rate, correction, and result paths | `not-authored` | 0 | 55 | 0 | `Log.pas:147-1137` |
 | `simulation.state-models` | Legacy simulation state models and transitions | `not-authored` | 0 | 66 | 0 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
-| `simulation.runtime-routines` | Legacy contest, station, and operator routines | `partial` | 1 | 93 | 234 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
-| `audio-dsp.legacy-processing` | Legacy portable keying and DSP processing | `partial` | 8 | 131 | 0 | `VCL/Crc32.pas`<br>`VCL/FarnsKeyer.pas`<br>`VCL/Mixers.pas`<br>`VCL/MorseKey.pas`<br>`VCL/MorseTbl.pas`<br>`VCL/MovAvg.pas`<br>`VCL/QuickAvg.pas`<br>`VCL/SndTypes.pas`<br>`VCL/VolumCtl.pas` |
+| `simulation.runtime-routines` | Legacy contest, station, and operator routines | `partial` | 1 | 93 | 240 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
+| `audio-dsp.legacy-processing` | Legacy portable keying and DSP processing | `partial` | 9 | 131 | 0 | `VCL/Crc32.pas`<br>`VCL/FarnsKeyer.pas`<br>`VCL/Mixers.pas`<br>`VCL/MorseKey.pas`<br>`VCL/MorseTbl.pas`<br>`VCL/MovAvg.pas`<br>`VCL/QuickAvg.pas`<br>`VCL/SndTypes.pas`<br>`VCL/VolumCtl.pas` |
 | `audio.legacy-adapters` | Legacy sound output, buffering, and WAV adapters | `not-authored` | 0 | 85 | 0 | `VCL/BaseComp.pas`<br>`VCL/SndCustm.pas`<br>`VCL/SndOut.pas`<br>`VCL/WavFile.pas` |
 | `ux.legacy-vcl-components` | Legacy VCL-only hint and volume controls | `not-authored` | 0 | 36 | 9 | `VCL/PermHint.pas`<br>`VCL/VolmSldr.pas` |
 | `contest.legacy-implementations` | Legacy contest-specific implementations | `partial` | 17 | 215 | 0 | `ACAG.pas`<br>`ALLJA.pas`<br>`ArrlDx.pas`<br>`ArrlFd.pas`<br>`ArrlSS.pas`<br>`CqWpx.pas`<br>`CqWW.pas`<br>`CWOPS.pas`<br>`CWSST.pas`<br>`DualExchContest.pas`<br>`IaruHf.pas`<br>`NaQp.pas` |
@@ -173,7 +173,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `audio.physical-queue-depth-and-order` | `audio.legacy-adapters` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | The physical audio queue preserves CE-equivalent default depth, FIFO block order, startup fill order, and exact sample continuity. |
 | `audio.deterministic-random-primitives` | `simulation.legacy-effects` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | MT19937 output and every CE random distribution primitive produce deterministic numeric vectors for reviewed seeds. |
 | `audio.qsk-receiver-ducking-and-recovery` | `audio-dsp.legacy-processing` | `bound` | `partial` | 2 | `windows`, `linux`, `macos` | QSK applies CE-equivalent receiver ducking and recovery around local transmissions. |
-| `audio.rit-affects-rendered-stations` | `audio-dsp.legacy-processing` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | RIT changes each station's audible offset using CE range, steps, and block-boundary timing. |
+| `audio.rit-affects-rendered-stations` | `audio-dsp.legacy-processing` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | RIT changes each station's audible offset using CE range, steps, and block-boundary timing. |
 | `audio.runtime-bandwidth-updates-filters` | `audio-dsp.legacy-processing` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | Runtime bandwidth changes replace or update receiver filters at the CE-equivalent block boundary. |
 | `audio.qrm-interfering-cw-stations` | `simulation.legacy-effects` | `bound` | `partial` | 3 | `windows`, `linux`, `macos` | QRM uses CE-equivalent randomized interfering CW stations, messages, levels, pitches, speeds, retries, and lifetimes. |
 | `audio.qrn-impulses-and-burst-stations` | `simulation.legacy-effects` | `bound` | `partial` | 2 | `windows`, `linux`, `macos` | QRN produces CE sparse impulses and burst stations before receiver filtering and AGC. |
@@ -298,6 +298,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `audio.operator-monitor-runtime-mute-second-cq-block-seed-12345` | `audio-dsp.legacy-processing` | `audio.operator-sidetone-pipeline` | `legacy-green-xplat-red` | `audio-operator-monitor-runtime-change-mismatch` | `pass` | `fail` |
 | `audio.qsk-receiver-ducking-first-cq-block-seed-12345` | `audio-dsp.legacy-processing` | `audio.qsk-receiver-ducking-and-recovery` | `legacy-green-xplat-red` | `audio-qsk-receiver-ducking-mismatch` | `pass` | `fail` |
 | `audio.qsk-runtime-enable-second-cq-block-seed-12345` | `audio-dsp.legacy-processing` | `audio.qsk-receiver-ducking-and-recovery` | `legacy-green-xplat-red` | `audio-qsk-runtime-change-mismatch` | `pass` | `fail` |
+| `audio.rit-runtime-plus-50-second-caller-block-seed-12345` | `audio-dsp.legacy-processing` | `audio.rit-affects-rendered-stations` | `legacy-green-xplat-red` | `audio-runtime-RIT-change-mismatch` | `pass` | `fail` |
 | `audio.sst-farnsworth-envelope-timing` | `audio-dsp.legacy-processing` | `audio.sst-farnsworth-timing` | `legacy-green-xplat-red` | `audio-sst-farnsworth-timing-mismatch` | `pass` | `fail` |
 | `audio.startup-warmup-and-filter-timing-fresh-seed-12345` | `audio-dsp.legacy-processing` | `audio.startup-warmup-and-filter-timing` | `legacy-green-xplat-red` | `audio-startup-warmup-and-filter-timing-mismatch` | `pass` | `fail` |
 | `contest.cwt-remote-exchange-format-seed-12345` | `contest.legacy-implementations` | `contest.full-remote-exchange-formatting` | `legacy-green-xplat-red` | `contest-cwt-remote-exchange-format-mismatch` | `pass` | `fail` |
