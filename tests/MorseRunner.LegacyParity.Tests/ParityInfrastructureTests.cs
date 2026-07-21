@@ -77,6 +77,7 @@ public sealed class ParityInfrastructureTests
                 "audio.sst-farnsworth-envelope-timing",
                 "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
                 "contest.cwt-remote-exchange-format-seed-12345",
+                "contest.default-two-field-remote-exchange-format-seed-12345",
                 "contest.exchange-shapes",
                 "contest.fieldday-remote-exchange-format-seed-12345",
                 "contest.hst-remote-exchange-format-seed-12345",
@@ -107,6 +108,7 @@ public sealed class ParityInfrastructureTests
                 "audio.sst-farnsworth-envelope-timing",
                 "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
                 "contest.cwt-remote-exchange-format-seed-12345",
+                "contest.default-two-field-remote-exchange-format-seed-12345",
                 "contest.exchange-shapes",
                 "contest.fieldday-remote-exchange-format-seed-12345",
                 "contest.hst-remote-exchange-format-seed-12345",
@@ -196,6 +198,11 @@ public sealed class ParityInfrastructureTests
         Assert.IsType<XPlatCwtRemoteExchangeFormatTarget>(
             ParityAcceptanceRegistry
                 .Get("contest.cwt-remote-exchange-format-seed-12345")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatDefaultTwoFieldRemoteExchangeFormatTarget>(
+            ParityAcceptanceRegistry
+                .Get(
+                    "contest.default-two-field-remote-exchange-format-seed-12345")
                 .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatFieldDayRemoteExchangeFormatTarget>(
             ParityAcceptanceRegistry
