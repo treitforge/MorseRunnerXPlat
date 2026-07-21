@@ -36,40 +36,39 @@ public static class ContestQsoRules
     {
         ArgumentNullException.ThrowIfNull(exchange);
         string value = exchange.Trim().ToUpperInvariant();
+        string[] fields = value.Split(
+            ' ',
+            StringSplitOptions.RemoveEmptyEntries);
+        string first = fields.Length > 0 ? fields[0] : string.Empty;
+        string second = fields.Length > 1 ? fields[1] : string.Empty;
         bool valid = contestId.Value switch
         {
-            "scWpx" or "scHst" => Regex.IsMatch(
-                value,
-                @"^[1-5E][1-9N][1-9N] +([0-9OTN]+|#)$",
-                RegexOptions.CultureInvariant),
-            "scCwt" => Regex.IsMatch(
-                value,
-                @"^[A-Z][A-Z]* +[0-9A-Z]+$",
-                RegexOptions.CultureInvariant),
-            "scFieldDay" => Regex.IsMatch(
-                value,
-                @"^[1-9][0-9]*[A-F] +[A-Z]{2,3}$",
-                RegexOptions.CultureInvariant),
-            "scNaQp" or "scSst" => Regex.IsMatch(
-                value,
-                @"^[A-Z][A-Z]* +[0-9A-Z/]+$",
-                RegexOptions.CultureInvariant),
-            "scCQWW" => Regex.IsMatch(
-                value,
-                @"^[1-5E][1-9N][1-9N] +[0-9OANT]+$",
-                RegexOptions.CultureInvariant),
-            "scArrlDx" => Regex.IsMatch(
-                value,
-                @"^[1-5E][1-9N][1-9N] +[0-9A-Z]+$",
-                RegexOptions.CultureInvariant),
-            "scAllJa" or "scAcag" => Regex.IsMatch(
-                value,
-                @"^[1-5E][1-9N][1-9N] +[0-9AOTN]+[LMHP]$",
-                RegexOptions.CultureInvariant),
-            "scIaruHf" => Regex.IsMatch(
-                value,
-                @"^[1-5E][1-9N][1-9N] +[0-9A-Z]+$",
-                RegexOptions.CultureInvariant),
+            "scWpx" or "scHst" =>
+                Matches(first, @"[1-5E][1-9N][1-9N]")
+                && (Matches(second, @"[0-9OTN]+") || second == "#"),
+            "scCwt" =>
+                Matches(first, @"[A-Z][A-Z]*")
+                && Matches(second, @"[0-9A-Z]+"),
+            "scFieldDay" =>
+                Matches(first, @"[1-9][0-9]*[A-F]")
+                && Matches(second, @"[A-Z]{2,3}"),
+            "scNaQp" or "scSst" =>
+                Matches(first, @"[A-Z][A-Z]*")
+                && Matches(second, @"[0-9A-Z/]+"),
+            "scCQWW" =>
+                Matches(first, @"[1-5E][1-9N][1-9N]")
+                && Matches(second, @"[0-9OANT]+"),
+            "scArrlDx" =>
+                Matches(first, @"[1-5E][1-9N][1-9N]")
+                && Matches(
+                    second,
+                    @"[ABCDFGHIKLMNOPQRSTUVWY][ABCDEFHIJKLMNORSTUVXYZ]"),
+            "scAllJa" or "scAcag" =>
+                Matches(first, @"[1-5E][1-9N][1-9N]")
+                && Matches(second, @"[0-9AOTN]*[LMHP]"),
+            "scIaruHf" =>
+                Matches(first, @"[1-5E][1-9N][1-9N]")
+                && Matches(second, @"[0-9A-Z]+"),
             "scArrlSS" => SweepstakesExchangeParser.ParseOwn(value).IsValid,
             _ => false,
         };
@@ -77,6 +76,12 @@ public static class ContestQsoRules
             ? new(true, string.Empty)
             : new(false, InvalidOwnExchangeMessage(contestId, exchange));
     }
+
+    private static bool Matches(string value, string pattern) =>
+        Regex.IsMatch(
+            value,
+            $"^(?:{pattern})$",
+            RegexOptions.CultureInvariant);
 
     internal static ContestQsoEvaluation EvaluateReceived(
         ContestId contestId,

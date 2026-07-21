@@ -126,7 +126,7 @@ public static partial class SweepstakesExchangeParser
         value.Length != 0 && value.All(char.IsAsciiDigit);
 
     [GeneratedRegex(
-        "^ *(?<exch1>(?<nr>[0-9]+|#)? *(?<prec>[QABUMS])) +(?<chk>[0-9]{2}) *(?<sect>[A-Z]+) *$",
+        "^ *(?<exch1>(?<nr>[0-9]+|#)? *(?<prec>[QABUMS])) +(?<chk>[0-9]{2}) +(?<sect>[A-Z]{2,3}) *$",
         RegexOptions.CultureInvariant)]
     private static partial Regex OwnExchangePattern();
 

@@ -110,4 +110,52 @@ public sealed class ContestRulesTests
     {
         Assert.True(ContestRules.ValidateMyCall("W7SST").IsValid);
     }
+
+    [Theory]
+    [InlineData("scWpx", "5NN # EXTRA", true)]
+    [InlineData("scCwt", "DAVID 123 EXTRA", true)]
+    [InlineData("scFieldDay", "3A OR EXTRA", true)]
+    [InlineData("scNaQp", "ALEX ON EXTRA", true)]
+    [InlineData("scHst", "5NN # EXTRA", true)]
+    [InlineData("scCQWW", "5NN 3 EXTRA", true)]
+    [InlineData("scArrlDx", "5NN ON EXTRA", true)]
+    [InlineData("scSst", "BRUCE MA EXTRA", true)]
+    [InlineData("scAllJa", "5NN 10H EXTRA", true)]
+    [InlineData("scAcag", "5NN 1002H EXTRA", true)]
+    [InlineData("scIaruHf", "5NN 6 EXTRA", true)]
+    [InlineData("scArrlSS", "A 72 OR EXTRA", false)]
+    [InlineData("scCwt", "DAVID", false)]
+    [InlineData("scNaQp", "ALEX", false)]
+    [InlineData("scSst", "BRUCE", false)]
+    [InlineData("scIaruHf", "5NN", false)]
+    [InlineData("scAllJa", "5NN H", true)]
+    [InlineData("scAcag", "5NN H", true)]
+    [InlineData("scArrlDx", "5NN KW", false)]
+    [InlineData("scArrlSS", "A 72OR", false)]
+    [InlineData("scArrlSS", "A 72 OREGON", false)]
+    [InlineData("scArrlSS", "A 72 OR", true)]
+    [InlineData("scWpx", "5NN #", true)]
+    public void OwnExchangeTokenizationMatchesCeBoundaries(
+        string contestId,
+        string exchange,
+        bool expectedValid)
+    {
+        ContestId id = new(contestId);
+
+        ContestValidation validation = ContestQsoRules.ValidateOwnExchange(
+            id,
+            exchange);
+
+        Assert.Equal(expectedValid, validation.IsValid);
+        if (expectedValid)
+        {
+            Assert.Empty(validation.Error);
+            return;
+        }
+
+        Assert.Equal(
+            $"Invalid exchange: '{exchange}' - expecting "
+                + $"{ContestCatalog.Get(id).ValidationMessage}.",
+            validation.Error);
+    }
 }

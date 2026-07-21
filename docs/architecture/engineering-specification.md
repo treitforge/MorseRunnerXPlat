@@ -1383,6 +1383,12 @@ valid controls guard the adapter setup. Lowercase UI normalization, maximum
 edit lengths, locality-dependent exchange-type selection, and
 received-exchange validation remain separate vectors.
 
+The production validator mirrors this split. Ordinary contest validators
+consume only the first two non-empty space-delimited tokens. The Sweepstakes
+validator consumes the complete input and rejects trailing tokens. The pinned
+ARRL DX state/province alphabet is the W7SST baseline and does not replace the
+separate locality-dependent exchange-type selection rules.
+
 ### 13.4 Extensibility
 
 New built-in contests register through a catalog. Runtime plug-in loading is
