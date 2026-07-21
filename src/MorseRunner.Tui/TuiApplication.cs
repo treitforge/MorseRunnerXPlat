@@ -766,7 +766,7 @@ public sealed class TuiApplication : IDisposable
         return snapshot?.RunModeId.Value == "rmHst"
             ? (((snapshot.CurrentWordsPerMinute + 4) / 5) * 5 - 5)
                 - snapshot.CurrentWordsPerMinute
-            : -2;
+            : -_wpmStepRate;
     }
 
     private async Task ExecuteStateCommandAsync(
