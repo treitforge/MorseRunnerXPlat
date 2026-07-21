@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "6469e6ffbaf4294aeba6c2f0e2b456289a59f1e3",
+      "tree": "cd5f9038af3c977591057fd8b66f43ac6229c338",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "audio.bandwidth-runtime-narrow-second-cq-block-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "audio.bandwidth-runtime-narrow-second-cq-block-seed-12345",
+      "acceptanceTestName": "parity:audio.bandwidth-runtime-narrow-second-cq-block-seed-12345()",
+      "target": "xplat",
+      "adapter": "XPlatRuntimeBandwidthChangeTarget",
+      "caseDefinitionSha256": "d3220134937bc4eb8ac5dafb947d0db068a9ab7523b2ebb59df796c47a17bc54",
+      "fixtureSha256": "905df1ac34d9996c65382ebdaaf15ede3aec1903064841865a148a9952f3bc48",
+      "outcome": "functional-divergence",
+      "failureCode": "audio-runtime-bandwidth-change-mismatch",
+      "evidenceSource": "MorseRunner.Engine.EngineSession.RenderBlocksAsync\u002BMorseRunner.Engine.EngineSession.MixOperatorMonitorIntoReceiver\u002BMorseRunner.Dsp.LegacyReceiverPipeline\u002BMorseRunner.Engine.IAudioSink.WriteAsync",
+      "observedValues": [
+        "configuration|run-mode=rmStop|seed=12345|sample-rate=11025|block-size=512|startup-requests=5|absolute-blocks=6,7|bandwidth-change-hz=500-to-250|pitch-hz=600|station-call=W7SST|monitor-level-db=0|change-before-absolute-block=7|filter-reset=true|qrn=false|qrm=false|qsb=false|flutter=false|qsk=false|lids=false",
+        "local-message|text=CQ W7SST TEST|rendered-local-samples=1024|probe-sample-indexes=0,1,2,148,149,150,255,310,384,509,510,511",
+        "bandwidth-before-change-block[0]|probe-bits=00000000,00000000,00000000,00000000,00000000,00000000,00000000,af1ef2fe,bc1821a0,be84929e,bd5ab8c9,3e22613d|peak=0.610351741|rms=0.184583975|float-sha256=7d925cbba9a0bb2e86a48c5a1777c347cfed68080a559446d8e3ed3c9d6af4ee",
+        "bandwidth-fixed-500-block[1]|probe-bits=3eb3ed67,3f007b40,3f1780a0,3f0e26cc,3eddd0a4,3e8492a0,3f1c4001,3f0e26cc,3e8492a0,3eddd0a4,3e8492a0,3d5ab8db|peak=0.610351741|rms=0.433598632|float-sha256=98ed32d957fef5ee62e50a0a04cb063f4c027a9770d4a9e30b27c60dec52e234",
+        "bandwidth-runtime-250-block[1]|probe-bits=3eb3ed67,3f007b40,3f1780a0,3f0e26cc,3eddd0a4,3e8492a0,3f1c4001,3f0e26cc,3e8492a0,3eddd0a4,3e8492a0,3d5ab8db|peak=0.610351741|rms=0.433598632|float-sha256=98ed32d957fef5ee62e50a0a04cb063f4c027a9770d4a9e30b27c60dec52e234",
+        "comparison|exact-equal=true|first-divergence=-1|bandwidth-fixed-500-float-sha256=98ed32d957fef5ee62e50a0a04cb063f4c027a9770d4a9e30b27c60dec52e234|bandwidth-runtime-250-float-sha256=98ed32d957fef5ee62e50a0a04cb063f4c027a9770d4a9e30b27c60dec52e234",
+        "terminal-random|ordinal=2048|bandwidth-fixed-500-single-bits=3f53fd06|bandwidth-runtime-250-single-bits=3f53fd06"
+      ],
+      "observedValueCount": 7,
+      "observedValuesSha256": "8ff2b6309e199bdb628fc97e00f23f1caa5361621ece956b3dc2184c6f2a0b80",
+      "firstDivergence": {
+        "index": 4,
+        "expected": "bandwidth-runtime-250-block[1]|probe-bits=3eb3ed67,3f007b40,3f1780a0,3f0e26cc,3eddd0a4,3e8492a0,3edcf889,379c5b52,3e80f105,3eddd0a6,3e8492a0,3d5ab8d6|peak=0.610351801|rms=0.383144172|float-sha256=7c95262971abcf6acf2f0324fd5b7ffc33c46032ba66111709f445f6a9bd8275",
+        "actual": "bandwidth-runtime-250-block[1]|probe-bits=3eb3ed67,3f007b40,3f1780a0,3f0e26cc,3eddd0a4,3e8492a0,3f1c4001,3f0e26cc,3e8492a0,3eddd0a4,3e8492a0,3d5ab8db|peak=0.610351741|rms=0.433598632|float-sha256=98ed32d957fef5ee62e50a0a04cb063f4c027a9770d4a9e30b27c60dec52e234"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}

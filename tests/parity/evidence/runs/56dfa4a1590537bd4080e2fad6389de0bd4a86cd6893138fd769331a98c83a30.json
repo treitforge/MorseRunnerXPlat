@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "target": "legacy",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "6469e6ffbaf4294aeba6c2f0e2b456289a59f1e3",
+      "tree": "cd5f9038af3c977591057fd8b66f43ac6229c338",
+      "clean": true
+    },
+    "legacy": {
+      "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+      "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+      "clean": true
+    }
+  },
+  "expectedParityIds": [
+    "audio.bandwidth-runtime-narrow-second-cq-block-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "audio.bandwidth-runtime-narrow-second-cq-block-seed-12345",
+      "acceptanceTestName": "parity:audio.bandwidth-runtime-narrow-second-cq-block-seed-12345()",
+      "target": "legacy",
+      "adapter": "LegacyOracleTarget",
+      "caseDefinitionSha256": "d3220134937bc4eb8ac5dafb947d0db068a9ab7523b2ebb59df796c47a17bc54",
+      "fixtureSha256": "905df1ac34d9996c65382ebdaaf15ede3aec1903064841865a148a9952f3bc48",
+      "outcome": "passed",
+      "failureCode": null,
+      "evidenceSource": "tests/parity/legacy-oracle/v41/LegacyOracle.lpr",
+      "observedValues": [
+        "configuration|run-mode=rmStop|seed=12345|sample-rate=11025|block-size=512|startup-requests=5|absolute-blocks=6,7|bandwidth-change-hz=500-to-250|pitch-hz=600|station-call=W7SST|monitor-level-db=0|change-before-absolute-block=7|filter-reset=true|qrn=false|qrm=false|qsb=false|flutter=false|qsk=false|lids=false",
+        "local-message|text=CQ W7SST TEST|rendered-local-samples=1024|probe-sample-indexes=0,1,2,148,149,150,255,310,384,509,510,511",
+        "bandwidth-before-change-block[0]|probe-bits=00000000,00000000,00000000,00000000,00000000,00000000,00000000,af1ef2fe,bc1821a0,be84929e,bd5ab8c9,3e22613d|peak=0.610351741|rms=0.184583975|float-sha256=7d925cbba9a0bb2e86a48c5a1777c347cfed68080a559446d8e3ed3c9d6af4ee",
+        "bandwidth-fixed-500-block[1]|probe-bits=3eb3ed67,3f007b40,3f1780a0,3f0e26cc,3eddd0a4,3e8492a0,3f1c4001,3f0e26cc,3e8492a0,3eddd0a4,3e8492a0,3d5ab8db|peak=0.610351741|rms=0.433598632|float-sha256=98ed32d957fef5ee62e50a0a04cb063f4c027a9770d4a9e30b27c60dec52e234",
+        "bandwidth-runtime-250-block[1]|probe-bits=3eb3ed67,3f007b40,3f1780a0,3f0e26cc,3eddd0a4,3e8492a0,3edcf889,379c5b52,3e80f105,3eddd0a6,3e8492a0,3d5ab8d6|peak=0.610351801|rms=0.383144172|float-sha256=7c95262971abcf6acf2f0324fd5b7ffc33c46032ba66111709f445f6a9bd8275",
+        "comparison|exact-equal=false|first-divergence=173|bandwidth-fixed-500-float-sha256=98ed32d957fef5ee62e50a0a04cb063f4c027a9770d4a9e30b27c60dec52e234|bandwidth-runtime-250-float-sha256=7c95262971abcf6acf2f0324fd5b7ffc33c46032ba66111709f445f6a9bd8275",
+        "terminal-random|ordinal=2048|bandwidth-fixed-500-single-bits=3f53fd06|bandwidth-runtime-250-single-bits=3f53fd06"
+      ],
+      "observedValueCount": 7,
+      "observedValuesSha256": "0b4d120185f6ba02ee99dd4d6916da71982e2967e9271a035d4053b3200540a6",
+      "firstDivergence": null,
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v41",
+        "source": "tests/parity/legacy-oracle/v41/LegacyOracle.lpr",
+        "sourceSha256": "5b5da01e8b16ceb2baa822aafdb2a5feae209ebb670de6af0e46964f0db9ea47",
+        "buildRecipe": "tests/parity/legacy-oracle/v41/build-recipe.json",
+        "buildRecipeSha256": "aed61e38ccfa32631e90ec58bf91824f1416f99a32ff2a6a0aa70418511c975f",
+        "registrySha256": "93e19f184a9930e450c27f9f63506e55f62e2de5c11f1042fbca012f6914e1a2",
+        "executableSha256": "ce177d094f3bca3300af2022758f2d23ee394f999fdad30d99f81e70601dc770",
+        "provenance": "artifacts/legacy-oracle/builds/legacy-oracle-v41/db3d75d31b68e312cda7c1b412a0b2b3693f95ed66bf7c9113b5d8f658aa01b8/cf1f6965cce74adf9571ae4d8b982df8/LegacyOracle.provenance.json",
+        "provenanceSha256": "c5ae2a46f8114ab5a98bea29cf4e34c0f4409850912d8bb8925babdfbf6fef8d"
+      },
+      "executionCount": 1
+    }
+  ]
+}
