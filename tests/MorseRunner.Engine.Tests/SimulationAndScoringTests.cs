@@ -294,6 +294,66 @@ public sealed class SimulationAndScoringTests
         Assert.Equal(expected, station.ObserveExchangeForParity());
     }
 
+    [Fact]
+    public void LidCandidateSendsOneCorrectedSerialThenClearsTheError()
+    {
+        var random = new LegacyRandom(16);
+        var station = SimulatedStation.CreateCandidate(
+            () => new StationIdentity(
+                "K1ABC",
+                "599",
+                Number: 123,
+                "599",
+                "123"),
+            () => 25,
+            random,
+            new LegacyRandomEffects(random),
+            OperatorRunMode.Wpx,
+            lids: true,
+            sweepstakes: false,
+            flutter: false,
+            new ContestId("scWpx"),
+            SerialNumberRangeMode.StartOfContest,
+            customSerialNumberMinimum: 1,
+            customSerialNumberMinimumDigits: 2);
+
+        Assert.Equal(
+            223,
+            (int)MathF.Round(
+                station.R1 * 1_000f,
+                MidpointRounding.ToEven));
+        Assert.Equal(
+            "5NN124EEEEE 123",
+            station.ObserveExchangeForParity());
+        Assert.Equal("5NN123", station.ObserveExchangeForParity());
+    }
+
+    [Fact]
+    public void NonLidCandidateDoesNotSendSerialCorrection()
+    {
+        var random = new LegacyRandom(16);
+        var station = SimulatedStation.CreateCandidate(
+            () => new StationIdentity(
+                "K1ABC",
+                "599",
+                Number: 123,
+                "599",
+                "123"),
+            () => 25,
+            random,
+            new LegacyRandomEffects(random),
+            OperatorRunMode.Wpx,
+            lids: false,
+            sweepstakes: false,
+            flutter: false,
+            new ContestId("scWpx"),
+            SerialNumberRangeMode.StartOfContest,
+            customSerialNumberMinimum: 1,
+            customSerialNumberMinimumDigits: 2);
+
+        Assert.Equal("5NN123", station.ObserveExchangeForParity());
+    }
+
     [Theory]
     [InlineData(7, "5NN007")]
     [InlineData(1234, "5NN1234")]

@@ -2723,6 +2723,22 @@ exchanges, other RST checkpoints, repeated formatter calls, missing fields,
 repeats, correction variants, LID errors, and random reply prefixes remain
 within the partial obligation.
 
+The authored
+`contest.lid-serial-correction-remote-exchange-format-seed-16` case extends
+the formatter through CE's one-shot LID serial correction. Its pinned CE v35
+adapter fixes WPX serial 123 at the station-creation checkpoint after raw draw
+nine. Seed 16 arms the LID decision at draw four, and formatter draw ten takes
+the increment branch, producing the exact exchange `5NN124EEEEE 123` before
+the state clears. Retained red evidence records
+`contest-lid-serial-correction-remote-exchange-format-mismatch`, where XPlat
+consumed but discarded the creation decision and emitted `5NN123`. Production
+candidate stations now retain that decision, corrupt the final eligible serial
+digit or the preceding eligible digit by one, append `EEEEE` and the correct
+three-digit serial, clear the state on the first formatting attempt, and then
+consume the ordinary RST and numeric-cut draws in CE order. Ineligible serial
+digits, other creation checkpoints, reply prefixes, and additional LID
+operator branches remain within the partial obligation.
+
 The authored `contest.naqp-remote-exchange-format-seed-12345` case extends
 that obligation through the nonempty NAQP name and location branch. Its pinned
 CE v23 adapter uses the same protected `TStation.NrAsText` observation boundary

@@ -17,6 +17,7 @@ public sealed class SimulatedStation
         new float[CompatibilityProfile.BlockSize];
     private double _bfoPhase;
     private int _timeoutBlocks = int.MaxValue;
+    private bool _numberWithError;
     private bool _transmissionCompletedInRenderedBlock;
 
     public SimulatedStation(
@@ -94,6 +95,7 @@ public sealed class SimulatedStation
         QsbProcessor qsb,
         float r1,
         float amplitude,
+        bool numberWithError,
         ContestId contestId,
         SerialNumberRangeMode serialNumberRange,
         int customSerialNumberMinimum,
@@ -113,6 +115,7 @@ public sealed class SimulatedStation
         _qsb = qsb;
         R1 = r1;
         Amplitude = amplitude;
+        _numberWithError = numberWithError;
         _renderer = new(
             CompatibilityProfile.SampleRate,
             CompatibilityProfile.BlockSize,
@@ -149,7 +152,7 @@ public sealed class SimulatedStation
             runMode,
             lids,
             sweepstakes);
-        _ = lids && random.NextDouble() < 0.1d;
+        bool numberWithError = lids && random.NextDouble() < 0.1d;
         int wordsPerMinute = wordsPerMinuteFactory();
         if (lids && random.NextDouble() < 0.03d)
         {
@@ -188,6 +191,7 @@ public sealed class SimulatedStation
             qsb,
             r1,
             amplitude,
+            numberWithError,
             contestId,
             serialNumberRange,
             customSerialNumberMinimum,
@@ -537,33 +541,9 @@ public sealed class SimulatedStation
             return FormatIaruHfExchange();
         }
 
-        if (_contestId.Value == "scHst")
+        if (_contestId.Value is "scWpx" or "scHst")
         {
-            return ToCutNumbers(Identity.Rst)
-                + Identity.Number.ToString("000", CultureInfo.InvariantCulture);
-        }
-
-        if (_contestId.Value == "scWpx"
-            && _serialNumberRange == SerialNumberRangeMode.MidContest)
-        {
-            return ToCutNumbers(Identity.Rst)
-                + ToCutNumbers(
-                    Identity.Number.ToString(
-                        "00",
-                        CultureInfo.InvariantCulture));
-        }
-
-        if (_contestId.Value == "scWpx"
-            && _serialNumberRange == SerialNumberRangeMode.Custom)
-        {
-            int minimumDigits = R1 < 0.5f
-                ? _customSerialNumberMinimumDigits
-                : DecimalDigitCount(_customSerialNumberMinimum);
-            return ToCutNumbers(Identity.Rst)
-                + ToCutNumbers(
-                    Identity.Number.ToString(
-                        $"D{minimumDigits}",
-                        CultureInfo.InvariantCulture));
+            return FormatSerialExchange();
         }
 
         string rst = ToCutNumbers(Identity.Rst);
@@ -578,6 +558,103 @@ public sealed class SimulatedStation
             ? rst
             : rst + exchange;
     }
+
+    private string FormatSerialExchange()
+    {
+        int minimumDigits = GetSerialMinimumDigits();
+        string result = Identity.Rst
+            + Identity.Number.ToString(
+                $"D{minimumDigits}",
+                CultureInfo.InvariantCulture);
+        result = ApplyNumberError(result);
+
+        if (Operator.RunMode == OperatorRunMode.Hst)
+        {
+            return result.Replace("599", "5NN", StringComparison.Ordinal);
+        }
+
+        if (_random.NextDouble() < 0.05d)
+        {
+            result = result.Replace("599", "ENN", StringComparison.Ordinal);
+        }
+
+        result = result
+            .Replace("599", "5NN", StringComparison.Ordinal)
+            .Replace("000", "TTT", StringComparison.Ordinal)
+            .Replace("00", "TT", StringComparison.Ordinal);
+        if (_random.NextDouble() < 0.98d)
+        {
+            result = result.Replace('0', 'T');
+        }
+
+        if (_random.NextDouble() < 0.4d)
+        {
+            result = result.Replace('0', 'O');
+        }
+        else if (_random.NextDouble() < 0.97d)
+        {
+            result = result.Replace('0', 'T');
+        }
+
+        if (_random.NextDouble() < 0.97d)
+        {
+            result = result.Replace('9', 'N');
+        }
+
+        return result;
+    }
+
+    private string ApplyNumberError(string result)
+    {
+        if (!_numberWithError)
+        {
+            return result;
+        }
+
+        _numberWithError = false;
+        int digitIndex = result.Length - 1;
+        if (digitIndex >= 0 && !IsEligibleErrorDigit(result[digitIndex]))
+        {
+            digitIndex--;
+        }
+
+        if (digitIndex < 0 || !IsEligibleErrorDigit(result[digitIndex]))
+        {
+            return result;
+        }
+
+        char[] characters = result.ToCharArray();
+        characters[digitIndex] = _random.NextDouble() < 0.5d
+            ? (char)(characters[digitIndex] - 1)
+            : (char)(characters[digitIndex] + 1);
+        return new string(characters)
+            + "EEEEE "
+            + Identity.Number.ToString("000", CultureInfo.InvariantCulture);
+    }
+
+    private int GetSerialMinimumDigits()
+    {
+        if (_contestId.Value == "scHst")
+        {
+            return 3;
+        }
+
+        return _serialNumberRange switch
+        {
+            SerialNumberRangeMode.StartOfContest => 3,
+            SerialNumberRangeMode.MidContest => 2,
+            SerialNumberRangeMode.EndOfContest => 3,
+            SerialNumberRangeMode.Custom when R1 < 0.5f =>
+                _customSerialNumberMinimumDigits,
+            SerialNumberRangeMode.Custom =>
+                DecimalDigitCount(_customSerialNumberMinimum),
+            _ => throw new InvalidOperationException(
+                $"Unknown serial-number range '{_serialNumberRange}'."),
+        };
+    }
+
+    private static bool IsEligibleErrorDigit(char value) =>
+        value is >= '2' and <= '7';
 
     private string FormatJarlExchange()
     {
