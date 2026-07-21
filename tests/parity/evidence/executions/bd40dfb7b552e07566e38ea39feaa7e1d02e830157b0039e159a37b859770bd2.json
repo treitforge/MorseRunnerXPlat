@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "target": "XPlat",
+  "platform": "windows",
+  "operatingSystem": "Microsoft Windows 10.0.26200",
+  "architecture": "x64",
+  "runtimeIdentifier": "win-x64",
+  "revision": "851cac4581e4a9f34fea916e1598a98a6b0104b1",
+  "tree": "73d89cfda813f8595c815c3cab6260d9d5a62e1e",
+  "resultSha256": "e2bf42eeaf41d632a84a704a7c3dbe0b814fdd032bdafa98acfdeac46b07efaf",
+  "testReportSha256": "fe509d20a84186fe5f44d0e90d360ed58cd885432848b4b74c0236411cca762b",
+  "testProcessExitCode": 2,
+  "wrapper": {
+    "completed": true,
+    "correlationValidated": true,
+    "exitCode": 0
+  },
+  "functionalDivergences": [
+    {
+      "caseId": "session.hst-invalid-start-settings",
+      "failureCode": "session-hst-invalid-start-settings-mismatch"
+    }
+  ]
+}

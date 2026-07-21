@@ -107,24 +107,24 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 
 - Manifest capabilities: 24
 - Complete capabilities: 0
-- Partially authored capabilities: 8
-- Not-authored capabilities: 16
+- Partially authored capabilities: 9
+- Not-authored capabilities: 15
 - Behavioral obligations: 123
-- Source-bound obligations: 30
-- Pending source bindings: 93
+- Source-bound obligations: 31
+- Pending source bindings: 92
 - Complete obligations: 0
-- Partially authored obligations: 30
-- Not-authored obligations: 93
+- Partially authored obligations: 31
+- Not-authored obligations: 92
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 65
+- Active acceptance cases: 66
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 65
+- Legacy-green/XPlat-red cases: 66
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
 |---|---|---|---:|---:|---:|---|
 | `catalog.contest-enumeration` | Legacy contest enumeration | `not-authored` | 0 | 12 | 0 | `Ini.pas:28-30` |
-| `session.run-mode-enumeration` | Legacy run mode enumeration | `not-authored` | 0 | 5 | 0 | `Ini.pas:31` |
+| `session.run-mode-enumeration` | Legacy run mode enumeration | `partial` | 1 | 5 | 0 | `Ini.pas:31` |
 | `catalog.contest-definitions` | Legacy contest definitions | `partial` | 1 | 12 | 0 | `Ini.pas:99-222` |
 | `configuration.persisted-settings` | Legacy persisted settings | `partial` | 1 | 60 | 30 | `Ini.pas:345-548` |
 | `ux.main-form-objects` | Legacy main-form objects | `not-authored` | 0 | 79 | 6 | `Main.dfm:1-1988` |
@@ -202,7 +202,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `contest.sweepstakes-complete-truth-model` | `contest.legacy-implementations` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Sweepstakes models serial, weighted precedence, own call, check, section, copied values, truth, and errors. |
 | `contest.arrldx-naqp-home-filtering-and-location` | `contest.legacy-implementations` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | ARRL DX and NAQP apply CE home-call filtering and dynamic location or exchange derivation. |
 | `contest.wpx-hst-station-serial-generation` | `contest.legacy-implementations` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | WPX and HST station serials use CE elapsed-time, skill, and random behavior. |
-| `session.hst-wpx-start-constraints` | `session.run-mode-enumeration` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | HST and WPX start constraints, forced settings, activity, bandwidth, duration, and valid serial rules match CE. |
+| `session.hst-wpx-start-constraints` | `session.run-mode-enumeration` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | HST and WPX start constraints, forced settings, activity, bandwidth, duration, and valid serial rules match CE. |
 | `engine.station-delay-lifetime-and-call-pool-rules` | `simulation.state-models` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Single-call delay, caller lifetime, patience, retry, Gaussian WPM, calls-from-keyer, station-ID rate, and HST call-pool removal match CE. |
 | `engine.midmessage-append-correction-and-abort` | `simulation.runtime-routines` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Mid-message append, unsent callsign correction, and abort completion preserve CE timing and station notification. |
 | `engine.confidence-lid-repeat-and-f12-branches` | `simulation.runtime-routines` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Confidence, LID, Sweepstakes correction, call-and-number repeat, and F12 probability branches match CE. |
@@ -349,6 +349,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `contest.jarl-call-history-truth-column-mapping` | `contest.legacy-implementations` | `contest.allja-acag-truth-column-mapping` | `legacy-green-xplat-red` | `contest-jarl-truth-column-mapping-mismatch` | `pass` | `fail` |
 | `audio.wav-pcm16-bit-exact` | `audio.legacy-adapters` | `audio.wav-pcm-bit-exact` | `legacy-green-xplat-red` | `audio-wav-pcm16-bit-exact-mismatch` | `pass` | `fail` |
 | `settings.duration-full-range` | `configuration.persisted-settings` | `settings.full-duration-range` | `legacy-green-xplat-red` | `settings-duration-full-range-mismatch` | `pass` | `fail` |
+| `session.hst-invalid-start-settings` | `session.run-mode-enumeration` | `session.hst-wpx-start-constraints` | `legacy-green-xplat-red` | `session-hst-invalid-start-settings-mismatch` | `pass` | `fail` |
 
 ## Retained noncertifying observations
 
