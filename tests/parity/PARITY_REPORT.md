@@ -22,7 +22,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Mapped legacy surfaces: 3668
 - Unmapped legacy surfaces: 0
 - Pending audit surfaces: 0
-- Overlapping case surface/platform assignments: 372
+- Overlapping case surface/platform assignments: 384
 
 | Category | Discovered surfaces |
 |---|---:|
@@ -110,15 +110,15 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Partially authored capabilities: 9
 - Not-authored capabilities: 15
 - Behavioral obligations: 123
-- Source-bound obligations: 31
-- Pending source bindings: 92
+- Source-bound obligations: 32
+- Pending source bindings: 91
 - Complete obligations: 0
-- Partially authored obligations: 31
-- Not-authored obligations: 92
+- Partially authored obligations: 32
+- Not-authored obligations: 91
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 67
+- Active acceptance cases: 68
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 67
+- Legacy-green/XPlat-red cases: 68
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
@@ -126,7 +126,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `catalog.contest-enumeration` | Legacy contest enumeration | `not-authored` | 0 | 12 | 0 | `Ini.pas:28-30` |
 | `session.run-mode-enumeration` | Legacy run mode enumeration | `partial` | 2 | 5 | 3 | `Ini.pas:31` |
 | `catalog.contest-definitions` | Legacy contest definitions | `partial` | 1 | 12 | 0 | `Ini.pas:99-222` |
-| `configuration.persisted-settings` | Legacy persisted settings | `partial` | 1 | 60 | 30 | `Ini.pas:345-548` |
+| `configuration.persisted-settings` | Legacy persisted settings | `partial` | 2 | 60 | 42 | `Ini.pas:345-548` |
 | `ux.main-form-objects` | Legacy main-form objects | `not-authored` | 0 | 79 | 6 | `Main.dfm:1-1988` |
 | `ux.main-menu-commands` | Legacy main-menu commands | `not-authored` | 0 | 129 | 0 | `Main.dfm:964-1579` |
 | `ux.main-form-events` | Legacy main-form event bindings and handlers | `not-authored` | 0 | 229 | 60 | `Main.dfm:1-1988`<br>`Main.pas:452-2867` |
@@ -239,7 +239,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `settings.production-legacy-import` | `configuration.persisted-settings` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Production startup invokes CE settings migration when appropriate. |
 | `settings.ce-encoding-translation` | `configuration.persisted-settings` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Migration translates CE indexes, ordinals, zero-or-one booleans, IDs, Hz values, duration, block size, and contest exchanges. |
 | `settings.preserve-unknown-and-unconsumed-values` | `configuration.persisted-settings` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Migration and save preserve unknown or unconsumed CE values and are idempotent. |
-| `settings.clean-profile-ce-defaults` | `configuration.persisted-settings` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Clean-profile call, WPM, activity, duration, pitch, bandwidth, and related defaults match CE. |
+| `settings.clean-profile-core-defaults` | `configuration.persisted-settings` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | Clean-profile call, WPM, activity, duration, pitch, bandwidth, and related defaults match CE. |
 | `settings.full-duration-range` | `configuration.persisted-settings` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | Every CE duration from 1 through 240 minutes is accepted and persists without hidden clamping. |
 | `data.replaceable-reference-root-and-fallback` | `data.files-and-operational-paths` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Users can replace CE reference data through an explicit root with packaged fallback and equivalent discovery. |
 | `data.malformed-and-missing-file-reporting` | `data.legacy-parsers` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Every parser rejects malformed rows and reports missing or invalid replacement data without fabricating values. |
@@ -351,6 +351,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `settings.duration-full-range` | `configuration.persisted-settings` | `settings.full-duration-range` | `legacy-green-xplat-red` | `settings-duration-full-range-mismatch` | `pass` | `fail` |
 | `session.hst-invalid-start-settings` | `session.run-mode-enumeration` | `session.hst-wpx-start-constraints` | `legacy-green-xplat-red` | `session-hst-invalid-start-settings-mismatch` | `pass` | `fail` |
 | `session.competition-forced-settings` | `session.run-mode-enumeration` | `session.hst-wpx-start-constraints` | `legacy-green-xplat-red` | `session-competition-forced-settings-mismatch` | `pass` | `fail` |
+| `settings.clean-profile-ce-defaults` | `configuration.persisted-settings` | `settings.clean-profile-core-defaults` | `legacy-green-xplat-red` | `settings-clean-profile-ce-defaults-mismatch` | `pass` | `fail` |
 
 ## Retained noncertifying observations
 
