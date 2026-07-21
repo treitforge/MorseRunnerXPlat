@@ -77,6 +77,7 @@ public sealed class ParityInfrastructureTests
                 "audio.sst-farnsworth-envelope-timing",
                 "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
                 "contest.arrldx-high-r1-power-remote-exchange-format-seed-12345",
+                "contest.cqww-random-consumption-remote-exchange-format-seed-12345",
                 "contest.cwt-remote-exchange-format-seed-12345",
                 "contest.default-two-field-remote-exchange-format-seed-12345",
                 "contest.exchange-shapes",
@@ -113,6 +114,7 @@ public sealed class ParityInfrastructureTests
                 "audio.sst-farnsworth-envelope-timing",
                 "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
                 "contest.arrldx-high-r1-power-remote-exchange-format-seed-12345",
+                "contest.cqww-random-consumption-remote-exchange-format-seed-12345",
                 "contest.cwt-remote-exchange-format-seed-12345",
                 "contest.default-two-field-remote-exchange-format-seed-12345",
                 "contest.exchange-shapes",
@@ -228,6 +230,11 @@ public sealed class ParityInfrastructureTests
             ParityAcceptanceRegistry
                 .Get(
                     "contest.arrldx-high-r1-power-remote-exchange-format-seed-12345")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatCqwwRandomConsumptionRemoteExchangeFormatTarget>(
+            ParityAcceptanceRegistry
+                .Get(
+                    "contest.cqww-random-consumption-remote-exchange-format-seed-12345")
                 .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatJarlRandomCutRemoteExchangeFormatTarget>(
             ParityAcceptanceRegistry

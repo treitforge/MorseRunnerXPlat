@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+  "parityId": "contest.cqww-random-consumption-remote-exchange-format-seed-12345",
+  "referenceDefinitionSha256": "663adf3bf230161abb923cf8b6651d394af1b99eab05efeafb696cb29992da23",
+  "oracle": "tests/parity/legacy-oracle/v36/LegacyOracle.lpr",
+  "legacyOracleVersionId": "legacy-oracle-v36",
+  "oracleSourceSha256": "eda9afc04b2015c764057c787cda1a458ae426e246facd457b270af0d6b3715b",
+  "oracleBuildRecipeSha256": "abed3c098216ae77f8d0854bfe3b927ebfe2956c5d5e371fe618cfcbd26e97f3",
+  "oracleExecutableSha256": "b5aa460f81bddd20d160543620eb43171b8e14ceacc5d3b29e48d9ffbd20faf4",
+  "toolchain": {
+    "lazarus": "4.6",
+    "fpc": "3.2.2",
+    "target": "x86_64-win64",
+    "compilerSha256": "8ba500bbb84bd7100c169f151082b1461e9241e4491e0f6f38f2376bec49c319",
+    "backendCompilerSha256": "1f33c43b890e2d02e6b07c88401fc47cfcac48e003a29bb58b2e1220ac6a3e22",
+    "lazbuildSha256": "9554983fff43cfe5b5cef9a8374a37ff8a152e2de9c40c5750e723501f6edfd1",
+    "fingerprintSha256": "3eb50f2aac396bac975d8f628ad44421318d05179c81a98524802bcf04c8afee"
+  },
+  "values": [
+    "configuration|scenario=contest.cqww-random-consumption-remote-exchange-format-seed-12345|station=W7SST|seed=12345|formatter-checkpoint-draw=7|r1-milli=930|run-mode=rmPileup",
+    "contest[0]|id=scCQWW|call=K1ABC|rst=599|exchange1=599|exchange2=10|formatted=5NN 10",
+    "shared-random-checkpoint|draw-count-before-checkpoint=10|ordinal=10|single-bits=3f18759e"
+  ]
+}
