@@ -74,6 +74,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
 {
     public const int MinimumDurationMinutes = 1;
     public const int MaximumDurationMinutes = 240;
+    public const int MinimumCompetitionDurationMinutes = 1;
+    public const int MaximumCompetitionDurationMinutes = 60;
 
     private static readonly ClientId DesktopClientId = new("avalonia-desktop");
     private static readonly IReadOnlyList<RunModeOption> RunModeOptions =
@@ -112,6 +114,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private ContestOption _selectedContest;
     private RunModeOption _selectedRunMode = RunModeOptions[0];
     private int _durationMinutes = 30;
+    private int _competitionDurationMinutes = 60;
     private SerialNumberRangeOption _selectedSerialNumberRange =
         SerialNumberRangeOptions[0];
     private string _status = "Ready. Configure a contest and press F9.";
@@ -315,6 +318,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                 value,
                 MinimumDurationMinutes,
                 MaximumDurationMinutes));
+    }
+
+    public int CompetitionDurationMinutes
+    {
+        get => _competitionDurationMinutes;
+        set => SetField(
+            ref _competitionDurationMinutes,
+            Math.Clamp(
+                value,
+                MinimumCompetitionDurationMinutes,
+                MaximumCompetitionDurationMinutes));
     }
 
     public SerialNumberRangeOption SelectedSerialNumberRange
@@ -897,6 +911,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             "Contest.Duration",
             DurationMinutes);
         DurationMinutes = duration;
+        CompetitionDurationMinutes = GetInt(
+            values,
+            "Contest.CompetitionDuration",
+            CompetitionDurationMinutes);
         int serialNumberRange = GetInt(
             values,
             "Station.SerialNR",
@@ -977,6 +995,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                 PitchHz = PitchHz,
                 BandwidthHz = BandwidthHz,
                 Activity = Activity,
+                CompetitionDurationMinutes = CompetitionDurationMinutes,
                 Qsk = Qsk,
                 Qsb = Qsb,
                 Qrm = Qrm,
@@ -1894,6 +1913,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             ["Contest.DefaultRunMode"] = SelectedRunMode.Id.Value,
             ["Contest.Duration"] = DurationMinutes.ToString(
                 CultureInfo.InvariantCulture),
+            ["Contest.CompetitionDuration"] =
+                CompetitionDurationMinutes.ToString(
+                    CultureInfo.InvariantCulture),
             ["System.ShowCallsignInfo"] = ShowCallsignInformation.ToString(
                 CultureInfo.InvariantCulture),
         };

@@ -58,13 +58,15 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
     {
         ThrowIfDisposed();
         ValidateSettings(settings);
+        SessionSettings effectiveSettings =
+            NormalizeCompetitionSettings(settings);
 
         SessionId sessionId = SessionId.New();
         IAudioSink sink = _audioSinkFactory(sessionId);
         EngineSession session = new(
             _engineEpoch,
             sessionId,
-            settings,
+            effectiveSettings,
             sink,
             _options);
         if (!_sessions.TryAdd(sessionId, session))
@@ -304,6 +306,13 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
                 "Activity must be between 1 and 9.");
         }
 
+        if (settings.CompetitionDurationMinutes is < 1 or > 60)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(settings),
+                "Competition duration must be between 1 and 60 minutes.");
+        }
+
         if (settings.StationIdRate < 0)
         {
             throw new ArgumentOutOfRangeException(
@@ -376,6 +385,42 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
             >= 10 => 2,
             _ => 1,
         };
+
+    internal static SessionSettings NormalizeCompetitionSettings(
+        SessionSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        long competitionDurationBlocks = checked(
+            (long)Math.Ceiling(
+                settings.CompetitionDurationMinutes
+                * 60d
+                * CompatibilityProfile.SampleRate
+                / CompatibilityProfile.BlockSize));
+        return settings.RunModeId.Value switch
+        {
+            "rmWpx" => settings with
+            {
+                DurationBlocks = competitionDurationBlocks,
+                Qsb = true,
+                Qrm = true,
+                Qrn = true,
+                Flutter = true,
+                Lids = true,
+            },
+            "rmHst" => settings with
+            {
+                DurationBlocks = competitionDurationBlocks,
+                Activity = 4,
+                BandwidthHz = 600,
+                Qsb = false,
+                Qrm = false,
+                Qrn = false,
+                Flutter = false,
+                Lids = false,
+            },
+            _ => settings,
+        };
+    }
 
     private EngineSession GetSession(SessionId sessionId)
     {

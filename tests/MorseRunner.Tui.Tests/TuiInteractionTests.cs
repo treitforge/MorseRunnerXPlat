@@ -512,6 +512,7 @@ public sealed class TuiInteractionTests
                 first.State.CustomSerialNumberMinimumDigits = 3;
                 first.State.CustomSerialNumberMaximumDigits = 4;
                 first.State.HstOperatorName = "W7SST";
+                first.State.CompetitionDurationMinutes = 23;
                 await first.HandleAsync(
                     new(TuiActionKind.ToggleQsb),
                     CancellationToken.None);
@@ -539,6 +540,7 @@ public sealed class TuiInteractionTests
             Assert.Equal(3, second.State.CustomSerialNumberMinimumDigits);
             Assert.Equal(4, second.State.CustomSerialNumberMaximumDigits);
             Assert.Equal("W7SST", second.State.HstOperatorName);
+            Assert.Equal(23, second.State.CompetitionDurationMinutes);
             Assert.True(second.State.Qsb);
             Assert.True(second.State.RecordingEnabled);
         }

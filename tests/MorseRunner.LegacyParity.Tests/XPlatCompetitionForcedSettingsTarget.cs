@@ -45,10 +45,14 @@ public sealed class XPlatCompetitionForcedSettingsTarget : IParityTarget
         await AssertSessionConsumesInputAsync(wpx, cancellationToken);
         await AssertSessionConsumesInputAsync(hst, cancellationToken);
 
+        SessionSettings effectiveWpx =
+            MorseRunnerEngine.NormalizeCompetitionSettings(wpx);
+        SessionSettings effectiveHst =
+            MorseRunnerEngine.NormalizeCompetitionSettings(hst);
         string[] values =
         [
-            FormatSettings(wpx),
-            FormatSettings(hst),
+            FormatSettings(effectiveWpx),
+            FormatSettings(effectiveHst),
         ];
         bool matches = values.SequenceEqual(
             scenario.ExpectedValues,
@@ -74,6 +78,8 @@ public sealed class XPlatCompetitionForcedSettingsTarget : IParityTarget
             DurationBlocks(input.InitialDurationMinutes))
         {
             Activity = input.InitialActivity,
+            CompetitionDurationMinutes =
+                input.CompetitionDurationMinutes,
             BandwidthHz = input.InitialBandwidthHz,
             Qsb = initialConditions,
             Qrm = initialConditions,
@@ -87,14 +93,16 @@ public sealed class XPlatCompetitionForcedSettingsTarget : IParityTarget
         SessionSettings settings,
         CancellationToken cancellationToken)
     {
+        SessionSettings effective =
+            MorseRunnerEngine.NormalizeCompetitionSettings(settings);
         await using var engine = new MorseRunnerEngine(
             _ => new NullAudioSink());
         SessionHandle handle = await engine.CreateSessionAsync(
             settings,
             cancellationToken);
         SessionSnapshot snapshot = engine.GetSnapshot(handle.SessionId);
-        if (snapshot.CurrentBandwidthHz != settings.BandwidthHz
-            || snapshot.QsbEnabled != settings.Qsb)
+        if (snapshot.CurrentBandwidthHz != effective.BandwidthHz
+            || snapshot.QsbEnabled != effective.Qsb)
         {
             throw new InvalidOperationException(
                 "The XPlat session did not consume its submitted settings.");

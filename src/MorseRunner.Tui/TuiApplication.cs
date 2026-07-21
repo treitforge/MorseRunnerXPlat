@@ -503,6 +503,7 @@ public sealed class TuiApplication : IDisposable
             PitchHz = State.PitchHz,
             BandwidthHz = State.BandwidthHz,
             Activity = State.Activity,
+            CompetitionDurationMinutes = State.CompetitionDurationMinutes,
             Qsk = State.Qsk,
             Qsb = State.Qsb,
             Qrm = State.Qrm,
@@ -1167,6 +1168,9 @@ public sealed class TuiApplication : IDisposable
             ["Contest.DefaultRunMode"] = State.RunMode.Value,
             ["Contest.Duration"] = State.DurationMinutes.ToString(
                 CultureInfo.InvariantCulture),
+            ["Contest.CompetitionDuration"] =
+                State.CompetitionDurationMinutes.ToString(
+                    CultureInfo.InvariantCulture),
         };
         await _settingsStore.SaveAsync(
             new(SettingsDocument.CurrentSchemaVersion, values),
@@ -1526,6 +1530,13 @@ public sealed class TuiApplication : IDisposable
         {
             State.DurationIndex = durationIndex;
         }
+        State.CompetitionDurationMinutes = Math.Clamp(
+            GetInt(
+                values,
+                "Contest.CompetitionDuration",
+                State.CompetitionDurationMinutes),
+            1,
+            60);
     }
 
     private static bool ShouldPersist(TuiActionKind action) =>

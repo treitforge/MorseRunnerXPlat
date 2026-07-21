@@ -44,6 +44,8 @@ public sealed record SessionSettings(
 
     public int Activity { get; init; } = 5;
 
+    public int CompetitionDurationMinutes { get; init; } = 60;
+
     public int StationIdRate { get; init; } = 3;
 
     public bool Qsk { get; init; }

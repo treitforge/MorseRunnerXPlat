@@ -63,6 +63,8 @@ public sealed class TuiState
 
     public int Activity { get; set; } = 5;
 
+    public int CompetitionDurationMinutes { get; set; } = 60;
+
     public double MonitorLevelDb { get; set; }
 
     public int ReceiveSpeedBelowWpm { get; set; }

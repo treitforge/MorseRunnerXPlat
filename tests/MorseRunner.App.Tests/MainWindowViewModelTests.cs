@@ -487,6 +487,7 @@ public sealed class MainWindowViewModelTests
             first.Qsb = true;
             first.SelectedContest = first.Contests[6];
             first.DurationMinutes = 17;
+            first.CompetitionDurationMinutes = 23;
             await first.DisposeAsync();
 
             await using var second = new MainWindowViewModel(
@@ -510,6 +511,7 @@ public sealed class MainWindowViewModelTests
             Assert.True(second.Qsb);
             Assert.Equal(first.Contests[6].Id, second.SelectedContest.Id);
             Assert.Equal(17, second.DurationMinutes);
+            Assert.Equal(23, second.CompetitionDurationMinutes);
         }
         finally
         {

@@ -40,6 +40,7 @@ public sealed class GrpcTransportTests
             ReceiveSpeedBelowWpm = 6,
             ReceiveSpeedAboveWpm = 2,
             StationIdRate = 5,
+            CompetitionDurationMinutes = 23,
             SerialNumberRange = SerialNumberRangeMode.Custom,
             CustomSerialNumberMinimum = 70,
             CustomSerialNumberExclusiveMaximum = 80,
@@ -65,6 +66,21 @@ public sealed class GrpcTransportTests
         SessionSettings actual = TransportMapper.ToDomain(transport);
 
         Assert.Equal(3, actual.StationIdRate);
+    }
+
+    [Fact]
+    public void OmittedCompetitionDurationUsesCeDefault()
+    {
+        SessionSettingsMessage transport = TransportMapper.ToTransport(
+            SessionSettings.CreateDefault(42) with
+            {
+                CompetitionDurationMinutes = 23,
+            });
+        transport.ClearCompetitionDurationMinutes();
+
+        SessionSettings actual = TransportMapper.ToDomain(transport);
+
+        Assert.Equal(60, actual.CompetitionDurationMinutes);
     }
 
     [Fact]

@@ -993,6 +993,8 @@ At minimum, `SessionSettings` includes:
 - Duration in whole minutes. The CE-compatible desktop setup range is 1
   through 240 inclusive, with a 30-minute default and no preset-only
   restriction.
+- Competition duration in whole minutes, persisted separately with CE's 1
+  through 60 inclusive range and 60-minute default.
 - Operator callsign and contest-specific station information.
 - WPM and Farnsworth settings.
 - Minimum and maximum receive-speed offsets.
@@ -1013,6 +1015,13 @@ Session creation enforces CE competition prerequisites before allocating a
 session or audio sink. In particular, `rmHst` requires contest `scHst` and the
 `StartOfContest` serial-number range. A request that violates either condition
 is rejected without a lifecycle transition, event, or snapshot.
+
+After validation and before session construction, competition modes normalize
+immutable settings exactly once. `rmWpx` uses the competition duration and
+forces QSB, QRM, QRN, flutter, and LIDs on. `rmHst` uses the competition
+duration, forces those five conditions off, sets activity to 4, and sets the
+receiver bandwidth to 600 Hz. Noncompetition modes preserve the submitted
+duration and condition settings.
 
 ## 10. Commands and ordering
 
