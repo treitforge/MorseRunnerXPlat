@@ -128,7 +128,8 @@
         "settings.clean-profile-ce-defaults",
         "settings.ce-encoding-translation",
         "settings.production-legacy-import",
-        "settings.preserve-legacy-values"
+        "settings.preserve-legacy-values",
+        "settings.legacy-nrdigits-migration"
       ]
     },
     {
@@ -868,7 +869,7 @@
     {"id": "ux.help-about-readme-community-actions", "capabilityId": "ux.main-menu-commands", "behavior": "Help, About, readme, website, and community actions match CE availability, targets, errors, keyboard access, and focus return.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "ux.score-service-browse-submit-and-failures", "capabilityId": "ux.score-dialog", "behavior": "Score browsing, submission, disabled or unavailable service behavior, failures, focus, and history match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "transport.session-lifecycle-transition-validity", "capabilityId": "simulation.state-models", "behavior": "Session lifecycle transitions reject invalid starts such as rmStop, define close-while-running behavior, and emit the same ordered terminal state through every client.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "settings.all-supported-ce-keys-consumed-or-preserved", "capabilityId": "configuration.persisted-settings", "behavior": "Every supported CE key is consumed with equivalent semantics or preserved losslessly across import, save, and restart.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "settings.all-supported-ce-keys-consumed-or-preserved", "capabilityId": "configuration.persisted-settings", "behavior": "Every supported CE key is consumed with equivalent semantics or preserved losslessly across import, save, and restart.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.station.nrdigits", "legacy.ini.setting.station.serialnr"], "acceptanceStatus": "partial", "caseIds": ["settings.legacy-nrdigits-migration"]},
     {"id": "release.cli-help-version-exit-codes", "capabilityId": "build.legacy-project-metadata", "behavior": "CLI help, version, validation failures, runtime failures, and successful commands expose stable documented output and exit codes in packaged builds.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "lifecycle.unit-initialization-finalization-order", "capabilityId": "lifecycle.legacy-unit-hooks", "behavior": "Legacy initialization and finalization hooks execute with equivalent order, registration, cleanup, state, and failures.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "ux.wpm-default-page-up-step", "capabilityId": "ux.keyboard-workflows", "behavior": "The default non-HST PageUp workflow applies CE's persisted WPM step to authoritative engine state.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.settings.wpmsteprate", "legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-default-page-up-command-step-2-wpm-seed-12345", "ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345", "ux.wpm-custom-page-up-command-step-7-wpm-seed-12345", "ux.tui-wpm-custom-page-up-command-step-7-wpm-seed-12345", "ux.wpm-custom-page-down-command-step-7-wpm-seed-12345", "ux.tui-wpm-custom-page-down-command-step-7-wpm-seed-12345", "ux.wpm-step-lower-clamp-page-up-from-zero-seed-12345", "ux.tui-wpm-step-lower-clamp-page-up-from-zero-seed-12345", "ux.wpm-step-upper-clamp-page-up-from-21-seed-12345", "ux.tui-wpm-step-upper-clamp-page-up-from-21-seed-12345"]},
@@ -6027,6 +6028,62 @@
       "failureCode": "settings-preserve-legacy-values-mismatch",
       "fixture": "tests/parity/fixtures/legacy/settings-preserve-legacy-values.json",
       "evidence": "tests/parity/evidence/settings-preserve-legacy-values.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "settings.legacy-nrdigits-migration",
+      "capabilityId": "configuration.persisted-settings",
+      "obligationIds": [
+        "settings.all-supported-ce-keys-consumed-or-preserved"
+      ],
+      "behavior": "Pre-1.84 NRDigits values are converted to CE SerialNR ordinals, including fallback values, and the obsolete key is removed.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v76",
+        "source": "tests/parity/legacy-oracle/v76/LegacyOracle.lpr",
+        "sourceSha256": "9a698882049c50de839863b80b414f7731f40581975c21a8b01a9339d681d998",
+        "buildRecipe": "tests/parity/legacy-oracle/v76/build-recipe.json",
+        "buildRecipeSha256": "2747e183f1a030e6983238de9773c8fc5f8c58323f71af35125e9f6fcc8bee9b"
+      },
+      "legacySources": [
+        "Ini.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.ini.setting.station.nrdigits",
+        "legacy.ini.setting.station.serialnr"
+      ],
+      "preconditions": [
+        "The live CE adapter runs Ini.FromIni once for each NRDigits input from zero through five and rereads the migrated INI file.",
+        "The vector covers all four historical mappings plus both out-of-range fallback branches.",
+        "The XPlat target imports the equivalent legacy documents through LegacySettingsImporter.",
+        "Malformed noninteger values and the separate obsolete cwopsnum deletion remain later boundaries."
+      ],
+      "input": {
+        "scenario": "settings.legacy-nrdigits-migration",
+        "seed": 12345
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatLegacyNRDigitsMigrationTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 6,
+        "observedValuesSha256": "1aea490c26df6aebabe8fceecc922e7242e19ae02d2c4a096d52bd684aee9598",
+        "firstDivergence": "LegacySettingsImporter initially retains Station.NRDigits and does not create the CE-equivalent Station.SerialNR value.",
+        "functionalDivergenceCode": "settings-legacy-nrdigits-migration-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "settings-legacy-nrdigits-migration-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/settings-legacy-nrdigits-migration.json",
+      "evidence": "tests/parity/evidence/settings-legacy-nrdigits-migration.baseline.json",
       "firstGreenCommit": null
     }
   ]
