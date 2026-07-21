@@ -53,7 +53,9 @@ public sealed class TuiApplication : IDisposable
             ?? (paths is null ? null : new TuiRecordingPreference(paths));
         _settingsStore = paths is null
             ? null
-            : new SettingsStore(Path.Combine(paths.Settings, "settings.json"));
+            : new SettingsStore(
+                Path.Combine(paths.Settings, "settings.json"),
+                paths.LegacySettingsImport);
         _highScoreStore = paths is null
             ? null
             : new HighScoreStore(

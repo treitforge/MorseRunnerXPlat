@@ -189,6 +189,60 @@ public sealed class SettingsPersistenceTests
     }
 
     [Fact]
+    public async Task MissingProjectSettingsImportsLegacyIniOnlyOnce()
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            "MorseRunnerXPlat.LegacyImport",
+            Guid.NewGuid().ToString("N"));
+        var paths = new ApplicationPaths(root);
+        string settingsPath = Path.Combine(paths.Settings, "settings.json");
+        try
+        {
+            Directory.CreateDirectory(root);
+            await File.WriteAllTextAsync(
+                paths.LegacySettingsImport,
+                "[Station]" + Environment.NewLine
+                    + "Call=K7ABC" + Environment.NewLine
+                    + "Pitch=6" + Environment.NewLine,
+                TestContext.Current.CancellationToken);
+            var store = new SettingsStore(
+                settingsPath,
+                paths.LegacySettingsImport);
+
+            SettingsLoadResult imported = await store.LoadAsync(
+                TestContext.Current.CancellationToken);
+
+            Assert.False(imported.Recovered);
+            Assert.Contains("Imported legacy", imported.Diagnostic);
+            Assert.Equal("K7ABC", imported.Document.Values["Station.Call"]);
+            Assert.Equal("600", imported.Document.Values["Station.Pitch"]);
+            Assert.True(File.Exists(settingsPath));
+
+            await File.WriteAllTextAsync(
+                paths.LegacySettingsImport,
+                "[Station]" + Environment.NewLine
+                    + "Call=N0NEW" + Environment.NewLine
+                    + "Pitch=2" + Environment.NewLine,
+                TestContext.Current.CancellationToken);
+            SettingsLoadResult restarted = await store.LoadAsync(
+                TestContext.Current.CancellationToken);
+
+            Assert.False(restarted.Recovered);
+            Assert.Null(restarted.Diagnostic);
+            Assert.Equal("K7ABC", restarted.Document.Values["Station.Call"]);
+            Assert.Equal("600", restarted.Document.Values["Station.Pitch"]);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public void ApplicationPathsRemainInsideTheSelectedRoot()
     {
         string root = Path.Combine(
@@ -201,6 +255,7 @@ public sealed class SettingsPersistenceTests
             new[]
             {
                 paths.Settings,
+                paths.LegacySettingsImport,
                 paths.Results,
                 paths.Recordings,
                 paths.Cache,

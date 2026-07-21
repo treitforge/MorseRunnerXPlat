@@ -75,7 +75,8 @@ public sealed class XPlatProductionLegacyImportTarget : IParityTarget
         await using var viewModel = new MainWindowViewModel(
             InProcessMorseRunnerClient.CreateDefault(),
             settingsStore: new SettingsStore(
-                Path.Combine(paths.Settings, "settings.json")));
+                Path.Combine(paths.Settings, "settings.json"),
+                paths.LegacySettingsImport));
         await viewModel.InitializeAsync();
         return Format("avalonia", viewModel.StationCall, viewModel.PitchHz);
     }

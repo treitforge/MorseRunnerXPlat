@@ -32,11 +32,15 @@ public sealed class SettingsStore
     };
 
     private readonly string _path;
+    private readonly string? _legacyIniPath;
 
-    public SettingsStore(string path)
+    public SettingsStore(string path, string? legacyIniPath = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         _path = Path.GetFullPath(path);
+        _legacyIniPath = String.IsNullOrWhiteSpace(legacyIniPath)
+            ? null
+            : Path.GetFullPath(legacyIniPath);
     }
 
     public async Task<SettingsLoadResult> LoadAsync(
@@ -44,6 +48,11 @@ public sealed class SettingsStore
     {
         if (!File.Exists(_path))
         {
+            if (_legacyIniPath is not null && File.Exists(_legacyIniPath))
+            {
+                return await ImportLegacyAsync(cancellationToken);
+            }
+
             return new SettingsLoadResult(SettingsDocument.Empty, false, null);
         }
 
@@ -133,6 +142,34 @@ public sealed class SettingsStore
                 document.Values,
                 StringComparer.OrdinalIgnoreCase);
         return new(SettingsDocument.CurrentSchemaVersion, values);
+    }
+
+    private async Task<SettingsLoadResult> ImportLegacyAsync(
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            string text = await File.ReadAllTextAsync(
+                _legacyIniPath!,
+                cancellationToken);
+            SettingsDocument imported = LegacySettingsImporter.Import(
+                LegacyIniDocument.Parse(text));
+            await SaveAsync(imported, cancellationToken);
+            return new SettingsLoadResult(
+                imported,
+                false,
+                "Imported legacy settings from MorseRunner.ini.");
+        }
+        catch (Exception exception)
+            when (exception is FormatException
+                or IOException
+                or UnauthorizedAccessException)
+        {
+            return new SettingsLoadResult(
+                SettingsDocument.Empty,
+                true,
+                $"Legacy settings recovery: {exception.Message}");
+        }
     }
 }
 

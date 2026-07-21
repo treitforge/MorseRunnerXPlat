@@ -2289,6 +2289,10 @@ The path service distinguishes:
 - Invalid settings produce a diagnostic and a safe recovery path.
 - Secrets are not stored in ordinary settings.
 - Legacy INI import is one-way and idempotent.
+- On Avalonia or TUI startup, `MorseRunner.ini` at the selected application
+  data root is imported only when `settings/settings.json` does not exist. A
+  successful import is atomically saved as project-owned settings, and later
+  startups load that JSON without rereading the legacy file.
 - Legacy import converts CE pitch and bandwidth indexes to Hz, contest and
   run-mode ordinals to stable IDs, numeric booleans to schema booleans, and
   the buffer exponent to its effective sample count. It also applies CE's
