@@ -1213,6 +1213,12 @@ def validate_acceptance_test_wiring(root: Path = ROOT) -> None:
             r"-SelectedCaseIds\s+\$selectedLegacyCaseIds",
             "bind build integration to the selected oracle case set",
         ),
+        (
+            r"\$registrySelectedCaseIds\s*=\s*"
+            r"\[Collections\.Generic\.HashSet\[string\]\]::new",
+            "keep the registry selection set distinct from the typed "
+            "SelectedCaseIds function parameter",
+        ),
     )
     for pattern, requirement in required_runner_patterns:
         if not re.search(pattern, parity_runner):

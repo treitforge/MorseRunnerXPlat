@@ -1030,7 +1030,8 @@ function Invoke-LegacyOracleBuildIntegration {
         -LiteralPath $legacyRegistryPath `
         -Raw |
         ConvertFrom-Json
-    $selectedCaseIds = [Collections.Generic.HashSet[string]]::new(
+    $registrySelectedCaseIds =
+        [Collections.Generic.HashSet[string]]::new(
         [StringComparer]::Ordinal)
     foreach ($entry in $registryDocument.entries) {
         $provenancePath = Join-Path (
@@ -1041,7 +1042,7 @@ function Invoke-LegacyOracleBuildIntegration {
             -Raw |
             ConvertFrom-Json
         foreach ($caseId in $provenance.selectedCaseIds) {
-            if (-not $selectedCaseIds.Add([string] $caseId)) {
+            if (-not $registrySelectedCaseIds.Add([string] $caseId)) {
                 throw (
                     'Legacy oracle build-integration selected case IDs ' +
                     "must be globally unique: $caseId")
@@ -1049,7 +1050,7 @@ function Invoke-LegacyOracleBuildIntegration {
         }
     }
     $orderedSelectedCaseIds = [string[]] @(
-        Get-OrdinallySortedStrings @($selectedCaseIds))
+        Get-OrdinallySortedStrings @($registrySelectedCaseIds))
     if ($orderedSelectedCaseIds.Count -eq 0) {
         throw (
             'Legacy oracle build-integration execution must bind at least ' +
