@@ -1755,7 +1755,9 @@ oracle verifies `Ini.RitStepIncr = 50` and invokes the real handleless
 implementation, the production Avalonia `RitUpCommand` reaches only +10 Hz
 through `IMorseRunnerClient`. Negative actions, HST, custom or reversed
 persisted steps, TUI, mouse wheel, reset, and displayed state remain separate
-acceptance boundaries.
+acceptance boundaries. Production Avalonia now sends +50 Hz and -50 Hz for its
+default RIT commands; the positive command matches the pinned v44 observation
+exactly.
 
 ### 14.5 Device failure
 

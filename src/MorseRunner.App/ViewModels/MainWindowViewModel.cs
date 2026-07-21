@@ -244,8 +244,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         SendCallAndExchangeCommand = new AsyncCommand(
             SendCallAndExchangeAsync,
             () => _sessionState == SessionState.Running);
-        RitUpCommand = CreateRadioCommand(RadioControl.Rit, 10);
-        RitDownCommand = CreateRadioCommand(RadioControl.Rit, -10);
+        RitUpCommand = CreateRadioCommand(RadioControl.Rit, 50);
+        RitDownCommand = CreateRadioCommand(RadioControl.Rit, -50);
         BandwidthUpCommand = CreateRadioCommand(RadioControl.Bandwidth, 50);
         BandwidthDownCommand = CreateRadioCommand(RadioControl.Bandwidth, -50);
         SpeedUpCommand = CreateRadioCommand(RadioControl.Speed, 1);

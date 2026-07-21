@@ -79,6 +79,18 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task RitUpUsesCeDefaultFiftyHertzStep()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+        await viewModel.StartCommand.ExecuteAsync(null);
+
+        await viewModel.RitUpCommand.ExecuteAsync(null);
+
+        Assert.Equal(50, viewModel.RitOffsetHz);
+    }
+
+    [Fact]
     public async Task OperatorIntentAndQsoLoggingUseSemanticClientCommands()
     {
         await using var viewModel = new MainWindowViewModel(
