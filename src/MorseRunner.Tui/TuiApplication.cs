@@ -834,7 +834,7 @@ public sealed class TuiApplication : IDisposable
                     State.WordsPerMinute,
                     direction,
                     5,
-                    100);
+                    120);
                 break;
             case 2:
                 State.PitchHz = Step(

@@ -1811,7 +1811,9 @@ sets WPM to 100 through `TMainForm.SetWpm`, and accepts a one-WPM increase to
 101. Before implementation, `TuiApplication.AdjustCurrentSetting` remains at
 100 because its setup-only ceiling is 100 WPM. The lower bound, operator-mode
 PageUp clamp, HST rounding, persisted custom steps, and direct menu choices
-remain separate acceptance boundaries.
+remain separate acceptance boundaries. Production TUI advanced settings now
+permit WPM values through CE's 120 WPM upper bound, and the fixed vector
+matches the pinned v49 observation exactly.
 
 ### 14.5 Device failure
 
