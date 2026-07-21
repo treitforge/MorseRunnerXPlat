@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "target": "XPlat",
+  "platform": "windows",
+  "operatingSystem": "Microsoft Windows 10.0.26200",
+  "architecture": "x64",
+  "runtimeIdentifier": "win-x64",
+  "revision": "61cdba7f118d5eb0f57087d98f17c97fdb21a042",
+  "tree": "e70e6c53878fbed43ab412584aa4b502139dba81",
+  "resultSha256": "be2457e80ecf01facadb4827e79790a948c598f565f25a5c01ae2d6af4db6286",
+  "testReportSha256": "39524361bd96897e43cad2e3dfc08ba07596bc376d14350ae92acbcf8a49a93b",
+  "testProcessExitCode": 2,
+  "wrapper": {
+    "completed": true,
+    "correlationValidated": true,
+    "exitCode": 0
+  },
+  "functionalDivergences": [
+    {
+      "caseId": "ux.wpm-custom-page-down-command-step-7-wpm-seed-12345",
+      "failureCode": "ux-WPM-custom-page-down-step-mismatch"
+    }
+  ]
+}
