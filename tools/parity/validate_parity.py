@@ -240,7 +240,9 @@ TRUSTED_V3_MIGRATION_OBLIGATION_OWNERS = {
     "ux.native-scaling-contrast-and-layout": "ux.legacy-form-definitions",
     "ux.score-dialog-and-history-workflow": "ux.score-dialog",
     "ux.legacy-component-runtime-behavior": "ux.legacy-vcl-components",
-    "settings.production-legacy-import": "configuration.persisted-settings",
+    "settings.production-startup-legacy-import": (
+        "configuration.persisted-settings"
+    ),
     "settings.ce-encoding-semantics": "configuration.persisted-settings",
     "settings.preserve-unknown-and-unconsumed-values": (
         "configuration.persisted-settings"
@@ -328,8 +330,8 @@ TRUSTED_V3_MIGRATION_OBLIGATION_IDS = frozenset(
     TRUSTED_V3_MIGRATION_OBLIGATION_OWNERS
 )
 TRUSTED_V3_MIGRATION_OBLIGATION_SHA256 = (
-    "17abbe2faf4f3df12cd0bada1172a961"
-    "95c67550bfee957791955c882e7b314a"
+    "af070dca1912a177f81a6344fc39ecd9"
+    "bc5f5c4ffd61017a3508f957d2dae683"
 )
 TRUSTED_V3_MIGRATION_CAPABILITY_SHA256 = (
     "04330886992153a69429ed7f271e9bf7"

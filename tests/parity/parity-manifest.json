@@ -126,7 +126,8 @@
       "caseIds": [
         "settings.duration-full-range",
         "settings.clean-profile-ce-defaults",
-        "settings.ce-encoding-translation"
+        "settings.ce-encoding-translation",
+        "settings.production-legacy-import"
       ]
     },
     {
@@ -780,7 +781,7 @@
     {"id": "ux.native-scaling-contrast-and-layout", "capabilityId": "ux.legacy-form-definitions", "behavior": "The native GUI remains usable at minimum size, 100, 150, and 200 percent scaling, high contrast, and platform fonts.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "ux.score-dialog-and-history-workflow", "capabilityId": "ux.score-dialog", "behavior": "Score dialogs, automatic completion, history navigation, actions, focus, and accessible content match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "ux.legacy-component-runtime-behavior", "capabilityId": "ux.legacy-vcl-components", "behavior": "Every legacy hint, volume, and UI component behavior remains functionally available through the cross-platform UX.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "settings.production-legacy-import", "capabilityId": "configuration.persisted-settings", "behavior": "Production startup invokes CE settings migration when appropriate.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "settings.production-startup-legacy-import", "capabilityId": "configuration.persisted-settings", "behavior": "Production startup invokes CE settings migration when appropriate.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.station.call", "legacy.ini.setting.station.pitch"], "acceptanceStatus": "partial", "caseIds": ["settings.production-legacy-import"]},
     {"id": "settings.ce-encoding-semantics", "capabilityId": "configuration.persisted-settings", "behavior": "Migration translates CE indexes, ordinals, zero-or-one booleans, IDs, Hz values, duration, block size, and contest exchanges.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas", "Main.lfm"], "legacySurfaceSelectors": ["legacy.ini.setting.station.pitch", "legacy.ini.setting.station.bandwidth", "legacy.ini.setting.contest.simcontest", "legacy.ini.setting.contest.defaultrunmode", "legacy.ini.setting.station.serialnr", "legacy.ini.setting.system.bufsize", "legacy.ini.setting.contest.duration", "legacy.ini.setting.contest.competitionduration", "legacy.ini.setting.station.selfmonvolume", "legacy.ini.setting.settings.wpmsteprate", "legacy.ini.setting.settings.ritstepincr", "legacy.ini.setting.settings.singlecallstartdelay", "legacy.ini.setting.station.cqwpxexchange", "legacy.ini.setting.station.qsk", "legacy.ini.setting.station.savewav", "legacy.ini.setting.band.qsb", "legacy.ini.setting.band.qrm", "legacy.ini.setting.band.qrn", "legacy.ini.setting.band.flutter", "legacy.ini.setting.band.lids", "legacy.ini.setting.system.showcallsigninfo"], "acceptanceStatus": "partial", "caseIds": ["settings.ce-encoding-translation"]},
     {"id": "settings.preserve-unknown-and-unconsumed-values", "capabilityId": "configuration.persisted-settings", "behavior": "Migration and save preserve unknown or unconsumed CE values and are idempotent.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "settings.clean-profile-core-defaults", "capabilityId": "configuration.persisted-settings", "behavior": "Clean-profile call, WPM, activity, duration, pitch, bandwidth, and related defaults match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas", "Main.lfm"], "legacySurfaceSelectors": ["legacy.ini.setting.station.call", "legacy.ini.setting.station.name", "legacy.ini.setting.station.wpm", "legacy.ini.setting.station.pitch", "legacy.ini.setting.station.bandwidth", "legacy.ini.setting.station.cwminrxspeed", "legacy.ini.setting.station.cwmaxrxspeed", "legacy.ini.setting.station.serialnr", "legacy.ini.setting.station.selfmonvolume", "legacy.ini.setting.station.qsk", "legacy.ini.setting.band.activity", "legacy.ini.setting.band.qsb", "legacy.ini.setting.band.qrm", "legacy.ini.setting.band.qrn", "legacy.ini.setting.band.flutter", "legacy.ini.setting.band.lids", "legacy.ini.setting.contest.duration", "legacy.ini.setting.contest.competitionduration", "legacy.ini.setting.contest.simcontest", "legacy.ini.setting.contest.defaultrunmode", "legacy.ini.setting.settings.stationidrate"], "acceptanceStatus": "partial", "caseIds": ["settings.clean-profile-ce-defaults"]},
@@ -5912,6 +5913,63 @@
       "failureCode": "settings-ce-encoding-translation-mismatch",
       "fixture": "tests/parity/fixtures/legacy/settings-ce-encoding-translation.json",
       "evidence": "tests/parity/evidence/settings-ce-encoding-translation.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "settings.production-legacy-import",
+      "capabilityId": "configuration.persisted-settings",
+      "obligationIds": [
+        "settings.production-startup-legacy-import"
+      ],
+      "behavior": "Avalonia and TUI production startup discover and apply an adjacent CE-compatible MorseRunner.ini when project-owned settings do not yet exist.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v74",
+        "source": "tests/parity/legacy-oracle/v74/LegacyOracle.lpr",
+        "sourceSha256": "871d536d2d087c646427e2ce30ea0eb2796a65664cef614f198992cf7565af01",
+        "buildRecipe": "tests/parity/legacy-oracle/v74/build-recipe.json",
+        "buildRecipeSha256": "5c0a27d5bd4eff803d46cc0cfd599ebef44485e3018ee5822ac996f7cea4374c"
+      },
+      "legacySources": [
+        "Ini.pas",
+        "Main.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.ini.setting.station.call",
+        "legacy.ini.setting.station.pitch"
+      ],
+      "preconditions": [
+        "The live CE adapter writes its executable-adjacent INI and executes the real Ini.FromIni startup load path.",
+        "The XPlat target places MorseRunner.ini at each isolated application-data root and executes the production Avalonia and TUI settings initialization paths.",
+        "Encoding translation is covered separately; this case uses station call and pitch to prove discovery plus application on both clients.",
+        "Existing-project-settings precedence, restart idempotence, malformed input, and unknown-key preservation remain separately asserted in Infrastructure tests or later acceptance boundaries."
+      ],
+      "input": {
+        "scenario": "settings.production-legacy-import",
+        "seed": 12345
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatProductionLegacyImportTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 2,
+        "observedValuesSha256": "b13ed8ebc369de6a16c66bb8643218178d2c7d02425c40be82711c31a69ac6a2",
+        "firstDivergence": "Avalonia initially retains its clean-profile VE3NEA call because production SettingsStore does not discover MorseRunner.ini.",
+        "functionalDivergenceCode": "settings-production-legacy-import-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "settings-production-legacy-import-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/settings-production-legacy-import.json",
+      "evidence": "tests/parity/evidence/settings-production-legacy-import.baseline.json",
       "firstGreenCommit": null
     }
   ]
