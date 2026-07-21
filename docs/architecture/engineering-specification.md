@@ -1903,6 +1903,15 @@ choices remain separate acceptance boundaries. Production Avalonia now
 subtracts the persisted step for non-HST PageDown while retaining the
 independent HST five-WPM boundary calculation.
 
+The authored `ux.tui-wpm-custom-page-down-command-step-7-wpm-seed-12345`
+case applies the negative persisted-step workflow to the terminal client.
+Both targets start `rmSingle` at 30 WPM with `WpmStepRate` configured as 7.
+The v58 CE oracle reaches 23 WPM through the real
+`TMainForm.FormKeyDown` PageDown path. Before implementation, production TUI
+loads and preserves the custom step but its SpeedDown action still subtracts
+the fixed two-WPM default and reaches 28 WPM. Lower-bound clamping, HST
+precedence, and direct menu choices remain separate acceptance boundaries.
+
 ### 14.5 Device failure
 
 On unrecoverable physical-device failure:
