@@ -200,7 +200,8 @@
       "caseIds": [
         "ux.enter-esm-partial-call-message-selection-live",
         "ux.rit-default-up-command-step-50-hz-seed-12345",
-        "ux.tui-rit-default-up-command-step-50-hz-seed-12345"
+        "ux.tui-rit-default-up-command-step-50-hz-seed-12345",
+        "ux.wpm-default-page-up-command-step-2-wpm-seed-12345"
       ]
     },
     {
@@ -739,7 +740,7 @@
     {"id": "ux.punctuation-and-modified-enter-logging", "capabilityId": "ux.keyboard-workflows", "behavior": "Punctuation and modified Enter preserve CE TU, log-only, wrong-QSO, and field-clearing workflows.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "ux.f9-explicit-pileup-action", "capabilityId": "ux.main-menu-commands", "behavior": "F9 and Run Pile-Up explicitly start Pile-Up regardless of the selected run-mode control.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "ux.live-settings-send-semantic-commands", "capabilityId": "ux.main-menu-commands", "behavior": "Every live QSK, effect, activity, speed, pitch, bandwidth, and monitor change reaches the engine through the client.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "ux.rit-wpm-bandwidth-ranges-and-steps", "capabilityId": "ux.keyboard-workflows", "behavior": "RIT, WPM, and bandwidth ranges, increments, clamping, and displayed engine state match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.settings.ritstepincr", "legacy.main.handler.panel8mousedown"], "acceptanceStatus": "partial", "caseIds": ["ux.rit-default-up-command-step-50-hz-seed-12345", "ux.tui-rit-default-up-command-step-50-hz-seed-12345"]},
+    {"id": "ux.rit-wpm-bandwidth-ranges-and-steps", "capabilityId": "ux.keyboard-workflows", "behavior": "RIT, WPM, and bandwidth ranges, increments, clamping, and displayed engine state match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.settings.ritstepincr", "legacy.main.handler.panel8mousedown"], "acceptanceStatus": "partial", "caseIds": ["ux.rit-default-up-command-step-50-hz-seed-12345", "ux.tui-rit-default-up-command-step-50-hz-seed-12345", "ux.wpm-default-page-up-command-step-2-wpm-seed-12345"]},
     {"id": "ux.shortcut-labels-and-score-wipe-commands", "capabilityId": "ux.main-menu-commands", "behavior": "Visible shortcut labels and commands consistently distinguish F11 Wipe from Ctrl+F11 Score.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "ux.plus-equals-keypad-and-layouts", "capabilityId": "ux.keyboard-workflows", "behavior": "Physical plus, equals, keypad Add, and international layouts invoke only the CE-equivalent completion actions.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "ux.keyboard-and-pointer-tuning-workflows", "capabilityId": "ux.keyboard-workflows", "behavior": "All CE key-down, key-up, shortcut, mouse-wheel, tuning-reset, and monitor-reset workflows are available.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -4094,6 +4095,67 @@
       "failureCode": "ux-TUI-RIT-default-up-step-mismatch",
       "fixture": "tests/parity/fixtures/legacy/ux-tui-rit-default-up-command-step-50-hz-seed-12345.json",
       "evidence": "tests/parity/evidence/ux-tui-rit-default-up-command-step-50-hz-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "ux.wpm-default-page-up-command-step-2-wpm-seed-12345",
+      "capabilityId": "ux.keyboard-workflows",
+      "obligationIds": [
+        "ux.rit-wpm-bandwidth-ranges-and-steps"
+      ],
+      "behavior": "From 30 WPM in a CQ WPX rmSingle session, one CE PageUp action and the production Avalonia SpeedUpCommand both apply the default +2 WPM step and finish at 32 WPM.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v46",
+        "source": "tests/parity/legacy-oracle/v46/LegacyOracle.lpr",
+        "sourceSha256": "6c4988f554ee889602919f3bf2f70431531e509c9cc08abe159738dda28d0173",
+        "buildRecipe": "tests/parity/legacy-oracle/v46/build-recipe.json",
+        "buildRecipeSha256": "6807376c7e8c9603597d6036ae2ffd18116c8996cf775523a720336087da2149"
+      },
+      "legacySources": [
+        "Ini.pas",
+        "Main.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.ini.setting.settings.wpmsteprate",
+        "legacy.main.handler.formkeydown"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The CE target creates a fresh handleless CQ WPX rmSingle runtime, sets WPM to 30, verifies the persisted-setting default step is 2 WPM, and invokes the real TMainForm.FormKeyDown PageUp path once.",
+        "Before implementation, the XPlat target creates the production MainWindowViewModel over IMorseRunnerClient, starts an rmSingle session at 30 WPM, executes the real SpeedUpCommand once, and observes the published authoritative WPM value.",
+        "The case pins only the default positive non-HST Avalonia PageUp step. Down, HST rounding, custom persisted steps, TUI, bounds, and displayed state remain separate boundaries."
+      ],
+      "input": {
+        "scenario": "ux.wpm-default-page-up-command-step-2-wpm-seed-12345",
+        "seed": 12345,
+        "initialWpm": 30,
+        "defaultWpmStep": 2,
+        "expectedAfterWpm": 32,
+        "runModeId": "rmSingle"
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatAvaloniaWpmStepTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 3,
+        "observedValuesSha256": "4f0ab5fb8858388f2e6afbdda97cd195da392162caba8c7fd64a12dd3b1cf7de",
+        "firstDivergence": "The zero-based first mismatch is expected in wpm-after-default-page-up. CE reaches 32 WPM, while the production Avalonia command initially reaches 31 WPM.",
+        "functionalDivergenceCode": "ux-WPM-default-page-up-step-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "ux-WPM-default-page-up-step-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/ux-wpm-default-page-up-command-step-2-wpm-seed-12345.json",
+      "evidence": "tests/parity/evidence/ux-wpm-default-page-up-command-step-2-wpm-seed-12345.baseline.json",
       "firstGreenCommit": null
     }
   ]

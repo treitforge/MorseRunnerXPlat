@@ -1769,6 +1769,15 @@ steps, reset, and displayed state remain separate acceptance boundaries.
 Production TUI now sends +50 Hz and -50 Hz for its default RIT actions; the
 positive action matches the pinned v45 observation exactly.
 
+The authored `ux.wpm-default-page-up-command-step-2-wpm-seed-12345` case
+isolates the default non-HST WPM step from startup defaults. Both targets begin
+an `rmSingle` session at 30 WPM. The v46 CE oracle verifies
+`Ini.WpmStepRate = 2` and invokes the real `TMainForm.FormKeyDown` PageUp path,
+which finishes at 32 WPM. Before implementation, the production Avalonia
+`SpeedUpCommand` reaches only 31 WPM through `IMorseRunnerClient`. Negative
+steps, HST rounding, persisted custom steps, TUI, bounds, and displayed state
+remain separate acceptance boundaries.
+
 ### 14.5 Device failure
 
 On unrecoverable physical-device failure:

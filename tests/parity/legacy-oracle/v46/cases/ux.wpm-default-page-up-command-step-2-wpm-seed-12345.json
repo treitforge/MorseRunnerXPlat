@@ -1,0 +1,8 @@
+{
+  "defaultWpmStep": 2,
+  "expectedAfterWpm": 32,
+  "initialWpm": 30,
+  "runModeId": "rmSingle",
+  "scenario": "ux.wpm-default-page-up-command-step-2-wpm-seed-12345",
+  "seed": 12345
+}

@@ -104,6 +104,7 @@ public sealed class ParityInfrastructureTests
                 "ux.enter-esm-partial-call-message-selection-live",
                 "ux.rit-default-up-command-step-50-hz-seed-12345",
                 "ux.tui-rit-default-up-command-step-50-hz-seed-12345",
+                "ux.wpm-default-page-up-command-step-2-wpm-seed-12345",
             ],
             ParityAcceptanceRegistry.AllIds,
             StringComparer.Ordinal);
@@ -150,6 +151,7 @@ public sealed class ParityInfrastructureTests
                 "ux.enter-esm-partial-call-message-selection-live",
                 "ux.rit-default-up-command-step-50-hz-seed-12345",
                 "ux.tui-rit-default-up-command-step-50-hz-seed-12345",
+                "ux.wpm-default-page-up-command-step-2-wpm-seed-12345",
             ],
             ParityAcceptanceRegistry.ActiveIds,
             StringComparer.Ordinal);
@@ -316,6 +318,11 @@ public sealed class ParityInfrastructureTests
             ParityAcceptanceRegistry
                 .Get(
                     "ux.tui-rit-default-up-command-step-50-hz-seed-12345")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatAvaloniaWpmStepTarget>(
+            ParityAcceptanceRegistry
+                .Get(
+                    "ux.wpm-default-page-up-command-step-2-wpm-seed-12345")
                 .CreateTarget(ParityTargetKind.XPlat)());
     }
 

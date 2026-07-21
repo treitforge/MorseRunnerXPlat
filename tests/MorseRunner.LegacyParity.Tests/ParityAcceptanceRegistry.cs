@@ -13,6 +13,16 @@ public static class ParityAcceptanceRegistry
         new Dictionary<string, ParityAcceptanceRegistration>(
             StringComparer.Ordinal)
         {
+            [XPlatAvaloniaWpmStepTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatAvaloniaWpmStepTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatAvaloniaWpmStepTarget),
+                    XPlatAvaloniaWpmStepTarget.FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = AvaloniaWpmStepInput.Parse(scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () => new XPlatAvaloniaWpmStepTarget()),
             [XPlatTuiRitUpStepTarget.ParityId] =
                 new ParityAcceptanceRegistration(
                     XPlatTuiRitUpStepTarget.ParityId,
