@@ -3,7 +3,7 @@
   "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
   "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
   "parityId": "audio.qsk-receiver-ducking-first-cq-block-seed-12345",
-  "referenceDefinitionSha256": "5177464a1f57b27880c444c865e0e072f37aa80a728e26ecf292d765db52edca",
+  "referenceDefinitionSha256": "663adf3bf230161abb923cf8b6651d394af1b99eab05efeafb696cb29992da23",
   "oracle": "tests/parity/legacy-oracle/v37/LegacyOracle.lpr",
   "legacyOracleVersionId": "legacy-oracle-v37",
   "oracleSourceSha256": "9b5614a2e5b84c1ca14323361ff2a61d609cbb541b0cbcf0871d0492af941ade",
