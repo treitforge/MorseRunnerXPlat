@@ -64,6 +64,35 @@ public sealed class RadioAndLoggingCommandTests
     }
 
     [Fact]
+    public async Task QskCanBeChangedAtARunningBoundary()
+    {
+        await using var engine = new MorseRunnerEngine();
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(12_345),
+            TestContext.Current.CancellationToken);
+        ClientId client = new("test");
+        Assert.True(
+            (await engine.ExecuteAsync(
+                new StartSessionCommand(
+                    RequestId.New(),
+                    handle.SessionId,
+                    client),
+                TestContext.Current.CancellationToken)).Accepted);
+
+        CommandResult enabled = await engine.ExecuteAsync(
+            new SetRadioConditionCommand(
+                RequestId.New(),
+                handle.SessionId,
+                client,
+                RadioCondition.Qsk,
+                Enabled: true),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(enabled.Accepted);
+        Assert.True(engine.GetSnapshot(handle.SessionId).QskEnabled);
+    }
+
+    [Fact]
     public async Task UnknownRadioConditionIsRejectedWithoutMutation()
     {
         await using var engine = new MorseRunnerEngine();

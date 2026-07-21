@@ -135,6 +135,7 @@ public sealed record AdjustRadioControlCommand(
 public enum RadioCondition
 {
     Qsb,
+    Qsk,
 }
 
 public sealed record SetRadioConditionCommand(

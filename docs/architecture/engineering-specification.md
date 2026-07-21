@@ -1096,6 +1096,12 @@ slider remains enabled while a session is running or paused, snaps to its
 five-dB ticks, and serializes semantic adjustments through
 `IMorseRunnerClient`. Setup-only station controls remain disabled.
 
+QSK is also an engine-owned runtime radio condition. Enable and disable
+commands are applied on the session loop before the next simulation block, and
+snapshots expose the current QSK state. The external transport appends
+`RADIO_CONDITION_MESSAGE_QSK` and `qsk_enabled`; both additions preserve older
+clients.
+
 #### Hosted control
 
 - Acquire control.
@@ -1677,9 +1683,12 @@ the fixed-off second block has hash
 while the runtime-on second block first diverges at sample 289 and has hash
 `d549ce119f5a1813f4c51196439c431c5830c5aec3e5f8b4be51dd49e930f356`.
 Both paths retain the ordinal-2048 random checkpoint `3f53fd06`. XPlat has no
-runtime QSK command yet, so retained red evidence must record the fixed-off
-second block for the requested runtime-on path before production support is
-added.
+runtime QSK command in the retained pre-implementation evidence, so that red
+record contains the fixed-off second block for the requested runtime-on path.
+Production now applies the semantic QSK condition on the session loop before
+the next block and matches the pinned CE runtime-on hash without changing the
+random checkpoint. Client transport carries the command and snapshot state;
+desktop and terminal runtime mutation remain pending.
 
 ### 14.5 Device failure
 

@@ -119,6 +119,23 @@ public sealed class GrpcTransportTests
     }
 
     [Fact]
+    public void SetQskConditionCommandRoundTripsWithoutLoss()
+    {
+        MorseRunner.Domain.SetRadioConditionCommand expected = new(
+            RequestId.New(),
+            SessionId.New(),
+            new ClientId("condition"),
+            RadioCondition.Qsk,
+            Enabled: true,
+            ExpectedRevision: 15);
+
+        SessionCommand actual = TransportMapper.ToDomain(
+            TransportMapper.ToTransport(expected));
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
     public void MonitorLevelCommandRoundTripsWithoutLoss()
     {
         AdjustRadioControlCommand expected = new(
@@ -384,6 +401,15 @@ public sealed class GrpcTransportTests
                 TestContext.Current.CancellationToken)).Accepted);
         Assert.True(
             (await client.ExecuteAsync(
+                new MorseRunner.Domain.SetRadioConditionCommand(
+                    RequestId.New(),
+                    sessionId,
+                    id,
+                    RadioCondition.Qsk,
+                    Enabled: true),
+                TestContext.Current.CancellationToken)).Accepted);
+        Assert.True(
+            (await client.ExecuteAsync(
                 new AdjustRadioControlCommand(
                     RequestId.New(),
                     sessionId,
@@ -438,6 +464,7 @@ public sealed class GrpcTransportTests
         Assert.Equal(expected.QsoCount, actual.QsoCount);
         Assert.Equal(expected.Score, actual.Score);
         Assert.Equal(expected.QsbEnabled, actual.QsbEnabled);
+        Assert.Equal(expected.QskEnabled, actual.QskEnabled);
         Assert.Equal(
             expected.CurrentMonitorLevelDb,
             actual.CurrentMonitorLevelDb);

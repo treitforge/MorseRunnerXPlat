@@ -135,6 +135,7 @@ internal sealed class EngineSession : IAsyncDisposable
     private int _ritOffsetHz;
     private double _currentMonitorLevelDb;
     private bool _qsbEnabled;
+    private bool _qskEnabled;
     private float _ritPhase;
     private int _qsoCount;
     private int _qsoCountSinceStationId;
@@ -215,6 +216,7 @@ internal sealed class EngineSession : IAsyncDisposable
         _currentWordsPerMinute = settings.WordsPerMinute;
         _currentBandwidthHz = settings.BandwidthHz;
         _qsbEnabled = settings.Qsb;
+        _qskEnabled = settings.Qsk;
         _toneRenderer = new(
             CompatibilityProfile.SampleRate,
             CompatibilityProfile.BlockSize,
@@ -1120,7 +1122,7 @@ internal sealed class EngineSession : IAsyncDisposable
             || _settings.Qrm
             || _settings.Qrn
             || _settings.Flutter
-            || _settings.Qsk
+            || _qskEnabled
             || _settings.Lids
             || _stations.Count != 0
             || _hasCreatedStation
@@ -1322,7 +1324,7 @@ internal sealed class EngineSession : IAsyncDisposable
                     _receiverReal,
                     _receiverImaginary,
                     _qsbEnabled,
-                    mixOutput: _settings.Qsk || !operatorIsSending);
+                    mixOutput: _qskEnabled || !operatorIsSending);
             }
             _ritPhase = LegacyStationMixer.AdvanceRitPhase(
                 _ritPhase,
@@ -1531,7 +1533,7 @@ internal sealed class EngineSession : IAsyncDisposable
             return;
         }
 
-        if (!_settings.Qsk)
+        if (!_qskEnabled)
         {
             for (int index = 0; index < _operatorBuffer.Length; index++)
             {
@@ -2248,6 +2250,9 @@ internal sealed class EngineSession : IAsyncDisposable
             case RadioCondition.Qsb:
                 _qsbEnabled = command.Enabled;
                 break;
+            case RadioCondition.Qsk:
+                _qskEnabled = command.Enabled;
+                break;
             default:
                 return RejectedResult(
                     DomainErrorCodes.InvalidSetting,
@@ -2685,7 +2690,8 @@ internal sealed class EngineSession : IAsyncDisposable
             QsoRateCalculator.Calculate(_completedQsos, elapsed),
             activeStations,
             _qsbEnabled,
-            _currentMonitorLevelDb);
+            _currentMonitorLevelDb,
+            _qskEnabled);
     }
 
     private void FailPendingCommands(Exception exception)

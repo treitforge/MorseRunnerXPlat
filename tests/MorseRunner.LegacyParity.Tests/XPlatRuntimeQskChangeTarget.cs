@@ -72,7 +72,6 @@ public sealed class XPlatRuntimeQskChangeTarget : IParityTarget
         bool runtimeEnableAfterFirstBlock,
         CancellationToken cancellationToken)
     {
-        _ = runtimeEnableAfterFirstBlock;
         var sink = new StrictCaptureAudioSink(
             input.SampleRate,
             input.BlockSize);
@@ -93,7 +92,7 @@ public sealed class XPlatRuntimeQskChangeTarget : IParityTarget
             PitchHz = input.PitchHz,
             BandwidthHz = input.BandwidthHz,
             Activity = 1,
-            Qsk = false,
+            Qsk = input.InitialQsk,
             Qsb = false,
             Qrm = false,
             Qrn = false,
@@ -144,10 +143,25 @@ public sealed class XPlatRuntimeQskChangeTarget : IParityTarget
             || firstSnapshot.RenderedSamples != input.BlockSize
             || firstSnapshot.CurrentMonitorLevelDb
                 != input.MonitorLevelDb
+            || firstSnapshot.QskEnabled
             || sink.BlockCount != 1)
         {
             throw new InvalidOperationException(
                 "The XPlat runtime QSK session left its first-CQ boundary.");
+        }
+
+        if (runtimeEnableAfterFirstBlock)
+        {
+            await RequireAcceptedAsync(
+                engine,
+                new SetRadioConditionCommand(
+                    RequestId.New(),
+                    handle.SessionId,
+                    ParityClient,
+                    RadioCondition.Qsk,
+                    Enabled: true),
+                "runtime enable",
+                cancellationToken);
         }
 
         await RequireAcceptedAsync(
@@ -166,7 +180,8 @@ public sealed class XPlatRuntimeQskChangeTarget : IParityTarget
             || snapshot.RenderedSamples != input.BlockSize * 2L
             || snapshot.ActiveStations is not { Count: 0 }
             || snapshot.LastOperatorMessage != input.MessageText
-            || snapshot.CurrentMonitorLevelDb != input.MonitorLevelDb)
+            || snapshot.CurrentMonitorLevelDb != input.MonitorLevelDb
+            || snapshot.QskEnabled != runtimeEnableAfterFirstBlock)
         {
             throw new InvalidOperationException(
                 "The XPlat runtime QSK session left its second-CQ boundary.");

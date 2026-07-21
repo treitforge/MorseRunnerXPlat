@@ -228,6 +228,7 @@ message RadioControlCommand {
 enum RadioConditionMessage {
   RADIO_CONDITION_MESSAGE_UNSPECIFIED = 0;
   RADIO_CONDITION_MESSAGE_QSB = 1;
+  RADIO_CONDITION_MESSAGE_QSK = 2;
 }
 
 message SetRadioConditionCommand {
@@ -325,6 +326,7 @@ message SessionSnapshotMessage {
   repeated ActiveStationMessage active_stations = 27;
   bool qsb_enabled = 28;
   double current_monitor_level_db = 29;
+  bool qsk_enabled = 30;
 }
 
 message ActiveStationMessage {
