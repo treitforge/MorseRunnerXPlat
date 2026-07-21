@@ -1,0 +1,8 @@
+{
+  "scenario": "contest.jarl-call-history-truth-column-mapping",
+  "seed": 12345,
+  "vectors": [
+    {"contestId": "scAllJa"},
+    {"contestId": "scAcag"}
+  ]
+}

@@ -445,6 +445,7 @@
         "contest.dynamic-exchange-type-locality-matrix",
         "contest.invalid-own-exchange-messages-ce-order",
         "contest.own-exchange-tokenization-boundaries",
+        "contest.jarl-call-history-truth-column-mapping",
         "engine.contest-specific-cq-tu-station-id-seed-12345"
       ]
     },
@@ -734,7 +735,7 @@
     {"id": "engine.contest-specific-cq-tu-and-station-id", "capabilityId": "contest.legacy-implementations", "behavior": "CQ, TU, operator call insertion, and periodic station-ID messages match each CE contest.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Contest.pas", "MyStn.pas", "CWOPS.pas", "ArrlFd.pas", "CWSST.pas", "ArrlSS.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.settings.stationidrate", "legacy.sim.routine.contest.tcontest.sendmsg", "legacy.sim.routine.contest.tcontest.onmefinishedsending", "legacy.sim.routine.contest.tcontest.onsaveqsocomplete", "legacy.sim.routine.contest.tcontest.onstationidsent", "legacy.sim.routine.mystn.tmystation.sendtext", "legacy.support.contest.routine.cwops.tcwops.sendmsg", "legacy.support.contest.routine.arrlfd.tarrlfieldday.sendmsg", "legacy.support.contest.routine.cwsst.tcwsst.sendmsg", "legacy.support.contest.routine.arrlss.tsweepstakes.sendmsg"], "acceptanceStatus": "partial", "caseIds": ["engine.contest-specific-cq-tu-station-id-seed-12345"]},
     {"id": "contest.full-remote-exchange-formatting", "capabilityId": "contest.legacy-implementations", "behavior": "Remote exchanges retain and format every CE contest identity field, cut number, repeat, and correction variant.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "Station.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getexchangetypes", "legacy.sim.routine.contest.tcontest.getsentexchtypes", "legacy.sim.routine.station.tstation.nrastext"], "acceptanceStatus": "partial", "caseIds": ["contest.cwt-remote-exchange-format-seed-12345", "contest.default-two-field-remote-exchange-format-seed-12345", "contest.arrldx-high-r1-power-remote-exchange-format-seed-12345", "contest.full-cut-numeric-remote-exchange-format-seed-12345", "contest.jarl-random-cut-remote-exchange-format-seed-12345", "contest.cqww-random-consumption-remote-exchange-format-seed-12345", "contest.lid-serial-correction-remote-exchange-format-seed-16", "contest.rare-rst-error-remote-exchange-format-seed-12345", "contest.hst-remote-exchange-format-seed-12345", "contest.naqp-remote-exchange-format-seed-12345", "contest.fieldday-remote-exchange-format-seed-12345", "contest.sst-remote-exchange-format-seed-12345", "contest.sweepstakes-remote-exchange-format-seed-12345", "contest.wpx-midcontest-remote-exchange-format-seed-12345"]},
     {"id": "contest.required-exchange-fields-all-contests", "capabilityId": "contest.legacy-implementations", "behavior": "CWT, SST, Field Day, NAQP, Sweepstakes, WPX, HST, and all other contests include every required CE exchange field.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["ArrlSS.pas"], "legacySurfaceSelectors": ["legacy.support.contest.routine.arrlss.tsweepstakes.validatemyexchange"], "acceptanceStatus": "partial", "caseIds": ["contest.invalid-own-exchange-messages-ce-order", "contest.own-exchange-tokenization-boundaries"]},
-    {"id": "contest.allja-acag-truth-column-mapping", "capabilityId": "contest.legacy-implementations", "behavior": "ALLJA and ACAG station truth use the correct CE data columns without serial fallback.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "contest.allja-acag-truth-column-mapping", "capabilityId": "contest.legacy-implementations", "behavior": "ALLJA and ACAG station truth use the correct CE data columns without serial fallback.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "ALLJA.pas", "ACAG.pas"], "legacySurfaceSelectors": ["legacy.ini.contest.*", "legacy.support.contest.routine.allja.tallja.getexch1", "legacy.support.contest.routine.allja.tallja.getexch2", "legacy.support.contest.routine.allja.tallja.loadcallhistory", "legacy.support.contest.routine.allja.tallja.pickstation", "legacy.support.contest.routine.acag.tacag.getexch1", "legacy.support.contest.routine.acag.tacag.getexch2", "legacy.support.contest.routine.acag.tacag.loadcallhistory", "legacy.support.contest.routine.acag.tacag.pickstation"], "acceptanceStatus": "partial", "caseIds": ["contest.jarl-call-history-truth-column-mapping"]},
     {"id": "contest.sweepstakes-complete-truth-model", "capabilityId": "contest.legacy-implementations", "behavior": "Sweepstakes models serial, weighted precedence, own call, check, section, copied values, truth, and errors.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.arrldx-naqp-home-filtering-and-location", "capabilityId": "contest.legacy-implementations", "behavior": "ARRL DX and NAQP apply CE home-call filtering and dynamic location or exchange derivation.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["DualExchContest.pas", "ArrlDx.pas", "NaQp.pas"], "legacySurfaceSelectors": ["legacy.support.contest.routine.dualexchcontest.tdualexchcontest.getexchangetypes", "legacy.support.contest.routine.arrldx.tarrldx.onsetmycall", "legacy.support.contest.routine.naqp.tncjnaqp.getexchangetypes", "legacy.support.contest.routine.naqp.tncjnaqp.iscalllocaltocontest", "legacy.support.contest.routine.naqp.tncjnaqp.onsetmycall"], "acceptanceStatus": "partial", "caseIds": ["contest.dynamic-exchange-type-locality-matrix"]},
     {"id": "contest.wpx-hst-station-serial-generation", "capabilityId": "contest.legacy-implementations", "behavior": "WPX and HST station serials use CE elapsed-time, skill, and random behavior.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Station.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.station.serialnrcustomrange", "legacy.sim.routine.station.tstation.nrastext"], "acceptanceStatus": "partial", "caseIds": ["contest.wpx-custom-range-remote-exchange-format-seed-12345"]},
@@ -5422,6 +5423,76 @@
       "failureCode": "contest-dynamic-exchange-type-locality-mismatch",
       "fixture": "tests/parity/fixtures/legacy/contest-dynamic-exchange-type-locality-matrix.json",
       "evidence": "tests/parity/evidence/contest-dynamic-exchange-type-locality-matrix.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "contest.jarl-call-history-truth-column-mapping",
+      "capabilityId": "contest.legacy-implementations",
+      "obligationIds": [
+        "contest.allja-acag-truth-column-mapping"
+      ],
+      "behavior": "For one identical seeded call-history selection per JARL contest, CE maps the selected call's stored prefecture or city-power value to exchange field 2 while exchange field 1 remains 599.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v67",
+        "source": "tests/parity/legacy-oracle/v67/LegacyOracle.lpr",
+        "sourceSha256": "4502487514d075f97389a5b9bd2630ea87ca8e5e8f17cef84d4747aa268991f4",
+        "buildRecipe": "tests/parity/legacy-oracle/v67/build-recipe.json",
+        "buildRecipeSha256": "e4cc444d03fc7dbc0cecda825ccc059aed9fa0186e90a73675615b3e059e4165"
+      },
+      "legacySources": [
+        "Ini.pas",
+        "ALLJA.pas",
+        "ACAG.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.ini.contest.*",
+        "legacy.support.contest.routine.allja.tallja.getexch1",
+        "legacy.support.contest.routine.allja.tallja.getexch2",
+        "legacy.support.contest.routine.allja.tallja.loadcallhistory",
+        "legacy.support.contest.routine.allja.tallja.pickstation",
+        "legacy.support.contest.routine.acag.tacag.getexch1",
+        "legacy.support.contest.routine.acag.tacag.getexch2",
+        "legacy.support.contest.routine.acag.tacag.loadcallhistory",
+        "legacy.support.contest.routine.acag.tacag.pickstation"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The live v67 oracle selects and verifies the real ActiveContest before creating each contest implementation.",
+        "Each contest loads its pinned call-history file and resets RandSeed to 12345 immediately before its single PickStation call.",
+        "The XPlat target loads the packaged copy of the same call-history file and performs the same first LegacyRandom draw.",
+        "Message cutting, multiplier extraction, status-bar user text, and malformed call-history rows remain separate boundaries."
+      ],
+      "input": {
+        "scenario": "contest.jarl-call-history-truth-column-mapping",
+        "seed": 12345,
+        "vectors": [
+          {"contestId": "scAllJa"},
+          {"contestId": "scAcag"}
+        ]
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatJarlTruthColumnMappingTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 2,
+        "observedValuesSha256": "5f5cea85c5b108c55bceba941d9ffe5257696e3560206d2d7be2ea5af89dbc22",
+        "firstDivergence": "The zero-based first mismatch is expected in row 0. CE maps the ALL JA history value to exchange field 2 and returns 599 in exchange field 1, while XPlat initially places the history value in exchange field 1 and falls back to a generated serial in field 2.",
+        "functionalDivergenceCode": "contest-jarl-truth-column-mapping-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "contest-jarl-truth-column-mapping-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/contest-jarl-call-history-truth-column-mapping.json",
+      "evidence": "tests/parity/evidence/contest-jarl-call-history-truth-column-mapping.baseline.json",
       "firstGreenCommit": null
     }
   ]

@@ -1402,6 +1402,13 @@ DX it applies CE's home-locality, simulated-station, and received-message XOR.
 For NAQP it classifies the sending callsign, using a non-empty remote callsign
 for received-message queries. UX clients do not reproduce either contest rule.
 
+The schema-v3 `contest.jarl-call-history-truth-column-mapping` case runs one
+seeded call-history selection for ALL JA and ACAG through `legacy-oracle-v67`.
+It pins the selected callsign and verifies that exchange field 1 is 599 while
+the stored prefecture or city-power value occupies exchange field 2. The case
+resets the same seed immediately before each contest's first selection so it
+does not mix truth-column mapping with later random formatting behavior.
+
 ### 13.4 Extensibility
 
 New built-in contests register through a catalog. Runtime plug-in loading is

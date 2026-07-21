@@ -94,6 +94,7 @@ public sealed class ParityInfrastructureTests
                 "contest.full-cut-numeric-remote-exchange-format-seed-12345",
                 "contest.hst-remote-exchange-format-seed-12345",
                 "contest.invalid-own-exchange-messages-ce-order",
+                "contest.jarl-call-history-truth-column-mapping",
                 "contest.jarl-random-cut-remote-exchange-format-seed-12345",
                 "contest.lid-serial-correction-remote-exchange-format-seed-16",
                 "contest.naqp-remote-exchange-format-seed-12345",
@@ -161,6 +162,7 @@ public sealed class ParityInfrastructureTests
                 "contest.full-cut-numeric-remote-exchange-format-seed-12345",
                 "contest.hst-remote-exchange-format-seed-12345",
                 "contest.invalid-own-exchange-messages-ce-order",
+                "contest.jarl-call-history-truth-column-mapping",
                 "contest.jarl-random-cut-remote-exchange-format-seed-12345",
                 "contest.lid-serial-correction-remote-exchange-format-seed-16",
                 "contest.naqp-remote-exchange-format-seed-12345",
@@ -201,6 +203,10 @@ public sealed class ParityInfrastructureTests
     [Trait("Category", "ParityInfrastructure")]
     public void CaseIdSelectsItsExactXPlatAdapter()
     {
+        Assert.IsType<XPlatJarlTruthColumnMappingTarget>(
+            ParityAcceptanceRegistry
+                .Get("contest.jarl-call-history-truth-column-mapping")
+                .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatDynamicExchangeTypeLocalityTarget>(
             ParityAcceptanceRegistry
                 .Get("contest.dynamic-exchange-type-locality-matrix")
