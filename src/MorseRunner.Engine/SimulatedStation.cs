@@ -13,9 +13,9 @@ public sealed class SimulatedStation
     private readonly int _customSerialNumberMinimum;
     private readonly int _customSerialNumberMinimumDigits;
     private readonly QsbProcessor? _qsb;
+    private readonly LegacyStationMixer _mixer;
     private readonly float[] _scratch =
         new float[CompatibilityProfile.BlockSize];
-    private double _bfoPhase;
     private int _timeoutBlocks = int.MaxValue;
     private bool _numberWithError;
     private bool _transmissionCompletedInRenderedBlock;
@@ -60,6 +60,7 @@ public sealed class SimulatedStation
             wordsPerMinute,
             carrierFrequency: 600f,
             gain: 1f);
+        _mixer = new(CompatibilityProfile.SampleRate);
     }
 
     public StationIdentity Identity { get; }
@@ -122,6 +123,7 @@ public sealed class SimulatedStation
             wordsPerMinute,
             carrierFrequency: 600f,
             gain: 1f);
+        _mixer = new(CompatibilityProfile.SampleRate);
     }
 
     internal static SimulatedStation CreateCandidate(
@@ -326,6 +328,8 @@ public sealed class SimulatedStation
         Span<float> receiverReal,
         Span<float> receiverImaginary,
         bool qsbEnabled,
+        int ritOffsetHz,
+        float ritPhase,
         bool mixOutput = true,
         Span<float> envelopeObservation = default)
     {
@@ -360,26 +364,17 @@ public sealed class SimulatedStation
 
         if (mixOutput)
         {
-            double phaseStep =
-                2d * Math.PI * PitchOffsetHz
-                / CompatibilityProfile.SampleRate;
-            for (int index = 0; index < receiverReal.Length; index++)
+            for (int index = 0; index < _scratch.Length; index++)
             {
-                float amplitude = _scratch[index] * Amplitude;
-                receiverReal[index] +=
-                    amplitude * (float)Math.Cos(_bfoPhase);
-                receiverImaginary[index] -=
-                    amplitude * (float)Math.Sin(_bfoPhase);
-                _bfoPhase += phaseStep;
-                if (_bfoPhase >= 2d * Math.PI)
-                {
-                    _bfoPhase -= 2d * Math.PI;
-                }
-                else if (_bfoPhase <= -2d * Math.PI)
-                {
-                    _bfoPhase += 2d * Math.PI;
-                }
+                _scratch[index] *= Amplitude;
             }
+
+            _mixer.MixBlock(
+                _scratch,
+                receiverReal,
+                receiverImaginary,
+                ritOffsetHz,
+                ritPhase);
         }
 
         _transmissionCompletedInRenderedBlock =
@@ -395,6 +390,7 @@ public sealed class SimulatedStation
                 "The station already has a pending transmission.");
         }
 
+        _mixer.BeginTransmission(PitchOffsetHz);
         _renderer.LoadMessage(message);
         State = StationState.Sending;
         _timeoutBlocks = int.MaxValue;
@@ -489,6 +485,7 @@ public sealed class SimulatedStation
         string message = string.Join(
             ' ',
             Enumerable.Repeat(LastReplyText, Operator.RepeatCount));
+        _mixer.BeginTransmission(PitchOffsetHz);
         _renderer.LoadMessage(message);
         State = StationState.Sending;
         _timeoutBlocks = int.MaxValue;

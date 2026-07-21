@@ -1246,6 +1246,8 @@ internal sealed class EngineSession : IAsyncDisposable
                 receiverReal,
                 receiverImaginary,
                 _qsbEnabled,
+                ritOffsetHz: 0,
+                ritPhase: 0f,
                 mixOutput: false,
                 envelopeObservation: block);
             blocks[blockIndex] = block;
@@ -1435,6 +1437,8 @@ internal sealed class EngineSession : IAsyncDisposable
                     _receiverReal,
                     _receiverImaginary,
                     _qsbEnabled,
+                    _ritOffsetHz,
+                    _ritPhase,
                     mixOutput: _qskEnabled || !operatorIsSending);
             }
             _ritPhase = LegacyStationMixer.AdvanceRitPhase(

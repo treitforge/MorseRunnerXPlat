@@ -1723,8 +1723,12 @@ The fixed-0 Hz second block has hash
 The runtime-+50 Hz block first diverges at sample 152 and has hash
 `2b2ce5e6e0c58f1ab1813a1c7727088a50aae43e3f7f69aba07d1a34401bef0c`.
 Both paths retain the ordinal-2048 random checkpoint `3f53fd06`. The authored
-XPlat target accepts and snapshots the semantic RIT command, but the normal
-`SimulatedStation` render path does not yet apply RIT. Negative offsets, clamp
+XPlat target now applies the semantic RIT command to normal callers through the
+shared `LegacyStationMixer`. Caller transmission start resets the binary32 BFO
+phase, each caller block uses CE's binary32 phase accumulation and binary64
+trigonometric evaluation, and the session supplies the shared block-start RIT
+phase. The common, fixed-0 Hz, and runtime-+50 Hz hashes, first divergence, and
+random checkpoint match the pinned CE values exactly. Negative offsets, clamp
 and step variants, reset, multiple stations, transport, and UX mutation remain
 separate acceptance boundaries.
 
@@ -3115,11 +3119,11 @@ session render path.
 advances it with the CE positive-only wrap, preserves the binary32
 `BFO - RitPhase` intermediate, evaluates the per-sample RIT term and separate
 cosine and sine contributions in binary64, and casts each receiver
-accumulation once to binary32. All QRM sources use the same block-start RIT
-phase. The session advances and wraps RIT once after chronological source
-mixing and before local-monitor and receiver processing. Applying that shared
-RIT phase to normal caller and QRN sources remains a broader receiver-mixing
-parity item.
+accumulation once to binary32. QRM and normal caller sources use the same
+block-start RIT phase and mixer arithmetic. The session advances and wraps RIT
+once after chronological source mixing and before local-monitor and receiver
+processing. Applying that shared RIT phase to QRN sources and certifying
+multi-source interaction remain broader receiver-mixing parity items.
 
 The QRM pool is sized before rendering from the active catalog and actual
 operator callsign. If `BLong` is the maximum 30-WPM padded long-CQ block count
