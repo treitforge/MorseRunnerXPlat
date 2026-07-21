@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "5e81bc732281aff950569d2661c0e3dde03c98ea",
+      "tree": "83a180874efda390f25f7170f8db4ef2fad8f4ba",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "ux.wpm-custom-page-up-command-step-7-wpm-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "ux.wpm-custom-page-up-command-step-7-wpm-seed-12345",
+      "acceptanceTestName": "parity:ux.wpm-custom-page-up-command-step-7-wpm-seed-12345()",
+      "target": "xplat",
+      "adapter": "XPlatAvaloniaCustomWpmStepTarget",
+      "caseDefinitionSha256": "38d2802df5d84f38343f258b8675068fedad1749fc2d4c3078fec17c5fc38fae",
+      "fixtureSha256": "18b6e1b89218e51b7f5c171704200ef15712e4fb957fe81a584a41ef9281b2f2",
+      "outcome": "functional-divergence",
+      "failureCode": "ux-WPM-custom-page-up-step-mismatch",
+      "evidenceSource": "MorseRunner.Infrastructure.SettingsStore.LoadAsync\u002BMorseRunner.App.ViewModels.MainWindowViewModel.SpeedUpCommand\u002BMorseRunner.Client.InProcessMorseRunnerClient\u002BMorseRunner.Engine.EngineSession.ApplyRadioControl",
+      "observedValues": [
+        "configuration|run-mode=rmSingle|seed=12345|initial-wpm=30|custom-step-wpm=7|action=page-up|handler=TMainForm.FormKeyDown",
+        "wpm-before|wpm=30",
+        "wpm-after-custom-page-up|wpm=32|delta-wpm=2"
+      ],
+      "observedValueCount": 3,
+      "observedValuesSha256": "c0c566e96e0425aa1baa74e45e614342e3088124242ac35b7496cd914d877184",
+      "firstDivergence": {
+        "index": 2,
+        "expected": "wpm-after-custom-page-up|wpm=37|delta-wpm=7",
+        "actual": "wpm-after-custom-page-up|wpm=32|delta-wpm=2"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}
