@@ -2710,6 +2710,19 @@ order. Other checkpoints, repeated formatter calls, higher-`R1` ARRL DX
 power, missing fields, repeats, correction variants, LID errors, and random
 reply prefixes remain within the partial obligation.
 
+The authored `contest.rare-rst-error-remote-exchange-format-seed-12345`
+case extends the formatter's random boundary through CE's non-HST remote RST
+error decision. Its pinned CE v34 adapter starts IARU HF headquarters exchange
+formatting after five raw draws. Draw six is below 0.05, so CE replaces `599`
+with `ENN` and emits `ENN ARRL`. Retained red evidence records
+`contest-rare-rst-error-remote-exchange-format-mismatch`, where XPlat emitted
+`5NN ARRL` without consuming the decision draw. Production IARU HF formatting
+now retains the station-owned random stream, consumes the RST decision once,
+and applies `ENN` before the ordinary `5NN` replacement. IARU numeric
+exchanges, other RST checkpoints, repeated formatter calls, missing fields,
+repeats, correction variants, LID errors, and random reply prefixes remain
+within the partial obligation.
+
 The authored `contest.naqp-remote-exchange-format-seed-12345` case extends
 that obligation through the nonempty NAQP name and location branch. Its pinned
 CE v23 adapter uses the same protected `TStation.NrAsText` observation boundary

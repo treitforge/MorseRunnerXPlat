@@ -534,7 +534,7 @@ public sealed class SimulatedStation
 
         if (_contestId.Value == "scIaruHf")
         {
-            return $"{ToCutNumbers(Identity.Rst)} {Identity.Exchange2}";
+            return FormatIaruHfExchange();
         }
 
         if (_contestId.Value == "scHst")
@@ -646,6 +646,22 @@ public sealed class SimulatedStation
         return R1 < 0.70f
             ? ToFullCutNumbers(result)
             : result;
+    }
+
+    private string FormatIaruHfExchange()
+    {
+        string result = $"{Identity.Exchange1} {Identity.Exchange2}";
+        if (Operator.RunMode == OperatorRunMode.Hst)
+        {
+            return result;
+        }
+
+        if (_random.NextDouble() < 0.05d)
+        {
+            result = result.Replace("599", "ENN", StringComparison.Ordinal);
+        }
+
+        return result.Replace("599", "5NN", StringComparison.Ordinal);
     }
 
     internal string ObserveExchangeForParity()

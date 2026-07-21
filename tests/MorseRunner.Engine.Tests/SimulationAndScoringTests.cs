@@ -246,6 +246,31 @@ public sealed class SimulationAndScoringTests
         Assert.Equal("5NN 1TT", station.ObserveExchangeForParity());
     }
 
+    [Fact]
+    public void IaruHeadquartersExchangeUsesRareRemoteRstErrorDraw()
+    {
+        var random = new LegacyRandom(12_345);
+        var station = new SimulatedStation(
+            new StationIdentity(
+                "DL1ABC",
+                "599",
+                Number: 0,
+                "599",
+                "ARRL"),
+            wordsPerMinute: 25,
+            pitchOffsetHz: 0,
+            random,
+            OperatorRunMode.Pileup,
+            contestId: new("scIaruHf"));
+        for (int draw = 2; draw < 5; draw++)
+        {
+            _ = random.NextDouble();
+        }
+
+        Assert.Equal("ENN ARRL", station.ObserveExchangeForParity());
+        Assert.Equal(0.20456027938053012d, random.NextDouble());
+    }
+
     [Theory]
     [InlineData("CO", "DAVID CO")]
     [InlineData("", "DAVID")]
