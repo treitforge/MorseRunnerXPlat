@@ -1880,6 +1880,16 @@ boundaries. Production Avalonia now loads and clamps
 PageUp, and preserves it when settings are saved. HST continues to use its
 five-WPM boundary calculation independently of the persisted step.
 
+The authored `ux.tui-wpm-custom-page-up-command-step-7-wpm-seed-12345`
+case applies the same persisted custom step to the production terminal
+client. Both targets start `rmSingle` at 30 WPM with `WpmStepRate` configured
+as 7. The v56 CE oracle reaches 37 WPM through the real
+`TMainForm.FormKeyDown` PageUp path. Before implementation, the production
+TUI settings path ignores `Settings.WpmStepRate`, so the SpeedUp action uses
+its fixed two-WPM default and reaches 32 WPM. PageDown, malformed or
+out-of-range setting clamps, HST precedence, and direct menu choices remain
+separate acceptance boundaries.
+
 ### 14.5 Device failure
 
 On unrecoverable physical-device failure:

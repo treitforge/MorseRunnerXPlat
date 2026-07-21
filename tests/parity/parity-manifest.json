@@ -201,6 +201,7 @@
         "ux.enter-esm-partial-call-message-selection-live",
         "ux.rit-default-up-command-step-50-hz-seed-12345",
         "ux.tui-rit-default-up-command-step-50-hz-seed-12345",
+        "ux.tui-wpm-custom-page-up-command-step-7-wpm-seed-12345",
         "ux.wpm-default-page-up-command-step-2-wpm-seed-12345",
         "ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345",
         "ux.tui-wpm-hst-page-down-rounds-33-to-30-seed-12345",
@@ -849,7 +850,7 @@
     {"id": "settings.all-supported-ce-keys-consumed-or-preserved", "capabilityId": "configuration.persisted-settings", "behavior": "Every supported CE key is consumed with equivalent semantics or preserved losslessly across import, save, and restart.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "release.cli-help-version-exit-codes", "capabilityId": "build.legacy-project-metadata", "behavior": "CLI help, version, validation failures, runtime failures, and successful commands expose stable documented output and exit codes in packaged builds.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "lifecycle.unit-initialization-finalization-order", "capabilityId": "lifecycle.legacy-unit-hooks", "behavior": "Legacy initialization and finalization hooks execute with equivalent order, registration, cleanup, state, and failures.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "ux.wpm-default-page-up-step", "capabilityId": "ux.keyboard-workflows", "behavior": "The default non-HST PageUp workflow applies CE's persisted WPM step to authoritative engine state.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.settings.wpmsteprate", "legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-default-page-up-command-step-2-wpm-seed-12345", "ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345", "ux.wpm-custom-page-up-command-step-7-wpm-seed-12345"]},
+    {"id": "ux.wpm-default-page-up-step", "capabilityId": "ux.keyboard-workflows", "behavior": "The default non-HST PageUp workflow applies CE's persisted WPM step to authoritative engine state.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.settings.wpmsteprate", "legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-default-page-up-command-step-2-wpm-seed-12345", "ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345", "ux.wpm-custom-page-up-command-step-7-wpm-seed-12345", "ux.tui-wpm-custom-page-up-command-step-7-wpm-seed-12345"]},
     {"id": "ux.wpm-upper-range-and-clamp", "capabilityId": "ux.keyboard-workflows", "behavior": "The CW-speed input and live PageUp workflow expose and enforce CE's 120 WPM upper bound.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.dfm", "Main.lfm", "Main.pas"], "legacySurfaceSelectors": ["legacy.main.object.spinedit1", "legacy.form.lfm.main.object.spinedit1", "legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-upper-clamp-extra-page-up-from-118-seed-12345", "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345"]},
     {"id": "ux.wpm-lower-range-and-clamp", "capabilityId": "ux.keyboard-workflows", "behavior": "Every CW-speed setup workflow enforces CE's 10 WPM lower bound.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.dfm", "Main.lfm", "Main.pas"], "legacySurfaceSelectors": ["legacy.main.object.spinedit1", "legacy.form.lfm.main.object.spinedit1"], "acceptanceStatus": "partial", "caseIds": ["ux.tui-wpm-setup-lower-clamp-decrement-from-10-seed-12345"]},
     {"id": "ux.wpm-hst-five-wpm-rounding", "capabilityId": "ux.keyboard-workflows", "behavior": "HST PageUp and PageDown workflows round CW speed outward to CE's adjacent five-WPM boundary.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.pas"], "legacySurfaceSelectors": ["legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-hst-page-up-rounds-32-to-35-seed-12345", "ux.tui-wpm-hst-page-up-rounds-32-to-35-seed-12345", "ux.wpm-hst-page-down-rounds-33-to-30-seed-12345", "ux.tui-wpm-hst-page-down-rounds-33-to-30-seed-12345"]}
@@ -4713,6 +4714,67 @@
       "failureCode": "ux-WPM-custom-page-up-step-mismatch",
       "fixture": "tests/parity/fixtures/legacy/ux-wpm-custom-page-up-command-step-7-wpm-seed-12345.json",
       "evidence": "tests/parity/evidence/ux-wpm-custom-page-up-command-step-7-wpm-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "ux.tui-wpm-custom-page-up-command-step-7-wpm-seed-12345",
+      "capabilityId": "ux.keyboard-workflows",
+      "obligationIds": [
+        "ux.wpm-default-page-up-step"
+      ],
+      "behavior": "From 30 WPM in a CQ WPX rmSingle session, one CE PageUp action and the production TUI SpeedUp action both apply a persisted custom 7 WPM step and finish at 37 WPM.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v56",
+        "source": "tests/parity/legacy-oracle/v56/LegacyOracle.lpr",
+        "sourceSha256": "844570e1897d9c8ba0b34e1fcb4c25b65c85cf9bce19146ee97ca40856be7d9a",
+        "buildRecipe": "tests/parity/legacy-oracle/v56/build-recipe.json",
+        "buildRecipeSha256": "c2530a32153232f9f63f2226837111d4826b7dcb3543cc7ddf5891837fc387b3"
+      },
+      "legacySources": [
+        "Ini.pas",
+        "Main.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.ini.setting.settings.wpmsteprate",
+        "legacy.main.handler.formkeydown"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The CE target creates a fresh handleless CQ WPX rmSingle runtime, configures WpmStepRate to 7, sets WPM to 30, and invokes the real TMainForm.FormKeyDown PageUp path once.",
+        "Before implementation, the XPlat target loads Settings.WpmStepRate as 7 through the production TUI settings path, starts an rmSingle session at 30 WPM, executes the real TuiApplication SpeedUp action once, and observes authoritative WPM state.",
+        "This case pins the positive TUI custom-step workflow. PageDown, malformed or out-of-range setting clamps, HST precedence, and direct menu choices remain separate boundaries."
+      ],
+      "input": {
+        "scenario": "ux.tui-wpm-custom-page-up-command-step-7-wpm-seed-12345",
+        "seed": 12345,
+        "initialWpm": 30,
+        "customWpmStep": 7,
+        "expectedAfterWpm": 37,
+        "runModeId": "rmSingle"
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatTuiCustomWpmStepTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 3,
+        "observedValuesSha256": "2420a3667f373eb9c55692dbfd50a92ce95427414a48447602bde901fe53c402",
+        "firstDivergence": "The zero-based first mismatch is expected in wpm-after-custom-page-up. CE reaches 37 WPM, while the production TUI action initially reaches 32 WPM.",
+        "functionalDivergenceCode": "ux-TUI-WPM-custom-page-up-step-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "ux-TUI-WPM-custom-page-up-step-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/ux-tui-wpm-custom-page-up-command-step-7-wpm-seed-12345.json",
+      "evidence": "tests/parity/evidence/ux-tui-wpm-custom-page-up-command-step-7-wpm-seed-12345.baseline.json",
       "firstGreenCommit": null
     }
   ]
