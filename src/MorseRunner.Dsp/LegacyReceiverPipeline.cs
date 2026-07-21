@@ -3,6 +3,8 @@ namespace MorseRunner.Dsp;
 public sealed class LegacyReceiverPipeline
 {
     private const float Pcm16Scale = 32_768f;
+    private readonly int _sampleRate;
+    private readonly int _blockSize;
     private readonly float[] _standbyReal;
     private readonly float[] _standbyImaginary;
     private readonly float[] _filteredReal;
@@ -25,11 +27,10 @@ public sealed class LegacyReceiverPipeline
         ArgumentOutOfRangeException.ThrowIfNegative(
             initialAbsoluteRequestCount);
 
-        int points = (int)MathF.Round(
-            0.7f * sampleRate / bandwidthHz);
-        float gainDb = 10f * MathF.Log10(500f / bandwidthHz);
-        _activeFilter = new(blockSize, points, passes: 3, gainDb);
-        _standbyFilter = new(blockSize, points, passes: 3, gainDb);
+        _sampleRate = sampleRate;
+        _blockSize = blockSize;
+        _activeFilter = CreateFilter(bandwidthHz);
+        _standbyFilter = CreateFilter(bandwidthHz);
         _modulator = new(sampleRate, requestedCarrierHz);
         _standbyReal = new float[blockSize];
         _standbyImaginary = new float[blockSize];
@@ -41,6 +42,12 @@ public sealed class LegacyReceiverPipeline
     }
 
     public float EffectiveCarrierHz => _modulator.EffectiveCarrierHz;
+
+    public void SetBandwidth(int bandwidthHz)
+    {
+        _activeFilter = CreateFilter(bandwidthHz);
+        _standbyFilter = CreateFilter(bandwidthHz);
+    }
 
     public void Process(
         ReadOnlySpan<float> realInput,
@@ -64,6 +71,17 @@ public sealed class LegacyReceiverPipeline
     {
         ProcessCore(realInput, imaginaryInput);
         _agcOutput.AsSpan().CopyTo(output);
+    }
+
+    private LegacyMovingAverageFilter CreateFilter(int bandwidthHz)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(bandwidthHz);
+        int points = checked((int)Math.Round(
+            0.7d * _sampleRate / bandwidthHz,
+            MidpointRounding.ToEven));
+        float gainDb = (float)(
+            10d * Math.Log10(500d / bandwidthHz));
+        return new(_blockSize, points, passes: 3, gainDb);
     }
 
     private void ProcessCore(

@@ -1704,7 +1704,11 @@ The runtime-250 Hz block first diverges at sample 173 and has hash
 Both paths retain the ordinal-2048 random checkpoint `3f53fd06`. The retained
 pre-implementation XPlat path accepts the semantic bandwidth command and
 reports 250 Hz in its snapshot, but renders the fixed-500 Hz hash because its
-receiver filters are not reconfigured.
+receiver filters are not reconfigured. Production now replaces both receiver
+filters on the session loop at the command boundary, preserves the absolute
+filter-swap phase, modulator, and AGC, and calculates filter points and gain in
+the same double-precision-then-Single order as CE. The runtime path matches the
+pinned 250 Hz hash and ordinal-2048 random checkpoint exactly.
 
 ### 14.5 Device failure
 

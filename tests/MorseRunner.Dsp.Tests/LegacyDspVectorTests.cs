@@ -221,6 +221,38 @@ public sealed class LegacyDspVectorTests
     }
 
     [Fact]
+    public void ReceiverBandwidthChangeResetsBothFiltersAndPreservesSwapPhase()
+    {
+        var receiver = CreateReceiver(initialAbsoluteRequestCount: 5);
+        ProcessBlocks(receiver, count: 1);
+        object previousActiveFilter = GetFilter(receiver, "_activeFilter");
+        object previousStandbyFilter = GetFilter(receiver, "_standbyFilter");
+
+        receiver.SetBandwidth(250);
+
+        object resetActiveFilter = GetFilter(receiver, "_activeFilter");
+        object resetStandbyFilter = GetFilter(receiver, "_standbyFilter");
+        Assert.NotSame(previousActiveFilter, resetActiveFilter);
+        Assert.NotSame(previousStandbyFilter, resetStandbyFilter);
+        Assert.Equal(612.5f, receiver.EffectiveCarrierHz);
+
+        ProcessBlocks(receiver, count: 3);
+
+        Assert.Same(resetActiveFilter, GetFilter(receiver, "_activeFilter"));
+        ProcessBlocks(receiver, count: 1);
+        Assert.Same(resetStandbyFilter, GetFilter(receiver, "_activeFilter"));
+    }
+
+    [Fact]
+    public void ReceiverBandwidthChangeRejectsNonpositiveValues()
+    {
+        var receiver = CreateReceiver(initialAbsoluteRequestCount: 5);
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => receiver.SetBandwidth(0));
+    }
+
+    [Fact]
     public void ReceiverPipelineRejectsNegativeInitialAbsoluteRequestCount()
     {
         Assert.Throws<ArgumentOutOfRangeException>(

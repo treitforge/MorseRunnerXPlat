@@ -2211,6 +2211,7 @@ internal sealed class EngineSession : IAsyncDisposable
                     _currentBandwidthHz + command.Delta,
                     100,
                     1_000);
+                _receiverPipeline.SetBandwidth(_currentBandwidthHz);
                 break;
             case RadioControl.Speed:
                 _currentWordsPerMinute = Math.Clamp(
