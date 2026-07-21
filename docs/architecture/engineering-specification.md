@@ -1665,9 +1665,21 @@ amplitude 300000, performs the QSK-off replacement or QSK-on gain calculation
 in both complex channels, and then uses the shared receiver filters, modulator,
 and AGC. It matches both pinned first-block hashes and the ordinal-1024 random
 checkpoint exactly. Later recovery blocks, remote signals beneath local
-transmission,
-runtime QSK toggles, other monitor levels, and post-message silence remain
-pending.
+transmission, other monitor levels, and post-message silence remain pending.
+
+The authored `audio.qsk-runtime-enable-second-cq-block-seed-12345` case pins a
+live CE QSK change from disabled to enabled after the first CQ block and before
+the second. The common first block retains hash
+`7d925cbba9a0bb2e86a48c5a1777c347cfed68080a559446d8e3ed3c9d6af4ee`.
+With receiver-filter, modulator, AGC, and QSK receiver-gain state continuous,
+the fixed-off second block has hash
+`98ed32d957fef5ee62e50a0a04cb063f4c027a9770d4a9e30b27c60dec52e234`,
+while the runtime-on second block first diverges at sample 289 and has hash
+`d549ce119f5a1813f4c51196439c431c5830c5aec3e5f8b4be51dd49e930f356`.
+Both paths retain the ordinal-2048 random checkpoint `3f53fd06`. XPlat has no
+runtime QSK command yet, so retained red evidence must record the fixed-off
+second block for the requested runtime-on path before production support is
+added.
 
 ### 14.5 Device failure
 

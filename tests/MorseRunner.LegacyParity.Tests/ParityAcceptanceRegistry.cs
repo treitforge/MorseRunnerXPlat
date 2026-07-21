@@ -408,6 +408,16 @@ public static class ParityAcceptanceRegistry
                     static () => new LegacyOracleTarget(),
                     static () =>
                         new XPlatQskReceiverDuckingTarget()),
+            [XPlatRuntimeQskChangeTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatRuntimeQskChangeTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatRuntimeQskChangeTarget),
+                    XPlatRuntimeQskChangeTarget.FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = RuntimeQskChangeInput.Parse(scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () => new XPlatRuntimeQskChangeTarget()),
             [XPlatOperatorMonitorMuteTarget.ParityId] =
                 new ParityAcceptanceRegistration(
                     XPlatOperatorMonitorMuteTarget.ParityId,

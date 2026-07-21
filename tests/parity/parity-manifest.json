@@ -325,6 +325,7 @@
         "audio.operator-monitor-minus-60db-mute-first-cq-block-seed-12345",
         "audio.operator-monitor-runtime-mute-second-cq-block-seed-12345",
         "audio.qsk-receiver-ducking-first-cq-block-seed-12345",
+        "audio.qsk-runtime-enable-second-cq-block-seed-12345",
         "audio.realistic-hiss-noise-floor",
         "audio.sst-farnsworth-envelope-timing",
         "audio.startup-warmup-and-filter-timing-fresh-seed-12345"
@@ -680,7 +681,7 @@
     {"id": "audio.default-compatibility-output-profile", "capabilityId": "audio.legacy-adapters", "behavior": "The default CE compatibility output contract is 11025 Hz mono, 512 samples per block, and identical sample totals.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.physical-queue-depth-and-order", "capabilityId": "audio.legacy-adapters", "behavior": "The physical audio queue preserves CE-equivalent default depth, FIFO block order, startup fill order, and exact sample continuity.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.deterministic-random-primitives", "capabilityId": "simulation.legacy-effects", "behavior": "MT19937 output and every CE random distribution primitive produce deterministic numeric vectors for reviewed seeds.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["RndFunc.pas"], "legacySurfaceSelectors": ["legacy.support.effect.routine.rndfunc.rndfunc.rndgausslim", "legacy.support.effect.routine.rndfunc.rndfunc.rndnormal", "legacy.support.effect.routine.rndfunc.rndfunc.rndpoisson", "legacy.support.effect.routine.rndfunc.rndfunc.rndrayleigh", "legacy.support.effect.routine.rndfunc.rndfunc.rnduniform", "legacy.support.effect.routine.rndfunc.rndfunc.rndushaped"], "acceptanceStatus": "partial", "caseIds": ["audio.deterministic-random-primitives-seed-12345"]},
-    {"id": "audio.qsk-receiver-ducking-and-recovery", "capabilityId": "audio-dsp.legacy-processing", "behavior": "QSK applies CE-equivalent receiver ducking and recovery around local transmissions.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "MyStn.pas", "Station.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.contest.tcontest.sendmsg", "legacy.sim.routine.mystn.tmystation.getblock", "legacy.sim.routine.station.tstation.sendmsg"], "acceptanceStatus": "partial", "caseIds": ["audio.qsk-receiver-ducking-first-cq-block-seed-12345"]},
+    {"id": "audio.qsk-receiver-ducking-and-recovery", "capabilityId": "audio-dsp.legacy-processing", "behavior": "QSK applies CE-equivalent receiver ducking and recovery around local transmissions.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "MyStn.pas", "Station.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.contest.tcontest.sendmsg", "legacy.sim.routine.mystn.tmystation.getblock", "legacy.sim.routine.station.tstation.sendmsg"], "acceptanceStatus": "partial", "caseIds": ["audio.qsk-receiver-ducking-first-cq-block-seed-12345", "audio.qsk-runtime-enable-second-cq-block-seed-12345"]},
     {"id": "audio.rit-affects-rendered-stations", "capabilityId": "audio-dsp.legacy-processing", "behavior": "RIT changes each station's audible offset using CE range, steps, and block-boundary timing.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.runtime-bandwidth-updates-filters", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Runtime bandwidth changes replace or update receiver filters at the CE-equivalent block boundary.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.qrm-interfering-cw-stations", "capabilityId": "simulation.legacy-effects", "behavior": "QRM uses CE-equivalent randomized interfering CW stations, messages, levels, pitches, speeds, retries, and lifetimes.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "StnColl.pas", "QrmStn.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.stncoll.tstations.addqrm", "legacy.sim.routine.qrmstn.tqrmstation.createstation", "legacy.sim.routine.qrmstn.tqrmstation.processevent", "legacy.sim.routine.qrmstn.tqrmstation.sendtext"], "acceptanceStatus": "partial", "caseIds": ["audio.qrm-caller-collision-retry-limit-seed-24680", "audio.qrm-first-triggered-station-seed-1843", "audio.qrm-no-trigger-invariance-seed-12345"]},
@@ -2247,6 +2248,94 @@
       "failureCode": "audio-qsk-receiver-ducking-mismatch",
       "fixture": "tests/parity/fixtures/legacy/audio-qsk-receiver-ducking-first-cq-block-seed-12345.json",
       "evidence": "tests/parity/evidence/audio-qsk-receiver-ducking-first-cq-block-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "audio.qsk-runtime-enable-second-cq-block-seed-12345",
+      "capabilityId": "audio-dsp.legacy-processing",
+      "obligationIds": [
+        "audio.qsk-receiver-ducking-and-recovery"
+      ],
+      "behavior": "For the fixed CE compatibility vector, enabling QSK between the first and second locally transmitted CQ blocks changes the next block at the CE runtime boundary, preserves receiver-filter and AGC state, and consumes no random values.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v40",
+        "source": "tests/parity/legacy-oracle/v40/LegacyOracle.lpr",
+        "sourceSha256": "a2c18929011e3905fc6e44c29fe4dc1df7660fae53ea1ff30d0b09ed7a2a7f8c",
+        "buildRecipe": "tests/parity/legacy-oracle/v40/build-recipe.json",
+        "buildRecipeSha256": "54f33cf9ed418c08dc6c22e78d9607cbc1079fd44b6230020de487ff37db43fb"
+      },
+      "legacySources": [
+        "Contest.pas",
+        "MyStn.pas",
+        "Station.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.sim.routine.contest.tcontest.getaudio",
+        "legacy.sim.routine.contest.tcontest.sendmsg",
+        "legacy.sim.routine.mystn.tmystation.getblock",
+        "legacy.sim.routine.station.tstation.sendmsg"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "Each target uses a fresh CQ WPX rmStop session with station call W7SST, seed 12345, 11025 Hz, 512 samples per block, 500 Hz bandwidth, 600 Hz pitch, 30 WPM, zero dB monitor level, QSK initially disabled, no remote stations, and QRN, QRM, QSB, flutter, and LIDs disabled.",
+        "The CE target performs and verifies five one-Single startup requests, resets RandSeed to 12345 immediately before sending the real msgCQ text CQ W7SST TEST, and captures two normalized blocks through TContest.GetAudio.",
+        "The CE runtime enables Ini.Qsk after the first full request and before the second. Filter, modulator, AGC, and QSK receiver-gain state remain continuous across the mutation.",
+        "Before implementation, the XPlat target starts two production manual-timing sessions with QSK disabled, sends OperatorIntent.Cq, advances each session in two separate one-block commands, and retains QSK disabled because no runtime QSK command exists.",
+        "Both observations use the same authoritative terminal random value at ordinal 2048 because a QSK mutation consumes no random values.",
+        "The case pins one live false-to-true QSK change and the immediately following local-transmission block. Runtime disable, repeated changes, remote receiver signals, later recovery, post-message silence, client transport, and UX mutation remain pending, so the obligation remains partial."
+      ],
+      "input": {
+        "scenario": "audio.qsk-runtime-enable-second-cq-block-seed-12345",
+        "sampleRate": 11025,
+        "blockSize": 512,
+        "seed": 12345,
+        "startupRequestCount": 5,
+        "terminalRandomOrdinal": 2048,
+        "bandwidthHz": 500,
+        "pitchHz": 600,
+        "monitorLevelDb": 0,
+        "initialQsk": false,
+        "runtimeQsk": true,
+        "stationCall": "W7SST",
+        "messageText": "CQ W7SST TEST",
+        "probeSampleIndexes": [
+          0,
+          1,
+          2,
+          148,
+          149,
+          150,
+          255,
+          310,
+          384,
+          509,
+          510,
+          511
+        ]
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatRuntimeQskChangeTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 7,
+        "observedValuesSha256": "5480c6b1d7f3210b52557286e2d1b2823a069e5ef5b9cbf71a2dccd223ae8f77",
+        "firstDivergence": "The zero-based first mismatch is ordinal 4, qsk-runtime-on-block[1]. CE enables QSK before absolute block 7 and emits hash d549ce119f5a1813f4c51196439c431c5830c5aec3e5f8b4be51dd49e930f356 with continuous receiver-filter and AGC state. XPlat has no runtime QSK command, retains QSK disabled, and emits the fixed-off hash 98ed32d957fef5ee62e50a0a04cb063f4c027a9770d4a9e30b27c60dec52e234. Both terminal random checkpoints match.",
+        "functionalDivergenceCode": "audio-qsk-runtime-change-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "audio-qsk-runtime-change-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/audio-qsk-runtime-enable-second-cq-block-seed-12345.json",
+      "evidence": "tests/parity/evidence/audio-qsk-runtime-enable-second-cq-block-seed-12345.baseline.json",
       "firstGreenCommit": null
     },
     {
