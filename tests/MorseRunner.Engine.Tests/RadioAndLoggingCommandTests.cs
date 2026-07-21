@@ -202,4 +202,47 @@ public sealed class RadioAndLoggingCommandTests
         Assert.True(lower.Accepted);
         Assert.Equal(-500, engine.GetSnapshot(handle.SessionId).RitOffsetHz);
     }
+
+    [Fact]
+    public async Task SpeedAdjustmentsClampToCeUpperRange()
+    {
+        await using var engine = new MorseRunnerEngine();
+        SessionSettings settings = SessionSettings.CreateDefault(12_345) with
+        {
+            WordsPerMinute = 118,
+        };
+        SessionHandle handle = await engine.CreateSessionAsync(
+            settings,
+            TestContext.Current.CancellationToken);
+        ClientId client = new("test");
+        await engine.ExecuteAsync(
+            new StartSessionCommand(RequestId.New(), handle.SessionId, client),
+            TestContext.Current.CancellationToken);
+
+        CommandResult upper = await engine.ExecuteAsync(
+            new AdjustRadioControlCommand(
+                RequestId.New(),
+                handle.SessionId,
+                client,
+                RadioControl.Speed,
+                2),
+            TestContext.Current.CancellationToken);
+        Assert.True(upper.Accepted);
+        Assert.Equal(
+            120,
+            engine.GetSnapshot(handle.SessionId).CurrentWordsPerMinute);
+
+        CommandResult extra = await engine.ExecuteAsync(
+            new AdjustRadioControlCommand(
+                RequestId.New(),
+                handle.SessionId,
+                client,
+                RadioControl.Speed,
+                2),
+            TestContext.Current.CancellationToken);
+        Assert.True(extra.Accepted);
+        Assert.Equal(
+            120,
+            engine.GetSnapshot(handle.SessionId).CurrentWordsPerMinute);
+    }
 }

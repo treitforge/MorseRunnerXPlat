@@ -441,7 +441,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     public int WordsPerMinute
     {
         get => _wordsPerMinute;
-        set => SetField(ref _wordsPerMinute, Math.Clamp(value, 10, 100));
+        set => SetField(ref _wordsPerMinute, Math.Clamp(value, 10, 120));
     }
 
     public int PitchHz

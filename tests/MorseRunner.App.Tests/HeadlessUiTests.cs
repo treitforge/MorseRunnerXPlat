@@ -45,6 +45,11 @@ public sealed class HeadlessUiTests
         Assert.NotNull(
             window.FindControl<NumericUpDown>(
                 "CustomSerialNumberMaximumDigitsInput"));
+        NumericUpDown? cwSpeedInput =
+            window.FindControl<NumericUpDown>("CwSpeedInput");
+        Assert.NotNull(cwSpeedInput);
+        Assert.Equal(10m, cwSpeedInput.Minimum);
+        Assert.Equal(120m, cwSpeedInput.Maximum);
         Assert.NotNull(
             window.FindControl<ComboBox>("AudioOutputDeviceSelector"));
         Assert.True(window.Bounds.Width >= window.MinWidth);

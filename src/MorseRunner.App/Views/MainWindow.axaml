@@ -204,10 +204,11 @@
                     Foreground="#91A6B8"
                     Text="CW Speed" />
                   <NumericUpDown
+                      x:Name="CwSpeedInput"
                       Grid.Column="1"
                       AutomationProperties.Name="CW speed words per minute"
                       Minimum="10"
-                      Maximum="100"
+                      Maximum="120"
                       Value="{Binding WordsPerMinute}" />
               </Grid>
               <Grid ColumnDefinitions="*,110" ColumnSpacing="10">

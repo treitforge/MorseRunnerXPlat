@@ -106,6 +106,23 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task SpeedUpClampsAtCeUpperRange()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault())
+        {
+            WordsPerMinute = 118,
+        };
+        await viewModel.StartSingleCommand.ExecuteAsync(null);
+
+        await viewModel.SpeedUpCommand.ExecuteAsync(null);
+        Assert.Equal(120, viewModel.WordsPerMinute);
+
+        await viewModel.SpeedUpCommand.ExecuteAsync(null);
+        Assert.Equal(120, viewModel.WordsPerMinute);
+    }
+
+    [Fact]
     public async Task OperatorIntentAndQsoLoggingUseSemanticClientCommands()
     {
         await using var viewModel = new MainWindowViewModel(

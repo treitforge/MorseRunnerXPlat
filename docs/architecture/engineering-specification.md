@@ -1799,7 +1799,9 @@ production Avalonia view-model setter first clamps the requested 118 WPM to
 100 WPM before session creation; its input control and the engine live-command
 path share the same incorrect ceiling. The lower bound, HST rounding,
 persisted custom steps, TUI setup range, and direct menu choices remain
-separate acceptance boundaries.
+separate acceptance boundaries. Production Avalonia setup, view-model state,
+and live engine speed adjustments now expose and enforce the CE 120 WPM upper
+bound; the fixed vector matches the pinned v48 observation exactly.
 
 ### 14.5 Device failure
 

@@ -2332,7 +2332,7 @@ internal sealed class EngineSession : IAsyncDisposable
                 _currentWordsPerMinute = Math.Clamp(
                     _currentWordsPerMinute + command.Delta,
                     10,
-                    100);
+                    120);
                 _toneRenderer.SetWordsPerMinute(_currentWordsPerMinute);
                 break;
             case RadioControl.MonitorLevel:
