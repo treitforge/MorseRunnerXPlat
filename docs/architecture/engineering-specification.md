@@ -1833,7 +1833,9 @@ start an `rmHst` session at 32 WPM. The v51 CE oracle invokes the real
 five-WPM boundary at 35 WPM. Before implementation, the production Avalonia
 `SpeedUpCommand` uses its fixed non-HST two-WPM increment and reaches 34 WPM.
 HST PageDown, exact-boundary changes, TUI, persisted custom steps, and direct
-menu choices remain separate acceptance boundaries.
+menu choices remain separate acceptance boundaries. Production Avalonia now
+computes PageUp's delta from the current authoritative WPM in `rmHst`, and the
+fixed vector matches the pinned v51 observation exactly.
 
 ### 14.5 Device failure
 

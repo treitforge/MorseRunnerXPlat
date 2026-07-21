@@ -248,7 +248,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         RitDownCommand = CreateRadioCommand(RadioControl.Rit, -50);
         BandwidthUpCommand = CreateRadioCommand(RadioControl.Bandwidth, 50);
         BandwidthDownCommand = CreateRadioCommand(RadioControl.Bandwidth, -50);
-        SpeedUpCommand = CreateRadioCommand(RadioControl.Speed, 2);
+        SpeedUpCommand = new AsyncCommand(
+            AdjustSpeedUpAsync,
+            () => _sessionState is SessionState.Running or SessionState.Paused);
         SpeedDownCommand = CreateRadioCommand(RadioControl.Speed, -2);
         ShowScoreCommand = new AsyncCommand(ShowScoreAsync);
         ExportJsonCommand = new AsyncCommand(
@@ -1229,6 +1231,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             ? $"Adjusted {control}."
             : result.Message ?? "Control adjustment was rejected.";
         await RefreshAsync();
+    }
+
+    private Task AdjustSpeedUpAsync()
+    {
+        int delta = SelectedRunMode.Id.Value == "rmHst"
+            ? ((WordsPerMinute / 5) * 5 + 5) - WordsPerMinute
+            : 2;
+        return AdjustRadioAsync(RadioControl.Speed, delta);
     }
 
     private async Task SendCallAndExchangeAsync()
