@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "target": "XPlat",
+  "platform": "windows",
+  "operatingSystem": "Microsoft Windows 10.0.26200",
+  "architecture": "x64",
+  "runtimeIdentifier": "win-x64",
+  "revision": "57441ec86875278738b06ab1e035d8347a2e28e0",
+  "tree": "cb5631beaa31d6fc854fcf150c595afafb9d9b0f",
+  "resultSha256": "135200fa37e7069c9a9e13fdb074d27317009161aa03bc192c7ef8262fd6ec67",
+  "testReportSha256": "d7c1fa35934f574a924b934f025ffd1b9363822eb0d30b6d2d25d44bfaced7d5",
+  "testProcessExitCode": 2,
+  "wrapper": {
+    "completed": true,
+    "correlationValidated": true,
+    "exitCode": 0
+  },
+  "functionalDivergences": [
+    {
+      "caseId": "ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345",
+      "failureCode": "ux-TUI-WPM-default-page-up-step-mismatch"
+    }
+  ]
+}
