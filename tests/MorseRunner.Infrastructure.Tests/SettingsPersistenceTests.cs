@@ -44,6 +44,68 @@ public sealed class SettingsPersistenceTests
     }
 
     [Fact]
+    public void LegacyImportTranslatesCeEncodingSemantics()
+    {
+        LegacyIniDocument source = LegacyIniDocument.Parse(
+            """
+            [Station]
+            Pitch=6
+            BandWidth=4
+            SerialNR=2
+            SelfMonVolume=-99
+            CqWpxExchange=5NN 007
+            Qsk=1
+            SaveWav=1
+            [Contest]
+            SimContest=9
+            DefaultRunMode=3
+            Duration=47
+            CompetitionDuration=99
+            [System]
+            BufSize=4
+            ShowCallsignInfo=0
+            [Settings]
+            WpmStepRate=0
+            RitStepIncr=700
+            SingleCallStartDelay=3000
+            [Band]
+            Qsb=1
+            Qrm=0
+            Qrn=1
+            Flutter=0
+            Lids=1
+            """);
+
+        SettingsDocument imported = LegacySettingsImporter.Import(source);
+
+        Assert.Equal("600", imported.Values["Station.Pitch"]);
+        Assert.Equal("300", imported.Values["Station.BandWidth"]);
+        Assert.Equal("scAcag", imported.Values["Contest.SimContest"]);
+        Assert.Equal("rmWpx", imported.Values["Contest.DefaultRunMode"]);
+        Assert.Equal("2", imported.Values["Station.SerialNR"]);
+        Assert.Equal("1024", imported.Values["System.BufSize"]);
+        Assert.Equal("47", imported.Values["Contest.Duration"]);
+        Assert.Equal("60", imported.Values["Contest.CompetitionDuration"]);
+        Assert.Equal("-60", imported.Values["Station.SelfMonVolume"]);
+        Assert.Equal("1", imported.Values["Settings.WpmStepRate"]);
+        Assert.Equal("500", imported.Values["Settings.RitStepIncr"]);
+        Assert.Equal(
+            "2500",
+            imported.Values["Settings.SingleCallStartDelay"]);
+        Assert.Equal(
+            "5NN 007",
+            imported.Values["Station.CqWpxExchange"]);
+        Assert.Equal("True", imported.Values["Station.Qsk"]);
+        Assert.Equal("True", imported.Values["Station.SaveWav"]);
+        Assert.Equal("True", imported.Values["Band.Qsb"]);
+        Assert.Equal("False", imported.Values["Band.Qrm"]);
+        Assert.Equal("True", imported.Values["Band.Qrn"]);
+        Assert.Equal("False", imported.Values["Band.Flutter"]);
+        Assert.Equal("True", imported.Values["Band.Lids"]);
+        Assert.Equal("False", imported.Values["System.ShowCallsignInfo"]);
+    }
+
+    [Fact]
     public async Task SettingsWriteIsAtomicAndMalformedInputRecovers()
     {
         string directory = Path.Combine(

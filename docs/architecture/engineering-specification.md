@@ -2289,6 +2289,11 @@ The path service distinguishes:
 - Invalid settings produce a diagnostic and a safe recovery path.
 - Secrets are not stored in ordinary settings.
 - Legacy INI import is one-way and idempotent.
+- Legacy import converts CE pitch and bandwidth indexes to Hz, contest and
+  run-mode ordinals to stable IDs, numeric booleans to schema booleans, and
+  the buffer exponent to its effective sample count. It also applies CE's
+  persisted clamps for competition duration, monitor level, WPM step, RIT
+  step, and single-call start delay before project-owned settings are exposed.
 - Unknown future fields should be preserved when practical.
 
 ### 17.3 Reference data

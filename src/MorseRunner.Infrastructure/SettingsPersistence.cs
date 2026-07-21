@@ -1,5 +1,7 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using MorseRunner.Domain;
 
 namespace MorseRunner.Infrastructure;
 
@@ -136,6 +138,24 @@ public sealed class SettingsStore
 
 public static class LegacySettingsImporter
 {
+    private static readonly HashSet<string> BooleanKeys = new(
+        [
+            "Band.Flutter",
+            "Band.Lids",
+            "Band.Qrm",
+            "Band.Qrn",
+            "Band.Qsb",
+            "Debug.DebugCwDecoder",
+            "Debug.DebugExchSettings",
+            "Debug.DebugGhosting",
+            "Station.CallsFromKeyer",
+            "Station.GetWpmUsesGaussian",
+            "Station.Qsk",
+            "Station.SaveWav",
+            "System.ShowCallsignInfo",
+        ],
+        StringComparer.OrdinalIgnoreCase);
+
     public static SettingsDocument Import(
         LegacyIniDocument source,
         SettingsDocument? existing = null)
@@ -154,9 +174,119 @@ public static class LegacySettingsImporter
             }
 
             string targetKey = $"{descriptor.Section}.{descriptor.Key}";
-            values.TryAdd(targetKey, value!);
+            values.TryAdd(
+                targetKey,
+                TranslateValue(targetKey, value!));
         }
 
         return new SettingsDocument(SettingsDocument.CurrentSchemaVersion, values);
     }
+
+    private static string TranslateValue(string key, string value)
+    {
+        if (BooleanKeys.Contains(key))
+        {
+            return TranslateBoolean(value);
+        }
+
+        return key switch
+        {
+            "Station.Pitch" => TranslateFrequencyIndex(
+                value,
+                minimumHz: 300,
+                maximumIndex: 12),
+            "Station.BandWidth" => TranslateFrequencyIndex(
+                value,
+                minimumHz: 100,
+                maximumIndex: 10),
+            "Contest.SimContest" => TranslateContest(value),
+            "Contest.DefaultRunMode" => TranslateRunMode(value),
+            "System.BufSize" => TranslateBufferSize(value),
+            "Contest.CompetitionDuration" =>
+                TranslateClampedInteger(value, 1, 60),
+            "Station.SelfMonVolume" =>
+                TranslateClampedInteger(value, -60, 0),
+            "Settings.WpmStepRate" =>
+                TranslateClampedInteger(value, 1, 20),
+            "Settings.RitStepIncr" =>
+                TranslateClampedInteger(value, -500, 500),
+            "Settings.SingleCallStartDelay" =>
+                TranslateClampedInteger(value, 0, 2_500),
+            _ => value,
+        };
+    }
+
+    private static string TranslateBoolean(string value)
+    {
+        if (Boolean.TryParse(value, out bool parsed))
+        {
+            return parsed.ToString();
+        }
+
+        return TryParseInteger(value, out int numeric)
+            && numeric is 0 or 1
+                ? (numeric == 1).ToString()
+                : value;
+    }
+
+    private static string TranslateFrequencyIndex(
+        string value,
+        int minimumHz,
+        int maximumIndex) =>
+        TryParseInteger(value, out int index)
+        && index >= 0
+        && index <= maximumIndex
+            ? (minimumHz + (index * 50)).ToString(
+                CultureInfo.InvariantCulture)
+            : value;
+
+    private static string TranslateContest(string value)
+    {
+        if (!TryParseInteger(value, out int ordinal)
+            || ordinal < 0
+            || ordinal >= ContestCatalog.All.Count)
+        {
+            return value;
+        }
+
+        return ContestCatalog.All[ordinal].Id.Value;
+    }
+
+    private static string TranslateRunMode(string value)
+    {
+        if (!TryParseInteger(value, out int ordinal))
+        {
+            return value;
+        }
+
+        int effectiveOrdinal = Math.Clamp(ordinal, 1, 4);
+        return RunModeCatalog.All[effectiveOrdinal].Value;
+    }
+
+    private static string TranslateBufferSize(string value)
+    {
+        if (!TryParseInteger(value, out int exponent))
+        {
+            return value;
+        }
+
+        int effectiveExponent = Math.Clamp(exponent == 0 ? 3 : exponent, 1, 5);
+        return (64 << effectiveExponent).ToString(CultureInfo.InvariantCulture);
+    }
+
+    private static string TranslateClampedInteger(
+        string value,
+        int minimum,
+        int maximum) =>
+        TryParseInteger(value, out int parsed)
+            ? Math.Clamp(parsed, minimum, maximum).ToString(
+                CultureInfo.InvariantCulture)
+            : value;
+
+    private static bool TryParseInteger(string value, out int parsed) =>
+        Int32.TryParse(
+            value,
+            NumberStyles.Integer,
+            CultureInfo.InvariantCulture,
+            out parsed);
 }
