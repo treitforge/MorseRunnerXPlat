@@ -2648,6 +2648,20 @@ for every remote reply that consumes the station exchange formatter. Numeric
 cutting, leading-zero width, other contests, repeat and correction variants,
 and LID errors remain within the partial obligation.
 
+The authored
+`contest.default-two-field-remote-exchange-format-seed-12345` case extends the
+same obligation through the shared CE exchange branch used by ARRL DX, ALL JA,
+ACAG, and IARU HF. Its pinned CE v30 adapter fixes nonnumeric second fields and
+observes the exact `5NN MA`, `5NN 12H`, `5NN 1234H`, and `5NN ARRL` exchanges.
+The JARL fields contain neither zero nor nine, so their probabilistic cut paths
+cannot alter this vector. Retained red evidence records
+`contest-default-two-field-remote-exchange-format-mismatch`, where XPlat
+discarded the separator and produced `5NNMA`, `5NN12H`, `5NN1234H`, and
+`5NNARRL`. Production simulated stations for these four contests now preserve
+the CE single space between cut RST and exchange field two. CQWW zones, ARRL DX
+power, JARL cut variants, missing fields, repeats, correction variants, LID
+errors, and random reply prefixes remain within the partial obligation.
+
 The authored `contest.naqp-remote-exchange-format-seed-12345` case extends
 that obligation through the nonempty NAQP name and location branch. Its pinned
 CE v23 adapter uses the same protected `TStation.NrAsText` observation boundary

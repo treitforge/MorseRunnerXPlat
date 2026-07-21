@@ -509,6 +509,11 @@ public sealed class SimulatedStation
             return $"{Identity.Exchange1} {Identity.Callsign} {Identity.Exchange2}";
         }
 
+        if (_contestId.Value is "scArrlDx" or "scAllJa" or "scAcag" or "scIaruHf")
+        {
+            return $"{ToCutNumbers(Identity.Rst)} {Identity.Exchange2}";
+        }
+
         if (_contestId.Value == "scHst")
         {
             return ToCutNumbers(Identity.Rst)
