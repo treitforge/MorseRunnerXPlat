@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "8db3365712130c1fd4e99e23b4042dfba114d2be",
+      "tree": "ae4abae76df0c8edb7bbb373497da618b80ab3a0",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "contest.full-cut-numeric-remote-exchange-format-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "contest.full-cut-numeric-remote-exchange-format-seed-12345",
+      "acceptanceTestName": "parity:contest.full-cut-numeric-remote-exchange-format-seed-12345()",
+      "target": "xplat",
+      "adapter": "XPlatFullCutNumericRemoteExchangeFormatTarget",
+      "caseDefinitionSha256": "2678caaa8ae500c76d1c09f2bed625c71f7d172e1ad501492e177ab48c3c5065",
+      "fixtureSha256": "6c7e7d5e9e9dee13a2abbd3ddc002558c6f5410a962373fec8f6374445ef7a45",
+      "outcome": "functional-divergence",
+      "failureCode": "contest-full-cut-numeric-remote-exchange-format-mismatch",
+      "evidenceSource": "MorseRunner.Engine.SimulatedStation.ObserveExchangeForParity",
+      "observedValues": [
+        "configuration|scenario=contest.full-cut-numeric-remote-exchange-format-seed-12345|station=W7SST|seed=12345|r1-milli=0|run-mode=rmPileup",
+        "contest[0]|id=scCQWW|call=K1ABC|rst=599|exchange1=599|exchange2=10|formatted=5NNT1T",
+        "contest[1]|id=scArrlDx|call=JA1ABC|rst=599|exchange1=599|exchange2=100|formatted=5NN 100"
+      ],
+      "observedValueCount": 3,
+      "observedValuesSha256": "8da4f8da1c571646b8df1b822322e74c00141a3ef22a2988d8a8eaed30719c9d",
+      "firstDivergence": {
+        "index": 1,
+        "expected": "contest[0]|id=scCQWW|call=K1ABC|rst=599|exchange1=599|exchange2=10|formatted=5NN AT",
+        "actual": "contest[0]|id=scCQWW|call=K1ABC|rst=599|exchange1=599|exchange2=10|formatted=5NNT1T"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}
