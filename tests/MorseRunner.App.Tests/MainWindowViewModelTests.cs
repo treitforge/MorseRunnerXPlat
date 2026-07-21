@@ -106,6 +106,43 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task SpeedUpUsesPersistedCustomWpmStep()
+    {
+        string path = Path.Combine(
+            Path.GetTempPath(),
+            $"MorseRunnerXPlat-settings-{Guid.NewGuid():N}.json");
+        try
+        {
+            var store = new SettingsStore(path);
+            await store.SaveAsync(
+                new SettingsDocument(
+                    SettingsDocument.CurrentSchemaVersion,
+                    new Dictionary<string, string>(
+                        StringComparer.OrdinalIgnoreCase)
+                    {
+                        ["Settings.WpmStepRate"] = "7",
+                    }),
+                TestContext.Current.CancellationToken);
+            await using var viewModel = new MainWindowViewModel(
+                InProcessMorseRunnerClient.CreateDefault(),
+                settingsStore: store)
+            {
+                WordsPerMinute = 30,
+            };
+            await viewModel.InitializeAsync();
+            await viewModel.StartSingleCommand.ExecuteAsync(null);
+
+            await viewModel.SpeedUpCommand.ExecuteAsync(null);
+
+            Assert.Equal(37, viewModel.WordsPerMinute);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
     public async Task SpeedUpClampsAtCeUpperRange()
     {
         await using var viewModel = new MainWindowViewModel(

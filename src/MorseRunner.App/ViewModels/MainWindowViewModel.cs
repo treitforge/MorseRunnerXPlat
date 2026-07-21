@@ -141,6 +141,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private string _stationCall = "W7SST";
     private int _seed = 12_345;
     private int _wordsPerMinute = 30;
+    private int _wpmStepRate = 2;
     private int _pitchHz = 600;
     private int _bandwidthHz = 500;
     private int _ritOffsetHz;
@@ -832,6 +833,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         IReadOnlyDictionary<string, string> values = result.Document.Values;
         StationCall = Get(values, "Station.Call", StationCall);
         WordsPerMinute = GetInt(values, "Station.Wpm", WordsPerMinute);
+        _wpmStepRate = Math.Clamp(
+            GetInt(values, "Settings.WpmStepRate", _wpmStepRate),
+            1,
+            20);
         PitchHz = GetInt(values, "Station.Pitch", PitchHz);
         BandwidthHz = GetInt(values, "Station.BandWidth", BandwidthHz);
         Activity = GetInt(values, "Band.Activity", Activity);
@@ -1239,7 +1244,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     {
         int delta = SelectedRunMode.Id.Value == "rmHst"
             ? ((WordsPerMinute / 5) * 5 + 5) - WordsPerMinute
-            : 2;
+            : _wpmStepRate;
         return AdjustRadioAsync(RadioControl.Speed, delta);
     }
 
@@ -1866,6 +1871,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         {
             ["Station.Call"] = StationCall,
             ["Station.Wpm"] = WordsPerMinute.ToString(
+                CultureInfo.InvariantCulture),
+            ["Settings.WpmStepRate"] = _wpmStepRate.ToString(
                 CultureInfo.InvariantCulture),
             ["Station.Pitch"] = PitchHz.ToString(CultureInfo.InvariantCulture),
             ["Station.BandWidth"] = BandwidthHz.ToString(
