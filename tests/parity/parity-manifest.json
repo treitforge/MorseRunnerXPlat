@@ -4229,7 +4229,7 @@
       "obligationIds": [
         "ux.wpm-upper-range-and-clamp"
       ],
-      "behavior": "From 118 WPM in a CQ WPX rmSingle session, the first CE and Avalonia PageUp action reach 120 WPM and an extra action remains clamped at 120 WPM.",
+      "behavior": "When configured for 118 WPM in a CQ WPX rmSingle session, CE preserves 118 WPM, the first PageUp action reaches 120 WPM, and an extra action remains clamped at 120 WPM; Avalonia must expose and preserve the same range through authoritative engine state.",
       "legacyOracle": {
         "adapterId": "LegacyOracleTarget",
         "versionId": "legacy-oracle-v48",
@@ -4251,7 +4251,7 @@
       "preconditions": [
         "The pinned CE oracle and toolchain fingerprint are available.",
         "The CE target mirrors the SpinEdit1 10 through 120 WPM range, creates a fresh handleless CQ WPX rmSingle runtime at 118 WPM, and invokes the real TMainForm.FormKeyDown PageUp path twice.",
-        "Before implementation, the XPlat target creates the production MainWindowViewModel over IMorseRunnerClient, starts an rmSingle session at 118 WPM, executes the real SpeedUpCommand twice, and observes authoritative WPM after each command.",
+        "Before implementation, the XPlat target requests 118 WPM through the production MainWindowViewModel over IMorseRunnerClient, starts an rmSingle session, executes the real SpeedUpCommand twice, and observes the initial and post-command authoritative WPM values.",
         "The production Avalonia CW-speed input remains separately asserted to expose the CE 120 WPM maximum. The lower bound, HST rounding, persisted custom steps, TUI setup range, and direct menu choices remain separate boundaries."
       ],
       "input": {
@@ -4271,7 +4271,7 @@
         "fixtureComparison": "exact",
         "observedValueCount": 4,
         "observedValuesSha256": "87036a0de2a05bace160c64cc83bbb94859a1c8c94c9925d60676de901936538",
-        "firstDivergence": "The zero-based first mismatch is expected in wpm-after-first-page-up. CE reaches 120 WPM, while the production engine initially falls from 118 to its incorrect 100 WPM ceiling.",
+        "firstDivergence": "The zero-based first mismatch is expected in wpm-before. CE preserves the configured 118 WPM value, while the production Avalonia view-model setter initially clamps it to 100 WPM before session creation.",
         "functionalDivergenceCode": "ux-WPM-upper-clamp-mismatch"
       },
       "platforms": [

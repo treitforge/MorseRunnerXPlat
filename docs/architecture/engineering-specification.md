@@ -1795,9 +1795,11 @@ pins the CE CW-speed ceiling independently from the default step. The v48 CE
 oracle mirrors the form's 10 through 120 WPM range, starts `rmSingle` at 118
 WPM, and invokes the real PageUp handler twice. The first action reaches 120
 WPM and the extra action remains at 120 WPM. Before implementation, the
-production Avalonia command path falls from 118 WPM to the engine's incorrect
-100 WPM ceiling. The lower bound, HST rounding, persisted custom steps, TUI
-setup range, and direct menu choices remain separate acceptance boundaries.
+production Avalonia view-model setter first clamps the requested 118 WPM to
+100 WPM before session creation; its input control and the engine live-command
+path share the same incorrect ceiling. The lower bound, HST rounding,
+persisted custom steps, TUI setup range, and direct menu choices remain
+separate acceptance boundaries.
 
 ### 14.5 Device failure
 
