@@ -1,0 +1,5 @@
+{
+  "scenario": "audio.wav-pcm16-bit-exact",
+  "sampleRate": 11025,
+  "pcmSamples": [-32767, -16384, -8192, 0, 8192, 16384, 32767]
+}

@@ -724,7 +724,7 @@
     {"id": "audio.legacy-block-size-configurations", "capabilityId": "audio-dsp.legacy-processing", "behavior": "CE block sizes from 128 through 2048 are supported or proven import-equivalent with matching timing.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.startup-warmup-and-filter-timing", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Startup warmup requests, block numbering, prefill, and alternating-filter swap timing match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "Main.pas", "VCL/MovAvg.pas", "VCL/SndCustm.pas", "VCL/SndOut.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.create", "legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.contest.tcontest.swapfilters", "legacy.vcl.dsp.routine.movavg.tmovingaverage.filter", "legacy.vcl.dsp.routine.movavg.tmovingaverage.dofilter", "legacy.vcl.dsp.routine.movavg.tmovingaverage.reset", "legacy.vcl.adapter.property.sndout.talsoundout.bufcount", "legacy.vcl.adapter.routine.sndout.talsoundout.start", "legacy.vcl.adapter.routine.sndout.talsoundout.bufferdone"], "acceptanceStatus": "partial", "caseIds": ["audio.startup-warmup-and-filter-timing-fresh-seed-12345"]},
     {"id": "audio.realistic-hiss-and-noise-floor", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Base complex hiss and receiver noise floor match CE level, spectrum, random draws, and processing order.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "Main.pas"], "legacySurfaceSelectors": ["legacy.main.handler.combobox2change", "legacy.sim.routine.contest.tcontest.create", "legacy.sim.routine.contest.tcontest.getaudio"], "acceptanceStatus": "partial", "caseIds": ["audio.realistic-hiss-noise-floor"]},
-    {"id": "audio.wav-pcm-bit-exact", "capabilityId": "audio.legacy-adapters", "behavior": "WAV headers, PCM scaling, rounding, clipping, negative full scale, and sample bytes match CE vectors.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "audio.wav-pcm-bit-exact", "capabilityId": "audio.legacy-adapters", "behavior": "WAV headers, PCM scaling, rounding, clipping, negative full scale, and sample bytes match CE vectors.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["VCL/WavFile.pas"], "legacySurfaceSelectors": ["legacy.vcl.adapter.type.wavfile.talwavfile", "legacy.vcl.adapter.property.wavfile.talwavfile.stereo", "legacy.vcl.adapter.property.wavfile.talwavfile.samplespersec", "legacy.vcl.adapter.property.wavfile.talwavfile.bytespersample", "legacy.vcl.adapter.routine.wavfile.talwavfile.create", "legacy.vcl.adapter.routine.wavfile.talwavfile.openwrite", "legacy.vcl.adapter.routine.wavfile.talwavfile.writefrom", "legacy.vcl.adapter.routine.wavfile.talwavfile.close"], "acceptanceStatus": "partial", "caseIds": ["audio.wav-pcm16-bit-exact"]},
     {"id": "audio.recording-failure-and-backpressure-isolation", "capabilityId": "audio.legacy-adapters", "behavior": "Recording failure and queue backpressure stop recording without faulting or allocating in the contest render path.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.sink-preconversion-block-equivalence", "capabilityId": "audio.legacy-adapters", "behavior": "Raw capture, WAV, null, and physical playback receive identical ordered pre-conversion audio blocks.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.physical-device-lifecycle", "capabilityId": "audio.legacy-adapters", "behavior": "Physical callbacks, underruns, drops, device loss, recovery, stale callbacks, shutdown, and disposal are bounded and proven natively.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -5493,6 +5493,69 @@
       "failureCode": "contest-jarl-truth-column-mapping-mismatch",
       "fixture": "tests/parity/fixtures/legacy/contest-jarl-call-history-truth-column-mapping.json",
       "evidence": "tests/parity/evidence/contest-jarl-call-history-truth-column-mapping.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "audio.wav-pcm16-bit-exact",
+      "capabilityId": "audio.legacy-adapters",
+      "obligationIds": [
+        "audio.wav-pcm-bit-exact"
+      ],
+      "behavior": "For a pinned mono PCM-scale sample vector, CE writes an exact 11025 Hz PCM16 RIFF/WAVE header and sample byte stream, including CE's symmetric negative full-scale value.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v68",
+        "source": "tests/parity/legacy-oracle/v68/LegacyOracle.lpr",
+        "sourceSha256": "401fd99d7022586a3a13fe177acd74e5c446ae697294642b112233b8de618b8c",
+        "buildRecipe": "tests/parity/legacy-oracle/v68/build-recipe.json",
+        "buildRecipeSha256": "a78c091c4ceb74f756a473ec5fb607d57a5f3d2b0efa2122458524a3c4833450"
+      },
+      "legacySources": [
+        "VCL/WavFile.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.vcl.adapter.type.wavfile.talwavfile",
+        "legacy.vcl.adapter.property.wavfile.talwavfile.stereo",
+        "legacy.vcl.adapter.property.wavfile.talwavfile.samplespersec",
+        "legacy.vcl.adapter.property.wavfile.talwavfile.bytespersample",
+        "legacy.vcl.adapter.routine.wavfile.talwavfile.create",
+        "legacy.vcl.adapter.routine.wavfile.talwavfile.openwrite",
+        "legacy.vcl.adapter.routine.wavfile.talwavfile.writefrom",
+        "legacy.vcl.adapter.routine.wavfile.talwavfile.close"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The live v68 oracle writes the PCM-scale sample vector through the real CE TAlWavFile PCM16 path.",
+        "The XPlat target normalizes the same PCM-scale values at the WavAudioSink boundary using a mono 11025 Hz stream.",
+        "Physical audio queues, recording backpressure, filenames, and device lifecycle remain separate boundaries."
+      ],
+      "input": {
+        "scenario": "audio.wav-pcm16-bit-exact",
+        "sampleRate": 11025,
+        "pcmSamples": [-32767, -16384, -8192, 0, 8192, 16384, 32767]
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatWavPcm16BitExactTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 1,
+        "observedValuesSha256": "e89ca8c7a437c3179820aad195c5714b54e5b2fa81fb010c0d4266d3d451a35a",
+        "firstDivergence": "The WAV byte stream is expected to differ at the first negative full-scale sample because CE writes -32767 while XPlat initially maps normalized -1.0 to -32768.",
+        "functionalDivergenceCode": "audio-wav-pcm16-bit-exact-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "audio-wav-pcm16-bit-exact-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/audio-wav-pcm16-bit-exact.json",
+      "evidence": "tests/parity/evidence/audio-wav-pcm16-bit-exact.baseline.json",
       "firstGreenCommit": null
     }
   ]

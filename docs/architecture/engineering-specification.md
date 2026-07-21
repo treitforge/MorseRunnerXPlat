@@ -2055,6 +2055,17 @@ fresh-run startup-prefix state and does not replay the five logical frames.
   emits an event without faulting the session unless explicitly configured.
 - The null sink supports real-time and accelerated modes.
 - WAV and null sinks must consume the same rendered blocks as the physical sink.
+- The CE-compatible mono PCM16 sink must map normalized engine samples to the
+  symmetric CE range from -32767 through 32767 and applies round-to-nearest,
+  ties-to-even conversion before writing little-endian samples. It does not
+  reserve -32768 as a special normalized negative-full-scale value.
+
+The schema-v3 `audio.wav-pcm16-bit-exact` case runs a pinned seven-sample
+vector through the real CE `TAlWavFile` path and the production XPlat
+`WavAudioSink`. It compares the complete 11025 Hz mono RIFF/WAVE file bytes,
+including header lengths, format fields, scaling, rounding, sign, and both
+full-scale endpoints. Physical playback, queue backpressure, recording names,
+and device lifecycle remain separate acceptance boundaries.
 
 ### 14.7 Hot-path restrictions
 

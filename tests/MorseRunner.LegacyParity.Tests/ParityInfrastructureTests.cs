@@ -83,6 +83,7 @@ public sealed class ParityInfrastructureTests
                 "audio.rit-upper-clamp-extra-click-second-caller-block-seed-12345",
                 "audio.sst-farnsworth-envelope-timing",
                 "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
+                "audio.wav-pcm16-bit-exact",
                 "catalog.contest-definition-metadata-ce-order",
                 "contest.arrldx-high-r1-power-remote-exchange-format-seed-12345",
                 "contest.cqww-random-consumption-remote-exchange-format-seed-12345",
@@ -151,6 +152,7 @@ public sealed class ParityInfrastructureTests
                 "audio.rit-upper-clamp-extra-click-second-caller-block-seed-12345",
                 "audio.sst-farnsworth-envelope-timing",
                 "audio.startup-warmup-and-filter-timing-fresh-seed-12345",
+                "audio.wav-pcm16-bit-exact",
                 "catalog.contest-definition-metadata-ce-order",
                 "contest.arrldx-high-r1-power-remote-exchange-format-seed-12345",
                 "contest.cqww-random-consumption-remote-exchange-format-seed-12345",
@@ -203,6 +205,10 @@ public sealed class ParityInfrastructureTests
     [Trait("Category", "ParityInfrastructure")]
     public void CaseIdSelectsItsExactXPlatAdapter()
     {
+        Assert.IsType<XPlatWavPcm16BitExactTarget>(
+            ParityAcceptanceRegistry
+                .Get("audio.wav-pcm16-bit-exact")
+                .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatJarlTruthColumnMappingTarget>(
             ParityAcceptanceRegistry
                 .Get("contest.jarl-call-history-truth-column-mapping")
