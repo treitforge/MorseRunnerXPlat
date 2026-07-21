@@ -22,7 +22,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Mapped legacy surfaces: 3668
 - Unmapped legacy surfaces: 0
 - Pending audit surfaces: 0
-- Overlapping case surface/platform assignments: 306
+- Overlapping case surface/platform assignments: 309
 
 | Category | Discovered surfaces |
 |---|---:|
@@ -116,9 +116,9 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Partially authored obligations: 24
 - Not-authored obligations: 99
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 48
+- Active acceptance cases: 49
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 48
+- Legacy-green/XPlat-red cases: 49
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
@@ -129,8 +129,8 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `configuration.persisted-settings` | Legacy persisted settings | `not-authored` | 0 | 60 | 6 | `Ini.pas:345-548` |
 | `ux.main-form-objects` | Legacy main-form objects | `not-authored` | 0 | 79 | 6 | `Main.dfm:1-1988` |
 | `ux.main-menu-commands` | Legacy main-menu commands | `not-authored` | 0 | 129 | 0 | `Main.dfm:964-1579` |
-| `ux.main-form-events` | Legacy main-form event bindings and handlers | `not-authored` | 0 | 229 | 24 | `Main.dfm:1-1988`<br>`Main.pas:452-2867` |
-| `ux.keyboard-workflows` | Legacy shortcuts and keyboard branches | `partial` | 10 | 53 | 0 | `Main.dfm:1000-1579`<br>`Main.pas:629-947` |
+| `ux.main-form-events` | Legacy main-form event bindings and handlers | `not-authored` | 0 | 229 | 27 | `Main.dfm:1-1988`<br>`Main.pas:452-2867` |
+| `ux.keyboard-workflows` | Legacy shortcuts and keyboard branches | `partial` | 11 | 53 | 0 | `Main.dfm:1000-1579`<br>`Main.pas:629-947` |
 | `logging.qso-model` | Legacy QSO record and error model | `not-authored` | 0 | 47 | 0 | `Log.pas:48-82` |
 | `logging.scoring-rate-and-results` | Legacy logging, scoring, rate, correction, and result paths | `not-authored` | 0 | 55 | 0 | `Log.pas:147-1137` |
 | `simulation.state-models` | Legacy simulation state models and transitions | `not-authored` | 0 | 66 | 0 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
@@ -274,7 +274,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `ux.wpm-default-page-up-step` | `ux.keyboard-workflows` | `bound` | `partial` | 2 | `windows`, `linux`, `macos` | The default non-HST PageUp workflow applies CE's persisted WPM step to authoritative engine state. |
 | `ux.wpm-upper-range-and-clamp` | `ux.keyboard-workflows` | `bound` | `partial` | 2 | `windows`, `linux`, `macos` | The CW-speed input and live PageUp workflow expose and enforce CE's 120 WPM upper bound. |
 | `ux.wpm-lower-range-and-clamp` | `ux.keyboard-workflows` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | Every CW-speed setup workflow enforces CE's 10 WPM lower bound. |
-| `ux.wpm-hst-five-wpm-rounding` | `ux.keyboard-workflows` | `bound` | `partial` | 2 | `windows`, `linux`, `macos` | HST PageUp and PageDown workflows round CW speed outward to CE's adjacent five-WPM boundary. |
+| `ux.wpm-hst-five-wpm-rounding` | `ux.keyboard-workflows` | `bound` | `partial` | 3 | `windows`, `linux`, `macos` | HST PageUp and PageDown workflows round CW speed outward to CE's adjacent five-WPM boundary. |
 
 ## Rich-artifact evidence blockers
 
@@ -332,6 +332,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `ux.tui-wpm-setup-lower-clamp-decrement-from-10-seed-12345` | `ux.keyboard-workflows` | `ux.wpm-lower-range-and-clamp` | `legacy-green-xplat-red` | `ux-TUI-WPM-setup-lower-clamp-mismatch` | `pass` | `fail` |
 | `ux.wpm-hst-page-up-rounds-32-to-35-seed-12345` | `ux.keyboard-workflows` | `ux.wpm-hst-five-wpm-rounding` | `legacy-green-xplat-red` | `ux-WPM-HST-page-up-rounding-mismatch` | `pass` | `fail` |
 | `ux.tui-wpm-hst-page-up-rounds-32-to-35-seed-12345` | `ux.keyboard-workflows` | `ux.wpm-hst-five-wpm-rounding` | `legacy-green-xplat-red` | `ux-TUI-WPM-HST-page-up-rounding-mismatch` | `pass` | `fail` |
+| `ux.wpm-hst-page-down-rounds-33-to-30-seed-12345` | `ux.keyboard-workflows` | `ux.wpm-hst-five-wpm-rounding` | `legacy-green-xplat-red` | `ux-WPM-HST-page-down-rounding-mismatch` | `pass` | `fail` |
 
 ## Retained noncertifying observations
 

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "4240a4b43281d75c4da2f720d57874068c1083ef",
+      "tree": "22fb9410a868a3e136ecd05c1ebdeb75ba9fd9ef",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "ux.wpm-hst-page-down-rounds-33-to-30-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "ux.wpm-hst-page-down-rounds-33-to-30-seed-12345",
+      "acceptanceTestName": "parity:ux.wpm-hst-page-down-rounds-33-to-30-seed-12345()",
+      "target": "xplat",
+      "adapter": "XPlatAvaloniaHstWpmPageDownTarget",
+      "caseDefinitionSha256": "8fd2240c40f5c7e2967282f7bd5049d6d9649a8c818b45b641009a29e613101a",
+      "fixtureSha256": "c0f66c6a15162cd22f2b5025f6c8981646dc81812146c59314a3b0b816caac00",
+      "outcome": "functional-divergence",
+      "failureCode": "ux-WPM-HST-page-down-rounding-mismatch",
+      "evidenceSource": "MorseRunner.App.ViewModels.MainWindowViewModel.SpeedDownCommand\u002BMorseRunner.Client.InProcessMorseRunnerClient\u002BMorseRunner.Engine.EngineSession.ApplyRadioControl",
+      "observedValues": [
+        "configuration|run-mode=rmHst|seed=12345|initial-wpm=33|rounding-interval-wpm=5|action=page-down|handler=TMainForm.FormKeyDown",
+        "wpm-before|wpm=33",
+        "wpm-after-hst-page-down|wpm=31|delta-wpm=-2"
+      ],
+      "observedValueCount": 3,
+      "observedValuesSha256": "65780b0e82477c291b196b44c8ccedbc04697a606f6dc862bdc5d6489c8fa289",
+      "firstDivergence": {
+        "index": 2,
+        "expected": "wpm-after-hst-page-down|wpm=30|delta-wpm=-3",
+        "actual": "wpm-after-hst-page-down|wpm=31|delta-wpm=-2"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}
