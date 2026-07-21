@@ -164,6 +164,31 @@ public sealed class SimulationAndScoringTests
     }
 
     [Theory]
+    [InlineData("scCQWW", "K1ABC", "10", "5NN AT")]
+    [InlineData("scArrlDx", "JA1ABC", "100", "5NN ATT")]
+    public void FullCutNumericRemoteExchangeUsesRetainedR1(
+        string contestId,
+        string callsign,
+        string exchange2,
+        string expected)
+    {
+        var station = new SimulatedStation(
+            new StationIdentity(
+                callsign,
+                "599",
+                Number: 0,
+                "599",
+                exchange2),
+            wordsPerMinute: 25,
+            pitchOffsetHz: 0,
+            new LegacyRandom(12_345),
+            OperatorRunMode.Pileup,
+            contestId: new(contestId));
+
+        Assert.Equal(expected, station.ObserveExchangeForParity());
+    }
+
+    [Theory]
     [InlineData("CO", "DAVID CO")]
     [InlineData("", "DAVID")]
     public void NaqpRemoteExchangeIncludesNameAndOptionalLocation(

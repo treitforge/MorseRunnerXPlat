@@ -2662,6 +2662,19 @@ the CE single space between cut RST and exchange field two. CQWW zones, ARRL DX
 power, JARL cut variants, missing fields, repeats, correction variants, LID
 errors, and random reply prefixes remain within the partial obligation.
 
+The authored
+`contest.full-cut-numeric-remote-exchange-format-seed-12345` case extends the
+same obligation through CE's retained-`R1` numeric branch. Its pinned CE v31
+adapter fixes `R1` at zero and observes CQWW zone `10` as `5NN AT` and ARRL DX
+power `100` from remote DX call `JA1ABC` as `5NN ATT`. Retained red evidence
+records `contest-full-cut-numeric-remote-exchange-format-mismatch`: XPlat
+forced a synthetic three-digit CQ zone and produced `5NNT1T`, while its ARRL DX
+row retained uncut `5NN 100`. Production simulated stations now apply CE's
+full `1` to `A`, `0` to `T`, and `9` to `N` mapping for CQWW zones and numeric
+ARRL DX power when retained `R1` is below 0.70. Higher-`R1` probabilistic power
+cuts, JARL cuts, repeats, correction variants, LID errors, and random reply
+prefixes remain within the partial obligation.
+
 The authored `contest.naqp-remote-exchange-format-seed-12345` case extends
 that obligation through the nonempty NAQP name and location branch. Its pinned
 CE v23 adapter uses the same protected `TStation.NrAsText` observation boundary

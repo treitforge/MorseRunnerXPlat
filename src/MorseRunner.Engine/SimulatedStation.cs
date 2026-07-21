@@ -509,6 +509,21 @@ public sealed class SimulatedStation
             return $"{Identity.Exchange1} {Identity.Callsign} {Identity.Exchange2}";
         }
 
+        if (_contestId.Value == "scCQWW")
+        {
+            string zone = R1 < 0.70f
+                ? ToFullCutNumbers(Identity.Exchange2)
+                : Identity.Exchange2;
+            return $"{ToCutNumbers(Identity.Rst)} {zone}";
+        }
+
+        if (_contestId.Value == "scArrlDx"
+            && R1 < 0.70f
+            && int.TryParse(Identity.Exchange2, out _))
+        {
+            return $"{ToCutNumbers(Identity.Rst)} {ToFullCutNumbers(Identity.Exchange2)}";
+        }
+
         if (_contestId.Value is "scArrlDx" or "scAllJa" or "scAcag" or "scIaruHf")
         {
             return $"{ToCutNumbers(Identity.Rst)} {Identity.Exchange2}";
@@ -563,6 +578,9 @@ public sealed class SimulatedStation
 
     private static string ToCutNumbers(string value) =>
         value.Replace('9', 'N').Replace('0', 'T');
+
+    private static string ToFullCutNumbers(string value) =>
+        ToCutNumbers(value).Replace('1', 'A');
 
     private static int DecimalDigitCount(int value) =>
         value switch
