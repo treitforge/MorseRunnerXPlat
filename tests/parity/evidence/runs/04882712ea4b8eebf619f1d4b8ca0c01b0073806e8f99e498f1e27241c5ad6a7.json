@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "target": "legacy",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "693d77ae3c9658c773c4ed571b156c346a46198b",
+      "tree": "73b51b43227a878cfafbd1e492f605f0e99b553d",
+      "clean": true
+    },
+    "legacy": {
+      "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+      "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+      "clean": true
+    }
+  },
+  "expectedParityIds": [
+    "ux.tui-wpm-hst-page-up-rounds-32-to-35-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "ux.tui-wpm-hst-page-up-rounds-32-to-35-seed-12345",
+      "acceptanceTestName": "parity:ux.tui-wpm-hst-page-up-rounds-32-to-35-seed-12345()",
+      "target": "legacy",
+      "adapter": "LegacyOracleTarget",
+      "caseDefinitionSha256": "db543315cb9fd1b9a0e2f70b344ec20138a8c13056596330b0da0e1bf7443784",
+      "fixtureSha256": "d34070f3068d16d37e56f9dc81199d8f3eb6beaa4eab604b257119a30c1f1fb6",
+      "outcome": "passed",
+      "failureCode": null,
+      "evidenceSource": "tests/parity/legacy-oracle/v52/LegacyOracle.lpr",
+      "observedValues": [
+        "configuration|run-mode=rmHst|seed=12345|initial-wpm=32|rounding-interval-wpm=5|action=page-up|handler=TMainForm.FormKeyDown",
+        "wpm-before|wpm=32",
+        "wpm-after-hst-page-up|wpm=35|delta-wpm=3"
+      ],
+      "observedValueCount": 3,
+      "observedValuesSha256": "e4eb78b80dd2f6f9b482e51a0810c4bf56d754023a6331e2a232b48a4fc4208e",
+      "firstDivergence": null,
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v52",
+        "source": "tests/parity/legacy-oracle/v52/LegacyOracle.lpr",
+        "sourceSha256": "00bf196b14d0209479f7237d0e0e67e16c0aeecf9a052f8cd4b727d505d78c29",
+        "buildRecipe": "tests/parity/legacy-oracle/v52/build-recipe.json",
+        "buildRecipeSha256": "8a448ac61a8aea86d26bfd0984b1e11b2fc9671f89b559493d86792435163225",
+        "registrySha256": "a6079880ed74360785e379d3fd894eb07ff9b6fb8195641fe93022cdaae86593",
+        "executableSha256": "433c00ba2c5ea47a13017fc2e44da7e17d825c3afe7af5bfa31b289645b7df8d",
+        "provenance": "artifacts/legacy-oracle/builds/legacy-oracle-v52/f1a40fdc7dff5233c77675ecfd45ad5767dc4e71bff61b147fbd9c235375f8bf/bc44174222dd4c2bb7b0398110423448/LegacyOracle.provenance.json",
+        "provenanceSha256": "31211a35c9c00205a843f8ab50454237c002c7ae0e83eb36bf9d228527f2ee2e"
+      },
+      "executionCount": 1
+    }
+  ]
+}
