@@ -1219,6 +1219,13 @@ def validate_acceptance_test_wiring(root: Path = ROOT) -> None:
             "keep the registry selection set distinct from the typed "
             "SelectedCaseIds function parameter",
         ),
+        (
+            r"if\s*\(\$PromoteCaseId\s*-and\s*"
+            r"\$selectedPromotionKind\s*-eq\s*'green'\)\s*\{\s*"
+            r"\$reproducibilityCases",
+            "defer duplicate oracle reproducibility builds from focused "
+            "red authoring to green promotion",
+        ),
     )
     for pattern, requirement in required_runner_patterns:
         if not re.search(pattern, parity_runner):

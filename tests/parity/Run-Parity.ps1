@@ -1292,7 +1292,8 @@ try {
         }
         Invoke-LegacyOracleBuildIntegration `
             -SelectedCaseIds $selectedLegacyCaseIds
-        if ($PromoteCaseId) {
+        if ($PromoteCaseId -and
+            $selectedPromotionKind -eq 'green') {
             $reproducibilityCases = @(
                 $promotionCases |
                     Group-Object {
@@ -1316,7 +1317,7 @@ try {
                 }
             }
 
-        } else {
+        } elseif (-not $PromoteCaseId) {
             & (Join-Path $PSScriptRoot 'Test-ParityCompleteness.ps1') `
                 -LegacyRoot $preparedLegacyRoot
         }

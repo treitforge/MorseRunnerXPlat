@@ -26,6 +26,8 @@ description: Compare MorseRunnerXPlat behavior with the legacy Pascal MorseRunne
 Author related narrow cases as one coherent batch when they can share an
 immutable oracle version. Promote the batch's red evidence atomically so the
 fresh Legacy build and build-integration gate cover only those selected cases.
+Focused red authoring performs one fresh build. Defer duplicate clean-build
+reproducibility to green promotion before final certification.
 After implementing the batch, run the complete applicable Legacy and XPlat
 suites before green capture or handoff. Do not treat focused red promotion as
 release certification.

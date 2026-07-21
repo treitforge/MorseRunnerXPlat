@@ -362,10 +362,12 @@ Red evidence promotion is focused authoring proof, not release certification.
 It fresh-builds only the exact selected case batch and the oracle versions that
 batch references, executes build integration over that same selection, and
 runs the selected cases through both adapters. It does not rebuild unrelated
-historical oracle versions. Ordinary Development, pull-request, and release
-runs remain complete applicable-suite gates. Green promotion still requires
-the complete cross-platform and Windows Legacy artifact closure described
-below.
+historical oracle versions or compile the same selected oracle repeatedly for
+reproducibility. Duplicate clean-build reproducibility runs are deferred to
+green promotion before the final certification checkpoint. Ordinary Development,
+pull-request, and release runs remain complete applicable-suite gates. Green
+promotion still requires the complete cross-platform and Windows Legacy
+artifact closure described below.
 
 Production implementation must not precede the parity test except for the
 minimal testability seams needed to run the XPlat adapter. Those seams must not
