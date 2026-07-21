@@ -15,7 +15,7 @@ public sealed class XPlatQskReceiverDuckingTarget : IParityTarget
         "audio-qsk-receiver-ducking-mismatch";
     internal const string EvidenceSource =
         "MorseRunner.Engine.EngineSession.RenderBlocksAsync"
-        + "+MorseRunner.Engine.EngineSession.ApplyAudioEffects"
+        + "+MorseRunner.Engine.EngineSession.MixOperatorMonitorIntoReceiver"
         + "+MorseRunner.Engine.IAudioSink.WriteAsync";
 
     private static readonly ClientId ParityClient =

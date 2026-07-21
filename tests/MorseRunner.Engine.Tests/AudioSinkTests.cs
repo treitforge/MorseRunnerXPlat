@@ -1,4 +1,6 @@
 using System.Buffers.Binary;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using MorseRunner.Audio;
 using MorseRunner.Domain;
 using MorseRunner.Engine;
@@ -18,18 +20,19 @@ public sealed class AudioSinkTests
     }
 
     [Fact]
-    public async Task FullMonitorProducesLegacyCalibratedLocalSidetone()
+    public async Task FullMonitorProducesCePipelineLocalAudio()
     {
         float[] samples = await RenderFirstOperatorBlockAsync(
             monitorLevelDb: 0d);
 
-        Assert.True(
-            samples.Max(MathF.Abs) > 0.95f,
-            $"Local sidetone peak was {samples.Max(MathF.Abs):F6}.");
+        Assert.Equal(
+            "7d925cbba9a0bb2e86a48c5a1777c347cfed68080a559446d8e3ed3c9d6af4ee",
+            ComputeRawSingleSha256(samples));
+        Assert.InRange(samples.Max(MathF.Abs), 0.6103517f, 0.6103518f);
     }
 
     [Fact]
-    public async Task MonitorLevelAttenuatesOnlyLocalSidetone()
+    public async Task MonitorLevelAttenuatesLocalInputBeforeSharedAgc()
     {
         float[] full = await RenderFirstOperatorBlockAsync(
             monitorLevelDb: 0d);
@@ -37,7 +40,19 @@ public sealed class AudioSinkTests
             monitorLevelDb: -20d);
 
         double ratio = RootMeanSquare(reduced) / RootMeanSquare(full);
-        Assert.InRange(ratio, 0.099d, 0.101d);
+        Assert.InRange(ratio, 0.854d, 0.855d);
+    }
+
+    [Fact]
+    public async Task QskDucksReceiverBeforeTheSharedCePipeline()
+    {
+        float[] samples = await RenderFirstOperatorBlockAsync(
+            monitorLevelDb: 0d,
+            qskEnabled: true);
+
+        Assert.Equal(
+            "a4568db0f89409e3bf3640cd4d3a8e04fe619e20467a98674f6c6dbf5dca85f3",
+            ComputeRawSingleSha256(samples));
     }
 
     [Fact]
@@ -93,7 +108,8 @@ public sealed class AudioSinkTests
     }
 
     private static async Task<float[]> RenderFirstOperatorBlockAsync(
-        double monitorLevelDb)
+        double monitorLevelDb,
+        bool qskEnabled = false)
     {
         var sink = new CapturingAudioSink();
         await using MorseRunnerEngine engine = new(_ => sink);
@@ -101,6 +117,7 @@ public sealed class AudioSinkTests
             SessionSettings.CreateDefault(seed: 12_345) with
             {
                 MonitorLevelDb = monitorLevelDb,
+                Qsk = qskEnabled,
             },
             TestContext.Current.CancellationToken);
         await StartAndAdvanceAsync(engine, handle.SessionId);
@@ -192,6 +209,10 @@ public sealed class AudioSinkTests
 
         return Math.Sqrt(sum / samples.Length);
     }
+
+    private static string ComputeRawSingleSha256(float[] samples) =>
+        Convert.ToHexStringLower(
+            SHA256.HashData(MemoryMarshal.AsBytes(samples.AsSpan())));
 
     private sealed class CapturingAudioSink : IAudioSink
     {

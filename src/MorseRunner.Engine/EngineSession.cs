@@ -75,6 +75,7 @@ internal sealed class EngineSession : IAsyncDisposable
     private const int CommandCapacity = 256;
     private const int SubscriberCapacity = 64;
     private const int EventHistoryCapacity = 256;
+    private const float LocalStationAmplitude = 300_000f;
     private const double QrmTriggerProbability = 0.0002d;
     private readonly Guid _engineEpoch;
     private readonly SessionId _sessionId;
@@ -1284,7 +1285,7 @@ internal sealed class EngineSession : IAsyncDisposable
             }
 
             bool operatorIsSending = _toneRenderer.HasPendingAudio;
-            _toneRenderer.Render(_operatorBuffer);
+            _toneRenderer.RenderEnvelope(_operatorBuffer);
             bool operatorFinished = operatorIsSending
                 && !_toneRenderer.HasPendingAudio;
             PrepareReceiverInput();
@@ -1326,11 +1327,11 @@ internal sealed class EngineSession : IAsyncDisposable
                 CompatibilityProfile.BlockSize,
                 _ritOffsetHz,
                 CompatibilityProfile.SampleRate);
+            MixOperatorMonitorIntoReceiver(operatorIsSending);
             _receiverPipeline.Process(
                 _receiverReal,
                 _receiverImaginary,
                 _renderBuffer);
-            ApplyAudioEffects(operatorIsSending);
             await _audioSink.WriteAsync(
                 _renderBuffer,
                 _simulationBlock,
@@ -1521,21 +1522,42 @@ internal sealed class EngineSession : IAsyncDisposable
         _receiverSources.RemoveAt(index);
     }
 
-    private void ApplyAudioEffects(bool operatorIsSending)
+    private void MixOperatorMonitorIntoReceiver(bool operatorIsSending)
     {
-        for (int index = 0; index < _renderBuffer.Length; index++)
+        if (!operatorIsSending)
         {
-            float sample = _renderBuffer[index];
+            return;
+        }
+
+        if (!_settings.Qsk)
+        {
+            for (int index = 0; index < _operatorBuffer.Length; index++)
+            {
+                float localMonitor = LocalStationAmplitude
+                    * _monitorGain
+                    * _operatorBuffer[index];
+                _receiverReal[index] = localMonitor;
+                _receiverImaginary[index] = localMonitor;
+            }
+
+            return;
+        }
+
+        float receiverGain = 1f;
+        for (int index = 0; index < _operatorBuffer.Length; index++)
+        {
+            float normalizedMonitor =
+                _monitorGain * _operatorBuffer[index];
+            float maximumReceiverGain = 1f - normalizedMonitor;
+            receiverGain = receiverGain > maximumReceiverGain
+                ? maximumReceiverGain
+                : (receiverGain * 0.997f) + 0.003f;
             float localMonitor =
-                _operatorBuffer[index] * _monitorGain;
-            _renderBuffer[index] = Math.Clamp(
-                operatorIsSending
-                    ? (_settings.Qsk
-                        ? sample + localMonitor
-                        : localMonitor)
-                    : sample,
-                -1f,
-                1f);
+                LocalStationAmplitude * normalizedMonitor;
+            _receiverReal[index] = localMonitor
+                + (receiverGain * _receiverReal[index]);
+            _receiverImaginary[index] = localMonitor
+                + (receiverGain * _receiverImaginary[index]);
         }
     }
 

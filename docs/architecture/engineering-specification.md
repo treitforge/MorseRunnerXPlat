@@ -1611,10 +1611,15 @@ QSK-off and QSK-on hashes
 `7d925cbba9a0bb2e86a48c5a1777c347cfed68080a559446d8e3ed3c9d6af4ee`
 and
 `a4568db0f89409e3bf3640cd4d3a8e04fe619e20467a98674f6c6dbf5dca85f3`.
-Retained red evidence records `audio-qsk-receiver-ducking-mismatch` at the
-QSK-off block because XPlat adds a separate post-receiver sidetone instead of
-using the CE receiver mixing boundary. Later recovery blocks, remote signals
-beneath local transmission,
+Retained red evidence records the pre-implementation
+`audio-qsk-receiver-ducking-mismatch` at the QSK-off block, where XPlat added a
+separate post-receiver sidetone instead of using the CE receiver mixing
+boundary. Production rendering now emits the keyer envelope at CE local-station
+amplitude 300000, performs the QSK-off replacement or QSK-on gain calculation
+in both complex channels, and then uses the shared receiver filters, modulator,
+and AGC. It matches both pinned first-block hashes and the ordinal-1024 random
+checkpoint exactly. Later recovery blocks, remote signals beneath local
+transmission,
 runtime QSK toggles, other monitor levels, and post-message silence remain
 pending.
 
@@ -3373,9 +3378,10 @@ Current Phase 3 implementation inventory, not parity certification:
   pre-filter receiver stage, eager burst construction, same-block mixing, and
   post-render lifetime boundary. Other burst durations, overlapping bursts,
   caller and QRM interaction, runtime QRN toggling, and RIT rotation remain
-  uncertified. The authored first-CQ QSK vector currently records that XPlat's
-  post-receiver sidetone placement diverges from CE's pre-filter complex-channel
-  mixing. Later QSK recovery remains uncertified. LID paths still use
+  uncertified. The retained first-CQ QSK red vector records the former
+  post-receiver sidetone divergence. Production now matches its pre-filter
+  complex-channel mixing, first-block QSK response, and shared-random
+  checkpoint exactly. Later QSK recovery remains uncertified. LID paths still use
   deterministic XPlat behavior rather than certified CE behavior. Production
   callers now own private CE-style QSB
   processors and construction draws. The session loop owns the mutable QSB
