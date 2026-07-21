@@ -833,7 +833,7 @@ public sealed class TuiApplication : IDisposable
                 State.WordsPerMinute = Step(
                     State.WordsPerMinute,
                     direction,
-                    5,
+                    10,
                     120);
                 break;
             case 2:

@@ -130,6 +130,26 @@ public sealed class TuiInteractionTests
     }
 
     [Fact]
+    public async Task SettingsWpmClampsAtCeLowerRange()
+    {
+        await using InProcessMorseRunnerClient client =
+            InProcessMorseRunnerClient.CreateDefault();
+        using var application = new TuiApplication(client, isHosted: false);
+        application.State.View = TuiView.Settings;
+        application.State.SettingsIndex = 1;
+        application.State.WordsPerMinute = 10;
+        CancellationToken cancellationToken =
+            TestContext.Current.CancellationToken;
+        await application.InitializeAsync(cancellationToken);
+
+        await application.HandleAsync(
+            new(TuiActionKind.DecreaseSetting),
+            cancellationToken);
+
+        Assert.Equal(10, application.State.WordsPerMinute);
+    }
+
+    [Fact]
     public void RendererAdaptsToCompactAndWideTerminals()
     {
         var state = new TuiState

@@ -1822,7 +1822,9 @@ control, starts at 10 WPM through `TMainForm.SetWpm`, and remains at 10 when
 asked to decrement by one. Before implementation,
 `TuiApplication.AdjustCurrentSetting` reaches 9 WPM because its setup-only
 minimum is 5. Operator-mode PageDown, HST rounding, persisted custom steps,
-and direct menu choices remain separate acceptance boundaries.
+and direct menu choices remain separate acceptance boundaries. Production TUI
+advanced settings now clamp WPM at CE's 10 WPM lower bound, and the fixed
+vector matches the pinned v50 observation exactly.
 
 ### 14.5 Device failure
 
