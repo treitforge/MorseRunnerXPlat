@@ -245,7 +245,7 @@ TRUSTED_V3_MIGRATION_OBLIGATION_OWNERS = {
     "settings.preserve-unknown-and-unconsumed-values": (
         "configuration.persisted-settings"
     ),
-    "settings.clean-profile-ce-defaults": (
+    "settings.clean-profile-core-defaults": (
         "configuration.persisted-settings"
     ),
     "settings.full-duration-range": "configuration.persisted-settings",
@@ -328,8 +328,8 @@ TRUSTED_V3_MIGRATION_OBLIGATION_IDS = frozenset(
     TRUSTED_V3_MIGRATION_OBLIGATION_OWNERS
 )
 TRUSTED_V3_MIGRATION_OBLIGATION_SHA256 = (
-    "c6d836d5262b51e95b5a0c73214d3095"
-    "8fc46c7febccfca53cadba22c2356167"
+    "e85319677bda59d29d1f460c0dd45be3"
+    "8c9cfec3fc83f6be1fc6ed24be1ea13f"
 )
 TRUSTED_V3_MIGRATION_CAPABILITY_SHA256 = (
     "04330886992153a69429ed7f271e9bf7"

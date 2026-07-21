@@ -124,7 +124,8 @@
       ],
       "acceptanceStatus": "partial",
       "caseIds": [
-        "settings.duration-full-range"
+        "settings.duration-full-range",
+        "settings.clean-profile-ce-defaults"
       ]
     },
     {
@@ -781,7 +782,7 @@
     {"id": "settings.production-legacy-import", "capabilityId": "configuration.persisted-settings", "behavior": "Production startup invokes CE settings migration when appropriate.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "settings.ce-encoding-translation", "capabilityId": "configuration.persisted-settings", "behavior": "Migration translates CE indexes, ordinals, zero-or-one booleans, IDs, Hz values, duration, block size, and contest exchanges.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "settings.preserve-unknown-and-unconsumed-values", "capabilityId": "configuration.persisted-settings", "behavior": "Migration and save preserve unknown or unconsumed CE values and are idempotent.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "settings.clean-profile-ce-defaults", "capabilityId": "configuration.persisted-settings", "behavior": "Clean-profile call, WPM, activity, duration, pitch, bandwidth, and related defaults match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "settings.clean-profile-core-defaults", "capabilityId": "configuration.persisted-settings", "behavior": "Clean-profile call, WPM, activity, duration, pitch, bandwidth, and related defaults match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas", "Main.lfm"], "legacySurfaceSelectors": ["legacy.ini.setting.station.call", "legacy.ini.setting.station.name", "legacy.ini.setting.station.wpm", "legacy.ini.setting.station.pitch", "legacy.ini.setting.station.bandwidth", "legacy.ini.setting.station.cwminrxspeed", "legacy.ini.setting.station.cwmaxrxspeed", "legacy.ini.setting.station.serialnr", "legacy.ini.setting.station.selfmonvolume", "legacy.ini.setting.station.qsk", "legacy.ini.setting.band.activity", "legacy.ini.setting.band.qsb", "legacy.ini.setting.band.qrm", "legacy.ini.setting.band.qrn", "legacy.ini.setting.band.flutter", "legacy.ini.setting.band.lids", "legacy.ini.setting.contest.duration", "legacy.ini.setting.contest.competitionduration", "legacy.ini.setting.contest.simcontest", "legacy.ini.setting.contest.defaultrunmode", "legacy.ini.setting.settings.stationidrate"], "acceptanceStatus": "partial", "caseIds": ["settings.clean-profile-ce-defaults"]},
     {"id": "settings.full-duration-range", "capabilityId": "configuration.persisted-settings", "behavior": "Every CE duration from 1 through 240 minutes is accepted and persists without hidden clamping.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.dfm", "Main.pas", "Ini.pas"], "legacySurfaceSelectors": ["legacy.main.object.spinedit2", "legacy.main.event-binding.spinedit2.onchange", "legacy.main.handler.spinedit2change", "legacy.ini.setting.contest.duration"], "acceptanceStatus": "partial", "caseIds": ["settings.duration-full-range"]},
     {"id": "data.replaceable-reference-root-and-fallback", "capabilityId": "data.files-and-operational-paths", "behavior": "Users can replace CE reference data through an explicit root with packaged fallback and equivalent discovery.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "data.malformed-and-missing-file-reporting", "capabilityId": "data.legacy-parsers", "behavior": "Every parser rejects malformed rows and reports missing or invalid replacement data without fabricating values.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -5756,6 +5757,84 @@
       "failureCode": "session-competition-forced-settings-mismatch",
       "fixture": "tests/parity/fixtures/legacy/session-competition-forced-settings.json",
       "evidence": "tests/parity/evidence/session-competition-forced-settings.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "settings.clean-profile-ce-defaults",
+      "capabilityId": "configuration.persisted-settings",
+      "obligationIds": [
+        "settings.clean-profile-core-defaults"
+      ],
+      "behavior": "A clean profile exposes the same core station, receiver, contest, duration, and condition defaults through domain, Avalonia, and TUI session setup.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v72",
+        "source": "tests/parity/legacy-oracle/v72/LegacyOracle.lpr",
+        "sourceSha256": "14d60198da6ab99716035152a843acdbbc983489a66103d87f47d6239450b6da",
+        "buildRecipe": "tests/parity/legacy-oracle/v72/build-recipe.json",
+        "buildRecipeSha256": "83988a65026d9792bef6bdad4087409955fedcd2638c728cead3022de434c910"
+      },
+      "legacySources": [
+        "Ini.pas",
+        "Main.pas",
+        "Main.lfm"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.ini.setting.station.call",
+        "legacy.ini.setting.station.name",
+        "legacy.ini.setting.station.wpm",
+        "legacy.ini.setting.station.pitch",
+        "legacy.ini.setting.station.bandwidth",
+        "legacy.ini.setting.station.cwminrxspeed",
+        "legacy.ini.setting.station.cwmaxrxspeed",
+        "legacy.ini.setting.station.serialnr",
+        "legacy.ini.setting.station.selfmonvolume",
+        "legacy.ini.setting.station.qsk",
+        "legacy.ini.setting.band.activity",
+        "legacy.ini.setting.band.qsb",
+        "legacy.ini.setting.band.qrm",
+        "legacy.ini.setting.band.qrn",
+        "legacy.ini.setting.band.flutter",
+        "legacy.ini.setting.band.lids",
+        "legacy.ini.setting.contest.duration",
+        "legacy.ini.setting.contest.competitionduration",
+        "legacy.ini.setting.contest.simcontest",
+        "legacy.ini.setting.contest.defaultrunmode",
+        "legacy.ini.setting.settings.stationidrate"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The live v72 oracle deletes its adjacent INI file and executes Ini.FromIni against a minimal headless form, including CE's clean-profile control-index defaults.",
+        "Pitch and bandwidth are observed from the loaded CE control indexes using the same 300 plus index times 50 and 100 plus index times 50 mappings applied by TMainForm.SetPitch and TMainForm.SetBw during startup.",
+        "The XPlat target observes fresh SessionSettings.CreateDefault, MainWindowViewModel, and TuiState instances without loading persisted settings.",
+        "Farnsworth timing, WPM step, RIT step, exchange defaults, buffer size, and production migration remain separate acceptance boundaries."
+      ],
+      "input": {
+        "scenario": "settings.clean-profile-ce-defaults",
+        "seed": 12345
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatCleanProfileDefaultsTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 3,
+        "observedValuesSha256": "d4485aeee2566072af190aa88ce7864c3fd0513fbd16991a16c755608bd08b02",
+        "firstDivergence": "The domain row is expected to differ first at station-call because CE starts with VE3NEA while XPlat initially starts with W7SST; WPM, pitch, bandwidth, activity, duration, and receive offsets also differ.",
+        "functionalDivergenceCode": "settings-clean-profile-ce-defaults-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "settings-clean-profile-ce-defaults-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/settings-clean-profile-ce-defaults.json",
+      "evidence": "tests/parity/evidence/settings-clean-profile-ce-defaults.baseline.json",
       "firstGreenCommit": null
     }
   ]
