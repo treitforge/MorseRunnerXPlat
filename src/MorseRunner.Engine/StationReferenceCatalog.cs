@@ -169,7 +169,7 @@ internal sealed class StationReferenceCatalog
         ContestId contestId,
         int serialNumber)
     {
-        ReferenceRow row = _rows[random.Next(_rows.Count)];
+        ReferenceRow row = _rows[(int)random.NextInt64(_rows.Count)];
         string rst = "599";
         string exchange1;
         string exchange2;
@@ -202,6 +202,11 @@ internal sealed class StationReferenceCatalog
             case "scArrlSS":
                 exchange1 = row.Get("Sect", fallback: "OR");
                 exchange2 = row.Get("CK", fallback: "72");
+                break;
+            case "scAllJa":
+            case "scAcag":
+                exchange1 = rst;
+                exchange2 = row.Get("Exch1", fallback: "H");
                 break;
             default:
                 exchange1 = row.Get("Exch1", "Name", fallback: rst);

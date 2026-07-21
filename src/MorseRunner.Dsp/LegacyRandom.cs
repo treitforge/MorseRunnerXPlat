@@ -38,6 +38,13 @@ public sealed class LegacyRandom
         return (int)(NextUInt32() * (long)exclusiveMaximum >> 32);
     }
 
+    public long NextInt64(long exclusiveMaximum)
+    {
+        long value = NextUInt32();
+        value |= (long)(((ulong)NextUInt32() << 32) & long.MaxValue);
+        return exclusiveMaximum == 0 ? 0 : value % exclusiveMaximum;
+    }
+
     private uint NextUInt32()
     {
         if (_index >= StateLength)

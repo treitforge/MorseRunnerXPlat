@@ -5,6 +5,25 @@ namespace MorseRunner.Engine.Tests;
 
 public sealed class QrmCatalogTests
 {
+    [Theory]
+    [InlineData("scAllJa", "JR4ERC/4", "34H")]
+    [InlineData("scAcag", "JA8SBJ", "0102L")]
+    public void JarlTruthUsesRstThenStoredLocationPower(
+        string contestId,
+        string expectedCall,
+        string expectedExchange2)
+    {
+        ContestId id = new(contestId);
+
+        StationIdentity station = StationReferenceCatalog
+            .Load(id)
+            .Pick(new LegacyRandom(12_345), id, serialNumber: 1);
+
+        Assert.Equal(expectedCall, station.Callsign);
+        Assert.Equal("599", station.Exchange1);
+        Assert.Equal(expectedExchange2, station.Exchange2);
+    }
+
     [Fact]
     public void WpxCallOnlySelectionMatchesThePinnedCeSeedVector()
     {
@@ -276,6 +295,7 @@ public sealed class QrmCatalogTests
         StationReferenceCatalog catalog =
             StationReferenceCatalog.Load(contestId, "W7SST");
         const int seed = 5_133;
+        const int callerSeed = 14_729;
         StationReferenceCatalog warmup =
             StationReferenceCatalog.Load(contestId, "W7SST");
         _ = warmup.PickCallsignForQrm(
@@ -297,7 +317,7 @@ public sealed class QrmCatalogTests
         Assert.Equal(0, allocated);
 
         StationIdentity caller = catalog.Pick(
-            new LegacyRandom(seed),
+            new LegacyRandom(callerSeed),
             contestId,
             serialNumber: 1);
 

@@ -1408,6 +1408,13 @@ It pins the selected callsign and verifies that exchange field 1 is 599 while
 the stored prefecture or city-power value occupies exchange field 2. The case
 resets the same seed immediately before each contest's first selection so it
 does not mix truth-column mapping with later random formatting behavior.
+Production station truth maps the JARL history `Exch1` column to the remote
+station's second exchange field and supplies 599 as its first field. It never
+uses the generated station serial as a JARL truth fallback.
+The station catalog also preserves CE's native `SizeInt` overload behavior:
+selection consumes two MT19937 words, clears the combined sign bit, and applies
+the list count as a 64-bit modulo. This is distinct from CE's one-word
+`Random(LongInt)` multiply-high path.
 
 ### 13.4 Extensibility
 
