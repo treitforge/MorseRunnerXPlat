@@ -1743,7 +1743,10 @@ Before implementation, the XPlat semantic-command path reaches +550 Hz on the
 eleventh step, first differs in its reported state, first differs in the
 rendered block at sample 101, and emits hash
 `069ecc737e21234023ee2be2fffb51c2c54e7587ad62a5717352169599299393`.
-Both paths retain the ordinal-2048 random checkpoint `3f53fd06`.
+Both paths retain the ordinal-2048 random checkpoint `3f53fd06`. Production
+now clamps the authoritative session RIT to -500 through +500 Hz. The extra
+positive step leaves both state and the caller waveform at the pinned CE
+values. Client-specific step mappings remain separately pending.
 
 ### 14.5 Device failure
 

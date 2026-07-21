@@ -167,4 +167,39 @@ public sealed class RadioAndLoggingCommandTests
         Assert.Equal(1, snapshot.Score);
         Assert.Equal("K1ABC", snapshot.LastLoggedCall);
     }
+
+    [Fact]
+    public async Task RitAdjustmentsClampToCeRange()
+    {
+        await using var engine = new MorseRunnerEngine();
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(12_345),
+            TestContext.Current.CancellationToken);
+        ClientId client = new("test");
+        await engine.ExecuteAsync(
+            new StartSessionCommand(RequestId.New(), handle.SessionId, client),
+            TestContext.Current.CancellationToken);
+
+        CommandResult upper = await engine.ExecuteAsync(
+            new AdjustRadioControlCommand(
+                RequestId.New(),
+                handle.SessionId,
+                client,
+                RadioControl.Rit,
+                550),
+            TestContext.Current.CancellationToken);
+        Assert.True(upper.Accepted);
+        Assert.Equal(500, engine.GetSnapshot(handle.SessionId).RitOffsetHz);
+
+        CommandResult lower = await engine.ExecuteAsync(
+            new AdjustRadioControlCommand(
+                RequestId.New(),
+                handle.SessionId,
+                client,
+                RadioControl.Rit,
+                -1_050),
+            TestContext.Current.CancellationToken);
+        Assert.True(lower.Accepted);
+        Assert.Equal(-500, engine.GetSnapshot(handle.SessionId).RitOffsetHz);
+    }
 }

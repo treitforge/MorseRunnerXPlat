@@ -2318,8 +2318,8 @@ internal sealed class EngineSession : IAsyncDisposable
             case RadioControl.Rit:
                 _ritOffsetHz = Math.Clamp(
                     _ritOffsetHz + command.Delta,
-                    -2_000,
-                    2_000);
+                    -500,
+                    500);
                 break;
             case RadioControl.Bandwidth:
                 _currentBandwidthHz = Math.Clamp(
