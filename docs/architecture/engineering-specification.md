@@ -340,7 +340,9 @@ Every ported feature follows this order:
    divergent value and the exact functional-divergence code.
 8. Implement the feature in production code.
 9. Run the unchanged case until XPlat passes.
-10. Run the complete legacy and XPlat suites to prevent regression.
+10. Before green capture or handoff, run the complete legacy and XPlat suites
+    to prevent regression. One complete run may close a coherent batch of
+    adjacent newly implemented cases.
 11. Capture XPlat green for the unchanged case at one clean first-green commit
     on Windows, Linux, and macOS.
 12. Promote only that case to `both-green` after the original red proof and all
@@ -355,6 +357,15 @@ Every ported feature follows this order:
 A case that accidentally passes XPlat before implementation is not accepted as
 proof. It must be examined for a weak assertion, an already implemented shared
 behavior, or an incorrect inventory boundary.
+
+Red evidence promotion is focused authoring proof, not release certification.
+It fresh-builds only the exact selected case batch and the oracle versions that
+batch references, executes build integration over that same selection, and
+runs the selected cases through both adapters. It does not rebuild unrelated
+historical oracle versions. Ordinary Development, pull-request, and release
+runs remain complete applicable-suite gates. Green promotion still requires
+the complete cross-platform and Windows Legacy artifact closure described
+below.
 
 Production implementation must not precede the parity test except for the
 minimal testability seams needed to run the XPlat adapter. Those seams must not
@@ -569,10 +580,12 @@ dotnet test --solution MorseRunnerXPlat.slnx --no-build -- --filter-not-trait Ca
 
 The ordinary solution run excludes `Category=ParityAcceptance` and the
 mandatory fresh-build `Category=LegacyOracleBuildIntegration` test.
+For ordinary Development, pull-request, and release validation,
 `tests\parity\Run-Parity.ps1` executes the build integration and every
-certifying acceptance case exactly once, then retains and validates the target
-result, run context, TRX, execution envelope, and expected functional-red
-process exit when a gap remains.
+certifying acceptance case exactly once. A red evidence promotion executes the
+same gates over only its exact selected authoring batch. The runner retains and
+validates the target result, run context, TRX, execution envelope, and expected
+functional-red process exit when a gap remains.
 
 NativeAOT is not a release requirement. Libraries should avoid unnecessary
 reflection and dynamic loading so future trimming and AOT experiments remain

@@ -849,6 +849,8 @@ $runXPlatTarget =
         $PromoteCaseId -and
         $selectedPromotionKind -eq 'green' -and
         $externalGreenCoversCurrentPlatform)
+$focusedRedPromotion =
+    $PromoteCaseId -and $selectedPromotionKind -eq 'red'
 
 Remove-SafeDirectoryTree `
     -Root $repositoryRoot `
@@ -998,6 +1000,14 @@ function New-ParityExecutionEnvelope {
 }
 
 function Invoke-LegacyOracleBuildIntegration {
+    param(
+        [Parameter(Mandatory)]
+        [string[]] $SelectedCaseIds
+    )
+
+    $env:MORSE_RUNNER_PARITY_CASE_IDS = ConvertTo-Json `
+        -InputObject ([string[]] $SelectedCaseIds) `
+        -Compress
     $fileName = 'legacy-oracle-build-integration.trx'
     $path = Join-Path $trxRoot $fileName
     & dotnet test `
@@ -1254,7 +1264,12 @@ try {
             -SourceRepository $LegacyRoot `
             -Destination $preparedLegacyRoot
 
-        $selectedLegacyCaseIds = @($applicableCases.id)
+        $selectedLegacyCaseIds = @(
+            if ($focusedRedPromotion) {
+                $localPromotionCaseIds
+            } else {
+                $applicableCases.id
+            })
         $legacyBuild = & (
             Join-Path $PSScriptRoot 'Build-LegacyOracle.ps1'
         ) `
@@ -1274,7 +1289,8 @@ try {
                 'Legacy build did not publish a lowercase oracle registry ' +
                 'SHA-256.')
         }
-        Invoke-LegacyOracleBuildIntegration
+        Invoke-LegacyOracleBuildIntegration `
+            -SelectedCaseIds $selectedLegacyCaseIds
         if ($PromoteCaseId) {
             $reproducibilityCases = @(
                 $promotionCases |

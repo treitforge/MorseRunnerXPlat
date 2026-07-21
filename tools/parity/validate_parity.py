@@ -1199,6 +1199,20 @@ def validate_acceptance_test_wiring(root: Path = ROOT) -> None:
             r"--minimum-expected-tests\s+1(?:\s|$)",
             "require at least one executed acceptance test",
         ),
+        (
+            r"\$selectedLegacyCaseIds\s*=\s*@\(\s*"
+            r"if\s*\(\$focusedRedPromotion\)",
+            "scope red authoring builds to their selected cases",
+        ),
+        (
+            r"-CaseId\s+\$selectedLegacyCaseIds(?:\s|`|$)",
+            "pass the selected case set to the legacy oracle build",
+        ),
+        (
+            r"Invoke-LegacyOracleBuildIntegration\s*`\s*"
+            r"-SelectedCaseIds\s+\$selectedLegacyCaseIds",
+            "bind build integration to the selected oracle case set",
+        ),
     )
     for pattern, requirement in required_runner_patterns:
         if not re.search(pattern, parity_runner):
