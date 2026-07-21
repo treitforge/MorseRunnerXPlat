@@ -107,18 +107,18 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 
 - Manifest capabilities: 24
 - Complete capabilities: 0
-- Partially authored capabilities: 6
-- Not-authored capabilities: 18
+- Partially authored capabilities: 7
+- Not-authored capabilities: 17
 - Behavioral obligations: 123
-- Source-bound obligations: 28
-- Pending source bindings: 95
+- Source-bound obligations: 29
+- Pending source bindings: 94
 - Complete obligations: 0
-- Partially authored obligations: 28
-- Not-authored obligations: 95
+- Partially authored obligations: 29
+- Not-authored obligations: 94
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 63
+- Active acceptance cases: 64
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 63
+- Legacy-green/XPlat-red cases: 64
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
@@ -136,7 +136,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `simulation.state-models` | Legacy simulation state models and transitions | `not-authored` | 0 | 66 | 0 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
 | `simulation.runtime-routines` | Legacy contest, station, and operator routines | `partial` | 1 | 93 | 249 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
 | `audio-dsp.legacy-processing` | Legacy portable keying and DSP processing | `partial` | 10 | 131 | 0 | `VCL/Crc32.pas`<br>`VCL/FarnsKeyer.pas`<br>`VCL/Mixers.pas`<br>`VCL/MorseKey.pas`<br>`VCL/MorseTbl.pas`<br>`VCL/MovAvg.pas`<br>`VCL/QuickAvg.pas`<br>`VCL/SndTypes.pas`<br>`VCL/VolumCtl.pas` |
-| `audio.legacy-adapters` | Legacy sound output, buffering, and WAV adapters | `not-authored` | 0 | 85 | 0 | `VCL/BaseComp.pas`<br>`VCL/SndCustm.pas`<br>`VCL/SndOut.pas`<br>`VCL/WavFile.pas` |
+| `audio.legacy-adapters` | Legacy sound output, buffering, and WAV adapters | `partial` | 1 | 85 | 0 | `VCL/BaseComp.pas`<br>`VCL/SndCustm.pas`<br>`VCL/SndOut.pas`<br>`VCL/WavFile.pas` |
 | `ux.legacy-vcl-components` | Legacy VCL-only hint and volume controls | `not-authored` | 0 | 36 | 9 | `VCL/PermHint.pas`<br>`VCL/VolmSldr.pas` |
 | `contest.legacy-implementations` | Legacy contest-specific implementations | `partial` | 21 | 215 | 3 | `ACAG.pas`<br>`ALLJA.pas`<br>`ArrlDx.pas`<br>`ArrlFd.pas`<br>`ArrlSS.pas`<br>`CqWpx.pas`<br>`CqWW.pas`<br>`CWOPS.pas`<br>`CWSST.pas`<br>`DualExchContest.pas`<br>`IaruHf.pas`<br>`NaQp.pas` |
 | `data.legacy-parsers` | Legacy call, prefix, exchange, and serial data parsers | `not-authored` | 0 | 477 | 0 | `CallLst.pas`<br>`DXCC.pas`<br>`ExchFields.pas`<br>`SerNRGen.pas`<br>`Util/ArrlSections.pas`<br>`Util/CallsignUtils.pas`<br>`Util/Lexer.pas`<br>`Util/SSExchParser.pas`<br>`ACAG.pas`<br>`ALLJA.pas`<br>`ArrlDx.pas`<br>`ArrlFd.pas`<br>`ArrlSS.pas`<br>`CqWW.pas`<br>`CWOPS.pas`<br>`CWSST.pas`<br>`IaruHf.pas`<br>`Main.pas`<br>`NaQp.pas`<br>`Test/SSLexerTest.pas` |
@@ -187,7 +187,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `audio.legacy-block-size-configurations` | `audio-dsp.legacy-processing` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | CE block sizes from 128 through 2048 are supported or proven import-equivalent with matching timing. |
 | `audio.startup-warmup-and-filter-timing` | `audio-dsp.legacy-processing` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | Startup warmup requests, block numbering, prefill, and alternating-filter swap timing match CE. |
 | `audio.realistic-hiss-and-noise-floor` | `audio-dsp.legacy-processing` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | Base complex hiss and receiver noise floor match CE level, spectrum, random draws, and processing order. |
-| `audio.wav-pcm-bit-exact` | `audio.legacy-adapters` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | WAV headers, PCM scaling, rounding, clipping, negative full scale, and sample bytes match CE vectors. |
+| `audio.wav-pcm-bit-exact` | `audio.legacy-adapters` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | WAV headers, PCM scaling, rounding, clipping, negative full scale, and sample bytes match CE vectors. |
 | `audio.recording-failure-and-backpressure-isolation` | `audio.legacy-adapters` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Recording failure and queue backpressure stop recording without faulting or allocating in the contest render path. |
 | `audio.sink-preconversion-block-equivalence` | `audio.legacy-adapters` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Raw capture, WAV, null, and physical playback receive identical ordered pre-conversion audio blocks. |
 | `audio.physical-device-lifecycle` | `audio.legacy-adapters` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Physical callbacks, underruns, drops, device loss, recovery, stale callbacks, shutdown, and disposal are bounded and proven natively. |
@@ -347,6 +347,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `contest.own-exchange-tokenization-boundaries` | `contest.legacy-implementations` | `contest.required-exchange-fields-all-contests` | `legacy-green-xplat-red` | `contest-own-exchange-tokenization-mismatch` | `pass` | `fail` |
 | `contest.dynamic-exchange-type-locality-matrix` | `contest.legacy-implementations` | `contest.arrldx-naqp-home-filtering-and-location` | `legacy-green-xplat-red` | `contest-dynamic-exchange-type-locality-mismatch` | `pass` | `fail` |
 | `contest.jarl-call-history-truth-column-mapping` | `contest.legacy-implementations` | `contest.allja-acag-truth-column-mapping` | `legacy-green-xplat-red` | `contest-jarl-truth-column-mapping-mismatch` | `pass` | `fail` |
+| `audio.wav-pcm16-bit-exact` | `audio.legacy-adapters` | `audio.wav-pcm-bit-exact` | `legacy-green-xplat-red` | `audio-wav-pcm16-bit-exact-mismatch` | `pass` | `fail` |
 
 ## Retained noncertifying observations
 
