@@ -59,20 +59,21 @@ public sealed class XPlatRuntimeRitChangeTarget : IParityTarget
         EnsureLittleEndianSingleStorage();
         CapturedRun fixedRit = await CaptureAsync(
             input,
-            runtimeRitAfterFirstBlock: false,
+            ritChangeCount: 0,
             cancellationToken);
         CapturedRun runtimeRit = await CaptureAsync(
             input,
-            runtimeRitAfterFirstBlock: true,
+            ritChangeCount: 1,
             cancellationToken);
         return Normalize(input, fixedRit, runtimeRit);
     }
 
-    private static async Task<CapturedRun> CaptureAsync(
+    internal static async Task<CapturedRun> CaptureAsync(
         RuntimeRitChangeInput input,
-        bool runtimeRitAfterFirstBlock,
+        int ritChangeCount,
         CancellationToken cancellationToken)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(ritChangeCount);
         var sink = new StrictCaptureAudioSink(
             input.SampleRate,
             input.BlockSize);
@@ -150,7 +151,9 @@ public sealed class XPlatRuntimeRitChangeTarget : IParityTarget
                 + "boundary.");
         }
 
-        if (runtimeRitAfterFirstBlock)
+        for (int changeIndex = 0;
+             changeIndex < ritChangeCount;
+             changeIndex++)
         {
             await RequireAcceptedAsync(
                 engine,
@@ -160,7 +163,7 @@ public sealed class XPlatRuntimeRitChangeTarget : IParityTarget
                     ParityClient,
                     RadioControl.Rit,
                     input.RuntimeRitHz),
-                "runtime RIT change",
+                $"runtime RIT change {changeIndex + 1}",
                 cancellationToken);
         }
 
@@ -180,11 +183,7 @@ public sealed class XPlatRuntimeRitChangeTarget : IParityTarget
             || snapshot.RenderedSamples != input.BlockSize * 2L
             || snapshot.ActiveStations is not { Count: 1 }
             || snapshot.LastOperatorMessage is not null
-            || snapshot.CurrentBandwidthHz != 500
-            || snapshot.RitOffsetHz
-                != (runtimeRitAfterFirstBlock
-                    ? input.RuntimeRitHz
-                    : 0))
+            || snapshot.CurrentBandwidthHz != 500)
         {
             throw new InvalidOperationException(
                 "The XPlat runtime-RIT session left its second caller "
@@ -281,7 +280,7 @@ public sealed class XPlatRuntimeRitChangeTarget : IParityTarget
         return [.. values];
     }
 
-    private static void AddBlockStatistics(
+    internal static void AddBlockStatistics(
         List<string> values,
         string prefix,
         float[] samples,
@@ -308,7 +307,7 @@ public sealed class XPlatRuntimeRitChangeTarget : IParityTarget
             + "|float-sha256=" + ComputeRawSingleSha256(samples));
     }
 
-    private static void ValidateRun(
+    internal static void ValidateRun(
         RuntimeRitChangeInput input,
         CapturedRun run,
         string name)
@@ -335,7 +334,7 @@ public sealed class XPlatRuntimeRitChangeTarget : IParityTarget
         }
     }
 
-    private static int FirstDivergence(float[] first, float[] second)
+    internal static int FirstDivergence(float[] first, float[] second)
     {
         if (first.Length != second.Length)
         {
@@ -375,28 +374,28 @@ public sealed class XPlatRuntimeRitChangeTarget : IParityTarget
         }
     }
 
-    private static string ComputeRawSingleSha256(
+    internal static string ComputeRawSingleSha256(
         ReadOnlySpan<float> samples) =>
         Convert.ToHexStringLower(
             SHA256.HashData(MemoryMarshal.AsBytes(samples)));
 
-    private static string SingleBits(float value) =>
+    internal static string SingleBits(float value) =>
         BitConverter
             .SingleToUInt32Bits(value)
             .ToString("x8", CultureInfo.InvariantCulture);
 
-    private static string Format(int value) =>
+    internal static string Format(int value) =>
         value.ToString(CultureInfo.InvariantCulture);
 
-    private static string Format(long value) =>
+    internal static string Format(long value) =>
         value.ToString(CultureInfo.InvariantCulture);
 
-    private static string Format(double value) =>
+    internal static string Format(double value) =>
         value.ToString("F9", CultureInfo.InvariantCulture);
 
-    private static string Format(bool value) => value ? "true" : "false";
+    internal static string Format(bool value) => value ? "true" : "false";
 
-    private static void EnsureLittleEndianSingleStorage()
+    internal static void EnsureLittleEndianSingleStorage()
     {
         if (!BitConverter.IsLittleEndian
             || Marshal.SizeOf<float>() != sizeof(uint))

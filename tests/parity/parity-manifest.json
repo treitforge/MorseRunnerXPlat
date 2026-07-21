@@ -328,6 +328,7 @@
         "audio.qsk-receiver-ducking-first-cq-block-seed-12345",
         "audio.qsk-runtime-enable-second-cq-block-seed-12345",
         "audio.rit-runtime-plus-50-second-caller-block-seed-12345",
+        "audio.rit-upper-clamp-extra-click-second-caller-block-seed-12345",
         "audio.realistic-hiss-noise-floor",
         "audio.sst-farnsworth-envelope-timing",
         "audio.startup-warmup-and-filter-timing-fresh-seed-12345"
@@ -684,7 +685,7 @@
     {"id": "audio.physical-queue-depth-and-order", "capabilityId": "audio.legacy-adapters", "behavior": "The physical audio queue preserves CE-equivalent default depth, FIFO block order, startup fill order, and exact sample continuity.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "audio.deterministic-random-primitives", "capabilityId": "simulation.legacy-effects", "behavior": "MT19937 output and every CE random distribution primitive produce deterministic numeric vectors for reviewed seeds.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["RndFunc.pas"], "legacySurfaceSelectors": ["legacy.support.effect.routine.rndfunc.rndfunc.rndgausslim", "legacy.support.effect.routine.rndfunc.rndfunc.rndnormal", "legacy.support.effect.routine.rndfunc.rndfunc.rndpoisson", "legacy.support.effect.routine.rndfunc.rndfunc.rndrayleigh", "legacy.support.effect.routine.rndfunc.rndfunc.rnduniform", "legacy.support.effect.routine.rndfunc.rndfunc.rndushaped"], "acceptanceStatus": "partial", "caseIds": ["audio.deterministic-random-primitives-seed-12345"]},
     {"id": "audio.qsk-receiver-ducking-and-recovery", "capabilityId": "audio-dsp.legacy-processing", "behavior": "QSK applies CE-equivalent receiver ducking and recovery around local transmissions.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "MyStn.pas", "Station.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.contest.tcontest.sendmsg", "legacy.sim.routine.mystn.tmystation.getblock", "legacy.sim.routine.station.tstation.sendmsg"], "acceptanceStatus": "partial", "caseIds": ["audio.qsk-receiver-ducking-first-cq-block-seed-12345", "audio.qsk-runtime-enable-second-cq-block-seed-12345"]},
-    {"id": "audio.rit-affects-rendered-stations", "capabilityId": "audio-dsp.legacy-processing", "behavior": "RIT changes each station's audible offset using CE range, steps, and block-boundary timing.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.pas", "Contest.pas", "Station.pas"], "legacySurfaceSelectors": ["legacy.main.handler.panel8mousedown", "legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.station.tstation.getbfo", "legacy.sim.routine.station.tstation.getblock"], "acceptanceStatus": "partial", "caseIds": ["audio.rit-runtime-plus-50-second-caller-block-seed-12345"]},
+    {"id": "audio.rit-affects-rendered-stations", "capabilityId": "audio-dsp.legacy-processing", "behavior": "RIT changes each station's audible offset using CE range, steps, and block-boundary timing.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.pas", "Contest.pas", "Station.pas"], "legacySurfaceSelectors": ["legacy.main.handler.panel8mousedown", "legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.station.tstation.getbfo", "legacy.sim.routine.station.tstation.getblock"], "acceptanceStatus": "partial", "caseIds": ["audio.rit-runtime-plus-50-second-caller-block-seed-12345", "audio.rit-upper-clamp-extra-click-second-caller-block-seed-12345"]},
     {"id": "audio.runtime-bandwidth-updates-filters", "capabilityId": "audio-dsp.legacy-processing", "behavior": "Runtime bandwidth changes replace or update receiver filters at the CE-equivalent block boundary.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.pas", "Contest.pas", "VCL/MovAvg.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.vcl.dsp.routine.movavg.tmovingaverage.setgaindb", "legacy.vcl.dsp.routine.movavg.tmovingaverage.setpoints"], "acceptanceStatus": "partial", "caseIds": ["audio.bandwidth-runtime-narrow-second-cq-block-seed-12345"]},
     {"id": "audio.qrm-interfering-cw-stations", "capabilityId": "simulation.legacy-effects", "behavior": "QRM uses CE-equivalent randomized interfering CW stations, messages, levels, pitches, speeds, retries, and lifetimes.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "StnColl.pas", "QrmStn.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.stncoll.tstations.addqrm", "legacy.sim.routine.qrmstn.tqrmstation.createstation", "legacy.sim.routine.qrmstn.tqrmstation.processevent", "legacy.sim.routine.qrmstn.tqrmstation.sendtext"], "acceptanceStatus": "partial", "caseIds": ["audio.qrm-caller-collision-retry-limit-seed-24680", "audio.qrm-first-triggered-station-seed-1843", "audio.qrm-no-trigger-invariance-seed-12345"]},
     {"id": "audio.qrn-impulses-and-burst-stations", "capabilityId": "simulation.legacy-effects", "behavior": "QRN produces CE sparse impulses and burst stations before receiver filtering and AGC.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "Station.pas", "StnColl.pas", "QrnStn.pas", "RndFunc.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getaudio", "legacy.sim.routine.station.tstation.getblock", "legacy.sim.routine.station.tstation.tick", "legacy.sim.routine.stncoll.tstations.addqrn", "legacy.sim.routine.qrnstn.tqrnstation.createstation", "legacy.sim.routine.qrnstn.tqrnstation.processevent", "legacy.support.effect.routine.rndfunc.rndfunc.secondstoblocks"], "acceptanceStatus": "partial", "caseIds": ["audio.qrn-background-sparse-impulses-seed-12345", "audio.qrn-burst-station-lifecycle-seed-1903"]},
@@ -2509,6 +2510,94 @@
       "failureCode": "audio-runtime-RIT-change-mismatch",
       "fixture": "tests/parity/fixtures/legacy/audio-rit-runtime-plus-50-second-caller-block-seed-12345.json",
       "evidence": "tests/parity/evidence/audio-rit-runtime-plus-50-second-caller-block-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "audio.rit-upper-clamp-extra-click-second-caller-block-seed-12345",
+      "capabilityId": "audio-dsp.legacy-processing",
+      "obligationIds": [
+        "audio.rit-affects-rendered-stations"
+      ],
+      "behavior": "For the fixed CE compatibility vector, ten 50 Hz pointer steps reach the +500 Hz RIT upper bound before the second scripted remote-station block, and an eleventh identical step changes neither configured RIT nor the rendered waveform.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v43",
+        "source": "tests/parity/legacy-oracle/v43/LegacyOracle.lpr",
+        "sourceSha256": "d57a16e232d2d2ef02118246d3c7b90ea4cda1ae89c782c2bd399972def41d24",
+        "buildRecipe": "tests/parity/legacy-oracle/v43/build-recipe.json",
+        "buildRecipeSha256": "ce27dd176df342a0c995ff9c3543b0c09067003018cdbc4e9af3bba25c6276ae"
+      },
+      "legacySources": [
+        "Main.pas",
+        "Contest.pas",
+        "Station.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.main.handler.panel8mousedown",
+        "legacy.sim.routine.contest.tcontest.getaudio",
+        "legacy.sim.routine.station.tstation.getbfo",
+        "legacy.sim.routine.station.tstation.getblock"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "Each target uses a fresh CQ WPX rmStop session with seed 12345, 11025 Hz, 512 samples per block, 500 Hz bandwidth, 600 Hz receiver pitch, 30 WPM, zero dB monitor level, and QRN, QRM, QSB, flutter, QSK, and LIDs disabled.",
+        "The CE target performs and verifies five one-Single startup requests, creates a real TStation-derived scripted remote station at +360 Hz and amplitude 18000 sending TEST TEST, resets RandSeed to 12345, and captures two normalized blocks through TContest.GetAudio.",
+        "One CE run invokes TMainForm.Panel8MouseDown ten times after the first full request and before the second. The other invokes it eleven times. Both must finish at +500 Hz with identical station BFO, receiver filter, modulator, and AGC histories.",
+        "Before implementation, the XPlat target starts two production manual-timing sessions, injects the same scripted normal SimulatedStation through the internal parity setup command, advances each session one block, and submits ten or eleven +50 Hz RadioControl.Rit commands before the second block.",
+        "Both observations use the same authoritative terminal random value at ordinal 2048 because the scripted station owns an isolated parity random source and RIT mutations consume no session random values.",
+        "The case pins the positive 50 Hz pointer step and +500 Hz upper clamp. Negative RIT, custom and reversed persisted steps, reset, keyboard increments, multiple stations, transport, and UX display remain pending, so the obligation remains partial."
+      ],
+      "input": {
+        "scenario": "audio.rit-upper-clamp-extra-click-second-caller-block-seed-12345",
+        "sampleRate": 11025,
+        "blockSize": 512,
+        "seed": 12345,
+        "startupRequestCount": 5,
+        "terminalRandomOrdinal": 2048,
+        "ritStepHz": 50,
+        "upperBoundHz": 500,
+        "fixedClickCount": 10,
+        "clampedClickCount": 11,
+        "remotePitchHz": 360,
+        "remoteAmplitude": 18000,
+        "messageText": "TEST TEST",
+        "probeSampleIndexes": [
+          0,
+          1,
+          2,
+          148,
+          149,
+          150,
+          255,
+          310,
+          384,
+          509,
+          510,
+          511
+        ]
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatRitUpperClampTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 7,
+        "observedValuesSha256": "ab65b4a12612f8fa697e6a18acfafb68c292531d48a48a91ccab532fe3e8f04d",
+        "firstDivergence": "The zero-based first mismatch is expected in the extra-click state or second caller block. CE clamps the eleventh +50 Hz pointer step at +500 Hz, while XPlat initially permits +550 Hz.",
+        "functionalDivergenceCode": "audio-RIT-upper-clamp-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "audio-RIT-upper-clamp-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/audio-rit-upper-clamp-extra-click-second-caller-block-seed-12345.json",
+      "evidence": "tests/parity/evidence/audio-rit-upper-clamp-extra-click-second-caller-block-seed-12345.baseline.json",
       "firstGreenCommit": null
     },
     {

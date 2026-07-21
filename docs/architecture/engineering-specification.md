@@ -1728,9 +1728,22 @@ shared `LegacyStationMixer`. Caller transmission start resets the binary32 BFO
 phase, each caller block uses CE's binary32 phase accumulation and binary64
 trigonometric evaluation, and the session supplies the shared block-start RIT
 phase. The common, fixed-0 Hz, and runtime-+50 Hz hashes, first divergence, and
-random checkpoint match the pinned CE values exactly. Negative offsets, clamp
-and step variants, reset, multiple stations, transport, and UX mutation remain
-separate acceptance boundaries.
+random checkpoint match the pinned CE values exactly. Negative offsets, the
+lower clamp, custom and reversed persisted steps, reset, multiple stations,
+transport, and UX mutation remain separate acceptance boundaries.
+
+The authored
+`audio.rit-upper-clamp-extra-click-second-caller-block-seed-12345` case
+separately pins the default +50 Hz pointer step and positive +500 Hz clamp. One
+fresh CE run invokes `TMainForm.Panel8MouseDown` ten times between caller
+blocks, and another invokes it eleven times. Both finish at +500 Hz and render
+the identical second-block hash
+`d22adaeb4130e08c7d2e8adeb9e37779ddd22e0b1967f9b875e66624ead5ffc3`.
+Before implementation, the XPlat semantic-command path reaches +550 Hz on the
+eleventh step, first differs in its reported state, first differs in the
+rendered block at sample 101, and emits hash
+`069ecc737e21234023ee2be2fffb51c2c54e7587ad62a5717352169599299393`.
+Both paths retain the ordinal-2048 random checkpoint `3f53fd06`.
 
 ### 14.5 Device failure
 
