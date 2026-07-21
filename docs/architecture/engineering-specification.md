@@ -1611,9 +1611,10 @@ QSK-off and QSK-on hashes
 `7d925cbba9a0bb2e86a48c5a1777c347cfed68080a559446d8e3ed3c9d6af4ee`
 and
 `a4568db0f89409e3bf3640cd4d3a8e04fe619e20467a98674f6c6dbf5dca85f3`.
-The current XPlat adapter diverges at the QSK-off block because it adds a
-separate post-receiver sidetone instead of using the CE receiver mixing
-boundary. Later recovery blocks, remote signals beneath local transmission,
+Retained red evidence records `audio-qsk-receiver-ducking-mismatch` at the
+QSK-off block because XPlat adds a separate post-receiver sidetone instead of
+using the CE receiver mixing boundary. Later recovery blocks, remote signals
+beneath local transmission,
 runtime QSK toggles, other monitor levels, and post-message silence remain
 pending.
 

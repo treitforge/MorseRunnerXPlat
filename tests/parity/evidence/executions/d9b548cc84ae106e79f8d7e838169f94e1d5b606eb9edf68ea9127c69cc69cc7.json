@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "target": "XPlat",
+  "platform": "windows",
+  "operatingSystem": "Microsoft Windows 10.0.26200",
+  "architecture": "x64",
+  "runtimeIdentifier": "win-x64",
+  "revision": "984ab5b643dc579352c34d328917131eef5a34bd",
+  "tree": "b616bc700859c2d83b4f54d99dcdfb85f4a61519",
+  "resultSha256": "05cb81e4d687348a9efff0bcf6a4f45810ed8ff83202ae4dc5299a8dcf3890e6",
+  "testReportSha256": "820c2f8486140f7ca9434fef35897e6ecbd08ce11fd44a00387b79006d0ba94a",
+  "testProcessExitCode": 2,
+  "wrapper": {
+    "completed": true,
+    "correlationValidated": true,
+    "exitCode": 0
+  },
+  "functionalDivergences": [
+    {
+      "caseId": "audio.qsk-receiver-ducking-first-cq-block-seed-12345",
+      "failureCode": "audio-qsk-receiver-ducking-mismatch"
+    }
+  ]
+}
