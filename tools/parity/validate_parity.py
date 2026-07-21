@@ -303,6 +303,7 @@ TRUSTED_V3_MIGRATION_OBLIGATION_OWNERS = {
     "ux.enter-esm-partial-call-message-selection": (
         "ux.keyboard-workflows"
     ),
+    "ux.wpm-default-page-up-step": "ux.keyboard-workflows",
     "ux.log-selection-updates-callsign-information": "ux.main-form-events",
     "ux.semantic-duration-not-simulation-blocks": "ux.main-form-events",
     "ux.help-about-readme-community-actions": "ux.main-menu-commands",
@@ -324,8 +325,8 @@ TRUSTED_V3_MIGRATION_OBLIGATION_IDS = frozenset(
     TRUSTED_V3_MIGRATION_OBLIGATION_OWNERS
 )
 TRUSTED_V3_MIGRATION_OBLIGATION_SHA256 = (
-    "e7844f6f39c8feaf5ae016aca41083df"
-    "d9197678120be424a4b57ef7c8d89b5d"
+    "f58e386f0a95ccd58bb29a59bca9c963"
+    "bfcf161934b6089d643fc27799791cab"
 )
 TRUSTED_V3_MIGRATION_CAPABILITY_SHA256 = (
     "04330886992153a69429ed7f271e9bf7"
