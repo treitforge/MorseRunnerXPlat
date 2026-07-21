@@ -41,6 +41,11 @@ public sealed class SettingsPersistenceTests
             first.Values.OrderBy(pair => pair.Key),
             second.Values.OrderBy(pair => pair.Key));
         Assert.DoesNotContain("Station.Unknown", first.Values.Keys);
+        Assert.Equal(
+            "preserve-in-source",
+            first.Values[LegacySettingsImporter.PreservedValueKey(
+                "Station",
+                "Unknown")]);
     }
 
     [Fact]
@@ -232,6 +237,61 @@ public sealed class SettingsPersistenceTests
             Assert.Null(restarted.Diagnostic);
             Assert.Equal("K7ABC", restarted.Document.Values["Station.Call"]);
             Assert.Equal("600", restarted.Document.Values["Station.Pitch"]);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task SettingsSavePreservesUnknownAndUnconsumedLegacyValues()
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            "MorseRunnerXPlat.PreservedSettings",
+            Guid.NewGuid().ToString("N"));
+        string path = Path.Combine(root, "settings.json");
+        try
+        {
+            SettingsDocument imported = LegacySettingsImporter.Import(
+                LegacyIniDocument.Parse(
+                    """
+                    [Future]
+                    Mystery=keep-me
+                    [Station]
+                    CallsFromKeyer=1
+                    Call=K7ABC
+                    """));
+            var store = new SettingsStore(path);
+            await store.SaveAsync(
+                imported,
+                TestContext.Current.CancellationToken);
+            await store.SaveAsync(
+                new SettingsDocument(
+                    SettingsDocument.CurrentSchemaVersion,
+                    new Dictionary<string, string>
+                    {
+                        ["Station.Call"] = "K7XYZ",
+                    }),
+                TestContext.Current.CancellationToken);
+
+            SettingsLoadResult restarted = await store.LoadAsync(
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal("K7XYZ", restarted.Document.Values["Station.Call"]);
+            Assert.Equal(
+                "True",
+                restarted.Document.Values["Station.CallsFromKeyer"]);
+            Assert.Equal(
+                "keep-me",
+                restarted.Document.Values[
+                    LegacySettingsImporter.PreservedValueKey(
+                        "Future",
+                        "Mystery")]);
         }
         finally
         {

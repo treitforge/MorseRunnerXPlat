@@ -60,7 +60,11 @@ public sealed class XPlatPreserveLegacyValuesTarget : IParityTarget
             [
                 "preservation"
                 + "|unknown="
-                + Get(restarted.Document.Values, "Legacy.Future.Mystery")
+                + Get(
+                    restarted.Document.Values,
+                    LegacySettingsImporter.PreservedValueKey(
+                        "Future",
+                        "Mystery"))
                 + "|unconsumed="
                 + Get(restarted.Document.Values, "Station.CallsFromKeyer")
                 + "|call="

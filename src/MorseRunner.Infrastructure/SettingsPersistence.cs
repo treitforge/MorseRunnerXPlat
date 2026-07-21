@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using MorseRunner.Domain;
@@ -99,6 +100,9 @@ public sealed class SettingsStore
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(document);
+        SettingsDocument effectiveDocument = await MergeExistingValuesAsync(
+            document,
+            cancellationToken);
         string? directory = Path.GetDirectoryName(_path);
         if (directory is not null)
         {
@@ -118,7 +122,7 @@ public sealed class SettingsStore
             {
                 await JsonSerializer.SerializeAsync(
                     stream,
-                    document,
+                    effectiveDocument,
                     JsonOptions,
                     cancellationToken);
                 await stream.FlushAsync(cancellationToken);
@@ -142,6 +146,48 @@ public sealed class SettingsStore
                 document.Values,
                 StringComparer.OrdinalIgnoreCase);
         return new(SettingsDocument.CurrentSchemaVersion, values);
+    }
+
+    private async Task<SettingsDocument> MergeExistingValuesAsync(
+        SettingsDocument document,
+        CancellationToken cancellationToken)
+    {
+        if (!File.Exists(_path))
+        {
+            return document;
+        }
+
+        SettingsDocument? existing;
+        try
+        {
+            await using FileStream stream = File.OpenRead(_path);
+            existing = await JsonSerializer.DeserializeAsync<SettingsDocument>(
+                stream,
+                JsonOptions,
+                cancellationToken);
+        }
+        catch (Exception exception)
+            when (exception is JsonException or IOException)
+        {
+            return document;
+        }
+
+        if (existing is null
+            || existing.SchemaVersion <= 0
+            || existing.SchemaVersion > SettingsDocument.CurrentSchemaVersion)
+        {
+            return document;
+        }
+
+        var values = new Dictionary<string, string>(
+            existing.Values,
+            StringComparer.OrdinalIgnoreCase);
+        foreach ((string key, string value) in document.Values)
+        {
+            values[key] = value;
+        }
+
+        return new(document.SchemaVersion, values);
     }
 
     private async Task<SettingsLoadResult> ImportLegacyAsync(
@@ -216,7 +262,31 @@ public static class LegacySettingsImporter
                 TranslateValue(targetKey, value!));
         }
 
+        foreach ((string section, IReadOnlyDictionary<string, string> entries)
+                 in source.Sections)
+        {
+            foreach ((string key, string value) in entries)
+            {
+                if (LegacySettingSchema.TryGet(section, key, out _))
+                {
+                    continue;
+                }
+
+                values.TryAdd(PreservedValueKey(section, key), value);
+            }
+        }
+
         return new SettingsDocument(SettingsDocument.CurrentSchemaVersion, values);
+    }
+
+    public static string PreservedValueKey(string section, string key)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(section);
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+        return "LegacyIni.Preserved."
+            + Convert.ToHexString(Encoding.UTF8.GetBytes(section))
+            + "."
+            + Convert.ToHexString(Encoding.UTF8.GetBytes(key));
     }
 
     private static string TranslateValue(string key, string value)

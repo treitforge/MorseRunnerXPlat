@@ -2298,6 +2298,10 @@ The path service distinguishes:
   the buffer exponent to its effective sample count. It also applies CE's
   persisted clamps for competition duration, monitor level, WPM step, RIT
   step, and single-call start delay before project-owned settings are exposed.
+- Unknown legacy section/key values are retained under a collision-safe
+  project-owned namespace. Atomic saves merge the existing document before
+  applying newly consumed values, so unknown and currently read-only settings
+  survive client updates and restart while new values win.
 - Unknown future fields should be preserved when practical.
 
 ### 17.3 Reference data
