@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+  "parityId": "ux.tui-wpm-step-upper-clamp-page-up-from-21-seed-12345",
+  "referenceDefinitionSha256": "663adf3bf230161abb923cf8b6651d394af1b99eab05efeafb696cb29992da23",
+  "oracle": "tests/parity/legacy-oracle/v62/LegacyOracle.lpr",
+  "legacyOracleVersionId": "legacy-oracle-v62",
+  "oracleSourceSha256": "4aa9ebe6e478374384f2f576f691b6cda4cc209b1172204ba50328f2ddc3a07a",
+  "oracleBuildRecipeSha256": "1167e9476f3284eca599db2918965ba8b5bf707eeddfd7cdb0aec56ec9cd9ca8",
+  "oracleExecutableSha256": "baf2df1d5de663c326a5144fef8888d56dc3fcce3643f8177ef13cfa9ff877d7",
+  "toolchain": {
+    "lazarus": "4.6",
+    "fpc": "3.2.2",
+    "target": "x86_64-win64",
+    "compilerSha256": "8ba500bbb84bd7100c169f151082b1461e9241e4491e0f6f38f2376bec49c319",
+    "backendCompilerSha256": "1f33c43b890e2d02e6b07c88401fc47cfcac48e003a29bb58b2e1220ac6a3e22",
+    "lazbuildSha256": "9554983fff43cfe5b5cef9a8374a37ff8a152e2de9c40c5750e723501f6edfd1",
+    "fingerprintSha256": "3eb50f2aac396bac975d8f628ad44421318d05179c81a98524802bcf04c8afee"
+  },
+  "values": [
+    "configuration|run-mode=rmSingle|seed=12345|initial-wpm=30|persisted-step-wpm=21|effective-step-wpm=20|action=page-up|handler=TMainForm.FormKeyDown",
+    "wpm-before|wpm=30",
+    "wpm-after-upper-clamped-page-up|wpm=50|delta-wpm=20"
+  ]
+}
