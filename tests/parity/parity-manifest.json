@@ -2323,7 +2323,7 @@
         "fixtureComparison": "exact",
         "observedValueCount": 3,
         "observedValuesSha256": "168a8f7d03fd8ab7cd11c1481345e526f61ff60604f60144c161870175200522",
-        "firstDivergence": "The zero-based first mismatch is ordinal 1, scCQWW. CE formats 5NN AT, while XPlat forces a synthetic three-digit zone and concatenates 5NNTAT. The ARRL DX row separately demonstrates missing full cuts for power 100.",
+        "firstDivergence": "The zero-based first mismatch is ordinal 1, scCQWW. CE formats 5NN AT, while XPlat forces a synthetic three-digit zone and concatenates 5NNT1T. The ARRL DX row separately demonstrates missing full cuts for power 100.",
         "functionalDivergenceCode": "contest-full-cut-numeric-remote-exchange-format-mismatch"
       },
       "platforms": [
