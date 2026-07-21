@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 2,
+  "parityId": "ux.tui-wpm-step-lower-clamp-page-up-from-zero-seed-12345",
+  "referenceRevision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "capturedAtUtc": "2026-07-21T17:23:41Z",
+  "fixture": {
+    "path": "tests/parity/fixtures/legacy/ux-tui-wpm-step-lower-clamp-page-up-from-zero-seed-12345.json",
+    "sha256": "91e9a05e60e244fc552413565925115799d5fd7e70cbab575577be036d0030ce",
+    "observedValuesSha256": "8915393346ef5543ba3fa6fe7af166263f9de1f44ddfe32d83a0eca3b43c5d5d"
+  },
+  "legacyOracle": {
+    "adapterId": "LegacyOracleTarget",
+    "versionId": "legacy-oracle-v60",
+    "source": "tests/parity/legacy-oracle/v60/LegacyOracle.lpr",
+    "sourceSha256": "7a158fdd8336bb57a6eea021b11842cd4b444a4847175fb07febe13ddfbc98a0",
+    "buildRecipe": "tests/parity/legacy-oracle/v60/build-recipe.json",
+    "buildRecipeSha256": "2f030397e1465e652f7912a048f56f7423ec2d8c6926b39febebc4df7e0e8e18",
+    "executableSha256": "398cc1428e28f16e23350991fd86b319d567f35cfb2b460becfe6bee6a1e3bd5",
+    "provenance": "artifacts/legacy-oracle/builds/legacy-oracle-v60/96a581a729a473713fe7c65e0ca79368d1e3b80dd6d0ac0ad880fb8f451d4bf4/39bf3745da524efe98ad9591a5c3ed38/LegacyOracle.provenance.json",
+    "provenanceSha256": "efb32fea07af493719cd4b89da97723d34b3640c54030b7fb21560e53c5b91c8",
+    "registrySha256": "4c04f6b2ef363e904f03dd0ed4c0b41860ffec68961b5ab23c761aa61a674b7b",
+    "retainedProvenance": {
+      "path": "tests/parity/evidence/provenance/efb32fea07af493719cd4b89da97723d34b3640c54030b7fb21560e53c5b91c8.json",
+      "sha256": "efb32fea07af493719cd4b89da97723d34b3640c54030b7fb21560e53c5b91c8"
+    }
+  },
+  "runs": {
+    "legacy": {
+      "path": "tests/parity/evidence/runs/7f5174e6536d02e400c19328d527fd480a91552cd931791e2581e868b8bff8c2.json",
+      "sha256": "7f5174e6536d02e400c19328d527fd480a91552cd931791e2581e868b8bff8c2"
+    },
+    "xplatRed": {
+      "path": "tests/parity/evidence/runs/022f00f18a949204804c82af372cb2cec1c28a8dd15d5ac956462d7589989c10.json",
+      "sha256": "022f00f18a949204804c82af372cb2cec1c28a8dd15d5ac956462d7589989c10"
+    },
+    "xplatGreen": {}
+  },
+  "testReports": {
+    "legacy": {
+      "path": "tests/parity/evidence/test-reports/9221d563c00ada15e4c72708dc6fb187612c423f21be0d4ccaf8bd119c4af012.trx",
+      "sha256": "9221d563c00ada15e4c72708dc6fb187612c423f21be0d4ccaf8bd119c4af012"
+    },
+    "xplatRed": {
+      "path": "tests/parity/evidence/test-reports/3f2883ed9f1a48b00dabb5090d8b0c0789755c79ac07f75b9f0739a1f20b429d.trx",
+      "sha256": "3f2883ed9f1a48b00dabb5090d8b0c0789755c79ac07f75b9f0739a1f20b429d"
+    },
+    "xplatGreen": {}
+  },
+  "executions": {
+    "legacy": {
+      "path": "tests/parity/evidence/executions/c5e1dc3b294008f730932f61bbb7de95f74164ba89ec6f69f62bb83b80aa0c36.json",
+      "sha256": "c5e1dc3b294008f730932f61bbb7de95f74164ba89ec6f69f62bb83b80aa0c36"
+    },
+    "xplatRed": {
+      "path": "tests/parity/evidence/executions/0649aaf5b968212bbd7b5247b3aab0c73d5d01a22f510612ce632834af3b2e42.json",
+      "sha256": "0649aaf5b968212bbd7b5247b3aab0c73d5d01a22f510612ce632834af3b2e42"
+    },
+    "xplatGreen": {}
+  },
+  "regressionGate": null,
+  "classification": "legacy-green-xplat-red"
+}
