@@ -1826,6 +1826,15 @@ and direct menu choices remain separate acceptance boundaries. Production TUI
 advanced settings now clamp WPM at CE's 10 WPM lower bound, and the fixed
 vector matches the pinned v50 observation exactly.
 
+The authored `ux.wpm-hst-page-up-rounds-32-to-35-seed-12345` case isolates
+CE's HST-specific speed rounding from the persisted non-HST step. Both targets
+start an `rmHst` session at 32 WPM. The v51 CE oracle invokes the real
+`TMainForm.FormKeyDown` PageUp path, which rounds upward to the adjacent
+five-WPM boundary at 35 WPM. Before implementation, the production Avalonia
+`SpeedUpCommand` uses its fixed non-HST two-WPM increment and reaches 34 WPM.
+HST PageDown, exact-boundary changes, TUI, persisted custom steps, and direct
+menu choices remain separate acceptance boundaries.
+
 ### 14.5 Device failure
 
 On unrecoverable physical-device failure:
