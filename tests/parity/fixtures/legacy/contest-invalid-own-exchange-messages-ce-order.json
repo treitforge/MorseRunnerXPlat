@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 2,
+  "revision": "55bbd019c29d8cf693184ea420a17a253f16fe1e",
+  "tree": "a44212bfee5b1eebfd0129459d476736775adf36",
+  "parityId": "contest.invalid-own-exchange-messages-ce-order",
+  "referenceDefinitionSha256": "663adf3bf230161abb923cf8b6651d394af1b99eab05efeafb696cb29992da23",
+  "oracle": "tests/parity/legacy-oracle/v64/LegacyOracle.lpr",
+  "legacyOracleVersionId": "legacy-oracle-v64",
+  "oracleSourceSha256": "6a6f3c4cd141dcf05197567042d897c14c380d3e3557f194e8d627c29d58c0ed",
+  "oracleBuildRecipeSha256": "5c79b78ddbbe7dc315813ac008922326ef94494fa9b02aea33cd2349b0d6c9af",
+  "oracleExecutableSha256": "7864664a688a8ca7ac6359d6754cc258108019c71ff546aba0da059c7afe3bde",
+  "toolchain": {
+    "lazarus": "4.6",
+    "fpc": "3.2.2",
+    "target": "x86_64-win64",
+    "compilerSha256": "8ba500bbb84bd7100c169f151082b1461e9241e4491e0f6f38f2376bec49c319",
+    "backendCompilerSha256": "1f33c43b890e2d02e6b07c88401fc47cfcac48e003a29bb58b2e1220ac6a3e22",
+    "lazbuildSha256": "9554983fff43cfe5b5cef9a8374a37ff8a152e2de9c40c5750e723501f6edfd1",
+    "fingerprintSha256": "3eb50f2aac396bac975d8f628ad44421318d05179c81a98524802bcf04c8afee"
+  },
+  "values": [
+    "contest|ordinal=0|id=scWpx|valid=false|error=Invalid exchange: '' - expecting 'RST <serial>' (e.g. 5NN #|123).",
+    "contest|ordinal=1|id=scCwt|valid=false|error=Invalid exchange: '' - expecting '<op name> <CWOPS Number|State|Country>' (e.g. DAVID 123).",
+    "contest|ordinal=2|id=scFieldDay|valid=false|error=Invalid exchange: '' - expecting '<class> <section>' (e.g. 3A OR).",
+    "contest|ordinal=3|id=scNaQp|valid=false|error=Invalid exchange: '' - expecting '<name> [<state|prov|dxcc-entity>]' (e.g. ALEX ON).",
+    "contest|ordinal=4|id=scHst|valid=false|error=Invalid exchange: '' - expecting 'RST <serial>' (e.g. 5NN #).",
+    "contest|ordinal=5|id=scCQWW|valid=false|error=Invalid exchange: '' - expecting 'RST <cq-zone>' (e.g. 5NN 3).",
+    "contest|ordinal=6|id=scArrlDx|valid=false|error=Invalid exchange: '' - expecting 'RST <state|province|power>' (e.g. 5NN ON).",
+    "contest|ordinal=7|id=scSst|valid=false|error=Invalid exchange: '' - expecting '<op name> <State|Prov|DX>' (e.g. BRUCE MA).",
+    "contest|ordinal=8|id=scAllJa|valid=false|error=Invalid exchange: '' - expecting 'RST <Pref><Power>' (e.g. 5NN 10H).",
+    "contest|ordinal=9|id=scAcag|valid=false|error=Invalid exchange: '' - expecting 'RST <City|Gun|Ku><Power>' (e.g. 5NN 1002H).",
+    "contest|ordinal=10|id=scIaruHf|valid=false|error=Invalid exchange: '' - expecting 'RST <Itu-zone|IARU Society>' (e.g. 5NN 6).",
+    "contest|ordinal=11|id=scArrlSS|valid=false|error=Invalid exchange: '' - expecting '[#|123] <precedence> <check> <section>' (e.g. A 72 OR)."
+  ]
+}

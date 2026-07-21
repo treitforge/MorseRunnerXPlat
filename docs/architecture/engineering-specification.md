@@ -1363,6 +1363,12 @@ A contest's configured default own exchange must pass that contest's normal
 own-exchange validator. The catalog must not bypass contest-specific validation
 with a blanket default-valid flag.
 
+The schema-v3 `contest.invalid-own-exchange-messages-ce-order` case invokes
+each live CE contest validator with an empty own exchange through
+`legacy-oracle-v64`. It pins rejection and the exact contest-specific
+required-field message for all twelve contests in catalog order. Partial-field
+inputs and each field's accepted lexical boundaries remain separate vectors.
+
 ### 13.4 Extensibility
 
 New built-in contests register through a catalog. Runtime plug-in loading is

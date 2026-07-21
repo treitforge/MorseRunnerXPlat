@@ -442,6 +442,7 @@
         "contest.wpx-custom-range-remote-exchange-format-seed-12345",
         "contest.wpx-midcontest-remote-exchange-format-seed-12345",
         "contest.exchange-shapes",
+        "contest.invalid-own-exchange-messages-ce-order",
         "engine.contest-specific-cq-tu-station-id-seed-12345"
       ]
     },
@@ -730,7 +731,7 @@
     {"id": "engine.start-silent-empty-enter-cq", "capabilityId": "simulation.runtime-routines", "behavior": "Start is silent and an empty Enter initiates the appropriate CE contest CQ.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.pas", "Contest.pas", "MyStn.pas"], "legacySurfaceSelectors": ["legacy.integration.command-line-path.main-pas.tmainform.run", "legacy.sim.routine.contest.tcontest.sendmsg", "legacy.sim.routine.mystn.tmystation.sendtext"], "acceptanceStatus": "partial", "caseIds": ["engine.start-silent-empty-enter-cq-seed-12345"]},
     {"id": "engine.contest-specific-cq-tu-and-station-id", "capabilityId": "contest.legacy-implementations", "behavior": "CQ, TU, operator call insertion, and periodic station-ID messages match each CE contest.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Contest.pas", "MyStn.pas", "CWOPS.pas", "ArrlFd.pas", "CWSST.pas", "ArrlSS.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.settings.stationidrate", "legacy.sim.routine.contest.tcontest.sendmsg", "legacy.sim.routine.contest.tcontest.onmefinishedsending", "legacy.sim.routine.contest.tcontest.onsaveqsocomplete", "legacy.sim.routine.contest.tcontest.onstationidsent", "legacy.sim.routine.mystn.tmystation.sendtext", "legacy.support.contest.routine.cwops.tcwops.sendmsg", "legacy.support.contest.routine.arrlfd.tarrlfieldday.sendmsg", "legacy.support.contest.routine.cwsst.tcwsst.sendmsg", "legacy.support.contest.routine.arrlss.tsweepstakes.sendmsg"], "acceptanceStatus": "partial", "caseIds": ["engine.contest-specific-cq-tu-station-id-seed-12345"]},
     {"id": "contest.full-remote-exchange-formatting", "capabilityId": "contest.legacy-implementations", "behavior": "Remote exchanges retain and format every CE contest identity field, cut number, repeat, and correction variant.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Contest.pas", "Station.pas"], "legacySurfaceSelectors": ["legacy.sim.routine.contest.tcontest.getexchangetypes", "legacy.sim.routine.contest.tcontest.getsentexchtypes", "legacy.sim.routine.station.tstation.nrastext"], "acceptanceStatus": "partial", "caseIds": ["contest.cwt-remote-exchange-format-seed-12345", "contest.default-two-field-remote-exchange-format-seed-12345", "contest.arrldx-high-r1-power-remote-exchange-format-seed-12345", "contest.full-cut-numeric-remote-exchange-format-seed-12345", "contest.jarl-random-cut-remote-exchange-format-seed-12345", "contest.cqww-random-consumption-remote-exchange-format-seed-12345", "contest.lid-serial-correction-remote-exchange-format-seed-16", "contest.rare-rst-error-remote-exchange-format-seed-12345", "contest.hst-remote-exchange-format-seed-12345", "contest.naqp-remote-exchange-format-seed-12345", "contest.fieldday-remote-exchange-format-seed-12345", "contest.sst-remote-exchange-format-seed-12345", "contest.sweepstakes-remote-exchange-format-seed-12345", "contest.wpx-midcontest-remote-exchange-format-seed-12345"]},
-    {"id": "contest.required-exchange-fields-all-contests", "capabilityId": "contest.legacy-implementations", "behavior": "CWT, SST, Field Day, NAQP, Sweepstakes, WPX, HST, and all other contests include every required CE exchange field.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "contest.required-exchange-fields-all-contests", "capabilityId": "contest.legacy-implementations", "behavior": "CWT, SST, Field Day, NAQP, Sweepstakes, WPX, HST, and all other contests include every required CE exchange field.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["ArrlSS.pas"], "legacySurfaceSelectors": ["legacy.support.contest.routine.arrlss.tsweepstakes.validatemyexchange"], "acceptanceStatus": "partial", "caseIds": ["contest.invalid-own-exchange-messages-ce-order"]},
     {"id": "contest.allja-acag-truth-column-mapping", "capabilityId": "contest.legacy-implementations", "behavior": "ALLJA and ACAG station truth use the correct CE data columns without serial fallback.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.sweepstakes-complete-truth-model", "capabilityId": "contest.legacy-implementations", "behavior": "Sweepstakes models serial, weighted precedence, own call, check, section, copied values, truth, and errors.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.arrldx-naqp-home-filtering-and-location", "capabilityId": "contest.legacy-implementations", "behavior": "ARRL DX and NAQP apply CE home-call filtering and dynamic location or exchange derivation.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -5207,6 +5208,62 @@
       "failureCode": "catalog-contest-definition-metadata-mismatch",
       "fixture": "tests/parity/fixtures/legacy/catalog-contest-definition-metadata-ce-order.json",
       "evidence": "tests/parity/evidence/catalog-contest-definition-metadata-ce-order.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "contest.invalid-own-exchange-messages-ce-order",
+      "capabilityId": "contest.legacy-implementations",
+      "obligationIds": [
+        "contest.required-exchange-fields-all-contests"
+      ],
+      "behavior": "All twelve CE contest validators reject an empty own exchange and report the exact contest-specific required-field message in declared contest order.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v64",
+        "source": "tests/parity/legacy-oracle/v64/LegacyOracle.lpr",
+        "sourceSha256": "6a6f3c4cd141dcf05197567042d897c14c380d3e3557f194e8d627c29d58c0ed",
+        "buildRecipe": "tests/parity/legacy-oracle/v64/build-recipe.json",
+        "buildRecipeSha256": "5c79b78ddbbe7dc315813ac008922326ef94494fa9b02aea33cd2349b0d6c9af"
+      },
+      "legacySources": [
+        "ArrlSS.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.support.contest.routine.arrlss.tsweepstakes.validatemyexchange"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The live v64 oracle selects each real CE contest implementation, sets W7SST as the operator callsign, and invokes ValidateMyExchange with an empty string.",
+        "The catalog messages consumed by ActiveContest are independently pinned by catalog.contest-definition-metadata-ce-order.",
+        "The shared TContest.ValidateMyExchange surface retains its separate simulation.runtime-routines ownership; this obligation claims the contest-owned Sweepstakes override while the vector observes every catalog result.",
+        "Before implementation, XPlat runs the production ContestRules validator for the same ordered catalog and reports its current exact validation result.",
+        "This vector pins the all-fields-missing boundary and exact required-field message. Partially entered exchanges and individual field regex boundaries remain separate cases."
+      ],
+      "input": {
+        "scenario": "contest.invalid-own-exchange-messages-ce-order"
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatInvalidOwnExchangeMessagesTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 12,
+        "observedValuesSha256": "76a0b772cab598d384793e9bc607ff9dfa1e13cb1b67da85c719e657bb2899e9",
+        "firstDivergence": "The zero-based first mismatch is expected in row 0, CQ WPX. CE lists both # and 123 as serial examples, while XPlat initially lists only #.",
+        "functionalDivergenceCode": "contest-invalid-own-exchange-message-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "contest-invalid-own-exchange-message-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/contest-invalid-own-exchange-messages-ce-order.json",
+      "evidence": "tests/parity/evidence/contest-invalid-own-exchange-messages-ce-order.baseline.json",
       "firstGreenCommit": null
     }
   ]

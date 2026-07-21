@@ -92,6 +92,7 @@ public sealed class ParityInfrastructureTests
                 "contest.fieldday-remote-exchange-format-seed-12345",
                 "contest.full-cut-numeric-remote-exchange-format-seed-12345",
                 "contest.hst-remote-exchange-format-seed-12345",
+                "contest.invalid-own-exchange-messages-ce-order",
                 "contest.jarl-random-cut-remote-exchange-format-seed-12345",
                 "contest.lid-serial-correction-remote-exchange-format-seed-16",
                 "contest.naqp-remote-exchange-format-seed-12345",
@@ -156,6 +157,7 @@ public sealed class ParityInfrastructureTests
                 "contest.fieldday-remote-exchange-format-seed-12345",
                 "contest.full-cut-numeric-remote-exchange-format-seed-12345",
                 "contest.hst-remote-exchange-format-seed-12345",
+                "contest.invalid-own-exchange-messages-ce-order",
                 "contest.jarl-random-cut-remote-exchange-format-seed-12345",
                 "contest.lid-serial-correction-remote-exchange-format-seed-16",
                 "contest.naqp-remote-exchange-format-seed-12345",
@@ -195,6 +197,10 @@ public sealed class ParityInfrastructureTests
     [Trait("Category", "ParityInfrastructure")]
     public void CaseIdSelectsItsExactXPlatAdapter()
     {
+        Assert.IsType<XPlatInvalidOwnExchangeMessagesTarget>(
+            ParityAcceptanceRegistry
+                .Get("contest.invalid-own-exchange-messages-ce-order")
+                .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatContestDefinitionMetadataTarget>(
             ParityAcceptanceRegistry
                 .Get("catalog.contest-definition-metadata-ce-order")
