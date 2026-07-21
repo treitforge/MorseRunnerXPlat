@@ -107,8 +107,56 @@ public sealed class AudioSinkTests
             Assert.Equal(52, bytes.Length);
             Assert.Equal(8, BinaryPrimitives.ReadInt32LittleEndian(bytes.AsSpan(40, 4)));
             Assert.Equal(
-                [Int16.MinValue, -16384, 16384, Int16.MaxValue],
+                [-Int16.MaxValue, -16384, 16384, Int16.MaxValue],
                 Enumerable.Range(0, 4)
+                    .Select(
+                        index => BinaryPrimitives.ReadInt16LittleEndian(
+                            bytes.AsSpan(44 + index * 2, 2))));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task WavSinkUsesCeTiesToEvenPcm16Conversion()
+    {
+        string path = System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(),
+            $"morse-runner-{Guid.NewGuid():N}.wav");
+        try
+        {
+            float scale = Int16.MaxValue;
+            float[] input =
+            [
+                -2.5f / scale,
+                -1.5f / scale,
+                -0.5f / scale,
+                0.5f / scale,
+                1.5f / scale,
+                2.5f / scale,
+            ];
+            await using WavAudioSink sink = new(path);
+            await sink.InitializeAsync(
+                SessionId.New(),
+                new AudioStreamFormat(
+                    11_025,
+                    Channels: 1,
+                    BlockSize: input.Length),
+                TestContext.Current.CancellationToken);
+            await sink.WriteAsync(
+                input,
+                simulationBlock: 0,
+                TestContext.Current.CancellationToken);
+            await sink.CompleteAsync(TestContext.Current.CancellationToken);
+
+            byte[] bytes = await File.ReadAllBytesAsync(
+                path,
+                TestContext.Current.CancellationToken);
+            Assert.Equal(
+                [-2, -2, 0, 0, 2, 2],
+                Enumerable.Range(0, input.Length)
                     .Select(
                         index => BinaryPrimitives.ReadInt16LittleEndian(
                             bytes.AsSpan(44 + index * 2, 2))));
