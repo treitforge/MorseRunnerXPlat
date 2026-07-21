@@ -1397,6 +1397,11 @@ remote-callsign override. Call-history partitioning and invalid-home-call error
 text remain separate boundaries so this decision-table case stays fast and
 deterministic.
 
+The engine resolves this dynamic pair from semantic station context. For ARRL
+DX it applies CE's home-locality, simulated-station, and received-message XOR.
+For NAQP it classifies the sending callsign, using a non-empty remote callsign
+for received-message queries. UX clients do not reproduce either contest rule.
+
 ### 13.4 Extensibility
 
 New built-in contests register through a catalog. Runtime plug-in loading is

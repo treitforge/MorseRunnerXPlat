@@ -303,7 +303,7 @@ internal sealed class StationReferenceCatalog
         return name.Length is > 0 and <= 12;
     }
 
-    private static bool IsArrlDxHomeCallLocal(string call)
+    internal static bool IsArrlDxHomeCallLocal(string call)
     {
         if (Dxcc.TryFind(call, out ContestDxccRecord? record)
             && record is not null)
@@ -322,7 +322,7 @@ internal sealed class StationReferenceCatalog
                 StringComparison.Ordinal);
     }
 
-    private static bool IsNaqpCallLocal(
+    internal static bool IsNaqpCallLocal(
         string call,
         bool useFallback)
     {

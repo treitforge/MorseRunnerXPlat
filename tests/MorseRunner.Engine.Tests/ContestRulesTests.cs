@@ -158,4 +158,38 @@ public sealed class ContestRulesTests
                 + $"{ContestCatalog.Get(id).ValidationMessage}.",
             validation.Error);
     }
+
+    [Theory]
+    [InlineData("scArrlDx", "W7SST", false, false, "W7SST", "", ExchangeType1.Rst, ExchangeType2.StateProvince)]
+    [InlineData("scArrlDx", "W7SST", false, true, "W7SST", "F6ABC", ExchangeType1.Rst, ExchangeType2.Power)]
+    [InlineData("scArrlDx", "W7SST", true, false, "F6ABC", "", ExchangeType1.Rst, ExchangeType2.Power)]
+    [InlineData("scArrlDx", "W7SST", true, true, "F6ABC", "W7SST", ExchangeType1.Rst, ExchangeType2.StateProvince)]
+    [InlineData("scArrlDx", "F6ABC", false, false, "F6ABC", "", ExchangeType1.Rst, ExchangeType2.Power)]
+    [InlineData("scArrlDx", "F6ABC", false, true, "F6ABC", "W7SST", ExchangeType1.Rst, ExchangeType2.StateProvince)]
+    [InlineData("scArrlDx", "F6ABC", true, false, "W7SST", "", ExchangeType1.Rst, ExchangeType2.StateProvince)]
+    [InlineData("scArrlDx", "F6ABC", true, true, "W7SST", "F6ABC", ExchangeType1.Rst, ExchangeType2.Power)]
+    [InlineData("scNaQp", "W7SST", false, false, "W7SST", "", ExchangeType1.OperatorName, ExchangeType2.NaqpSecondField)]
+    [InlineData("scNaQp", "F6ABC", false, false, "F6ABC", "", ExchangeType1.OperatorName, ExchangeType2.NaqpNonNorthAmericaSecondField)]
+    [InlineData("scNaQp", "F6ABC", false, true, "F6ABC", "W7SST", ExchangeType1.OperatorName, ExchangeType2.NaqpSecondField)]
+    [InlineData("scNaQp", "W7SST", false, true, "W7SST", "F6ABC", ExchangeType1.OperatorName, ExchangeType2.NaqpNonNorthAmericaSecondField)]
+    public void DynamicExchangeTypesMatchCeLocalityMatrix(
+        string contestId,
+        string homeCall,
+        bool isSimulatedStation,
+        bool isReceivedMessage,
+        string stationCall,
+        string remoteCall,
+        ExchangeType1 expectedFirst,
+        ExchangeType2 expectedSecond)
+    {
+        ExchangeTypes actual = ContestQsoRules.ResolveExchangeTypes(
+            new ContestId(contestId),
+            homeCall,
+            isSimulatedStation,
+            isReceivedMessage,
+            stationCall,
+            remoteCall);
+
+        Assert.Equal(new ExchangeTypes(expectedFirst, expectedSecond), actual);
+    }
 }

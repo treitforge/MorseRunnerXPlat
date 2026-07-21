@@ -30,6 +30,55 @@ public static class ContestQsoRules
 {
     private static readonly ContestDxccDatabase Dxcc = new();
 
+    public static ExchangeTypes ResolveExchangeTypes(
+        ContestId contestId,
+        string homeCall,
+        bool isSimulatedStation,
+        bool isReceivedMessage,
+        string stationCall,
+        string remoteCall)
+    {
+        ArgumentNullException.ThrowIfNull(homeCall);
+        ArgumentNullException.ThrowIfNull(stationCall);
+        ArgumentNullException.ThrowIfNull(remoteCall);
+
+        if (contestId.Value == "scArrlDx")
+        {
+            bool homeCallIsDx =
+                !StationReferenceCatalog.IsArrlDxHomeCallLocal(homeCall);
+            bool useDxTypes = homeCallIsDx
+                ^ isSimulatedStation
+                ^ isReceivedMessage;
+            return useDxTypes
+                ? new(ExchangeType1.Rst, ExchangeType2.Power)
+                : new(ExchangeType1.Rst, ExchangeType2.StateProvince);
+        }
+
+        if (contestId.Value == "scNaQp")
+        {
+            string sendingCall = isReceivedMessage
+                    && remoteCall.Length > 0
+                ? remoteCall
+                : stationCall;
+            bool sendingCallIsLocal =
+                StationReferenceCatalog.IsNaqpCallLocal(
+                    sendingCall,
+                    useFallback: false);
+            return sendingCallIsLocal
+                ? new(
+                    ExchangeType1.OperatorName,
+                    ExchangeType2.NaqpSecondField)
+                : new(
+                    ExchangeType1.OperatorName,
+                    ExchangeType2.NaqpNonNorthAmericaSecondField);
+        }
+
+        ContestRules rules = ContestRulesCatalog.Get(contestId);
+        return isReceivedMessage
+            ? rules.BaselineReceivedExchangeTypes
+            : rules.BaselineSentExchangeTypes;
+    }
+
     public static ContestValidation ValidateOwnExchange(
         ContestId contestId,
         string exchange)
