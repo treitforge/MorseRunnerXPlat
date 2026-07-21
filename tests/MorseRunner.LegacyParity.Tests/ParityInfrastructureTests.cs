@@ -105,6 +105,7 @@ public sealed class ParityInfrastructureTests
                 "ux.rit-default-up-command-step-50-hz-seed-12345",
                 "ux.tui-rit-default-up-command-step-50-hz-seed-12345",
                 "ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345",
+                "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345",
                 "ux.wpm-default-page-up-command-step-2-wpm-seed-12345",
                 "ux.wpm-upper-clamp-extra-page-up-from-118-seed-12345",
             ],
@@ -154,6 +155,7 @@ public sealed class ParityInfrastructureTests
                 "ux.rit-default-up-command-step-50-hz-seed-12345",
                 "ux.tui-rit-default-up-command-step-50-hz-seed-12345",
                 "ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345",
+                "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345",
                 "ux.wpm-default-page-up-command-step-2-wpm-seed-12345",
                 "ux.wpm-upper-clamp-extra-page-up-from-118-seed-12345",
             ],
@@ -322,6 +324,12 @@ public sealed class ParityInfrastructureTests
             ParityAcceptanceRegistry
                 .Get(
                     "ux.tui-rit-default-up-command-step-50-hz-seed-12345")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatTuiWpmSetupUpperRangeTarget>(
+            ParityAcceptanceRegistry
+                .Get(
+                    "ux.tui-wpm-setup-upper-range-increment-from-100"
+                    + "-seed-12345")
                 .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatAvaloniaWpmStepTarget>(
             ParityAcceptanceRegistry

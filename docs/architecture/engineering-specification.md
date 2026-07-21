@@ -1803,6 +1803,16 @@ separate acceptance boundaries. Production Avalonia setup, view-model state,
 and live engine speed adjustments now expose and enforce the CE 120 WPM upper
 bound; the fixed vector matches the pinned v48 observation exactly.
 
+The authored
+`ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345` case applies
+the CE numeric-control range to the production terminal advanced-settings
+workflow. The v49 CE oracle mirrors the form's 10 through 120 WPM control,
+sets WPM to 100 through `TMainForm.SetWpm`, and accepts a one-WPM increase to
+101. Before implementation, `TuiApplication.AdjustCurrentSetting` remains at
+100 because its setup-only ceiling is 100 WPM. The lower bound, operator-mode
+PageUp clamp, HST rounding, persisted custom steps, and direct menu choices
+remain separate acceptance boundaries.
+
 ### 14.5 Device failure
 
 On unrecoverable physical-device failure:

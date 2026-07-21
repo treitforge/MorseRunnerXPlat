@@ -203,7 +203,8 @@
         "ux.tui-rit-default-up-command-step-50-hz-seed-12345",
         "ux.wpm-default-page-up-command-step-2-wpm-seed-12345",
         "ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345",
-        "ux.wpm-upper-clamp-extra-page-up-from-118-seed-12345"
+        "ux.wpm-upper-clamp-extra-page-up-from-118-seed-12345",
+        "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345"
       ]
     },
     {
@@ -843,7 +844,7 @@
     {"id": "release.cli-help-version-exit-codes", "capabilityId": "build.legacy-project-metadata", "behavior": "CLI help, version, validation failures, runtime failures, and successful commands expose stable documented output and exit codes in packaged builds.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "lifecycle.unit-initialization-finalization-order", "capabilityId": "lifecycle.legacy-unit-hooks", "behavior": "Legacy initialization and finalization hooks execute with equivalent order, registration, cleanup, state, and failures.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "ux.wpm-default-page-up-step", "capabilityId": "ux.keyboard-workflows", "behavior": "The default non-HST PageUp workflow applies CE's persisted WPM step to authoritative engine state.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.settings.wpmsteprate", "legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-default-page-up-command-step-2-wpm-seed-12345", "ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345"]},
-    {"id": "ux.wpm-upper-range-and-clamp", "capabilityId": "ux.keyboard-workflows", "behavior": "The CW-speed input and live PageUp workflow expose and enforce CE's 120 WPM upper bound.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.dfm", "Main.lfm", "Main.pas"], "legacySurfaceSelectors": ["legacy.main.object.spinedit1", "legacy.form.lfm.main.object.spinedit1", "legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-upper-clamp-extra-page-up-from-118-seed-12345"]}
+    {"id": "ux.wpm-upper-range-and-clamp", "capabilityId": "ux.keyboard-workflows", "behavior": "The CW-speed input and live PageUp workflow expose and enforce CE's 120 WPM upper bound.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.dfm", "Main.lfm", "Main.pas"], "legacySurfaceSelectors": ["legacy.main.object.spinedit1", "legacy.form.lfm.main.object.spinedit1", "legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-upper-clamp-extra-page-up-from-118-seed-12345", "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345"]}
   ],
   "cases": [
     {
@@ -4285,6 +4286,69 @@
       "failureCode": "ux-WPM-upper-clamp-mismatch",
       "fixture": "tests/parity/fixtures/legacy/ux-wpm-upper-clamp-extra-page-up-from-118-seed-12345.json",
       "evidence": "tests/parity/evidence/ux-wpm-upper-clamp-extra-page-up-from-118-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345",
+      "capabilityId": "ux.keyboard-workflows",
+      "obligationIds": [
+        "ux.wpm-upper-range-and-clamp"
+      ],
+      "behavior": "CE accepts a one-WPM setup increase from 100 to 101 within its 10 through 120 WPM control range; the production TUI advanced-settings workflow must expose the same upper range.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v49",
+        "source": "tests/parity/legacy-oracle/v49/LegacyOracle.lpr",
+        "sourceSha256": "4ffaff321093af8c719faef061f8428ec7903a41743082e31e69f1db4d7a2853",
+        "buildRecipe": "tests/parity/legacy-oracle/v49/build-recipe.json",
+        "buildRecipeSha256": "7d15e69a5c750e18f717bd47061bcb09df6a6decbd4377eefe6f3a5110071f94"
+      },
+      "legacySources": [
+        "Main.dfm",
+        "Main.lfm",
+        "Main.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.main.object.spinedit1",
+        "legacy.form.lfm.main.object.spinedit1"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The CE target mirrors the SpinEdit1 10 through 120 WPM range, creates a fresh handleless runtime, sets WPM to 100 through TMainForm.SetWpm, and applies one additional WPM through the same production method.",
+        "Before implementation, the XPlat target creates the production TuiApplication, enters advanced settings on the WPM field at 100, executes the real IncreaseSetting action once, and observes the TUI setup value.",
+        "This case pins only upper-range availability in TUI setup. The lower bound, operator-mode PageUp clamp, HST rounding, persisted custom steps, and direct menu choices remain separate boundaries."
+      ],
+      "input": {
+        "scenario": "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345",
+        "seed": 12345,
+        "initialWpm": 100,
+        "settingsIncrementWpm": 1,
+        "expectedAfterWpm": 101,
+        "expectedMinimumWpm": 10,
+        "expectedMaximumWpm": 120
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatTuiWpmSetupUpperRangeTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 3,
+        "observedValuesSha256": "df696c51a4f7ef05b2c11f05b0700314eeb6a3f4242b0b41f084717123bc7f91",
+        "firstDivergence": "The zero-based first mismatch is expected in wpm-after-settings-increment. CE reaches 101 WPM, while the production TUI advanced-settings action initially remains clamped at 100 WPM.",
+        "functionalDivergenceCode": "ux-TUI-WPM-setup-upper-range-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "ux-TUI-WPM-setup-upper-range-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/ux-tui-wpm-setup-upper-range-increment-from-100-seed-12345.json",
+      "evidence": "tests/parity/evidence/ux-tui-wpm-setup-upper-range-increment-from-100-seed-12345.baseline.json",
       "firstGreenCommit": null
     }
   ]

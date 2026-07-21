@@ -13,6 +13,16 @@ public static class ParityAcceptanceRegistry
         new Dictionary<string, ParityAcceptanceRegistration>(
             StringComparer.Ordinal)
         {
+            [XPlatTuiWpmSetupUpperRangeTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatTuiWpmSetupUpperRangeTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatTuiWpmSetupUpperRangeTarget),
+                    XPlatTuiWpmSetupUpperRangeTarget.FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = TuiWpmSetupUpperRangeInput.Parse(scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () => new XPlatTuiWpmSetupUpperRangeTarget()),
             [XPlatWpmUpperClampTarget.ParityId] =
                 new ParityAcceptanceRegistration(
                     XPlatWpmUpperClampTarget.ParityId,
