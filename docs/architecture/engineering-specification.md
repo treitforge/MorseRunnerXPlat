@@ -1815,6 +1815,15 @@ remain separate acceptance boundaries. Production TUI advanced settings now
 permit WPM values through CE's 120 WPM upper bound, and the fixed vector
 matches the pinned v49 observation exactly.
 
+The authored
+`ux.tui-wpm-setup-lower-clamp-decrement-from-10-seed-12345` case pins the
+opposite TUI setup boundary. The v50 CE oracle mirrors the same numeric
+control, starts at 10 WPM through `TMainForm.SetWpm`, and remains at 10 when
+asked to decrement by one. Before implementation,
+`TuiApplication.AdjustCurrentSetting` reaches 9 WPM because its setup-only
+minimum is 5. Operator-mode PageDown, HST rounding, persisted custom steps,
+and direct menu choices remain separate acceptance boundaries.
+
 ### 14.5 Device failure
 
 On unrecoverable physical-device failure:

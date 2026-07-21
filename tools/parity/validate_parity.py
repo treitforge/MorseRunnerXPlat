@@ -305,6 +305,7 @@ TRUSTED_V3_MIGRATION_OBLIGATION_OWNERS = {
     ),
     "ux.wpm-default-page-up-step": "ux.keyboard-workflows",
     "ux.wpm-upper-range-and-clamp": "ux.keyboard-workflows",
+    "ux.wpm-lower-range-and-clamp": "ux.keyboard-workflows",
     "ux.log-selection-updates-callsign-information": "ux.main-form-events",
     "ux.semantic-duration-not-simulation-blocks": "ux.main-form-events",
     "ux.help-about-readme-community-actions": "ux.main-menu-commands",
@@ -326,8 +327,8 @@ TRUSTED_V3_MIGRATION_OBLIGATION_IDS = frozenset(
     TRUSTED_V3_MIGRATION_OBLIGATION_OWNERS
 )
 TRUSTED_V3_MIGRATION_OBLIGATION_SHA256 = (
-    "eed39cd2b9d597b30bb37cf2b7c17800"
-    "24b767ce4f51f2639c2c4ac64c6bbeea"
+    "e7fb0f99d4e618501c9b8eec6d7bd0cc"
+    "3dec3e18061f32481b8dcc79acb038b3"
 )
 TRUSTED_V3_MIGRATION_CAPABILITY_SHA256 = (
     "04330886992153a69429ed7f271e9bf7"

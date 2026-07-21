@@ -204,7 +204,8 @@
         "ux.wpm-default-page-up-command-step-2-wpm-seed-12345",
         "ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345",
         "ux.wpm-upper-clamp-extra-page-up-from-118-seed-12345",
-        "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345"
+        "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345",
+        "ux.tui-wpm-setup-lower-clamp-decrement-from-10-seed-12345"
       ]
     },
     {
@@ -844,7 +845,8 @@
     {"id": "release.cli-help-version-exit-codes", "capabilityId": "build.legacy-project-metadata", "behavior": "CLI help, version, validation failures, runtime failures, and successful commands expose stable documented output and exit codes in packaged builds.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "lifecycle.unit-initialization-finalization-order", "capabilityId": "lifecycle.legacy-unit-hooks", "behavior": "Legacy initialization and finalization hooks execute with equivalent order, registration, cleanup, state, and failures.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "ux.wpm-default-page-up-step", "capabilityId": "ux.keyboard-workflows", "behavior": "The default non-HST PageUp workflow applies CE's persisted WPM step to authoritative engine state.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.settings.wpmsteprate", "legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-default-page-up-command-step-2-wpm-seed-12345", "ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345"]},
-    {"id": "ux.wpm-upper-range-and-clamp", "capabilityId": "ux.keyboard-workflows", "behavior": "The CW-speed input and live PageUp workflow expose and enforce CE's 120 WPM upper bound.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.dfm", "Main.lfm", "Main.pas"], "legacySurfaceSelectors": ["legacy.main.object.spinedit1", "legacy.form.lfm.main.object.spinedit1", "legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-upper-clamp-extra-page-up-from-118-seed-12345", "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345"]}
+    {"id": "ux.wpm-upper-range-and-clamp", "capabilityId": "ux.keyboard-workflows", "behavior": "The CW-speed input and live PageUp workflow expose and enforce CE's 120 WPM upper bound.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.dfm", "Main.lfm", "Main.pas"], "legacySurfaceSelectors": ["legacy.main.object.spinedit1", "legacy.form.lfm.main.object.spinedit1", "legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-upper-clamp-extra-page-up-from-118-seed-12345", "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345"]},
+    {"id": "ux.wpm-lower-range-and-clamp", "capabilityId": "ux.keyboard-workflows", "behavior": "Every CW-speed setup workflow enforces CE's 10 WPM lower bound.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.dfm", "Main.lfm", "Main.pas"], "legacySurfaceSelectors": ["legacy.main.object.spinedit1", "legacy.form.lfm.main.object.spinedit1"], "acceptanceStatus": "partial", "caseIds": ["ux.tui-wpm-setup-lower-clamp-decrement-from-10-seed-12345"]}
   ],
   "cases": [
     {
@@ -4349,6 +4351,69 @@
       "failureCode": "ux-TUI-WPM-setup-upper-range-mismatch",
       "fixture": "tests/parity/fixtures/legacy/ux-tui-wpm-setup-upper-range-increment-from-100-seed-12345.json",
       "evidence": "tests/parity/evidence/ux-tui-wpm-setup-upper-range-increment-from-100-seed-12345.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "ux.tui-wpm-setup-lower-clamp-decrement-from-10-seed-12345",
+      "capabilityId": "ux.keyboard-workflows",
+      "obligationIds": [
+        "ux.wpm-lower-range-and-clamp"
+      ],
+      "behavior": "CE remains clamped at 10 WPM when setup is decremented below its 10 through 120 WPM control range; the production TUI advanced-settings workflow must enforce the same lower bound.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v50",
+        "source": "tests/parity/legacy-oracle/v50/LegacyOracle.lpr",
+        "sourceSha256": "6ec549c4aca0442eac8cb333a3646bd0430d90821a1bbaf59bb7c6254926e297",
+        "buildRecipe": "tests/parity/legacy-oracle/v50/build-recipe.json",
+        "buildRecipeSha256": "6595416e1aa5531edea590c886b9cf79a9a872e878cbcd3bea4764a6a234230c"
+      },
+      "legacySources": [
+        "Main.dfm",
+        "Main.lfm",
+        "Main.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.main.object.spinedit1",
+        "legacy.form.lfm.main.object.spinedit1"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The CE target mirrors the SpinEdit1 10 through 120 WPM range, creates a fresh handleless runtime, sets WPM to 10 through TMainForm.SetWpm, and requests one WPM below the lower bound through the same production method.",
+        "Before implementation, the XPlat target creates the production TuiApplication, enters advanced settings on the WPM field at 10, executes the real DecreaseSetting action once, and observes the TUI setup value.",
+        "This case pins only the TUI setup lower clamp. Operator-mode PageDown, HST rounding, persisted custom steps, and direct menu choices remain separate boundaries."
+      ],
+      "input": {
+        "scenario": "ux.tui-wpm-setup-lower-clamp-decrement-from-10-seed-12345",
+        "seed": 12345,
+        "initialWpm": 10,
+        "settingsDecrementWpm": 1,
+        "expectedAfterWpm": 10,
+        "expectedMinimumWpm": 10,
+        "expectedMaximumWpm": 120
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatTuiWpmSetupLowerClampTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 3,
+        "observedValuesSha256": "30fd948fe11be59d71921000719e6ec57ac62f6451dd32176c039c83339f4419",
+        "firstDivergence": "The zero-based first mismatch is expected in wpm-after-settings-decrement. CE remains at 10 WPM, while the production TUI advanced-settings action initially reaches 9 WPM.",
+        "functionalDivergenceCode": "ux-TUI-WPM-setup-lower-clamp-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "ux-TUI-WPM-setup-lower-clamp-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/ux-tui-wpm-setup-lower-clamp-decrement-from-10-seed-12345.json",
+      "evidence": "tests/parity/evidence/ux-tui-wpm-setup-lower-clamp-decrement-from-10-seed-12345.baseline.json",
       "firstGreenCommit": null
     }
   ]
