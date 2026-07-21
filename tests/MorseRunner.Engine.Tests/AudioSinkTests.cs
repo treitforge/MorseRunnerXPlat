@@ -44,6 +44,18 @@ public sealed class AudioSinkTests
     }
 
     [Fact]
+    public async Task MinusSixtyDbMonitorProducesCeSignedZeroMute()
+    {
+        float[] samples = await RenderFirstOperatorBlockAsync(
+            monitorLevelDb: -60d);
+
+        Assert.All(samples, sample => Assert.Equal(0f, MathF.Abs(sample)));
+        Assert.Equal(
+            "b73ce67d7f6a60efbc46929d114471b7e79ddaee5b5a60a350a2c6a0a3ce3e6a",
+            ComputeRawSingleSha256(samples));
+    }
+
+    [Fact]
     public async Task QskDucksReceiverBeforeTheSharedCePipeline()
     {
         float[] samples = await RenderFirstOperatorBlockAsync(

@@ -209,7 +209,7 @@ internal sealed class EngineSession : IAsyncDisposable
         {
             _qrnBurstPool[index] = new QrnBurstStation();
         }
-        _monitorGain = MathF.Pow(10F, (float)settings.MonitorLevelDb / 20F);
+        _monitorGain = CalculateLegacyMonitorGain(settings.MonitorLevelDb);
         _currentWordsPerMinute = settings.WordsPerMinute;
         _currentBandwidthHz = settings.BandwidthHz;
         _qsbEnabled = settings.Qsb;
@@ -1559,6 +1559,21 @@ internal sealed class EngineSession : IAsyncDisposable
             _receiverImaginary[index] = localMonitor
                 + (receiverGain * _receiverImaginary[index]);
         }
+    }
+
+    private static float CalculateLegacyMonitorGain(double monitorLevelDb)
+    {
+        float sliderValue = Math.Clamp(
+            ((float)monitorLevelDb / 60f) + 1f,
+            0f,
+            1f);
+        float gain = (float)Math.Pow(10d, (sliderValue - 1f) * 3f);
+        if (sliderValue < 0.05f)
+        {
+            gain *= sliderValue * 60f;
+        }
+
+        return gain;
     }
 
     private async Task<CommandResult> ApplyAudioRecoveryAsync(
