@@ -1914,6 +1914,15 @@ precedence, and direct menu choices remain separate acceptance boundaries.
 Production TUI now subtracts the persisted step for non-HST PageDown while
 retaining the independent HST five-WPM boundary calculation.
 
+The authored `ux.wpm-step-lower-clamp-page-up-from-zero-seed-12345` case
+pins CE's lower load clamp for the persisted WPM step. The v59 CE oracle
+writes `WpmStepRate=0` beside the executable, invokes the real `Ini.FromIni`
+path, verifies an effective step of 1 WPM, and reaches 31 WPM from 30 through
+the real `TMainForm.FormKeyDown` PageUp path. Before implementation,
+production Avalonia loads the zero value unchanged, so `SpeedUpCommand`
+remains at 30 WPM. TUI, the upper load clamp, malformed values, PageDown, HST
+precedence, and direct menu choices remain separate acceptance boundaries.
+
 ### 14.5 Device failure
 
 On unrecoverable physical-device failure:
