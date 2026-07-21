@@ -125,7 +125,8 @@
       "acceptanceStatus": "partial",
       "caseIds": [
         "settings.duration-full-range",
-        "settings.clean-profile-ce-defaults"
+        "settings.clean-profile-ce-defaults",
+        "settings.ce-encoding-translation"
       ]
     },
     {
@@ -780,7 +781,7 @@
     {"id": "ux.score-dialog-and-history-workflow", "capabilityId": "ux.score-dialog", "behavior": "Score dialogs, automatic completion, history navigation, actions, focus, and accessible content match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "ux.legacy-component-runtime-behavior", "capabilityId": "ux.legacy-vcl-components", "behavior": "Every legacy hint, volume, and UI component behavior remains functionally available through the cross-platform UX.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "settings.production-legacy-import", "capabilityId": "configuration.persisted-settings", "behavior": "Production startup invokes CE settings migration when appropriate.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "settings.ce-encoding-translation", "capabilityId": "configuration.persisted-settings", "behavior": "Migration translates CE indexes, ordinals, zero-or-one booleans, IDs, Hz values, duration, block size, and contest exchanges.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "settings.ce-encoding-translation", "capabilityId": "configuration.persisted-settings", "behavior": "Migration translates CE indexes, ordinals, zero-or-one booleans, IDs, Hz values, duration, block size, and contest exchanges.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas", "Main.lfm"], "legacySurfaceSelectors": ["legacy.ini.setting.station.pitch", "legacy.ini.setting.station.bandwidth", "legacy.ini.setting.contest.simcontest", "legacy.ini.setting.contest.defaultrunmode", "legacy.ini.setting.station.serialnr", "legacy.ini.setting.system.bufsize", "legacy.ini.setting.contest.duration", "legacy.ini.setting.contest.competitionduration", "legacy.ini.setting.station.selfmonvolume", "legacy.ini.setting.settings.wpmsteprate", "legacy.ini.setting.settings.ritstepincr", "legacy.ini.setting.settings.singlecallstartdelay", "legacy.ini.setting.station.cqwpxexchange", "legacy.ini.setting.station.qsk", "legacy.ini.setting.station.savewav", "legacy.ini.setting.band.qsb", "legacy.ini.setting.band.qrm", "legacy.ini.setting.band.qrn", "legacy.ini.setting.band.flutter", "legacy.ini.setting.band.lids", "legacy.ini.setting.system.showcallsigninfo"], "acceptanceStatus": "partial", "caseIds": ["settings.ce-encoding-translation"]},
     {"id": "settings.preserve-unknown-and-unconsumed-values", "capabilityId": "configuration.persisted-settings", "behavior": "Migration and save preserve unknown or unconsumed CE values and are idempotent.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "settings.clean-profile-core-defaults", "capabilityId": "configuration.persisted-settings", "behavior": "Clean-profile call, WPM, activity, duration, pitch, bandwidth, and related defaults match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas", "Main.lfm"], "legacySurfaceSelectors": ["legacy.ini.setting.station.call", "legacy.ini.setting.station.name", "legacy.ini.setting.station.wpm", "legacy.ini.setting.station.pitch", "legacy.ini.setting.station.bandwidth", "legacy.ini.setting.station.cwminrxspeed", "legacy.ini.setting.station.cwmaxrxspeed", "legacy.ini.setting.station.serialnr", "legacy.ini.setting.station.selfmonvolume", "legacy.ini.setting.station.qsk", "legacy.ini.setting.band.activity", "legacy.ini.setting.band.qsb", "legacy.ini.setting.band.qrm", "legacy.ini.setting.band.qrn", "legacy.ini.setting.band.flutter", "legacy.ini.setting.band.lids", "legacy.ini.setting.contest.duration", "legacy.ini.setting.contest.competitionduration", "legacy.ini.setting.contest.simcontest", "legacy.ini.setting.contest.defaultrunmode", "legacy.ini.setting.settings.stationidrate"], "acceptanceStatus": "partial", "caseIds": ["settings.clean-profile-ce-defaults"]},
     {"id": "settings.full-duration-range", "capabilityId": "configuration.persisted-settings", "behavior": "Every CE duration from 1 through 240 minutes is accepted and persists without hidden clamping.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.dfm", "Main.pas", "Ini.pas"], "legacySurfaceSelectors": ["legacy.main.object.spinedit2", "legacy.main.event-binding.spinedit2.onchange", "legacy.main.handler.spinedit2change", "legacy.ini.setting.contest.duration"], "acceptanceStatus": "partial", "caseIds": ["settings.duration-full-range"]},
@@ -5835,6 +5836,82 @@
       "failureCode": "settings-clean-profile-ce-defaults-mismatch",
       "fixture": "tests/parity/fixtures/legacy/settings-clean-profile-ce-defaults.json",
       "evidence": "tests/parity/evidence/settings-clean-profile-ce-defaults.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "settings.ce-encoding-translation",
+      "capabilityId": "configuration.persisted-settings",
+      "obligationIds": [
+        "settings.ce-encoding-translation"
+      ],
+      "behavior": "CE persisted indexes, ordinals, numeric booleans, ranges, buffer exponent, duration, and contest exchange text import as their effective XPlat semantic values.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v73",
+        "source": "tests/parity/legacy-oracle/v73/LegacyOracle.lpr",
+        "sourceSha256": "5454b7f283a101c36a0c7b335dabaa37e62041fc9e5f4bec38bb0369d8b83ca3",
+        "buildRecipe": "tests/parity/legacy-oracle/v73/build-recipe.json",
+        "buildRecipeSha256": "63b9f31b01c48eda1ef64321f69aff56fcbe5985259e7fd738809b2373e10487"
+      },
+      "legacySources": [
+        "Ini.pas",
+        "Main.pas",
+        "Main.lfm"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.ini.setting.station.pitch",
+        "legacy.ini.setting.station.bandwidth",
+        "legacy.ini.setting.contest.simcontest",
+        "legacy.ini.setting.contest.defaultrunmode",
+        "legacy.ini.setting.station.serialnr",
+        "legacy.ini.setting.system.bufsize",
+        "legacy.ini.setting.contest.duration",
+        "legacy.ini.setting.contest.competitionduration",
+        "legacy.ini.setting.station.selfmonvolume",
+        "legacy.ini.setting.settings.wpmsteprate",
+        "legacy.ini.setting.settings.ritstepincr",
+        "legacy.ini.setting.settings.singlecallstartdelay",
+        "legacy.ini.setting.station.cqwpxexchange",
+        "legacy.ini.setting.station.qsk",
+        "legacy.ini.setting.station.savewav",
+        "legacy.ini.setting.band.qsb",
+        "legacy.ini.setting.band.qrm",
+        "legacy.ini.setting.band.qrn",
+        "legacy.ini.setting.band.flutter",
+        "legacy.ini.setting.band.lids",
+        "legacy.ini.setting.system.showcallsigninfo"
+      ],
+      "preconditions": [
+        "The live CE adapter writes one executable-adjacent INI vector and executes Ini.FromIni through the minimal real form controls required for effective values.",
+        "The XPlat target parses the equivalent numeric INI text and executes the production LegacySettingsImporter.",
+        "Legacy NRDigits conversion, malformed values, production discovery, unknown-key preservation, save, and restart remain separate acceptance boundaries."
+      ],
+      "input": {
+        "scenario": "settings.ce-encoding-translation",
+        "seed": 12345
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatCeEncodingTranslationTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 1,
+        "observedValuesSha256": "45d934a3587abcbcd5da3ce7f1ec26ac402b88bfbf5e08b37945455e1a4af60c",
+        "firstDivergence": "The first field differs because CE converts pitch index 6 to 600 Hz while the initial XPlat importer preserves the raw value 6.",
+        "functionalDivergenceCode": "settings-ce-encoding-translation-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "settings-ce-encoding-translation-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/settings-ce-encoding-translation.json",
+      "evidence": "tests/parity/evidence/settings-ce-encoding-translation.baseline.json",
       "firstGreenCommit": null
     }
   ]
