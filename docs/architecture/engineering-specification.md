@@ -1612,9 +1612,10 @@ modulator, and AGC path. The full block retains hash
 The muted block has zero magnitude while its raw binary32 bytes retain signed
 zero and hash
 `b73ce67d7f6a60efbc46929d114471b7e79ddaee5b5a60a350a2c6a0a3ce3e6a`.
-The current XPlat gain calculation leaves a nonzero `0.001` endpoint, so the
-new case records a functional divergence before implementation. Intermediate
-low-level slider values and runtime changes remain pending.
+Retained red evidence records
+`audio-operator-monitor-minus-60db-mute-mismatch`, where the XPlat gain
+calculation leaves a nonzero `0.001` endpoint. Intermediate low-level slider
+values and runtime changes remain pending.
 
 The authored
 `audio.qsk-receiver-ducking-first-cq-block-seed-12345` case pins fresh QSK-off

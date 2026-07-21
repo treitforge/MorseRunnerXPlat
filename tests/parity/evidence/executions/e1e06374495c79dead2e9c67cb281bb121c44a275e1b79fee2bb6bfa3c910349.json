@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "target": "XPlat",
+  "platform": "windows",
+  "operatingSystem": "Microsoft Windows 10.0.26200",
+  "architecture": "x64",
+  "runtimeIdentifier": "win-x64",
+  "revision": "3740c730b30cd5924184aff94ef56ffc663b7106",
+  "tree": "c52488f83c231e2a2f2961fbf1772d84ac545f55",
+  "resultSha256": "58950beae1de098f88340e09bb8c0b966f927e9cb7b6e95d5eb01fe08adbc1b9",
+  "testReportSha256": "05598ecdcbfa9ac6fd4fdd856efb764cc827598510102a3369f2e7e86b4d00ce",
+  "testProcessExitCode": 2,
+  "wrapper": {
+    "completed": true,
+    "correlationValidated": true,
+    "exitCode": 0
+  },
+  "functionalDivergences": [
+    {
+      "caseId": "audio.operator-monitor-minus-60db-mute-first-cq-block-seed-12345",
+      "failureCode": "audio-operator-monitor-minus-60db-mute-mismatch"
+    }
+  ]
+}
