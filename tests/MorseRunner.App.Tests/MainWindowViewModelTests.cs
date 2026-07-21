@@ -91,6 +91,21 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task SpeedUpUsesCeDefaultTwoWpmStep()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault())
+        {
+            WordsPerMinute = 30,
+        };
+        await viewModel.StartSingleCommand.ExecuteAsync(null);
+
+        await viewModel.SpeedUpCommand.ExecuteAsync(null);
+
+        Assert.Equal(32, viewModel.WordsPerMinute);
+    }
+
+    [Fact]
     public async Task OperatorIntentAndQsoLoggingUseSemanticClientCommands()
     {
         await using var viewModel = new MainWindowViewModel(

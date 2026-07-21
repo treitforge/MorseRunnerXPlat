@@ -1776,7 +1776,9 @@ an `rmSingle` session at 30 WPM. The v46 CE oracle verifies
 which finishes at 32 WPM. Before implementation, the production Avalonia
 `SpeedUpCommand` reaches only 31 WPM through `IMorseRunnerClient`. Negative
 steps, HST rounding, persisted custom steps, TUI, bounds, and displayed state
-remain separate acceptance boundaries.
+remain separate acceptance boundaries. Production Avalonia now sends +2 WPM
+and -2 WPM for its default speed commands; the positive command matches the
+pinned v46 observation exactly.
 
 ### 14.5 Device failure
 

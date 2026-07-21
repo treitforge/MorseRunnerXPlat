@@ -248,8 +248,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         RitDownCommand = CreateRadioCommand(RadioControl.Rit, -50);
         BandwidthUpCommand = CreateRadioCommand(RadioControl.Bandwidth, 50);
         BandwidthDownCommand = CreateRadioCommand(RadioControl.Bandwidth, -50);
-        SpeedUpCommand = CreateRadioCommand(RadioControl.Speed, 1);
-        SpeedDownCommand = CreateRadioCommand(RadioControl.Speed, -1);
+        SpeedUpCommand = CreateRadioCommand(RadioControl.Speed, 2);
+        SpeedDownCommand = CreateRadioCommand(RadioControl.Speed, -2);
         ShowScoreCommand = new AsyncCommand(ShowScoreAsync);
         ExportJsonCommand = new AsyncCommand(
             () => ExportResultAsync(ResultExportFormat.Json),
