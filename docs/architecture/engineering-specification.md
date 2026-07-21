@@ -1867,6 +1867,16 @@ menu choices remain separate acceptance boundaries. Production TUI now
 computes PageDown's delta from the current authoritative WPM in `rmHst`, and
 the fixed vector matches the pinned v54 observation exactly.
 
+The authored `ux.wpm-custom-page-up-command-step-7-wpm-seed-12345` case
+pins CE's persisted non-HST speed increment. Both targets start an `rmSingle`
+session at 30 WPM with `WpmStepRate` configured as 7. The v55 CE oracle
+invokes the real `TMainForm.FormKeyDown` PageUp path and reaches 37 WPM.
+Before implementation, the production Avalonia settings path ignores
+`Settings.WpmStepRate`, so `SpeedUpCommand` applies its fixed two-WPM default
+and reaches 32 WPM. PageDown, malformed or out-of-range setting clamps, TUI,
+HST precedence, and direct menu choices remain separate acceptance
+boundaries.
+
 ### 14.5 Device failure
 
 On unrecoverable physical-device failure:
