@@ -102,6 +102,7 @@ public sealed class ParityInfrastructureTests
                 "engine.contest-specific-cq-tu-station-id-seed-12345",
                 "engine.start-silent-empty-enter-cq-seed-12345",
                 "ux.enter-esm-partial-call-message-selection-live",
+                "ux.rit-default-up-command-step-50-hz-seed-12345",
             ],
             ParityAcceptanceRegistry.AllIds,
             StringComparer.Ordinal);
@@ -146,6 +147,7 @@ public sealed class ParityInfrastructureTests
                 "engine.contest-specific-cq-tu-station-id-seed-12345",
                 "engine.start-silent-empty-enter-cq-seed-12345",
                 "ux.enter-esm-partial-call-message-selection-live",
+                "ux.rit-default-up-command-step-50-hz-seed-12345",
             ],
             ParityAcceptanceRegistry.ActiveIds,
             StringComparer.Ordinal);

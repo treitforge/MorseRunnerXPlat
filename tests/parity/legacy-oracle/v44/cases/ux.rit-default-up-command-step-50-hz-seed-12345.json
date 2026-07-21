@@ -1,0 +1,6 @@
+{
+  "defaultRitStepHz": 50,
+  "expectedAfterHz": 50,
+  "scenario": "ux.rit-default-up-command-step-50-hz-seed-12345",
+  "seed": 12345
+}

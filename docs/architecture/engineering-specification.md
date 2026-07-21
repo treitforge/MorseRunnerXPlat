@@ -1748,6 +1748,15 @@ now clamps the authoritative session RIT to -500 through +500 Hz. The extra
 positive step leaves both state and the caller waveform at the pinned CE
 values. Client-specific step mappings remain separately pending.
 
+The authored `ux.rit-default-up-command-step-50-hz-seed-12345` case pins one
+default positive client action independently from the engine range. The v44 CE
+oracle verifies `Ini.RitStepIncr = 50` and invokes the real handleless
+`TMainForm.Panel8MouseDown` path once, moving RIT from 0 Hz to +50 Hz. Before
+implementation, the production Avalonia `RitUpCommand` reaches only +10 Hz
+through `IMorseRunnerClient`. Negative actions, HST, custom or reversed
+persisted steps, TUI, mouse wheel, reset, and displayed state remain separate
+acceptance boundaries.
+
 ### 14.5 Device failure
 
 On unrecoverable physical-device failure:
