@@ -1790,6 +1790,15 @@ remain separate acceptance boundaries. Production TUI now sends +2 WPM and
 -2 WPM for its default speed actions; the positive action matches the pinned
 v47 observation exactly.
 
+The authored `ux.wpm-upper-clamp-extra-page-up-from-118-seed-12345` case
+pins the CE CW-speed ceiling independently from the default step. The v48 CE
+oracle mirrors the form's 10 through 120 WPM range, starts `rmSingle` at 118
+WPM, and invokes the real PageUp handler twice. The first action reaches 120
+WPM and the extra action remains at 120 WPM. Before implementation, the
+production Avalonia command path falls from 118 WPM to the engine's incorrect
+100 WPM ceiling. The lower bound, HST rounding, persisted custom steps, TUI
+setup range, and direct menu choices remain separate acceptance boundaries.
+
 ### 14.5 Device failure
 
 On unrecoverable physical-device failure:
