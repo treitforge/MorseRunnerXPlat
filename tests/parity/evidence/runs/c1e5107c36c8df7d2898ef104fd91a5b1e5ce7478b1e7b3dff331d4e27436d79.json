@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "d9f9e65f5883163f61c45235560023b1e1daf2b2",
+      "tree": "4442594eb7ef323d845a71d1a5d9c34a61023fce",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "settings.duration-full-range"
+  ],
+  "results": [
+    {
+      "parityId": "settings.duration-full-range",
+      "acceptanceTestName": "parity:settings.duration-full-range()",
+      "target": "xplat",
+      "adapter": "XPlatDurationRangeTarget",
+      "caseDefinitionSha256": "e015775500e2dd1bc738fd627f8b9e2c5a74186629fcd43cfcd6eb976b169db4",
+      "fixtureSha256": "e192096978ae138765354aa669cfd169ba9398ea095c99e2a2c412145afaa504",
+      "outcome": "functional-divergence",
+      "failureCode": "settings-duration-full-range-mismatch",
+      "evidenceSource": "MorseRunner.App.ViewModels.MainWindowViewModel.SelectedDuration",
+      "observedValues": [
+        "duration-control|min=0|max=120|initial=30",
+        "duration-arbitrary|request=17|result=30",
+        "duration-upper|request=240|result=30",
+        "duration-low-clamp|request=0|result=0",
+        "duration-high-clamp|request=241|result=0"
+      ],
+      "observedValueCount": 5,
+      "observedValuesSha256": "5899c5f553d5e7ba879731c767d9ab09ce507d05236df247a39d3924acf1ddf5",
+      "firstDivergence": {
+        "index": 0,
+        "expected": "duration-control|min=1|max=240|initial=30",
+        "actual": "duration-control|min=0|max=120|initial=30"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}

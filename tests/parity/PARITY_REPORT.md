@@ -107,18 +107,18 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 
 - Manifest capabilities: 24
 - Complete capabilities: 0
-- Partially authored capabilities: 7
-- Not-authored capabilities: 17
+- Partially authored capabilities: 8
+- Not-authored capabilities: 16
 - Behavioral obligations: 123
-- Source-bound obligations: 29
-- Pending source bindings: 94
+- Source-bound obligations: 30
+- Pending source bindings: 93
 - Complete obligations: 0
-- Partially authored obligations: 29
-- Not-authored obligations: 94
+- Partially authored obligations: 30
+- Not-authored obligations: 93
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 64
+- Active acceptance cases: 65
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 64
+- Legacy-green/XPlat-red cases: 65
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
@@ -126,7 +126,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `catalog.contest-enumeration` | Legacy contest enumeration | `not-authored` | 0 | 12 | 0 | `Ini.pas:28-30` |
 | `session.run-mode-enumeration` | Legacy run mode enumeration | `not-authored` | 0 | 5 | 0 | `Ini.pas:31` |
 | `catalog.contest-definitions` | Legacy contest definitions | `partial` | 1 | 12 | 0 | `Ini.pas:99-222` |
-| `configuration.persisted-settings` | Legacy persisted settings | `not-authored` | 0 | 60 | 30 | `Ini.pas:345-548` |
+| `configuration.persisted-settings` | Legacy persisted settings | `partial` | 1 | 60 | 30 | `Ini.pas:345-548` |
 | `ux.main-form-objects` | Legacy main-form objects | `not-authored` | 0 | 79 | 6 | `Main.dfm:1-1988` |
 | `ux.main-menu-commands` | Legacy main-menu commands | `not-authored` | 0 | 129 | 0 | `Main.dfm:964-1579` |
 | `ux.main-form-events` | Legacy main-form event bindings and handlers | `not-authored` | 0 | 229 | 54 | `Main.dfm:1-1988`<br>`Main.pas:452-2867` |
@@ -240,7 +240,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `settings.ce-encoding-translation` | `configuration.persisted-settings` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Migration translates CE indexes, ordinals, zero-or-one booleans, IDs, Hz values, duration, block size, and contest exchanges. |
 | `settings.preserve-unknown-and-unconsumed-values` | `configuration.persisted-settings` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Migration and save preserve unknown or unconsumed CE values and are idempotent. |
 | `settings.clean-profile-ce-defaults` | `configuration.persisted-settings` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Clean-profile call, WPM, activity, duration, pitch, bandwidth, and related defaults match CE. |
-| `settings.full-duration-range` | `configuration.persisted-settings` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Every CE duration from 1 through 240 minutes is accepted and persists without hidden clamping. |
+| `settings.full-duration-range` | `configuration.persisted-settings` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | Every CE duration from 1 through 240 minutes is accepted and persists without hidden clamping. |
 | `data.replaceable-reference-root-and-fallback` | `data.files-and-operational-paths` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Users can replace CE reference data through an explicit root with packaged fallback and equivalent discovery. |
 | `data.malformed-and-missing-file-reporting` | `data.legacy-parsers` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Every parser rejects malformed rows and reports missing or invalid replacement data without fabricating values. |
 | `data.legacy-parser-output-equivalence` | `data.legacy-parsers` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Call, prefix, exchange, serial, section, lexer, and contest data parsers produce CE-equivalent values and failures. |
@@ -348,6 +348,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `contest.dynamic-exchange-type-locality-matrix` | `contest.legacy-implementations` | `contest.arrldx-naqp-home-filtering-and-location` | `legacy-green-xplat-red` | `contest-dynamic-exchange-type-locality-mismatch` | `pass` | `fail` |
 | `contest.jarl-call-history-truth-column-mapping` | `contest.legacy-implementations` | `contest.allja-acag-truth-column-mapping` | `legacy-green-xplat-red` | `contest-jarl-truth-column-mapping-mismatch` | `pass` | `fail` |
 | `audio.wav-pcm16-bit-exact` | `audio.legacy-adapters` | `audio.wav-pcm-bit-exact` | `legacy-green-xplat-red` | `audio-wav-pcm16-bit-exact-mismatch` | `pass` | `fail` |
+| `settings.duration-full-range` | `configuration.persisted-settings` | `settings.full-duration-range` | `legacy-green-xplat-red` | `settings-duration-full-range-mismatch` | `pass` | `fail` |
 
 ## Retained noncertifying observations
 
