@@ -1922,6 +1922,9 @@ the real `TMainForm.FormKeyDown` PageUp path. Before implementation,
 production Avalonia loads the zero value unchanged, so `SpeedUpCommand`
 remains at 30 WPM. TUI, the upper load clamp, malformed values, PageDown, HST
 precedence, and direct menu choices remain separate acceptance boundaries.
+Production Avalonia now applies the CE lower load clamp before using or
+preserving the persisted step. Values above CE's upper bound remain unmodified
+until their separate acceptance boundary is implemented.
 
 ### 14.5 Device failure
 
