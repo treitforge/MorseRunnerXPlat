@@ -1875,9 +1875,9 @@ Before implementation, the production Avalonia settings path ignores
 `Settings.WpmStepRate`, so `SpeedUpCommand` applies its fixed two-WPM default
 and reaches 32 WPM. PageDown, malformed or out-of-range setting clamps, TUI,
 HST precedence, and direct menu choices remain separate acceptance
-boundaries. Production Avalonia now loads and clamps
-`Settings.WpmStepRate` to CE's 1 through 20 range, applies it to non-HST
-PageUp, and preserves it when settings are saved. HST continues to use its
+boundaries. Production Avalonia now loads a valid persisted
+`Settings.WpmStepRate`, applies it to non-HST PageUp, and preserves it when
+settings are saved. HST continues to use its
 five-WPM boundary calculation independently of the persisted step.
 
 The authored `ux.tui-wpm-custom-page-up-command-step-7-wpm-seed-12345`
@@ -1888,9 +1888,9 @@ as 7. The v56 CE oracle reaches 37 WPM through the real
 TUI settings path ignores `Settings.WpmStepRate`, so the SpeedUp action uses
 its fixed two-WPM default and reaches 32 WPM. PageDown, malformed or
 out-of-range setting clamps, HST precedence, and direct menu choices remain
-separate acceptance boundaries. Production TUI now loads and clamps the
-persisted step to CE's 1 through 20 range, applies it to non-HST PageUp, and
-preserves it on save while leaving HST five-WPM rounding independent.
+separate acceptance boundaries. Production TUI now loads a valid persisted
+step, applies it to non-HST PageUp, and preserves it on save while leaving HST
+five-WPM rounding independent.
 
 The authored `ux.wpm-custom-page-down-command-step-7-wpm-seed-12345` case
 pins the negative Avalonia custom-step workflow. Both targets start
