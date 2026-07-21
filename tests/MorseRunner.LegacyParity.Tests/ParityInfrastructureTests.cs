@@ -80,6 +80,7 @@ public sealed class ParityInfrastructureTests
                 "contest.default-two-field-remote-exchange-format-seed-12345",
                 "contest.exchange-shapes",
                 "contest.fieldday-remote-exchange-format-seed-12345",
+                "contest.full-cut-numeric-remote-exchange-format-seed-12345",
                 "contest.hst-remote-exchange-format-seed-12345",
                 "contest.naqp-remote-exchange-format-seed-12345",
                 "contest.sst-remote-exchange-format-seed-12345",
@@ -111,6 +112,7 @@ public sealed class ParityInfrastructureTests
                 "contest.default-two-field-remote-exchange-format-seed-12345",
                 "contest.exchange-shapes",
                 "contest.fieldday-remote-exchange-format-seed-12345",
+                "contest.full-cut-numeric-remote-exchange-format-seed-12345",
                 "contest.hst-remote-exchange-format-seed-12345",
                 "contest.naqp-remote-exchange-format-seed-12345",
                 "contest.sst-remote-exchange-format-seed-12345",
@@ -208,6 +210,11 @@ public sealed class ParityInfrastructureTests
             ParityAcceptanceRegistry
                 .Get(
                     "contest.fieldday-remote-exchange-format-seed-12345")
+                .CreateTarget(ParityTargetKind.XPlat)());
+        Assert.IsType<XPlatFullCutNumericRemoteExchangeFormatTarget>(
+            ParityAcceptanceRegistry
+                .Get(
+                    "contest.full-cut-numeric-remote-exchange-format-seed-12345")
                 .CreateTarget(ParityTargetKind.XPlat)());
         Assert.IsType<XPlatHstRemoteExchangeFormatTarget>(
             ParityAcceptanceRegistry

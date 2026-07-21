@@ -175,6 +175,19 @@ public static class ParityAcceptanceRegistry
                     static () => new LegacyOracleTarget(),
                     static () =>
                         new XPlatDefaultTwoFieldRemoteExchangeFormatTarget()),
+            [XPlatFullCutNumericRemoteExchangeFormatTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatFullCutNumericRemoteExchangeFormatTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatFullCutNumericRemoteExchangeFormatTarget),
+                    XPlatFullCutNumericRemoteExchangeFormatTarget
+                        .FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = FullCutNumericRemoteExchangeFormatInput.Parse(
+                            scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () =>
+                        new XPlatFullCutNumericRemoteExchangeFormatTarget()),
             [XPlatFieldDayRemoteExchangeFormatTarget.ParityId] =
                 new ParityAcceptanceRegistration(
                     XPlatFieldDayRemoteExchangeFormatTarget.ParityId,
