@@ -1368,6 +1368,9 @@ each live CE contest validator with an empty own exchange through
 `legacy-oracle-v64`. It pins rejection and the exact contest-specific
 required-field message for all twelve contests in catalog order. Partial-field
 inputs and each field's accepted lexical boundaries remain separate vectors.
+The production `ContestQsoRules` validator consumes the same catalog validation
+message used by the catalog and transport surfaces, avoiding a second
+contest-message table.
 
 ### 13.4 Extensibility
 

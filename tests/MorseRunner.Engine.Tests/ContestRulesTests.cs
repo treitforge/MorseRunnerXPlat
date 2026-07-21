@@ -99,7 +99,10 @@ public sealed class ContestRulesTests
 
         ContestValidation invalid = rules.ValidateMyExchange(string.Empty);
         Assert.False(invalid.IsValid);
-        Assert.NotEmpty(invalid.Error);
+        Assert.Equal(
+            $"Invalid exchange: '' - expecting "
+                + $"{definition.ValidationMessage}.",
+            invalid.Error);
     }
 
     [Fact]

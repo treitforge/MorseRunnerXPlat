@@ -630,32 +630,9 @@ public static class ContestQsoRules
         ContestId contestId,
         string exchange)
     {
-        string expectation = contestId.Value switch
-        {
-            "scWpx" or "scHst" =>
-                "'RST <serial>' (e.g. 5NN #).",
-            "scCwt" =>
-                "'<name> <member nr|qth>' (e.g. DAVID 123).",
-            "scFieldDay" =>
-                "'<class> <section>' (e.g. 3A OR).",
-            "scNaQp" =>
-                "'<name> [<state|prov|dxcc-entity>]' (e.g. ALEX ON).",
-            "scCQWW" =>
-                "'RST <cq-zone>' (e.g. 5NN 3).",
-            "scArrlDx" =>
-                "'RST <state|province|power>' (e.g. 5NN ON).",
-            "scSst" =>
-                "'<op name> <State|Prov|DX>' (e.g. BRUCE MA).",
-            "scAllJa" =>
-                "'RST <Pref><Power>' (e.g. 5NN 10H).",
-            "scAcag" =>
-                "'RST <City|Gun|Ku><Power>' (e.g. 5NN 1002H).",
-            "scIaruHf" =>
-                "'RST <Itu-zone|IARU Society>' (e.g. 5NN 6).",
-            "scArrlSS" =>
-                "'[#|123] <precedence> <check> <section>' (e.g. A 72 OR).",
-            _ => "'supported contest exchange'.",
-        };
-        return $"Invalid exchange: '{exchange}' - expecting {expectation}";
+        string expectation = ContestCatalog.All.FirstOrDefault(
+            definition => definition.Id == contestId)?.ValidationMessage
+            ?? "'supported contest exchange'";
+        return $"Invalid exchange: '{exchange}' - expecting {expectation}.";
     }
 }
