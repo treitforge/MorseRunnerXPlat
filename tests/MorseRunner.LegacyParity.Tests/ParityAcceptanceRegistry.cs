@@ -13,6 +13,16 @@ public static class ParityAcceptanceRegistry
         new Dictionary<string, ParityAcceptanceRegistration>(
             StringComparer.Ordinal)
         {
+            [XPlatDurationRangeTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatDurationRangeTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatDurationRangeTarget),
+                    XPlatDurationRangeTarget.FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = DurationRangeInput.Parse(scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () => new XPlatDurationRangeTarget()),
             [XPlatWavPcm16BitExactTarget.ParityId] =
                 new ParityAcceptanceRegistration(
                     XPlatWavPcm16BitExactTarget.ParityId,

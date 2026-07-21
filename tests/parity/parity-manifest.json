@@ -777,7 +777,7 @@
     {"id": "settings.ce-encoding-translation", "capabilityId": "configuration.persisted-settings", "behavior": "Migration translates CE indexes, ordinals, zero-or-one booleans, IDs, Hz values, duration, block size, and contest exchanges.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "settings.preserve-unknown-and-unconsumed-values", "capabilityId": "configuration.persisted-settings", "behavior": "Migration and save preserve unknown or unconsumed CE values and are idempotent.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "settings.clean-profile-ce-defaults", "capabilityId": "configuration.persisted-settings", "behavior": "Clean-profile call, WPM, activity, duration, pitch, bandwidth, and related defaults match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "settings.full-duration-range", "capabilityId": "configuration.persisted-settings", "behavior": "Every CE duration from 1 through 240 minutes is accepted and persists without hidden clamping.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "settings.full-duration-range", "capabilityId": "configuration.persisted-settings", "behavior": "Every CE duration from 1 through 240 minutes is accepted and persists without hidden clamping.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Main.dfm", "Main.pas", "Ini.pas"], "legacySurfaceSelectors": ["legacy.main.object.spinedit2", "legacy.main.event-binding.spinedit2.onchange", "legacy.main.handler.spinedit2change", "legacy.ini.setting.contest.duration"], "acceptanceStatus": "partial", "caseIds": ["settings.duration-full-range"]},
     {"id": "data.replaceable-reference-root-and-fallback", "capabilityId": "data.files-and-operational-paths", "behavior": "Users can replace CE reference data through an explicit root with packaged fallback and equivalent discovery.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "data.malformed-and-missing-file-reporting", "capabilityId": "data.legacy-parsers", "behavior": "Every parser rejects malformed rows and reports missing or invalid replacement data without fabricating values.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "data.legacy-parser-output-equivalence", "capabilityId": "data.legacy-parsers", "behavior": "Call, prefix, exchange, serial, section, lexer, and contest data parsers produce CE-equivalent values and failures.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -5556,6 +5556,72 @@
       "failureCode": "audio-wav-pcm16-bit-exact-mismatch",
       "fixture": "tests/parity/fixtures/legacy/audio-wav-pcm16-bit-exact.json",
       "evidence": "tests/parity/evidence/audio-wav-pcm16-bit-exact.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "settings.duration-full-range",
+      "capabilityId": "configuration.persisted-settings",
+      "obligationIds": [
+        "settings.full-duration-range"
+      ],
+      "behavior": "The CE duration control accepts arbitrary whole-minute values from 1 through 240 and clamps requests outside that range.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v69",
+        "source": "tests/parity/legacy-oracle/v69/LegacyOracle.lpr",
+        "sourceSha256": "5f288e739bff55943ed9192b9b3b2ff4c99c7d447f0fda2d7aa40afeb2063fd6",
+        "buildRecipe": "tests/parity/legacy-oracle/v69/build-recipe.json",
+        "buildRecipeSha256": "7814f696d202cdfd11e4542605f8ed2b5c7156ff56774017a1d5a041c2da505d"
+      },
+      "legacySources": [
+        "Main.dfm",
+        "Main.pas",
+        "Ini.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.main.object.spinedit2",
+        "legacy.main.event-binding.spinedit2.onchange",
+        "legacy.main.handler.spinedit2change",
+        "legacy.ini.setting.contest.duration"
+      ],
+      "preconditions": [
+        "The pinned CE oracle and toolchain fingerprint are available.",
+        "The live v69 oracle exercises the CE TSpinEdit range and clamping behavior with the Main.dfm duration bounds.",
+        "The XPlat target observes the corresponding Avalonia setup view-model surface without starting a session.",
+        "Duration expiry timing and persistence round trips remain separate acceptance boundaries."
+      ],
+      "input": {
+        "arbitraryValue": 17,
+        "initialValue": 30,
+        "maximumValue": 240,
+        "minimumValue": 1,
+        "requestAbove": 241,
+        "requestBelow": 0,
+        "scenario": "settings.duration-full-range",
+        "upperValue": 240
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatDurationRangeTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 5,
+        "observedValuesSha256": "3d80047aa3d40f8b54998744d0782948bb57dbecf463a33442bd788182b34c50",
+        "firstDivergence": "The first row is expected to differ because XPlat initially exposes an unlimited zero-minute option and stops at 120 minutes instead of CE's 1 through 240 minute range.",
+        "functionalDivergenceCode": "settings-duration-full-range-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "settings-duration-full-range-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/settings-duration-full-range.json",
+      "evidence": "tests/parity/evidence/settings-duration-full-range.baseline.json",
       "firstGreenCommit": null
     }
   ]
