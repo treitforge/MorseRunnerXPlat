@@ -15,7 +15,7 @@
     "target": "x86_64-win64",
     "compilerSha256": "8ba500bbb84bd7100c169f151082b1461e9241e4491e0f6f38f2376bec49c319",
     "backendCompilerSha256": "1f33c43b890e2d02e6b07c88401fc47cfcac48e003a29bb58b2e1220ac6a3e22",
-    "lazbuildSha256": "9554983fff43cfe5b5cef9b85e708047d2c01c39c442b8dc5fcb556d9fa81c469",
+    "lazbuildSha256": "9554983fff43cfe5b5cef9a8374a37ff8a152e2de9c40c5750e723501f6edfd1",
     "fingerprintSha256": "3eb50f2aac396bac975d8f628ad44421318d05179c81a98524802bcf04c8afee"
   },
   "values": [
