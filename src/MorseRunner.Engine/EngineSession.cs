@@ -110,7 +110,7 @@ internal sealed class EngineSession : IAsyncDisposable
     private readonly MorseToneRenderer _toneRenderer;
     private readonly LegacyReceiverPipeline _receiverPipeline;
     private readonly LegacyReceiverNoiseGenerator _receiverNoiseGenerator;
-    private readonly float _monitorGain;
+    private float _monitorGain;
     private readonly bool _automaticTiming;
     private readonly TimeSpan _blockPeriod;
     private readonly AutomaticBlockClock _automaticBlockClock = new(
@@ -133,6 +133,7 @@ internal sealed class EngineSession : IAsyncDisposable
     private int _currentWordsPerMinute;
     private int _currentBandwidthHz;
     private int _ritOffsetHz;
+    private double _currentMonitorLevelDb;
     private bool _qsbEnabled;
     private float _ritPhase;
     private int _qsoCount;
@@ -209,7 +210,8 @@ internal sealed class EngineSession : IAsyncDisposable
         {
             _qrnBurstPool[index] = new QrnBurstStation();
         }
-        _monitorGain = CalculateLegacyMonitorGain(settings.MonitorLevelDb);
+        _currentMonitorLevelDb = settings.MonitorLevelDb;
+        _monitorGain = CalculateLegacyMonitorGain(_currentMonitorLevelDb);
         _currentWordsPerMinute = settings.WordsPerMinute;
         _currentBandwidthHz = settings.BandwidthHz;
         _qsbEnabled = settings.Qsb;
@@ -2215,6 +2217,14 @@ internal sealed class EngineSession : IAsyncDisposable
                     100);
                 _toneRenderer.SetWordsPerMinute(_currentWordsPerMinute);
                 break;
+            case RadioControl.MonitorLevel:
+                _currentMonitorLevelDb = Math.Clamp(
+                    _currentMonitorLevelDb + command.Delta,
+                    -60d,
+                    0d);
+                _monitorGain = CalculateLegacyMonitorGain(
+                    _currentMonitorLevelDb);
+                break;
             default:
                 return RejectedResult(
                     DomainErrorCodes.InvalidSetting,
@@ -2674,7 +2684,8 @@ internal sealed class EngineSession : IAsyncDisposable
             activeOperatorState,
             QsoRateCalculator.Calculate(_completedQsos, elapsed),
             activeStations,
-            _qsbEnabled);
+            _qsbEnabled,
+            _currentMonitorLevelDb);
     }
 
     private void FailPendingCommands(Exception exception)

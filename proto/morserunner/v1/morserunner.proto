@@ -217,6 +217,7 @@ enum RadioControlMessage {
   RADIO_CONTROL_MESSAGE_RIT = 1;
   RADIO_CONTROL_MESSAGE_BANDWIDTH = 2;
   RADIO_CONTROL_MESSAGE_SPEED = 3;
+  RADIO_CONTROL_MESSAGE_MONITOR_LEVEL = 4;
 }
 
 message RadioControlCommand {
@@ -323,6 +324,7 @@ message SessionSnapshotMessage {
   int32 qso_rate_per_hour = 26;
   repeated ActiveStationMessage active_stations = 27;
   bool qsb_enabled = 28;
+  double current_monitor_level_db = 29;
 }
 
 message ActiveStationMessage {

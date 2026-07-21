@@ -136,7 +136,8 @@ public sealed record SessionSnapshot(
     OperatorState? ActiveOperatorState = null,
     int QsoRatePerHour = 0,
     IReadOnlyList<ActiveStationSnapshot>? ActiveStations = null,
-    bool QsbEnabled = false);
+    bool QsbEnabled = false,
+    double CurrentMonitorLevelDb = 0d);
 
 public sealed record AudioOutputDevice(
     string Name,

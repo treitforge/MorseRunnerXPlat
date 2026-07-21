@@ -1086,6 +1086,13 @@ or broader native UX behavior.
 - Toggle eligible radio-condition effects.
 - Start or stop recording.
 
+Monitor level is an engine-owned runtime radio control. The adjustment delta
+is applied on the session loop, clamped to the CE range from `-60 dB` through
+`0 dB`, and converted to the CE monitor gain before the next simulation block.
+Snapshots expose the current monitor level. The external transport appends
+`RADIO_CONTROL_MESSAGE_MONITOR_LEVEL` and `current_monitor_level_db`; older
+clients continue to ignore the additive snapshot field.
+
 #### Hosted control
 
 - Acquire control.
@@ -1630,10 +1637,12 @@ has hash
 `98ed32d957fef5ee62e50a0a04cb063f4c027a9770d4a9e30b27c60dec52e234`,
 while the runtime-muted second block has hash
 `4d62f0d47d5d84552b1e30ae49c93f6ac69c5ebb9edad4cd655bfa5eec01e3a2`.
-Both paths retain the ordinal-2048 random checkpoint `3f53fd06`. XPlat has no
-runtime monitor command yet, so retained red evidence must record the
-fixed-full second block for the requested runtime-muted path before production
-support is added.
+Both paths retain the ordinal-2048 random checkpoint `3f53fd06`. Retained red
+evidence records the former XPlat gap, where both runs kept the full monitor
+level and emitted the fixed-full second block. Production now applies the
+semantic monitor-level command on the session loop before the next block. The
+runtime-muted path matches the pinned CE second-block hash without changing the
+random checkpoint. Desktop mutation of this runtime control remains pending.
 
 The authored
 `audio.qsk-receiver-ducking-first-cq-block-seed-12345` case pins fresh QSK-off

@@ -427,6 +427,7 @@ public static class TransportMapper
             ActiveOperatorState = ToTransport(value.ActiveOperatorState),
             QsoRatePerHour = value.QsoRatePerHour,
             QsbEnabled = value.QsbEnabled,
+            CurrentMonitorLevelDb = value.CurrentMonitorLevelDb,
         };
         if (lease is not null)
         {
@@ -473,7 +474,8 @@ public static class TransportMapper
             ToDomain(value.ActiveOperatorState),
             value.QsoRatePerHour,
             value.ActiveStations.Select(ToDomain).ToArray(),
-            value.QsbEnabled);
+            value.QsbEnabled,
+            value.CurrentMonitorLevelDb);
 
     private static Contract.ActiveStationMessage ToTransport(
         Domain.ActiveStationSnapshot value) =>

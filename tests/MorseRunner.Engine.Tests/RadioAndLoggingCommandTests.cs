@@ -113,6 +113,14 @@ public sealed class RadioAndLoggingCommandTests
                 50),
             TestContext.Current.CancellationToken);
         await engine.ExecuteAsync(
+            new AdjustRadioControlCommand(
+                RequestId.New(),
+                handle.SessionId,
+                client,
+                RadioControl.MonitorLevel,
+                -100),
+            TestContext.Current.CancellationToken);
+        await engine.ExecuteAsync(
             new LogQsoCommand(
                 RequestId.New(),
                 handle.SessionId,
@@ -125,6 +133,7 @@ public sealed class RadioAndLoggingCommandTests
 
         SessionSnapshot snapshot = engine.GetSnapshot(handle.SessionId);
         Assert.Equal(50, snapshot.RitOffsetHz);
+        Assert.Equal(-60d, snapshot.CurrentMonitorLevelDb);
         Assert.Equal(1, snapshot.QsoCount);
         Assert.Equal(1, snapshot.Score);
         Assert.Equal("K1ABC", snapshot.LastLoggedCall);

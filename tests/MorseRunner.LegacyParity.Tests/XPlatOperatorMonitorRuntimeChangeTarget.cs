@@ -58,15 +58,18 @@ public sealed class XPlatOperatorMonitorRuntimeChangeTarget : IParityTarget
         EnsureLittleEndianSingleStorage();
         CapturedRun fullMonitor = await CaptureAsync(
             input,
+            runtimeMuteAfterFirstBlock: false,
             cancellationToken);
         CapturedRun runtimeMutedMonitor = await CaptureAsync(
             input,
+            runtimeMuteAfterFirstBlock: true,
             cancellationToken);
         return Normalize(input, fullMonitor, runtimeMutedMonitor);
     }
 
     private static async Task<CapturedRun> CaptureAsync(
         OperatorMonitorRuntimeChangeInput input,
+        bool runtimeMuteAfterFirstBlock,
         CancellationToken cancellationToken)
     {
         var sink = new StrictCaptureAudioSink(
@@ -138,10 +141,27 @@ public sealed class XPlatOperatorMonitorRuntimeChangeTarget : IParityTarget
         if (firstSnapshot.State != SessionState.Running
             || firstSnapshot.SimulationBlock != 1
             || firstSnapshot.RenderedSamples != input.BlockSize
+            || firstSnapshot.CurrentMonitorLevelDb
+                != input.FullMonitorLevelDb
             || sink.BlockCount != 1)
         {
             throw new InvalidOperationException(
                 "The XPlat monitor session left its first-CQ boundary.");
+        }
+
+        if (runtimeMuteAfterFirstBlock)
+        {
+            await RequireAcceptedAsync(
+                engine,
+                new AdjustRadioControlCommand(
+                    RequestId.New(),
+                    handle.SessionId,
+                    ParityClient,
+                    RadioControl.MonitorLevel,
+                    input.RuntimeMonitorLevelDb
+                        - input.FullMonitorLevelDb),
+                "runtime monitor change",
+                cancellationToken);
         }
 
         await RequireAcceptedAsync(
@@ -159,7 +179,11 @@ public sealed class XPlatOperatorMonitorRuntimeChangeTarget : IParityTarget
             || snapshot.SimulationBlock != 2
             || snapshot.RenderedSamples != input.BlockSize * 2L
             || snapshot.ActiveStations is not { Count: 0 }
-            || snapshot.LastOperatorMessage != input.MessageText)
+            || snapshot.LastOperatorMessage != input.MessageText
+            || snapshot.CurrentMonitorLevelDb
+                != (runtimeMuteAfterFirstBlock
+                    ? input.RuntimeMonitorLevelDb
+                    : input.FullMonitorLevelDb))
         {
             throw new InvalidOperationException(
                 "The XPlat monitor session left its fixed second-CQ boundary.");

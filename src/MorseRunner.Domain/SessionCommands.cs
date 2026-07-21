@@ -120,6 +120,7 @@ public enum RadioControl
     Rit,
     Bandwidth,
     Speed,
+    MonitorLevel,
 }
 
 public sealed record AdjustRadioControlCommand(
