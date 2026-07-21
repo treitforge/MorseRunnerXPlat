@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "014255a568c5cd3dbde6854fc729fae2cec93e8d",
+      "tree": "9d42a1fa95c113061a0c3d446dac24a2a463fa5b",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "contest.jarl-call-history-truth-column-mapping"
+  ],
+  "results": [
+    {
+      "parityId": "contest.jarl-call-history-truth-column-mapping",
+      "acceptanceTestName": "parity:contest.jarl-call-history-truth-column-mapping()",
+      "target": "xplat",
+      "adapter": "XPlatJarlTruthColumnMappingTarget",
+      "caseDefinitionSha256": "2bf17c200af42b7d238ede1ba80fef3e13a51c0bdfc7dec26a5c7c99f3b944ea",
+      "fixtureSha256": "bcfc9252d77a6b3614d30d5d7f01e1ecd430ba5a65986df469100dfa31e2e01b",
+      "outcome": "functional-divergence",
+      "failureCode": "contest-jarl-truth-column-mapping-mismatch",
+      "evidenceSource": "MorseRunner.Engine.StationReferenceCatalog.Pick",
+      "observedValues": [
+        "vector|ordinal=0|contest=scAllJa|seed=12345|call=JR2JPU|exchange1=20M|exchange2=1",
+        "vector|ordinal=1|contest=scAcag|seed=12345|call=JR2NMJ|exchange1=2105H|exchange2=1"
+      ],
+      "observedValueCount": 2,
+      "observedValuesSha256": "8f2f8f61c27a1671d2a3dc944ee94cfaf89d16bf2a8445928864a117c1176115",
+      "firstDivergence": {
+        "index": 0,
+        "expected": "vector|ordinal=0|contest=scAllJa|seed=12345|call=JR4ERC/4|exchange1=599|exchange2=34H",
+        "actual": "vector|ordinal=0|contest=scAllJa|seed=12345|call=JR2JPU|exchange1=20M|exchange2=1"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}
