@@ -990,7 +990,9 @@ At minimum, `SessionSettings` includes:
 
 - Contest ID.
 - Run mode.
-- Duration.
+- Duration in whole minutes. The CE-compatible desktop setup range is 1
+  through 240 inclusive, with a 30-minute default and no preset-only
+  restriction.
 - Operator callsign and contest-specific station information.
 - WPM and Farnsworth settings.
 - Minimum and maximum receive-speed offsets.
@@ -3892,6 +3894,9 @@ Current Phase 5 implementation inventory, not parity certification:
   station and radio controls, band conditions, QSO entry and a live QSO log,
   score, contest and run-mode selection, duration, message keys, and score
   dialog.
+- The Avalonia duration editor accepts and persists every whole-minute CE value
+  from 1 through 240. Values loaded or assigned outside that range clamp at the
+  corresponding CE boundary before session creation.
 - The desktop exposes F1 through F12, modifier, entry-field, abort, wipe,
   complete-QSO, RIT, bandwidth, and speed command paths. The audit found that
   several mappings, focus transitions, partial-call Enter behavior, exchange

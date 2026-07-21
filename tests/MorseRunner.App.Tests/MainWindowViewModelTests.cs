@@ -442,6 +442,21 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task DurationAcceptsEveryCeMinuteAndClampsToCeRange()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+
+        Assert.Equal(30, viewModel.DurationMinutes);
+        viewModel.DurationMinutes = 17;
+        Assert.Equal(17, viewModel.DurationMinutes);
+        viewModel.DurationMinutes = 0;
+        Assert.Equal(1, viewModel.DurationMinutes);
+        viewModel.DurationMinutes = 241;
+        Assert.Equal(240, viewModel.DurationMinutes);
+    }
+
+    [Fact]
     public async Task OperatorSettingsRoundTripThroughTheSettingsStore()
     {
         string path = Path.Combine(
@@ -467,7 +482,7 @@ public sealed class MainWindowViewModelTests
             first.ShowCallsignInformation = false;
             first.Qsb = true;
             first.SelectedContest = first.Contests[6];
-            first.SelectedDuration = first.Durations[4];
+            first.DurationMinutes = 17;
             await first.DisposeAsync();
 
             await using var second = new MainWindowViewModel(
@@ -490,7 +505,7 @@ public sealed class MainWindowViewModelTests
             Assert.False(second.ShowCallsignInformation);
             Assert.True(second.Qsb);
             Assert.Equal(first.Contests[6].Id, second.SelectedContest.Id);
-            Assert.Equal(30, second.SelectedDuration.Minutes);
+            Assert.Equal(17, second.DurationMinutes);
         }
         finally
         {

@@ -12,7 +12,7 @@ public sealed class XPlatDurationRangeTarget : IParityTarget
     internal const string FunctionalDivergenceCode =
         "settings-duration-full-range-mismatch";
     internal const string EvidenceSource =
-        "MorseRunner.App.ViewModels.MainWindowViewModel.SelectedDuration";
+        "MorseRunner.App.ViewModels.MainWindowViewModel.DurationMinutes";
 
     public async Task<ParityObservation> ExecuteAsync(
         ParityScenario scenario,
@@ -31,18 +31,18 @@ public sealed class XPlatDurationRangeTarget : IParityTarget
         DurationRangeInput input = DurationRangeInput.Parse(scenario);
         await using var viewModel = new MainWindowViewModel(
             InProcessMorseRunnerClient.CreateDefault());
-        int minimum = viewModel.Durations.Min(option => option.Minutes);
-        int maximum = viewModel.Durations.Max(option => option.Minutes);
-        SetDuration(viewModel, input.InitialValue);
-        int initial = viewModel.SelectedDuration.Minutes;
-        SetDuration(viewModel, input.ArbitraryValue);
-        int arbitrary = viewModel.SelectedDuration.Minutes;
-        SetDuration(viewModel, input.UpperValue);
-        int upper = viewModel.SelectedDuration.Minutes;
-        SetDuration(viewModel, input.RequestBelow);
-        int low = viewModel.SelectedDuration.Minutes;
-        SetDuration(viewModel, input.RequestAbove);
-        int high = viewModel.SelectedDuration.Minutes;
+        int minimum = MainWindowViewModel.MinimumDurationMinutes;
+        int maximum = MainWindowViewModel.MaximumDurationMinutes;
+        viewModel.DurationMinutes = input.InitialValue;
+        int initial = viewModel.DurationMinutes;
+        viewModel.DurationMinutes = input.ArbitraryValue;
+        int arbitrary = viewModel.DurationMinutes;
+        viewModel.DurationMinutes = input.UpperValue;
+        int upper = viewModel.DurationMinutes;
+        viewModel.DurationMinutes = input.RequestBelow;
+        int low = viewModel.DurationMinutes;
+        viewModel.DurationMinutes = input.RequestAbove;
+        int high = viewModel.DurationMinutes;
         string[] values =
         [
             $"duration-control|min={Format(minimum)}|max={Format(maximum)}"
@@ -66,18 +66,6 @@ public sealed class XPlatDurationRangeTarget : IParityTarget
             values,
             matches ? null : FunctionalDivergenceCode,
             EvidenceSource);
-    }
-
-    private static void SetDuration(
-        MainWindowViewModel viewModel,
-        int requestedMinutes)
-    {
-        DurationOption? option = viewModel.Durations.FirstOrDefault(
-            candidate => candidate.Minutes == requestedMinutes);
-        if (option is not null)
-        {
-            viewModel.SelectedDuration = option;
-        }
     }
 
     private static string Format(int value) =>

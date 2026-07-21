@@ -189,10 +189,13 @@
                   ItemsSource="{Binding RunModes}"
                   SelectedItem="{Binding SelectedRunMode}" />
               <TextBlock Foreground="#91A6B8" Text="Duration" />
-              <ComboBox
+              <NumericUpDown
+                  x:Name="DurationInput"
                   AutomationProperties.Name="Session duration"
-                  ItemsSource="{Binding Durations}"
-                  SelectedItem="{Binding SelectedDuration}" />
+                  Increment="1"
+                  Maximum="240"
+                  Minimum="1"
+                  Value="{Binding DurationMinutes}" />
               <TextBlock Foreground="#91A6B8" Text="Call" />
               <TextBox
                   x:Name="StationCallBox"

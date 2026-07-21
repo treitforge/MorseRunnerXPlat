@@ -19,11 +19,6 @@ public sealed record RunModeOption(RunModeId Id, string DisplayName)
     public override string ToString() => DisplayName;
 }
 
-public sealed record DurationOption(int Minutes, string DisplayName)
-{
-    public override string ToString() => DisplayName;
-}
-
 public sealed record SerialNumberRangeOption(
     SerialNumberRangeMode Mode,
     string DisplayName)
@@ -77,6 +72,9 @@ public sealed class EntryFocusRequestedEventArgs(
 
 public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposable
 {
+    public const int MinimumDurationMinutes = 1;
+    public const int MaximumDurationMinutes = 240;
+
     private static readonly ClientId DesktopClientId = new("avalonia-desktop");
     private static readonly IReadOnlyList<RunModeOption> RunModeOptions =
     [
@@ -84,17 +82,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         new(new("rmSingle"), "Single Calls"),
         new(new("rmWpx"), "WPX Competition"),
         new(new("rmHst"), "HST Competition"),
-    ];
-    private static readonly IReadOnlyList<DurationOption> DurationOptions =
-    [
-        new(0, "Unlimited"),
-        new(5, "5 minutes"),
-        new(10, "10 minutes"),
-        new(15, "15 minutes"),
-        new(30, "30 minutes"),
-        new(60, "60 minutes"),
-        new(90, "90 minutes"),
-        new(120, "120 minutes"),
     ];
     private static readonly IReadOnlyList<SerialNumberRangeOption>
         SerialNumberRangeOptions =
@@ -124,7 +111,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private SessionState _sessionState = SessionState.Ready;
     private ContestOption _selectedContest;
     private RunModeOption _selectedRunMode = RunModeOptions[0];
-    private DurationOption _selectedDuration = DurationOptions[0];
+    private int _durationMinutes = 30;
     private SerialNumberRangeOption _selectedSerialNumberRange =
         SerialNumberRangeOptions[0];
     private string _status = "Ready. Configure a contest and press F9.";
@@ -194,7 +181,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             .Select(contest => new ContestOption(contest.Id, contest.DisplayName))
             .ToArray();
         RunModes = RunModeOptions;
-        Durations = DurationOptions;
         _selectedContest = Contests[0];
 
         StartCommand = new AsyncCommand(
@@ -288,8 +274,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
 
     public IReadOnlyList<RunModeOption> RunModes { get; }
 
-    public IReadOnlyList<DurationOption> Durations { get; }
-
     public IReadOnlyList<SerialNumberRangeOption> SerialNumberRanges { get; } =
         SerialNumberRangeOptions;
 
@@ -322,16 +306,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         }
     }
 
-    public DurationOption SelectedDuration
+    public int DurationMinutes
     {
-        get => _selectedDuration;
-        set
-        {
-            if (value is not null)
-            {
-                SetField(ref _selectedDuration, value);
-            }
-        }
+        get => _durationMinutes;
+        set => SetField(
+            ref _durationMinutes,
+            Math.Clamp(
+                value,
+                MinimumDurationMinutes,
+                MaximumDurationMinutes));
     }
 
     public SerialNumberRangeOption SelectedSerialNumberRange
@@ -912,10 +895,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         int duration = GetInt(
             values,
             "Contest.Duration",
-            SelectedDuration.Minutes);
-        SelectedDuration = Durations.FirstOrDefault(
-                option => option.Minutes == duration)
-            ?? SelectedDuration;
+            DurationMinutes);
+        DurationMinutes = duration;
         int serialNumberRange = GetInt(
             values,
             "Station.SerialNR",
@@ -989,7 +970,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                 Seed,
                 SelectedContest.Id,
                 SelectedRunMode.Id,
-                DurationBlocks(SelectedDuration.Minutes))
+                DurationBlocks(DurationMinutes))
             {
                 StationCall = StationCall,
                 WordsPerMinute = WordsPerMinute,
@@ -1911,7 +1892,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             ["Band.Lids"] = Lids.ToString(CultureInfo.InvariantCulture),
             ["Contest.SimContest"] = SelectedContest.Id.Value,
             ["Contest.DefaultRunMode"] = SelectedRunMode.Id.Value,
-            ["Contest.Duration"] = SelectedDuration.Minutes.ToString(
+            ["Contest.Duration"] = DurationMinutes.ToString(
                 CultureInfo.InvariantCulture),
             ["System.ShowCallsignInfo"] = ShowCallsignInformation.ToString(
                 CultureInfo.InvariantCulture),
