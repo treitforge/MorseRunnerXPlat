@@ -1591,12 +1591,31 @@ portable backend callback size or callback count. It also does not certify WAV,
 raw, or null adapter exclusion; those sinks require dedicated acceptance
 vectors before that part of the contract can be promoted.
 
-Local sidetone remains separate from receiver audio until the final monitor
-boundary. The default monitor level is the legacy `0 dB`. A lower monitor level
-attenuates only local sidetone and never changes remote stations, QRM, QRN, or
-the receiver noise floor. With QSK disabled, local transmission mutes the
-receiver path. With QSK enabled, the monitored local signal and receiver output
-are combined.
+Local monitor audio enters both complex receiver channels before the moving-
+average filters, pitch modulator, and AGC. The default monitor level is the
+legacy `0 dB`. A lower monitor level attenuates the local signal used at that
+mixing boundary. During local transmission with QSK disabled, the scaled local
+block replaces both receiver channels. With QSK enabled, a receiver-gain value
+starts at one for each block. Each local sample may immediately reduce it to
+`1 - local / local amplitude`; otherwise it recovers as
+`receiver gain * 0.997 + 0.003`. The scaled local sample and gain-adjusted
+receiver sample are then combined independently in both complex channels.
+QSK consumes no random values.
+
+The authored
+`audio.qsk-receiver-ducking-first-cq-block-seed-12345` case pins fresh QSK-off
+and QSK-on first-CQ blocks from the real CE `TContest.GetAudio` path, including
+12 binary32 probes, peak, RMS, full-block hash, first QSK divergence, and the
+shared random checkpoint at ordinal 1024. Its CE v37 adapter observes exact
+QSK-off and QSK-on hashes
+`7d925cbba9a0bb2e86a48c5a1777c347cfed68080a559446d8e3ed3c9d6af4ee`
+and
+`a4568db0f89409e3bf3640cd4d3a8e04fe619e20467a98674f6c6dbf5dca85f3`.
+The current XPlat adapter diverges at the QSK-off block because it adds a
+separate post-receiver sidetone instead of using the CE receiver mixing
+boundary. Later recovery blocks, remote signals beneath local transmission,
+runtime QSK toggles, other monitor levels, and post-message silence remain
+pending.
 
 ### 14.5 Device failure
 
@@ -3353,8 +3372,11 @@ Current Phase 3 implementation inventory, not parity certification:
   pre-filter receiver stage, eager burst construction, same-block mixing, and
   post-render lifetime boundary. Other burst durations, overlapping bursts,
   caller and QRM interaction, runtime QRN toggling, and RIT rotation remain
-  uncertified. QSK and LID paths still use deterministic XPlat behavior rather
-  than certified CE behavior. Production callers now own private CE-style QSB
+  uncertified. The authored first-CQ QSK vector currently records that XPlat's
+  post-receiver sidetone placement diverges from CE's pre-filter complex-channel
+  mixing. Later QSK recovery remains uncertified. LID paths still use
+  deterministic XPlat behavior rather than certified CE behavior. Production
+  callers now own private CE-style QSB
   processors and construction draws. The session loop owns the mutable QSB
   flag, applies it at station render boundaries, and publishes it through
   in-process and gRPC snapshots. The retained seed-12345 runtime-toggle case
