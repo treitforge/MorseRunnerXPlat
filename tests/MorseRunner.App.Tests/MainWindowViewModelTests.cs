@@ -338,6 +338,7 @@ public sealed class MainWindowViewModelTests
     {
         await using var viewModel = new MainWindowViewModel(
             InProcessMorseRunnerClient.CreateDefault());
+        viewModel.OperatorExchange = "599 #";
         await viewModel.StartCommand.ExecuteAsync(null);
         viewModel.CallEntry = "K1ABC";
         viewModel.RstEntry = "5NN";
@@ -346,7 +347,7 @@ public sealed class MainWindowViewModelTests
 
         await viewModel.SendExchangeCommand.ExecuteAsync(null);
 
-        Assert.Equal("5NN 001", viewModel.LastSent);
+        Assert.Equal("599 001", viewModel.LastSent);
 
         await viewModel.CompleteQsoCommand.ExecuteAsync(null);
 
@@ -516,6 +517,7 @@ public sealed class MainWindowViewModelTests
             first.ShowCallsignInformation = false;
             first.Qsb = true;
             first.SelectedContest = first.Contests[6];
+            first.OperatorExchange = "ALICE 123";
             first.DurationMinutes = 17;
             first.CompetitionDurationMinutes = 23;
             await first.DisposeAsync();
@@ -540,6 +542,7 @@ public sealed class MainWindowViewModelTests
             Assert.False(second.ShowCallsignInformation);
             Assert.True(second.Qsb);
             Assert.Equal(first.Contests[6].Id, second.SelectedContest.Id);
+            Assert.Equal("ALICE 123", second.OperatorExchange);
             Assert.Equal(17, second.DurationMinutes);
             Assert.Equal(23, second.CompetitionDurationMinutes);
         }

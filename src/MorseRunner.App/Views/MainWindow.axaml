@@ -201,6 +201,10 @@
                   x:Name="StationCallBox"
                   AutomationProperties.Name="Station callsign"
                   Text="{Binding StationCall}" />
+              <TextBlock Foreground="#91A6B8" Text="Sent exchange" />
+              <TextBox
+                  AutomationProperties.Name="Sent exchange"
+                  Text="{Binding OperatorExchange}" />
               <Grid ColumnDefinitions="*,110" ColumnSpacing="10">
                 <TextBlock
                     VerticalAlignment="Center"

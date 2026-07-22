@@ -62,6 +62,7 @@ public static class TuiRenderer
         string[] values =
         [
             $"STATION CALL        {state.StationCall}",
+            $"SENT EXCHANGE       {state.OperatorExchange}",
             $"WPM                 {state.WordsPerMinute}",
             $"PITCH               {state.PitchHz} Hz",
             $"BANDWIDTH           {state.BandwidthHz} Hz",

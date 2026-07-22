@@ -36,6 +36,8 @@ public sealed record SessionSettings(
 {
     public string StationCall { get; init; } = "VE3NEA";
 
+    public string OperatorExchange { get; init; } = string.Empty;
+
     public int WordsPerMinute { get; init; } = 25;
 
     public int PitchHz { get; init; } = 450;

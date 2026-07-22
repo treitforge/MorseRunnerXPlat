@@ -64,6 +64,7 @@ public static class TransportMapper
             RunModeId = value.RunModeId.Value,
             DurationBlocks = value.DurationBlocks,
             StationCall = value.StationCall,
+            OperatorExchange = value.OperatorExchange,
             WordsPerMinute = value.WordsPerMinute,
             PitchHz = value.PitchHz,
             BandwidthHz = value.BandwidthHz,
@@ -100,6 +101,7 @@ public static class TransportMapper
             value.DurationBlocks)
         {
             StationCall = value.StationCall,
+            OperatorExchange = value.OperatorExchange,
             WordsPerMinute = value.WordsPerMinute,
             PitchHz = value.PitchHz,
             BandwidthHz = value.BandwidthHz,

@@ -37,6 +37,7 @@ public sealed class GrpcTransportTests
     {
         SessionSettings expected = SessionSettings.CreateDefault(42) with
         {
+            OperatorExchange = "599 #",
             ReceiveSpeedBelowWpm = 6,
             ReceiveSpeedAboveWpm = 2,
             StationIdRate = 5,

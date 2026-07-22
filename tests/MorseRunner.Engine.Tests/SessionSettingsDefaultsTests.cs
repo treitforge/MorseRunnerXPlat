@@ -10,6 +10,7 @@ public sealed class SessionSettingsDefaultsTests
         SessionSettings settings = SessionSettings.CreateDefault(12_345);
 
         Assert.Equal("VE3NEA", settings.StationCall);
+        Assert.Empty(settings.OperatorExchange);
         Assert.Equal(25, settings.WordsPerMinute);
         Assert.Equal(450, settings.PitchHz);
         Assert.Equal(550, settings.BandwidthHz);

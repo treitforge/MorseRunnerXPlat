@@ -3980,8 +3980,9 @@ Current Phase 5 implementation inventory, not parity certification:
   beside physical playback, and completed recordings can be opened from the
   File menu.
 - Avalonia exposes persisted receive-speed bounds, legacy serial-number range
-  choices, a validated custom serial range, HST operator identity, and optional
-  live callsign context. These values remain immutable after session creation.
+  choices, a validated custom serial range, HST operator identity,
+  per-contest sent exchanges, and optional live callsign context. These values
+  remain immutable after session creation.
 - Mid-contest and end-of-contest serial selection uses the pinned legacy WPX
   weighted bins. Custom ranges retain the legacy exclusive upper bound.
 - Logging a valid entry without a completed matching live station retains
@@ -3998,10 +3999,11 @@ Current Phase 5 implementation inventory, not parity certification:
   platform results directory, and the gRPC Results service reuses the same
   formatter.
 - The TUI persists the same XPlat station, contest, run-mode, duration,
-  condition, receive-speed, serial-range, HST operator, monitor, and recording
-  keys as Avalonia. Whether their defaults, ranges, mutation rules, and effects
-  match CE remains unverified. Its advanced settings view changes immutable
-  session inputs before creation and sends no widget state into the engine.
+  per-contest sent exchange, condition, receive-speed, serial-range, HST
+  operator, monitor, and recording keys as Avalonia. Whether their defaults,
+  ranges, mutation rules, and effects match CE remains unverified. Its advanced
+  settings view changes immutable session inputs before creation and sends no
+  widget state into the engine.
 - Completed TUI sessions show engine-owned score, QSO count, five-minute rate,
   elapsed time, and the shared per-contest personal high score. JSON and
   Cabrillo exports use the same infrastructure formatter and atomic save path

@@ -231,9 +231,12 @@ public static class ContestQsoRules
     internal static string ComposeOwnExchange(
         ContestId contestId,
         string stationCall,
-        int serialNumber)
+        int serialNumber,
+        string operatorExchange)
     {
-        string exchange = ContestCatalog.Get(contestId).ExchangeDefault;
+        string exchange = String.IsNullOrWhiteSpace(operatorExchange)
+            ? ContestCatalog.Get(contestId).ExchangeDefault
+            : operatorExchange.Trim().ToUpperInvariant();
         if (contestId.Value == "scArrlSS")
         {
             string[] fields = exchange.Split(

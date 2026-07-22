@@ -501,6 +501,7 @@ public sealed class TuiApplication : IDisposable
             DurationBlocks(State.DurationMinutes))
         {
             StationCall = State.StationCall,
+            OperatorExchange = State.OperatorExchange,
             WordsPerMinute = State.WordsPerMinute,
             PitchHz = State.PitchHz,
             BandwidthHz = State.BandwidthHz,
@@ -526,9 +527,18 @@ public sealed class TuiApplication : IDisposable
                 State.CustomSerialNumberMaximumDigits,
             HstOperatorName = State.HstOperatorName,
         };
-        SessionHandle handle = await _client.CreateSessionAsync(
-            settings,
-            cancellationToken);
+        SessionHandle handle;
+        try
+        {
+            handle = await _client.CreateSessionAsync(
+                settings,
+                cancellationToken);
+        }
+        catch (ArgumentException exception)
+        {
+            State.Status = exception.Message;
+            return;
+        }
         _sessionId = handle.SessionId;
         _subscriptionTask = ObserveAsync(
             handle.SessionId,
@@ -806,11 +816,11 @@ public sealed class TuiApplication : IDisposable
                 return true;
             case TuiActionKind.NextField:
             case TuiActionKind.RitDown:
-                State.SettingsIndex = (State.SettingsIndex + 1) % 21;
+                State.SettingsIndex = (State.SettingsIndex + 1) % 22;
                 return true;
             case TuiActionKind.PreviousField:
             case TuiActionKind.RitUp:
-                State.SettingsIndex = (State.SettingsIndex + 20) % 21;
+                State.SettingsIndex = (State.SettingsIndex + 21) % 22;
                 return true;
             case TuiActionKind.IncreaseSetting:
             case TuiActionKind.EnterSendMessage:
@@ -857,53 +867,53 @@ public sealed class TuiApplication : IDisposable
 
         switch (State.SettingsIndex)
         {
-            case 1:
+            case 2:
                 State.WordsPerMinute = Step(
                     State.WordsPerMinute,
                     direction,
                     10,
                     120);
                 break;
-            case 2:
+            case 3:
                 State.PitchHz = Step(
                     State.PitchHz,
                     direction * 10,
                     100,
                     2_000);
                 break;
-            case 3:
+            case 4:
                 State.BandwidthHz = Step(
                     State.BandwidthHz,
                     direction * 50,
                     50,
                     5_000);
                 break;
-            case 4:
+            case 5:
                 State.Activity = Step(State.Activity, direction, 1, 9);
                 break;
-            case 5:
+            case 6:
                 State.MonitorLevelDb = Math.Clamp(
                     State.MonitorLevelDb + direction,
                     -60d,
                     12d);
                 break;
-            case 6:
+            case 7:
                 State.ReceiveSpeedBelowWpm = NextReceiveOffset(
                     State.ReceiveSpeedBelowWpm,
                     Math.Sign(direction));
                 break;
-            case 7:
+            case 8:
                 State.ReceiveSpeedAboveWpm = NextReceiveOffset(
                     State.ReceiveSpeedAboveWpm,
                     Math.Sign(direction));
                 break;
-            case 8:
+            case 9:
                 State.SerialNumberRange = (SerialNumberRangeMode)
                     Mod(
                         (int)State.SerialNumberRange + Math.Sign(direction),
                         Enum.GetValues<SerialNumberRangeMode>().Length);
                 break;
-            case 9:
+            case 10:
                 State.CustomSerialNumberMinimum = Step(
                     State.CustomSerialNumberMinimum,
                     direction,
@@ -913,7 +923,7 @@ public sealed class TuiApplication : IDisposable
                     State.CustomSerialNumberMinimumDigits,
                     DecimalDigitCount(State.CustomSerialNumberMinimum));
                 break;
-            case 10:
+            case 11:
                 State.CustomSerialNumberExclusiveMaximum = Step(
                     State.CustomSerialNumberExclusiveMaximum,
                     direction,
@@ -924,14 +934,14 @@ public sealed class TuiApplication : IDisposable
                     DecimalDigitCount(
                         State.CustomSerialNumberExclusiveMaximum));
                 break;
-            case 11:
+            case 12:
                 State.CustomSerialNumberMinimumDigits = Step(
                     State.CustomSerialNumberMinimumDigits,
                     direction,
                     DecimalDigitCount(State.CustomSerialNumberMinimum),
                     4);
                 break;
-            case 12:
+            case 13:
                 State.CustomSerialNumberMaximumDigits = Step(
                     State.CustomSerialNumberMaximumDigits,
                     direction,
@@ -939,25 +949,25 @@ public sealed class TuiApplication : IDisposable
                         State.CustomSerialNumberExclusiveMaximum),
                     4);
                 break;
-            case 14:
+            case 15:
                 State.Qsk = !State.Qsk;
                 break;
-            case 15:
+            case 16:
                 State.Qsb = !State.Qsb;
                 break;
-            case 16:
+            case 17:
                 State.Qrm = !State.Qrm;
                 break;
-            case 17:
+            case 18:
                 State.Qrn = !State.Qrn;
                 break;
-            case 18:
+            case 19:
                 State.Flutter = !State.Flutter;
                 break;
-            case 19:
+            case 20:
                 State.Lids = !State.Lids;
                 break;
-            case 20:
+            case 21:
                 ToggleRecording();
                 break;
         }
@@ -974,7 +984,14 @@ public sealed class TuiApplication : IDisposable
         {
             State.StationCall += character;
         }
-        else if (State.SettingsIndex == 13
+        else if (State.SettingsIndex == 1
+            && State.OperatorExchange.Length < 32
+            && (Char.IsAsciiLetterOrDigit(character)
+                || character is ' ' or '#' or '/'))
+        {
+            State.OperatorExchange += character;
+        }
+        else if (State.SettingsIndex == 14
             && State.HstOperatorName.Length < 32
             && !Char.IsControl(character))
         {
@@ -988,7 +1005,12 @@ public sealed class TuiApplication : IDisposable
         {
             State.StationCall = State.StationCall[..^1];
         }
-        else if (State.SettingsIndex == 13
+        else if (State.SettingsIndex == 1
+            && State.OperatorExchange.Length > 0)
+        {
+            State.OperatorExchange = State.OperatorExchange[..^1];
+        }
+        else if (State.SettingsIndex == 14
             && State.HstOperatorName.Length > 0)
         {
             State.HstOperatorName = State.HstOperatorName[..^1];
@@ -1001,7 +1023,11 @@ public sealed class TuiApplication : IDisposable
         {
             State.StationCall = string.Empty;
         }
-        else if (State.SettingsIndex == 13)
+        else if (State.SettingsIndex == 1)
+        {
+            State.OperatorExchange = string.Empty;
+        }
+        else if (State.SettingsIndex == 14)
         {
             State.HstOperatorName = string.Empty;
         }
@@ -1174,6 +1200,11 @@ public sealed class TuiApplication : IDisposable
                 State.CompetitionDurationMinutes.ToString(
                     CultureInfo.InvariantCulture),
         };
+        foreach (ContestDefinition contest in ContestCatalog.All)
+        {
+            values[$"Contest.OperatorExchange.{contest.Id.Value}"] =
+                State.GetOperatorExchange(contest.Id);
+        }
         await _settingsStore.SaveAsync(
             new(SettingsDocument.CurrentSchemaVersion, values),
             cancellationToken);
@@ -1498,6 +1529,13 @@ public sealed class TuiApplication : IDisposable
         if (ContestCatalog.All[contestIndex].Id.Value == contestId)
         {
             State.ContestIndex = contestIndex;
+        }
+        foreach (ContestDefinition contest in ContestCatalog.All)
+        {
+            State.SetOperatorExchange(contest.Id, Get(
+                values,
+                $"Contest.OperatorExchange.{contest.Id.Value}",
+                contest.ExchangeDefault));
         }
 
         string runMode = Get(

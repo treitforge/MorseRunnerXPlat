@@ -1742,7 +1742,8 @@ internal sealed class EngineSession : IAsyncDisposable
             OperatorIntent.Exchange => ContestQsoRules.ComposeOwnExchange(
                 _settings.ContestId,
                 _settings.StationCall,
-                _qsoCount + 1),
+                _qsoCount + 1,
+                _settings.OperatorExchange),
             OperatorIntent.ThankYou => ComposeThankYouMessage(),
             OperatorIntent.MyCall => _settings.StationCall,
             OperatorIntent.HisCall => command.Call,
@@ -1820,7 +1821,8 @@ internal sealed class EngineSession : IAsyncDisposable
                     ContestQsoRules.ComposeOwnExchange(
                         _settings.ContestId,
                         _settings.StationCall,
-                        _qsoCount + 1)
+                        _qsoCount + 1,
+                        _settings.OperatorExchange)
                 ));
         }
 

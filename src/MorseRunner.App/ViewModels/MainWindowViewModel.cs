@@ -104,6 +104,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private readonly string? _resultsDirectory;
     private readonly DxccDatabase _dxccDatabase;
     private readonly SynchronizationContext? _uiContext;
+    private readonly Dictionary<ContestId, string> _operatorExchanges = [];
     private readonly object _snapshotApplicationGate = new();
     private readonly SemaphoreSlim _monitorLevelUpdateGate = new(1, 1);
     private readonly CancellationTokenSource _lifetime = new();
@@ -296,6 +297,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             if (value is not null && SetField(ref _selectedContest, value))
             {
                 OnPropertyChanged(nameof(ContestName));
+                OnPropertyChanged(nameof(OperatorExchange));
             }
         }
     }
@@ -435,6 +437,29 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     {
         get => _stationCall;
         set => SetField(ref _stationCall, value.ToUpperInvariant());
+    }
+
+    public string OperatorExchange
+    {
+        get => _operatorExchanges.TryGetValue(
+            SelectedContest.Id,
+            out string? value)
+                ? value
+                : ContestCatalog.Get(SelectedContest.Id).ExchangeDefault;
+        set
+        {
+            string normalized = value.Trim().ToUpperInvariant();
+            if (String.Equals(
+                    OperatorExchange,
+                    normalized,
+                    StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _operatorExchanges[SelectedContest.Id] = normalized;
+            OnPropertyChanged(nameof(OperatorExchange));
+        }
     }
 
     public int Seed
@@ -902,6 +927,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         SelectedContest = Contests.FirstOrDefault(
                 option => option.Id.Value == contestId)
             ?? SelectedContest;
+        foreach (ContestDefinition contest in ContestCatalog.All)
+        {
+            _operatorExchanges[contest.Id] = Get(
+                values,
+                $"Contest.OperatorExchange.{contest.Id.Value}",
+                contest.ExchangeDefault).Trim().ToUpperInvariant();
+        }
+        OnPropertyChanged(nameof(OperatorExchange));
         string runModeId = Get(
             values,
             "Contest.DefaultRunMode",
@@ -996,6 +1029,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                 DurationBlocks(DurationMinutes))
             {
                 StationCall = StationCall,
+                OperatorExchange = OperatorExchange,
                 WordsPerMinute = WordsPerMinute,
                 PitchHz = PitchHz,
                 BandwidthHz = BandwidthHz,
@@ -1925,6 +1959,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             ["System.ShowCallsignInfo"] = ShowCallsignInformation.ToString(
                 CultureInfo.InvariantCulture),
         };
+        foreach (ContestDefinition contest in ContestCatalog.All)
+        {
+            values[$"Contest.OperatorExchange.{contest.Id.Value}"] =
+                _operatorExchanges.TryGetValue(contest.Id, out string? exchange)
+                    ? exchange
+                    : contest.ExchangeDefault;
+        }
         await _settingsStore.SaveAsync(
             new(
                 SettingsDocument.CurrentSchemaVersion,

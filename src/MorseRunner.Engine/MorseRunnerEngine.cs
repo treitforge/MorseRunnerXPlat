@@ -359,6 +359,16 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
         }
 
         ContestCatalog.Get(settings.ContestId);
+        if (!String.IsNullOrWhiteSpace(settings.OperatorExchange)
+            && !ContestQsoRules.ValidateOwnExchange(
+                settings.ContestId,
+                settings.OperatorExchange).IsValid)
+        {
+            throw new ArgumentException(
+                "The operator exchange is invalid for the selected contest.",
+                nameof(settings));
+        }
+
         if (!RunModeCatalog.All.Contains(settings.RunModeId))
         {
             throw new ArgumentException(

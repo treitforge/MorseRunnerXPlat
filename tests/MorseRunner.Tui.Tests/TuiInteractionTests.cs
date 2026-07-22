@@ -123,6 +123,29 @@ public sealed class TuiInteractionTests
     }
 
     [Fact]
+    public async Task SendExchangeUsesConfiguredOperatorExchange()
+    {
+        await using InProcessMorseRunnerClient client =
+            InProcessMorseRunnerClient.CreateDefault();
+        using var application = new TuiApplication(client, isHosted: false);
+        application.State.OperatorExchange = "599 #";
+        CancellationToken cancellationToken =
+            TestContext.Current.CancellationToken;
+        await application.InitializeAsync(cancellationToken);
+        await application.HandleAsync(
+            new(TuiActionKind.StartPileup),
+            cancellationToken);
+
+        await application.HandleAsync(
+            new(TuiActionKind.SendExchange),
+            cancellationToken);
+
+        Assert.Equal(
+            "599 001",
+            application.State.Snapshot?.LastOperatorMessage);
+    }
+
+    [Fact]
     public async Task SpeedUpUsesCeDefaultTwoWpmStep()
     {
         await using InProcessMorseRunnerClient client =
@@ -414,7 +437,7 @@ public sealed class TuiInteractionTests
             InProcessMorseRunnerClient.CreateDefault();
         using var application = new TuiApplication(client, isHosted: false);
         application.State.View = TuiView.Settings;
-        application.State.SettingsIndex = 1;
+        application.State.SettingsIndex = 2;
         application.State.WordsPerMinute = 100;
         CancellationToken cancellationToken =
             TestContext.Current.CancellationToken;
@@ -434,7 +457,7 @@ public sealed class TuiInteractionTests
             InProcessMorseRunnerClient.CreateDefault();
         using var application = new TuiApplication(client, isHosted: false);
         application.State.View = TuiView.Settings;
-        application.State.SettingsIndex = 1;
+        application.State.SettingsIndex = 2;
         application.State.WordsPerMinute = 10;
         CancellationToken cancellationToken =
             TestContext.Current.CancellationToken;
@@ -588,6 +611,7 @@ public sealed class TuiInteractionTests
                 first.State.CustomSerialNumberMinimumDigits = 3;
                 first.State.CustomSerialNumberMaximumDigits = 4;
                 first.State.HstOperatorName = "W7SST";
+                first.State.OperatorExchange = "599 #";
                 first.State.CompetitionDurationMinutes = 23;
                 await first.HandleAsync(
                     new(TuiActionKind.ToggleQsb),
@@ -616,6 +640,7 @@ public sealed class TuiInteractionTests
             Assert.Equal(3, second.State.CustomSerialNumberMinimumDigits);
             Assert.Equal(4, second.State.CustomSerialNumberMaximumDigits);
             Assert.Equal("W7SST", second.State.HstOperatorName);
+            Assert.Equal("599 #", second.State.OperatorExchange);
             Assert.Equal(23, second.State.CompetitionDurationMinutes);
             Assert.True(second.State.Qsb);
             Assert.True(second.State.RecordingEnabled);
@@ -690,6 +715,7 @@ public sealed class TuiInteractionTests
         {
             View = TuiView.Settings,
             HstOperatorName = "W7SST",
+            OperatorExchange = "599 #",
             CustomSerialNumberMinimumDigits = 3,
             CustomSerialNumberMaximumDigits = 4,
             ConnectionStatus = "Connected to authenticated local host.",
@@ -703,6 +729,10 @@ public sealed class TuiInteractionTests
 
         Assert.Contains("ADVANCED SETTINGS", settings, StringComparison.Ordinal);
         Assert.Contains("HST OPERATOR", settings, StringComparison.Ordinal);
+        Assert.Contains(
+            "SENT EXCHANGE       599 #",
+            settings,
+            StringComparison.Ordinal);
         Assert.Contains("CUSTOM MINIMUM      001", settings, StringComparison.Ordinal);
         Assert.Contains("CUSTOM MAXIMUM      0099", settings, StringComparison.Ordinal);
         Assert.Contains("RESULTS", results, StringComparison.Ordinal);

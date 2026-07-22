@@ -14,6 +14,8 @@ public enum TuiView
 
 public sealed class TuiState
 {
+    private readonly Dictionary<ContestId, string> _operatorExchanges = [];
+
     public int Seed { get; init; } = 12_345;
 
     public int ContestIndex { get; set; }
@@ -54,6 +56,24 @@ public sealed class TuiState
     public int SettingsIndex { get; set; }
 
     public string StationCall { get; set; } = "VE3NEA";
+
+    public string OperatorExchange
+    {
+        get => _operatorExchanges.TryGetValue(
+            Contest.Id,
+            out string? value)
+                ? value
+                : Contest.ExchangeDefault;
+        set => SetOperatorExchange(Contest.Id, value);
+    }
+
+    public void SetOperatorExchange(ContestId contestId, string value) =>
+        _operatorExchanges[contestId] = value.Trim().ToUpperInvariant();
+
+    public string GetOperatorExchange(ContestId contestId) =>
+        _operatorExchanges.TryGetValue(contestId, out string? value)
+            ? value
+            : ContestCatalog.Get(contestId).ExchangeDefault;
 
     public int WordsPerMinute { get; set; } = 25;
 
