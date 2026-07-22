@@ -129,7 +129,8 @@
         "settings.ce-encoding-translation",
         "settings.production-legacy-import",
         "settings.preserve-legacy-values",
-        "settings.legacy-nrdigits-migration"
+        "settings.legacy-nrdigits-migration",
+        "settings.legacy-malformed-obsolete"
       ]
     },
     {
@@ -869,7 +870,7 @@
     {"id": "ux.help-about-readme-community-actions", "capabilityId": "ux.main-menu-commands", "behavior": "Help, About, readme, website, and community actions match CE availability, targets, errors, keyboard access, and focus return.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "ux.score-service-browse-submit-and-failures", "capabilityId": "ux.score-dialog", "behavior": "Score browsing, submission, disabled or unavailable service behavior, failures, focus, and history match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "transport.session-lifecycle-transition-validity", "capabilityId": "simulation.state-models", "behavior": "Session lifecycle transitions reject invalid starts such as rmStop, define close-while-running behavior, and emit the same ordered terminal state through every client.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
-    {"id": "settings.all-supported-ce-keys-consumed-or-preserved", "capabilityId": "configuration.persisted-settings", "behavior": "Every supported CE key is consumed with equivalent semantics or preserved losslessly across import, save, and restart.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.station.nrdigits", "legacy.ini.setting.station.serialnr"], "acceptanceStatus": "partial", "caseIds": ["settings.legacy-nrdigits-migration"]},
+    {"id": "settings.all-supported-ce-keys-consumed-or-preserved", "capabilityId": "configuration.persisted-settings", "behavior": "Every supported CE key is consumed with equivalent semantics or preserved losslessly across import, save, and restart.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.station.nrdigits", "legacy.ini.setting.station.serialnr", "legacy.ini.setting.station.cwopsnum", "legacy.ini.setting.station.pitch", "legacy.ini.setting.station.bandwidth", "legacy.ini.setting.station.wpm", "legacy.ini.setting.station.qsk", "legacy.ini.setting.station.selfmonvolume", "legacy.ini.setting.station.savewav", "legacy.ini.setting.contest.simcontest", "legacy.ini.setting.contest.defaultrunmode", "legacy.ini.setting.contest.duration", "legacy.ini.setting.contest.competitionduration", "legacy.ini.setting.system.bufsize", "legacy.ini.setting.system.showcallsigninfo", "legacy.ini.setting.settings.farnsworthcharacterrate", "legacy.ini.setting.settings.wpmsteprate", "legacy.ini.setting.settings.ritstepincr", "legacy.ini.setting.settings.singlecallstartdelay", "legacy.ini.setting.band.activity", "legacy.ini.setting.band.qsb", "legacy.ini.setting.band.qrm", "legacy.ini.setting.band.qrn", "legacy.ini.setting.band.flutter", "legacy.ini.setting.band.lids"], "acceptanceStatus": "partial", "caseIds": ["settings.legacy-nrdigits-migration", "settings.legacy-malformed-obsolete"]},
     {"id": "release.cli-help-version-exit-codes", "capabilityId": "build.legacy-project-metadata", "behavior": "CLI help, version, validation failures, runtime failures, and successful commands expose stable documented output and exit codes in packaged builds.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "lifecycle.unit-initialization-finalization-order", "capabilityId": "lifecycle.legacy-unit-hooks", "behavior": "Legacy initialization and finalization hooks execute with equivalent order, registration, cleanup, state, and failures.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "ux.wpm-default-page-up-step", "capabilityId": "ux.keyboard-workflows", "behavior": "The default non-HST PageUp workflow applies CE's persisted WPM step to authoritative engine state.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Ini.pas", "Main.pas"], "legacySurfaceSelectors": ["legacy.ini.setting.settings.wpmsteprate", "legacy.main.handler.formkeydown"], "acceptanceStatus": "partial", "caseIds": ["ux.wpm-default-page-up-command-step-2-wpm-seed-12345", "ux.tui-wpm-default-page-up-command-step-2-wpm-seed-12345", "ux.wpm-custom-page-up-command-step-7-wpm-seed-12345", "ux.tui-wpm-custom-page-up-command-step-7-wpm-seed-12345", "ux.wpm-custom-page-down-command-step-7-wpm-seed-12345", "ux.tui-wpm-custom-page-down-command-step-7-wpm-seed-12345", "ux.wpm-step-lower-clamp-page-up-from-zero-seed-12345", "ux.tui-wpm-step-lower-clamp-page-up-from-zero-seed-12345", "ux.wpm-step-upper-clamp-page-up-from-21-seed-12345", "ux.tui-wpm-step-upper-clamp-page-up-from-21-seed-12345"]},
@@ -6084,6 +6085,84 @@
       "failureCode": "settings-legacy-nrdigits-migration-mismatch",
       "fixture": "tests/parity/fixtures/legacy/settings-legacy-nrdigits-migration.json",
       "evidence": "tests/parity/evidence/settings-legacy-nrdigits-migration.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "settings.legacy-malformed-obsolete",
+      "capabilityId": "configuration.persisted-settings",
+      "obligationIds": [
+        "settings.all-supported-ce-keys-consumed-or-preserved"
+      ],
+      "behavior": "Malformed primitive CE settings fall back to their clean defaults, while obsolete cwopsnum is deleted during load.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v77",
+        "source": "tests/parity/legacy-oracle/v77/LegacyOracle.lpr",
+        "sourceSha256": "16ec049877ca009daeeab6dd14bf42cc747dd903f6b3830084c862569ad437b2",
+        "buildRecipe": "tests/parity/legacy-oracle/v77/build-recipe.json",
+        "buildRecipeSha256": "68808cc7b90b102d7e48352a0fd72b63ccd2909383187bf3873b4ef94f709860"
+      },
+      "legacySources": [
+        "Ini.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.ini.setting.station.cwopsnum",
+        "legacy.ini.setting.station.pitch",
+        "legacy.ini.setting.station.bandwidth",
+        "legacy.ini.setting.station.wpm",
+        "legacy.ini.setting.station.qsk",
+        "legacy.ini.setting.station.serialnr",
+        "legacy.ini.setting.station.selfmonvolume",
+        "legacy.ini.setting.station.savewav",
+        "legacy.ini.setting.contest.simcontest",
+        "legacy.ini.setting.contest.defaultrunmode",
+        "legacy.ini.setting.contest.duration",
+        "legacy.ini.setting.contest.competitionduration",
+        "legacy.ini.setting.system.bufsize",
+        "legacy.ini.setting.system.showcallsigninfo",
+        "legacy.ini.setting.settings.farnsworthcharacterrate",
+        "legacy.ini.setting.settings.wpmsteprate",
+        "legacy.ini.setting.settings.ritstepincr",
+        "legacy.ini.setting.settings.singlecallstartdelay",
+        "legacy.ini.setting.band.activity",
+        "legacy.ini.setting.band.qsb",
+        "legacy.ini.setting.band.qrm",
+        "legacy.ini.setting.band.qrn",
+        "legacy.ini.setting.band.flutter",
+        "legacy.ini.setting.band.lids"
+      ],
+      "preconditions": [
+        "The live CE adapter writes the same nonnumeric value to integer, boolean, index, enum, and buffer settings before invoking Ini.FromIni.",
+        "The obsolete Station.cwopsnum key is present before CE loads the file.",
+        "The XPlat target imports the equivalent legacy document through LegacySettingsImporter.",
+        "Malformed serial-range strings that invoke CE's user-facing callback remain a separate error-reporting boundary."
+      ],
+      "input": {
+        "scenario": "settings.legacy-malformed-obsolete",
+        "seed": 12345
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatLegacyMalformedObsoleteSettingsTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 1,
+        "observedValuesSha256": "2f22201aea9266b4edf40a30e321a982a0394d3709b360ff3b49adff279dbfb3",
+        "firstDivergence": "LegacySettingsImporter initially retains malformed primitive strings instead of applying CE's read defaults.",
+        "functionalDivergenceCode": "settings-legacy-malformed-obsolete-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "settings-legacy-malformed-obsolete-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/settings-legacy-malformed-obsolete.json",
+      "evidence": "tests/parity/evidence/settings-legacy-malformed-obsolete.baseline.json",
       "firstGreenCommit": null
     }
   ]
