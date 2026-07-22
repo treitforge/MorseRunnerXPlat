@@ -22,7 +22,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Mapped legacy surfaces: 3668
 - Unmapped legacy surfaces: 0
 - Pending audit surfaces: 0
-- Overlapping case surface/platform assignments: 510
+- Overlapping case surface/platform assignments: 513
 
 | Category | Discovered surfaces |
 |---|---:|
@@ -116,9 +116,9 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 - Partially authored obligations: 36
 - Not-authored obligations: 87
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 73
+- Active acceptance cases: 74
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 73
+- Legacy-green/XPlat-red cases: 74
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
@@ -126,7 +126,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `catalog.contest-enumeration` | Legacy contest enumeration | `not-authored` | 0 | 12 | 0 | `Ini.pas:28-30` |
 | `session.run-mode-enumeration` | Legacy run mode enumeration | `partial` | 2 | 5 | 3 | `Ini.pas:31` |
 | `catalog.contest-definitions` | Legacy contest definitions | `partial` | 1 | 12 | 0 | `Ini.pas:99-222` |
-| `configuration.persisted-settings` | Legacy persisted settings | `partial` | 7 | 60 | 168 | `Ini.pas:345-548` |
+| `configuration.persisted-settings` | Legacy persisted settings | `partial` | 8 | 60 | 171 | `Ini.pas:345-548` |
 | `ux.main-form-objects` | Legacy main-form objects | `not-authored` | 0 | 79 | 6 | `Main.dfm:1-1988` |
 | `ux.main-menu-commands` | Legacy main-menu commands | `not-authored` | 0 | 129 | 0 | `Main.dfm:964-1579` |
 | `ux.main-form-events` | Legacy main-form event bindings and handlers | `not-authored` | 0 | 229 | 60 | `Main.dfm:1-1988`<br>`Main.pas:452-2867` |
@@ -268,7 +268,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `ux.help-about-readme-community-actions` | `ux.main-menu-commands` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Help, About, readme, website, and community actions match CE availability, targets, errors, keyboard access, and focus return. |
 | `ux.score-service-browse-submit-and-failures` | `ux.score-dialog` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Score browsing, submission, disabled or unavailable service behavior, failures, focus, and history match CE. |
 | `transport.session-lifecycle-transition-validity` | `simulation.state-models` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Session lifecycle transitions reject invalid starts such as rmStop, define close-while-running behavior, and emit the same ordered terminal state through every client. |
-| `settings.all-supported-ce-keys-consumed-or-preserved` | `configuration.persisted-settings` | `bound` | `partial` | 2 | `windows`, `linux`, `macos` | Every supported CE key is consumed with equivalent semantics or preserved losslessly across import, save, and restart. |
+| `settings.all-supported-ce-keys-consumed-or-preserved` | `configuration.persisted-settings` | `bound` | `partial` | 3 | `windows`, `linux`, `macos` | Every supported CE key is consumed with equivalent semantics or preserved losslessly across import, save, and restart. |
 | `release.cli-help-version-exit-codes` | `build.legacy-project-metadata` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | CLI help, version, validation failures, runtime failures, and successful commands expose stable documented output and exit codes in packaged builds. |
 | `lifecycle.unit-initialization-finalization-order` | `lifecycle.legacy-unit-hooks` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Legacy initialization and finalization hooks execute with equivalent order, registration, cleanup, state, and failures. |
 | `ux.wpm-default-page-up-step` | `ux.keyboard-workflows` | `bound` | `partial` | 10 | `windows`, `linux`, `macos` | The default non-HST PageUp workflow applies CE's persisted WPM step to authoritative engine state. |
@@ -357,6 +357,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `settings.preserve-legacy-values` | `configuration.persisted-settings` | `settings.preserve-unknown-and-unconsumed-values` | `legacy-green-xplat-red` | `settings-preserve-legacy-values-mismatch` | `pass` | `fail` |
 | `settings.legacy-nrdigits-migration` | `configuration.persisted-settings` | `settings.all-supported-ce-keys-consumed-or-preserved` | `legacy-green-xplat-red` | `settings-legacy-nrdigits-migration-mismatch` | `pass` | `fail` |
 | `settings.legacy-malformed-obsolete` | `configuration.persisted-settings` | `settings.all-supported-ce-keys-consumed-or-preserved` | `legacy-green-xplat-red` | `settings-legacy-malformed-obsolete-mismatch` | `pass` | `fail` |
+| `settings.legacy-serial-range-errors` | `configuration.persisted-settings` | `settings.all-supported-ce-keys-consumed-or-preserved` | `legacy-green-xplat-red` | `settings-legacy-serial-range-errors-mismatch` | `pass` | `fail` |
 
 ## Retained noncertifying observations
 

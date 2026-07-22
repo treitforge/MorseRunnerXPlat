@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "0d190b8b9c0ecfb523caa055b36447e615c05f2a",
+      "tree": "a7df423bb24d968a310e8d5712402b8a21c23efd",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "settings.legacy-serial-range-errors"
+  ],
+  "results": [
+    {
+      "parityId": "settings.legacy-serial-range-errors",
+      "acceptanceTestName": "parity:settings.legacy-serial-range-errors()",
+      "target": "xplat",
+      "adapter": "XPlatLegacySerialRangeErrorsTarget",
+      "caseDefinitionSha256": "c4896f2ad6d8192945e94bb531b7b3a1a3102f4f149d9371caedc67ab06d1c6b",
+      "fixtureSha256": "76249ec5c5fc55a97e0424f9139c81e6206b3800c96187b7b2ed35dbc126e83f",
+      "outcome": "functional-divergence",
+      "failureCode": "settings-legacy-serial-range-errors-mismatch",
+      "evidenceSource": "Production SettingsStore legacy import diagnostics",
+      "observedValues": [
+        "retained-ranges|mid=bad|end=10000-10001|custom=99-1",
+        "custom-caption=Custom Range..."
+      ],
+      "observedValueCount": 2,
+      "observedValuesSha256": "ab020b179c17418ce76244b491baacca5564179379c6394edd4ff6405cea6301",
+      "firstDivergence": {
+        "index": 0,
+        "expected": "error[0]=Error while reading MorseRunner.ini file.\rInvalid Keyword Value: \u0027SerialNrMidContest=bad\u0027:\rError: \u0027bad\u0027 is an invalid range.\rExpecting min-max values with up to 4-digits each (e.g. 100-300).\rPlease correct this keyword or remove the MorseRunner.ini file.",
+        "actual": "retained-ranges|mid=bad|end=10000-10001|custom=99-1"
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}
