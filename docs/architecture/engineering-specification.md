@@ -2306,6 +2306,10 @@ The path service distinguishes:
   ordinals. The obsolete key is removed, values 1 through 4 select start,
   custom, mid-contest, and end-contest respectively, and other numeric values
   fall back to start-of-contest.
+- Malformed CE integer, boolean, index, enum, and buffer values use the same
+  initialized defaults as `Ini.FromIni`. The obsolete `Station.cwopsnum` key
+  is discarded during import. A malformed boolean is false, including
+  `System.ShowCallsignInfo`, matching CE's persisted parser behavior.
 - Unknown future fields should be preserved when practical.
 
 ### 17.3 Reference data

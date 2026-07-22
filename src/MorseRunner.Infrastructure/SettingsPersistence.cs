@@ -239,6 +239,26 @@ public static class LegacySettingsImporter
         ],
         StringComparer.OrdinalIgnoreCase);
 
+    private static readonly Dictionary<string, string>
+        MalformedIntegerDefaults = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Station.Pitch"] = "450",
+            ["Station.BandWidth"] = "550",
+            ["Station.Wpm"] = "25",
+            ["Station.SerialNR"] = "0",
+            ["Station.SelfMonVolume"] = "0",
+            ["Contest.SimContest"] = "scWpx",
+            ["Contest.DefaultRunMode"] = "rmPileup",
+            ["Contest.Duration"] = "30",
+            ["Contest.CompetitionDuration"] = "60",
+            ["System.BufSize"] = "512",
+            ["Settings.FarnsworthCharacterRate"] = "25",
+            ["Settings.WpmStepRate"] = "2",
+            ["Settings.RitStepIncr"] = "50",
+            ["Settings.SingleCallStartDelay"] = "0",
+            ["Band.Activity"] = "2",
+        };
+
     public static SettingsDocument Import(
         LegacyIniDocument source,
         SettingsDocument? existing = null)
@@ -303,6 +323,14 @@ public static class LegacySettingsImporter
             return TranslateBoolean(value);
         }
 
+        if (MalformedIntegerDefaults.TryGetValue(
+                key,
+                out string? defaultValue)
+            && !TryParseInteger(value, out _))
+        {
+            return defaultValue;
+        }
+
         return key switch
         {
             "Station.Pitch" => TranslateFrequencyIndex(
@@ -340,7 +368,7 @@ public static class LegacySettingsImporter
         return TryParseInteger(value, out int numeric)
             && numeric is 0 or 1
                 ? (numeric == 1).ToString()
-                : value;
+                : false.ToString();
     }
 
     private static string TranslateFrequencyIndex(

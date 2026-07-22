@@ -35,7 +35,7 @@ public sealed class SettingsPersistenceTests
 
         Assert.Equal("W7SST", first.Values["Station.Call"]);
         Assert.Equal("32", first.Values["Station.Wpm"]);
-        Assert.Equal("0.25", first.Values["Band.Qrn"]);
+        Assert.Equal("False", first.Values["Band.Qrn"]);
         Assert.Equal(first.SchemaVersion, second.SchemaVersion);
         Assert.Equal(
             first.Values.OrderBy(pair => pair.Key),
@@ -133,6 +133,76 @@ public sealed class SettingsPersistenceTests
         Assert.Equal(
             expectedSerialMode,
             imported.Values["Station.SerialNR"]);
+    }
+
+    [Fact]
+    public void LegacyImportUsesCeDefaultsForMalformedPrimitiveSettings()
+    {
+        SettingsDocument imported = LegacySettingsImporter.Import(
+            LegacyIniDocument.Parse(
+                """
+                [Station]
+                cwopsnum=9999
+                Pitch=not-a-value
+                BandWidth=not-a-value
+                Wpm=not-a-value
+                Qsk=not-a-value
+                SerialNR=not-a-value
+                SelfMonVolume=not-a-value
+                SaveWav=not-a-value
+                [Contest]
+                SimContest=not-a-value
+                DefaultRunMode=not-a-value
+                Duration=not-a-value
+                CompetitionDuration=not-a-value
+                [System]
+                BufSize=not-a-value
+                ShowCallsignInfo=not-a-value
+                [Settings]
+                FarnsworthCharacterRate=not-a-value
+                WpmStepRate=not-a-value
+                RitStepIncr=not-a-value
+                SingleCallStartDelay=not-a-value
+                [Band]
+                Activity=not-a-value
+                Qsb=not-a-value
+                Qrm=not-a-value
+                Qrn=not-a-value
+                Flutter=not-a-value
+                Lids=not-a-value
+                """));
+        var expected = new Dictionary<string, string>
+        {
+            ["Station.Pitch"] = "450",
+            ["Station.BandWidth"] = "550",
+            ["Station.Wpm"] = "25",
+            ["Station.Qsk"] = "False",
+            ["Station.SerialNR"] = "0",
+            ["Station.SelfMonVolume"] = "0",
+            ["Station.SaveWav"] = "False",
+            ["Contest.SimContest"] = "scWpx",
+            ["Contest.DefaultRunMode"] = "rmPileup",
+            ["Contest.Duration"] = "30",
+            ["Contest.CompetitionDuration"] = "60",
+            ["System.BufSize"] = "512",
+            ["System.ShowCallsignInfo"] = "False",
+            ["Settings.FarnsworthCharacterRate"] = "25",
+            ["Settings.WpmStepRate"] = "2",
+            ["Settings.RitStepIncr"] = "50",
+            ["Settings.SingleCallStartDelay"] = "0",
+            ["Band.Activity"] = "2",
+            ["Band.Qsb"] = "False",
+            ["Band.Qrm"] = "False",
+            ["Band.Qrn"] = "False",
+            ["Band.Flutter"] = "False",
+            ["Band.Lids"] = "False",
+        };
+
+        Assert.DoesNotContain("Station.cwopsnum", imported.Values.Keys);
+        foreach ((string key, string value) in expected)
+        {
+            Assert.Equal(value, imported.Values[key]);
+        }
     }
 
     [Fact]
