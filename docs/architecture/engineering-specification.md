@@ -2310,6 +2310,11 @@ The path service distinguishes:
   initialized defaults as `Ini.FromIni`. The obsolete `Station.cwopsnum` key
   is discarded during import. A malformed boolean is false, including
   `System.ShowCallsignInfo`, matching CE's persisted parser behavior.
+- Invalid `SerialNrMidContest`, `SerialNrEndContest`, and
+  `SerialNrCustomRange` values remain preserved and produce CE's exact ordered
+  operator diagnostics. Production startup returns those diagnostics to every
+  UX after saving the imported document; invalid custom ranges use the generic
+  custom-range presentation.
 - Unknown future fields should be preserved when practical.
 
 ### 17.3 Reference data

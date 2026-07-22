@@ -924,9 +924,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             ?? SelectedSerialNumberRange;
         await RefreshAudioDevicesAsync(
             Get(values, "Station.AudioOutputDevice", string.Empty));
-        Status = result.Recovered
-            ? result.Diagnostic ?? "Settings recovered with defaults."
-            : "Ready. Configure a contest and press F9.";
+        Status = !String.IsNullOrWhiteSpace(result.Diagnostic)
+            ? result.Diagnostic
+            : result.Recovered
+                ? "Settings recovered with defaults."
+                : "Ready. Configure a contest and press F9.";
     }
 
     public async ValueTask DisposeAsync()

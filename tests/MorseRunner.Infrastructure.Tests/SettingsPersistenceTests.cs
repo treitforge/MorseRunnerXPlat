@@ -206,6 +206,55 @@ public sealed class SettingsPersistenceTests
     }
 
     [Fact]
+    public void LegacyImportReportsCeSerialRangeErrorsInReadOrder()
+    {
+        LegacySettingsImportResult imported =
+            LegacySettingsImporter.ImportWithDiagnostics(
+                LegacyIniDocument.Parse(
+                    """
+                    [Station]
+                    SerialNrMidContest=bad
+                    SerialNrEndContest=10000-10001
+                    SerialNrCustomRange=99-1
+                    """));
+
+        Assert.Equal(
+            [
+                "Error while reading MorseRunner.ini file.\r"
+                    + "Invalid Keyword Value: 'SerialNrMidContest=bad':\r"
+                    + "Error: 'bad' is an invalid range.\r"
+                    + "Expecting min-max values with up to 4-digits each "
+                    + "(e.g. 100-300).\r"
+                    + "Please correct this keyword or remove the "
+                    + "MorseRunner.ini file.",
+                "Error while reading MorseRunner.ini file.\r"
+                    + "Invalid Keyword Value: "
+                    + "'SerialNrEndContest=10000-10001':\r"
+                    + "Error: '10000-10001' is an invalid range.\r"
+                    + "Expecting range values to be less than or equal "
+                    + "to 9999.\r"
+                    + "Please correct this keyword or remove the "
+                    + "MorseRunner.ini file.",
+                "Error while reading MorseRunner.ini file.\r"
+                    + "Invalid Keyword Value: 'SerialNrCustomRange=99-1':\r"
+                    + "Error: '99-1' is an invalid range.\r"
+                    + "Expecting Min value to be less than Max value.\r"
+                    + "Please correct this keyword or remove the "
+                    + "MorseRunner.ini file.",
+            ],
+            imported.Diagnostics);
+        Assert.Equal(
+            "bad",
+            imported.Document.Values["Station.SerialNrMidContest"]);
+        Assert.Equal(
+            "10000-10001",
+            imported.Document.Values["Station.SerialNrEndContest"]);
+        Assert.Equal(
+            "99-1",
+            imported.Document.Values["Station.SerialNrCustomRange"]);
+    }
+
+    [Fact]
     public async Task SettingsWriteIsAtomicAndMalformedInputRecovers()
     {
         string directory = Path.Combine(

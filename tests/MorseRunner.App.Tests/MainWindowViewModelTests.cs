@@ -549,6 +549,44 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task LegacySerialRangeErrorsAreVisibleAfterStartupImport()
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            $"MorseRunnerXPlat-range-errors-{Guid.NewGuid():N}");
+        string settingsPath = Path.Combine(root, "settings.json");
+        string legacyPath = Path.Combine(root, "MorseRunner.ini");
+        try
+        {
+            Directory.CreateDirectory(root);
+            await File.WriteAllTextAsync(
+                legacyPath,
+                """
+                [Station]
+                SerialNrCustomRange=99-1
+                """,
+                TestContext.Current.CancellationToken);
+            await using var viewModel = new MainWindowViewModel(
+                InProcessMorseRunnerClient.CreateDefault(),
+                settingsStore: new SettingsStore(settingsPath, legacyPath));
+
+            await viewModel.InitializeAsync();
+
+            Assert.Contains(
+                "Invalid Keyword Value: 'SerialNrCustomRange=99-1'",
+                viewModel.Status,
+                StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task ResultExportWritesJsonThroughTheViewModel()
     {
         string directory = Path.Combine(

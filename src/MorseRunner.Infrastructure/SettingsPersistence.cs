@@ -23,6 +23,10 @@ public sealed record SettingsLoadResult(
     bool Recovered,
     string? Diagnostic);
 
+public sealed record LegacySettingsImportResult(
+    SettingsDocument Document,
+    IReadOnlyList<string> Diagnostics);
+
 public sealed class SettingsStore
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -198,13 +202,20 @@ public sealed class SettingsStore
             string text = await File.ReadAllTextAsync(
                 _legacyIniPath!,
                 cancellationToken);
-            SettingsDocument imported = LegacySettingsImporter.Import(
-                LegacyIniDocument.Parse(text));
-            await SaveAsync(imported, cancellationToken);
+            LegacySettingsImportResult imported =
+                LegacySettingsImporter.ImportWithDiagnostics(
+                    LegacyIniDocument.Parse(text));
+            await SaveAsync(imported.Document, cancellationToken);
+            string diagnostic = "Imported legacy settings from MorseRunner.ini.";
+            if (imported.Diagnostics.Count > 0)
+            {
+                diagnostic += "\n" + String.Join("\n", imported.Diagnostics);
+            }
+
             return new SettingsLoadResult(
-                imported,
+                imported.Document,
                 false,
-                "Imported legacy settings from MorseRunner.ini.");
+                diagnostic);
         }
         catch (Exception exception)
             when (exception is FormatException
@@ -221,6 +232,14 @@ public sealed class SettingsStore
 
 public static class LegacySettingsImporter
 {
+    private static readonly (string Key, string DefaultValue)[]
+        SerialRangeSettings =
+        [
+            ("SerialNrMidContest", "50-500"),
+            ("SerialNrEndContest", "500-5000"),
+            ("SerialNrCustomRange", "01-99"),
+        ];
+
     private static readonly HashSet<string> BooleanKeys = new(
         [
             "Band.Flutter",
@@ -261,9 +280,15 @@ public static class LegacySettingsImporter
 
     public static SettingsDocument Import(
         LegacyIniDocument source,
+        SettingsDocument? existing = null) =>
+        ImportWithDiagnostics(source, existing).Document;
+
+    public static LegacySettingsImportResult ImportWithDiagnostics(
+        LegacyIniDocument source,
         SettingsDocument? existing = null)
     {
         ArgumentNullException.ThrowIfNull(source);
+        var diagnostics = new List<string>();
         var values = new Dictionary<string, string>(
             existing?.Values
                 ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
@@ -289,6 +314,21 @@ public static class LegacySettingsImporter
                 legacyDigits!);
         }
 
+        foreach ((string key, string defaultValue) in SerialRangeSettings)
+        {
+            string value = source.TryGet(
+                "Station",
+                key,
+                out string? persistedValue)
+                    ? persistedValue!
+                    : defaultValue;
+            string? error = GetSerialRangeError(value);
+            if (error is not null)
+            {
+                diagnostics.Add(FormatSerialRangeDiagnostic(key, value, error));
+            }
+        }
+
         foreach ((string section, IReadOnlyDictionary<string, string> entries)
                  in source.Sections)
         {
@@ -303,7 +343,9 @@ public static class LegacySettingsImporter
             }
         }
 
-        return new SettingsDocument(SettingsDocument.CurrentSchemaVersion, values);
+        return new LegacySettingsImportResult(
+            new SettingsDocument(SettingsDocument.CurrentSchemaVersion, values),
+            diagnostics);
     }
 
     public static string PreservedValueKey(string section, string key)
@@ -429,6 +471,40 @@ public static class LegacySettingsImporter
             : 0;
         return serialMode.ToString(CultureInfo.InvariantCulture);
     }
+
+    private static string? GetSerialRangeError(string value)
+    {
+        string[] parts = value.Split('-');
+        if (parts.Length != 2
+            || value.Count(character => character == '-') != 1
+            || !TryParseInteger(parts[0], out int minimum)
+            || !TryParseInteger(parts[1], out int maximum))
+        {
+            return $"Error: '{value}' is an invalid range.\r"
+                + "Expecting min-max values with up to 4-digits each "
+                + "(e.g. 100-300).";
+        }
+
+        if (minimum > 9_999 || maximum > 9_999)
+        {
+            return $"Error: '{value}' is an invalid range.\r"
+                + "Expecting range values to be less than or equal to 9999.";
+        }
+
+        return minimum > maximum
+            ? $"Error: '{value}' is an invalid range.\r"
+                + "Expecting Min value to be less than Max value."
+            : null;
+    }
+
+    private static string FormatSerialRangeDiagnostic(
+        string key,
+        string value,
+        string error) =>
+        "Error while reading MorseRunner.ini file.\r"
+        + $"Invalid Keyword Value: '{key}={value}':\r"
+        + error
+        + "\rPlease correct this keyword or remove the MorseRunner.ini file.";
 
     private static string TranslateClampedInteger(
         string value,
