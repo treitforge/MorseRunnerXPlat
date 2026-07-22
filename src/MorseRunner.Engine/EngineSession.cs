@@ -1766,6 +1766,11 @@ internal sealed class EngineSession : IAsyncDisposable
         {
             _esmExchangeSent = true;
         }
+        else if (command.Intent == OperatorIntent.Abort)
+        {
+            _esmSentCall = null;
+            _esmExchangeSent = false;
+        }
 
         _revision++;
         return AcceptedResult();

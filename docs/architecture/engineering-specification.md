@@ -2173,6 +2173,9 @@ a concrete client use case.
   only the engine-owned ESM call and exchange bookkeeping at a session-loop
   command boundary. Clients clear their editable entry fields after acceptance;
   the command does not abort an in-flight operator message.
+- The existing `Abort` operator intent clears the same ESM bookkeeping after
+  cancelling its message, so the next Enter workflow sends the caller call and
+  operator exchange again.
 - Represent receive-speed bounds, serial-number ranges, HST operator identity,
   preferred audio-device name, and station-ID rate as additive
   session-setting fields. An omitted station-ID rate uses the CE default of
