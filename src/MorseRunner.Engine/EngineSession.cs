@@ -2418,7 +2418,7 @@ internal sealed class EngineSession : IAsyncDisposable
             evaluation,
             command,
             completedStation);
-        bool duplicate = !_workedCalls.Add(evaluation.Call);
+        bool duplicate = _workedCalls.Contains(evaluation.Call);
         if (duplicate && exchangeError == LogError.None)
         {
             exchangeError = LogError.Duplicate;
@@ -2426,6 +2426,7 @@ internal sealed class EngineSession : IAsyncDisposable
 
         if (!duplicate && exchangeError == LogError.None)
         {
+            _workedCalls.Add(evaluation.Call);
             _verifiedPoints += evaluation.Points;
             if (evaluation.UsesAdditiveScore)
             {

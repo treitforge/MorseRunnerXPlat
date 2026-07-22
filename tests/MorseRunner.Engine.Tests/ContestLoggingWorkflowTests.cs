@@ -86,6 +86,7 @@ public sealed class ContestLoggingWorkflowTests
             engine.GetCompletedQsos(handle.SessionId);
         Assert.Equal(2, qsos.Count);
         Assert.All(qsos, qso => Assert.Equal(LogError.Nil, qso.ExchangeError));
+        Assert.All(qsos, qso => Assert.False(qso.IsDuplicate));
         Assert.All(qsos, qso => Assert.Empty(qso.TrueCall));
         Assert.All(qsos, qso => Assert.Equal("NIL", qso.ErrorText));
         SessionSnapshot snapshot = engine.GetSnapshot(handle.SessionId);

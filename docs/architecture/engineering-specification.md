@@ -1474,8 +1474,10 @@ The implemented legacy score policies are:
 
 Exact-call duplicates are logged with `IsDuplicate`,
 `LogError.Duplicate`, and `DUP`, but do not change verified points,
-multipliers, or score. A rejected exchange does not mutate the QSO log or
-score, so a corrected command with a new request ID can be retried safely.
+multipliers, or score. A call enters the worked-call set only after a
+verified-correct QSO, so NIL and erroneous rows do not make a later attempt a
+duplicate. A rejected exchange does not mutate the QSO log or score, so a
+corrected command with a new request ID can be retried safely.
 
 DXCC geography is resolved once through an immutable engine lookup over the
 canonical packaged `DXCC.LIST` data. Sweepstakes parsing is a pure Domain
