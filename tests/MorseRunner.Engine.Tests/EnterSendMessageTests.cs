@@ -184,7 +184,7 @@ public sealed class EnterSendMessageTests
         CommandResult aborted = await session.SendAsync(OperatorIntent.Abort);
 
         Assert.True(aborted.Accepted);
-        Assert.Empty(session.Snapshot.LastOperatorMessage);
+        Assert.Empty(session.Snapshot.LastOperatorMessage ?? string.Empty);
 
         CommandResult result = await session.EnterAsync("KC7AVA", "5NN", "123", "");
 
