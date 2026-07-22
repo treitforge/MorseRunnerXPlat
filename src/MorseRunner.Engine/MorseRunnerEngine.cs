@@ -58,13 +58,15 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
     {
         ThrowIfDisposed();
         ValidateSettings(settings);
+        SessionSettings effectiveSettings =
+            NormalizeCompetitionSettings(settings);
 
         SessionId sessionId = SessionId.New();
         IAudioSink sink = _audioSinkFactory(sessionId);
         EngineSession session = new(
             _engineEpoch,
             sessionId,
-            settings,
+            effectiveSettings,
             sink,
             _options);
         if (!_sessions.TryAdd(sessionId, session))
@@ -146,6 +148,118 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
                 snapshot.ElapsedSimulationTime));
     }
 
+    internal Task<float> TakeNextSessionRandomSingleForParityAsync(
+        SessionId sessionId,
+        long expectedRevision,
+        long expectedSimulationBlock,
+        CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        return GetSession(sessionId)
+            .TakeNextRandomSingleForParityAsync(
+                expectedRevision,
+                expectedSimulationBlock,
+                cancellationToken);
+    }
+
+    internal Task<QrnBurstParityObservation>
+        ObserveQrnBurstForParityAsync(
+            SessionId sessionId,
+            long expectedRevision,
+            long expectedSimulationBlock,
+            CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        return GetSession(sessionId)
+            .ObserveQrnBurstForParityAsync(
+                expectedRevision,
+                expectedSimulationBlock,
+                cancellationToken);
+    }
+
+    internal Task<QrmStationParityObservation>
+        ObserveQrmStationForParityAsync(
+            SessionId sessionId,
+            long expectedRevision,
+            long expectedSimulationBlock,
+            CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        return GetSession(sessionId)
+            .ObserveQrmStationForParityAsync(
+                expectedRevision,
+                expectedSimulationBlock,
+                cancellationToken);
+    }
+
+    internal Task<CallerCollisionParityObservation>
+        ObserveCallerCollisionForParityAsync(
+            SessionId sessionId,
+            long expectedRevision,
+            long expectedSimulationBlock,
+            string collisionCall,
+            int retryLimit,
+            CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        return GetSession(sessionId)
+            .ObserveCallerCollisionForParityAsync(
+                expectedRevision,
+                expectedSimulationBlock,
+                collisionCall,
+                retryLimit,
+                cancellationToken);
+    }
+
+    internal Task<QsbRuntimeParityObservation>
+        ObserveQsbRuntimeForParityAsync(
+            SessionId sessionId,
+            long expectedRevision,
+            long expectedSimulationBlock,
+            string stationCall,
+            string message,
+            int blockCount,
+            int toggleAfterBlockCount,
+            bool runtimeToggle,
+            CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        return GetSession(sessionId)
+            .ObserveQsbRuntimeForParityAsync(
+                expectedRevision,
+                expectedSimulationBlock,
+                stationCall,
+                message,
+                blockCount,
+                toggleAfterBlockCount,
+                runtimeToggle,
+            cancellationToken);
+    }
+
+    internal Task AddScriptedStationForParityAsync(
+        SessionId sessionId,
+        long expectedRevision,
+        long expectedSimulationBlock,
+        string stationCall,
+        string message,
+        int wordsPerMinute,
+        int pitchOffsetHz,
+        float amplitude,
+        CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        return GetSession(sessionId)
+            .AddScriptedStationForParityAsync(
+                expectedRevision,
+                expectedSimulationBlock,
+                stationCall,
+                message,
+                wordsPerMinute,
+                pitchOffsetHz,
+                amplitude,
+                cancellationToken);
+    }
+
     public async Task CloseSessionAsync(
         SessionId sessionId,
         CancellationToken cancellationToken)
@@ -192,6 +306,20 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
                 "Activity must be between 1 and 9.");
         }
 
+        if (settings.CompetitionDurationMinutes is < 1 or > 60)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(settings),
+                "Competition duration must be between 1 and 60 minutes.");
+        }
+
+        if (settings.StationIdRate < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(settings),
+                "Station ID rate cannot be negative.");
+        }
+
         if (settings.MonitorLevelDb is < -60d or > 0d)
         {
             throw new ArgumentOutOfRangeException(
@@ -199,13 +327,109 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
                 "Monitor level must be between -60 dB and 0 dB.");
         }
 
+        bool usesLegacyOriginalSpeed =
+            settings.ReceiveSpeedBelowWpm == -1
+            && settings.ReceiveSpeedAboveWpm == -1;
+        if (!usesLegacyOriginalSpeed
+            && (settings.ReceiveSpeedBelowWpm is < 0 or > 10
+                || settings.ReceiveSpeedAboveWpm is < 0 or > 10))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(settings),
+                "Receive speed offsets must be between 0 and 10 WPM.");
+        }
+
+        if (settings.SerialNumberRange == SerialNumberRangeMode.Custom
+            && (settings.CustomSerialNumberMinimum < 1
+                || settings.CustomSerialNumberExclusiveMaximum
+                    <= settings.CustomSerialNumberMinimum
+                || settings.CustomSerialNumberExclusiveMaximum > 9_999
+                || settings.CustomSerialNumberMinimumDigits
+                    < DecimalDigitCount(
+                        settings.CustomSerialNumberMinimum)
+                || settings.CustomSerialNumberMinimumDigits > 4
+                || settings.CustomSerialNumberMaximumDigits
+                    < DecimalDigitCount(
+                        settings.CustomSerialNumberExclusiveMaximum)
+                || settings.CustomSerialNumberMaximumDigits > 4))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(settings),
+                "The custom serial range must be min-max with 1 <= min < max <= 9999 and one to four digits per bound.");
+        }
+
         ContestCatalog.Get(settings.ContestId);
+        if (!String.IsNullOrWhiteSpace(settings.OperatorExchange)
+            && !ContestQsoRules.ValidateOwnExchange(
+                settings.ContestId,
+                settings.OperatorExchange).IsValid)
+        {
+            throw new ArgumentException(
+                "The operator exchange is invalid for the selected contest.",
+                nameof(settings));
+        }
+
         if (!RunModeCatalog.All.Contains(settings.RunModeId))
         {
             throw new ArgumentException(
                 "The run mode is not supported.",
                 nameof(settings));
         }
+
+        if (settings.RunModeId.Value == "rmHst"
+            && (settings.ContestId.Value != "scHst"
+                || settings.SerialNumberRange
+                    != SerialNumberRangeMode.StartOfContest))
+        {
+            throw new ArgumentException(
+                "HST competition mode requires the HST contest and the Start of Contest serial-number range.",
+                nameof(settings));
+        }
+    }
+
+    private static int DecimalDigitCount(int value) =>
+        value switch
+        {
+            >= 1_000 => 4,
+            >= 100 => 3,
+            >= 10 => 2,
+            _ => 1,
+        };
+
+    internal static SessionSettings NormalizeCompetitionSettings(
+        SessionSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        long competitionDurationBlocks = checked(
+            (long)Math.Ceiling(
+                settings.CompetitionDurationMinutes
+                * 60d
+                * CompatibilityProfile.SampleRate
+                / CompatibilityProfile.BlockSize));
+        return settings.RunModeId.Value switch
+        {
+            "rmWpx" => settings with
+            {
+                DurationBlocks = competitionDurationBlocks,
+                Qsb = true,
+                Qrm = true,
+                Qrn = true,
+                Flutter = true,
+                Lids = true,
+            },
+            "rmHst" => settings with
+            {
+                DurationBlocks = competitionDurationBlocks,
+                Activity = 4,
+                BandwidthHz = 600,
+                Qsb = false,
+                Qrm = false,
+                Qrn = false,
+                Flutter = false,
+                Lids = false,
+            },
+            _ => settings,
+        };
     }
 
     private EngineSession GetSession(SessionId sessionId)

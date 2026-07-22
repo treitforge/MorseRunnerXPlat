@@ -7,11 +7,15 @@ if (args.Contains("--help", StringComparer.OrdinalIgnoreCase))
 {
     Console.WriteLine(
         """
-        Usage: MorseRunner.Tui [--hosted] [--no-audio] [--snapshot]
+        Usage: MorseRunner.Tui [--hosted] [--no-audio] [--no-color] [--snapshot]
+                               [--snapshot-view <operator|settings|results|diagnostics|help>]
 
           --hosted    Connect to the locally discovered MorseRunner engine host.
           --no-audio  Run locally with automatic timing and a null audio sink.
+          --no-color  Disable color while retaining terminal cursor control.
           --snapshot  Render one non-interactive frame and exit.
+          --snapshot-view
+                      Select the view rendered by --snapshot.
 
         The default is an in-process engine with physical audio.
         """);
@@ -20,13 +24,19 @@ if (args.Contains("--help", StringComparer.OrdinalIgnoreCase))
 
 bool hosted = args.Contains("--hosted", StringComparer.OrdinalIgnoreCase);
 bool noAudio = args.Contains("--no-audio", StringComparer.OrdinalIgnoreCase);
+bool noColor = args.Contains("--no-color", StringComparer.OrdinalIgnoreCase);
 bool snapshot = args.Contains("--snapshot", StringComparer.OrdinalIgnoreCase);
+string snapshotView = GetOptionValue(args, "--snapshot-view") ?? "operator";
+var paths = new ApplicationPaths();
+paths.EnsureWritableDirectories();
+var recording = new TuiRecordingPreference(paths);
 
 await using IMorseRunnerClient? client = hosted
     ? await CreateHostedClientAsync()
     : noAudio
         ? InProcessMorseRunnerClient.CreateWithAutomaticNullAudio()
-        : InProcessMorseRunnerClient.CreateWithPhysicalAudio();
+        : InProcessMorseRunnerClient.CreateWithPhysicalAudio(
+            recordingPathProvider: recording.CreatePath);
 if (client is null)
 {
     Console.Error.WriteLine(
@@ -34,9 +44,25 @@ if (client is null)
     return 1;
 }
 
-using var application = new TuiApplication(client, hosted);
+using var application = new TuiApplication(
+    client,
+    hosted,
+    paths,
+    recording,
+    forceNoColor: noColor);
+await application.InitializeAsync(CancellationToken.None);
 if (snapshot)
 {
+    application.State.View = snapshotView.ToLowerInvariant() switch
+    {
+        "operator" => TuiView.Operator,
+        "settings" => TuiView.Settings,
+        "results" => TuiView.Results,
+        "diagnostics" => TuiView.Diagnostics,
+        "help" => TuiView.Help,
+        _ => throw new ArgumentException(
+            $"Unknown snapshot view '{snapshotView}'."),
+    };
     Console.Write(
         TuiRenderer.Render(
             application.State,
@@ -89,4 +115,20 @@ static bool IsProcessRunning(int processId)
     {
         return false;
     }
+}
+
+static string? GetOptionValue(string[] arguments, string option)
+{
+    for (int index = 0; index < arguments.Length - 1; index++)
+    {
+        if (String.Equals(
+            arguments[index],
+            option,
+            StringComparison.OrdinalIgnoreCase))
+        {
+            return arguments[index + 1];
+        }
+    }
+
+    return null;
 }

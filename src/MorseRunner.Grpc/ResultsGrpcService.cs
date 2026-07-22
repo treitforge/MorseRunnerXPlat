@@ -1,10 +1,9 @@
-using System.Text;
-using System.Text.Json;
 using Google.Protobuf;
 using Grpc.Core;
 using MorseRunner.Client;
 using MorseRunner.Contracts.V1;
 using MorseRunner.Domain;
+using MorseRunner.Infrastructure;
 
 namespace MorseRunner.Grpc;
 
@@ -77,53 +76,29 @@ public sealed class ResultsGrpcService(
             throw SessionNotFound(sessionId);
         }
 
-        return request.Format switch
+        ResultExportArtifact artifact = request.Format switch
         {
-            ResultExportFormat.Json => new()
-            {
-                MediaType = "application/json",
-                Content = ByteString.CopyFrom(
-                    JsonSerializer.SerializeToUtf8Bytes(
-                        new { result, qsos })),
-                SuggestedFileName = $"{sessionId}.json",
-            },
-            ResultExportFormat.Cabrillo => new()
-            {
-                MediaType = "text/plain; charset=utf-8",
-                Content = ByteString.CopyFromUtf8(
-                    ExportCabrillo(result, qsos)),
-                SuggestedFileName = $"{sessionId}.log",
-            },
+            MorseRunner.Contracts.V1.ResultExportFormat.Json =>
+                ResultExporter.Create(
+                    result,
+                    qsos,
+                    MorseRunner.Infrastructure.ResultExportFormat.Json),
+            MorseRunner.Contracts.V1.ResultExportFormat.Cabrillo =>
+                ResultExporter.Create(
+                    result,
+                    qsos,
+                    MorseRunner.Infrastructure.ResultExportFormat.Cabrillo),
             _ => throw new RpcException(
                 new Status(
                     StatusCode.InvalidArgument,
                     "A supported result export format is required.")),
         };
-    }
-
-    private static string ExportCabrillo(
-        SessionResult result,
-        IReadOnlyList<Qso> qsos)
-    {
-        var builder = new StringBuilder();
-        builder.AppendLine("START-OF-LOG: 3.0");
-        builder.Append("CONTEST: ").AppendLine(result.ContestId.Value);
-        builder.Append("CLAIMED-SCORE: ").AppendLine(
-            result.Score.ToString(System.Globalization.CultureInfo.InvariantCulture));
-        foreach (Qso qso in qsos)
+        return new()
         {
-            builder.Append("QSO: ")
-                .Append(qso.Call)
-                .Append(' ')
-                .Append(qso.Rst)
-                .Append(' ')
-                .Append(qso.Exchange1)
-                .Append(' ')
-                .AppendLine(qso.Exchange2);
-        }
-
-        builder.AppendLine("END-OF-LOG:");
-        return builder.ToString();
+            MediaType = artifact.MediaType,
+            Content = ByteString.CopyFrom(artifact.Content),
+            SuggestedFileName = artifact.SuggestedFileName,
+        };
     }
 
     private static SessionId ParseSessionId(string value)

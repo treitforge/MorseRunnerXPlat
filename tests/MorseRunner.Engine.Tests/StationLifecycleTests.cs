@@ -113,7 +113,52 @@ public sealed class StationLifecycleTests
 
         Assert.True(logged.Accepted);
         Assert.Equal(LogError.Nil, qso.ExchangeError);
+        Assert.Empty(qso.TrueCall);
+        Assert.Equal(0, qso.TrueRst);
+        Assert.Equal(0, qso.TrueNumber);
+        Assert.Empty(qso.TrueExchange1);
+        Assert.Empty(qso.TrueExchange2);
         Assert.Equal(0, qso.Points);
+        Assert.Equal(0, engine.GetSnapshot(handle.SessionId).Score);
+    }
+
+    [Fact]
+    public async Task LoggingBeforeAnyStationExistsProducesNilTruth()
+    {
+        await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 12_345) with
+            {
+                RunModeId = new("rmSingle"),
+            },
+            TestContext.Current.CancellationToken);
+        await engine.ExecuteAsync(
+            new StartSessionCommand(
+                RequestId.New(),
+                handle.SessionId,
+                TestClient),
+            TestContext.Current.CancellationToken);
+
+        CommandResult logged = await engine.ExecuteAsync(
+            new LogQsoCommand(
+                RequestId.New(),
+                handle.SessionId,
+                TestClient,
+                "K1ABC",
+                "599",
+                "1",
+                string.Empty),
+            TestContext.Current.CancellationToken);
+        Qso qso = Assert.Single(engine.GetCompletedQsos(handle.SessionId));
+
+        Assert.True(logged.Accepted);
+        Assert.Equal(LogError.Nil, qso.ExchangeError);
+        Assert.Empty(qso.TrueCall);
+        Assert.Equal(0, qso.TrueRst);
+        Assert.Equal(0, qso.TrueNumber);
+        Assert.Empty(qso.TrueExchange1);
+        Assert.Empty(qso.TrueExchange2);
+        Assert.Equal("NIL", qso.ErrorText);
         Assert.Equal(0, engine.GetSnapshot(handle.SessionId).Score);
     }
 
@@ -153,6 +198,114 @@ public sealed class StationLifecycleTests
         Assert.Contains("|", replyEvent.Detail);
     }
 
+    [Fact]
+    public async Task RetainedCompletedCallersLeaveCapacityForQrnBursts()
+    {
+        await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 1_903) with
+            {
+                RunModeId = new("rmSingle"),
+                Activity = 9,
+                Qrn = true,
+            },
+            TestContext.Current.CancellationToken);
+        await StartAndAdvanceAsync(engine, handle.SessionId, blocks: 4);
+
+        int retainedCallerCount =
+            QrnBurstStation.MaximumConcurrentStations + 1;
+        for (int callerIndex = 0;
+             callerIndex < retainedCallerCount;
+             callerIndex++)
+        {
+            SessionSnapshot beforeExchange =
+                engine.GetSnapshot(handle.SessionId);
+            ActiveStationSnapshot caller = Assert.Single(
+                beforeExchange.ActiveStations
+                    ?.Where(
+                        station =>
+                            station.OperatorState
+                                is not OperatorState.Done
+                                and not OperatorState.Failed)
+                ?? []);
+
+            await SendAsync(
+                engine,
+                handle.SessionId,
+                OperatorIntent.HisCall,
+                caller.Callsign);
+            await SendAsync(
+                engine,
+                handle.SessionId,
+                OperatorIntent.Exchange,
+                caller.Callsign,
+                caller.TrueRst,
+                caller.TrueExchange2);
+            await SendAsync(
+                engine,
+                handle.SessionId,
+                OperatorIntent.ThankYou,
+                caller.Callsign);
+
+            ActiveStationSnapshot completed =
+                Assert.Single(
+                    engine.GetSnapshot(handle.SessionId)
+                        .ActiveStations
+                        ?.Where(
+                            station =>
+                                station.Callsign == caller.Callsign)
+                    ?? []);
+            Assert.Equal(OperatorState.Done, completed.OperatorState);
+            if (callerIndex + 1 < retainedCallerCount)
+            {
+                await AdvanceAsync(
+                    engine,
+                    handle.SessionId,
+                    blocks: 4);
+            }
+        }
+
+        SessionSnapshot retained = engine.GetSnapshot(handle.SessionId);
+        Assert.Equal(retainedCallerCount, retained.ActiveStations?.Count);
+        Assert.All(
+            retained.ActiveStations ?? [],
+            station => Assert.Equal(
+                OperatorState.Done,
+                station.OperatorState));
+        Assert.Equal(
+            retainedCallerCount,
+            retained.ActiveStations
+                ?.Select(station => station.Callsign)
+                .Distinct(StringComparer.Ordinal)
+                .Count());
+        Assert.Equal(0, retained.QsoCount);
+        Assert.Empty(engine.GetCompletedQsos(handle.SessionId));
+        Assert.Equal(SessionState.Running, retained.State);
+
+        SessionSnapshot burstSnapshot = retained;
+        QrnBurstParityObservation observation =
+            QrnBurstParityObservation.Empty;
+        long searchLimit = retained.SimulationBlock + 512;
+        while (observation.ActiveCount == 0
+               && burstSnapshot.SimulationBlock < searchLimit)
+        {
+            await AdvanceAsync(engine, handle.SessionId, blocks: 1);
+            burstSnapshot = engine.GetSnapshot(handle.SessionId);
+            observation =
+                await engine.ObserveQrnBurstForParityAsync(
+                    handle.SessionId,
+                    burstSnapshot.Revision,
+                    burstSnapshot.SimulationBlock,
+                    TestContext.Current.CancellationToken);
+        }
+
+        Assert.True(
+            observation.ActiveCount > 0,
+            $"Seed 1903 produced no QRN burst by simulation block "
+            + $"{burstSnapshot.SimulationBlock}.");
+        Assert.Equal(SessionState.Running, burstSnapshot.State);
+    }
+
     [Theory]
     [InlineData("scWpx")]
     [InlineData("scCwt")]
@@ -188,6 +341,146 @@ public sealed class StationLifecycleTests
     }
 
     [Fact]
+    public async Task ReceiveSpeedBoundsControlSeededCallerSpeed()
+    {
+        await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 405) with
+            {
+                RunModeId = new("rmPileup"),
+                WordsPerMinute = 30,
+                ReceiveSpeedBelowWpm = 6,
+                ReceiveSpeedAboveWpm = 2,
+                Activity = 9,
+            },
+            TestContext.Current.CancellationToken);
+        await StartAndAdvanceAsync(engine, handle.SessionId, blocks: 20);
+
+        ActiveStationSnapshot[] stations =
+            [.. engine.GetSnapshot(handle.SessionId).ActiveStations ?? []];
+
+        Assert.NotEmpty(stations);
+        Assert.All(
+            stations,
+            station => Assert.InRange(station.WordsPerMinute, 24, 32));
+        Assert.Contains(stations, station => station.WordsPerMinute < 30);
+        Assert.Contains(stations, station => station.WordsPerMinute > 30);
+    }
+
+    [Fact]
+    public async Task ActiveQrmCollisionConstructsTenSeededCandidates()
+    {
+        const int seed = 24_680;
+        await using MorseRunnerEngine engine = new(
+            _ => new NullAudioSink(),
+            new MorseRunnerEngineOptions
+            {
+                AutomaticTiming = false,
+            });
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed) with
+            {
+                ContestId = new("scWpx"),
+                RunModeId = new("rmStop"),
+                StationCall = "W7SST",
+                WordsPerMinute = 30,
+                Activity = 1,
+                ReceiveSpeedBelowWpm = 0,
+                ReceiveSpeedAboveWpm = 0,
+                Qrm = true,
+            },
+            TestContext.Current.CancellationToken);
+
+        CallerCollisionParityObservation observation =
+            await engine.ObserveCallerCollisionForParityAsync(
+                handle.SessionId,
+                handle.Revision,
+                expectedSimulationBlock: 0,
+                collisionCall: "K1ABC",
+                retryLimit: 10,
+                TestContext.Current.CancellationToken);
+
+        Assert.Equal(10, observation.IdentitySelectionCount);
+        Assert.Equal(10, observation.AcceptedAttempt);
+        Assert.Equal(2, observation.DuplicateActiveCallsignCount);
+        Assert.Equal("K1ABC", observation.Qrm.MyCall);
+        Assert.Equal("K1ABC", observation.AcceptedCaller?.Callsign);
+        Assert.Equal(
+            [
+                0x3e84d1dbU,
+                0x3f6334d5U,
+                0x3dca46ceU,
+                0x3f571831U,
+                0x3d1c9b48U,
+                0x3ee7bb6fU,
+                0x3f41ef12U,
+                0x3d5256c8U,
+                0x3ed9db67U,
+                0x3c9570e0U,
+            ],
+            observation.Candidates
+                .Select(
+                    candidate =>
+                        BitConverter.SingleToUInt32Bits(candidate.R1))
+                .ToArray());
+        Assert.All(
+            observation.Candidates.Take(9),
+            candidate => Assert.NotEqual(
+                observation.AcceptedAttempt,
+                candidate.Attempt));
+        CallerCandidateParityObservation accepted =
+            observation.Candidates[^1];
+        Assert.Equal(1_010, accepted.Identity.Number);
+        Assert.Equal("EX10", accepted.Identity.Exchange1);
+        Assert.Equal("ID10", accepted.Identity.Exchange2);
+        Assert.Equal("OP10", accepted.Identity.OperatorName);
+        Assert.Equal("catalog-row-10", accepted.Identity.UserText);
+        Assert.Equal(OperatorState.NeedPreviousEnd, accepted.OperatorState);
+        Assert.Equal(5, accepted.Patience);
+        Assert.Equal(
+            0x3f7bb16dU,
+            BitConverter.SingleToUInt32Bits(
+                observation.TerminalRandom));
+    }
+
+    [Theory]
+    [InlineData(SerialNumberRangeMode.MidContest, 50, 499)]
+    [InlineData(SerialNumberRangeMode.EndOfContest, 500, 4_999)]
+    [InlineData(SerialNumberRangeMode.Custom, 70, 79)]
+    public async Task SerialRangeControlsCallerExchange(
+        SerialNumberRangeMode mode,
+        int expectedMinimum,
+        int expectedMaximum)
+    {
+        await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 909) with
+            {
+                ContestId = new("scWpx"),
+                RunModeId = new("rmPileup"),
+                Activity = 9,
+                SerialNumberRange = mode,
+                CustomSerialNumberMinimum = 70,
+                CustomSerialNumberExclusiveMaximum = 80,
+            },
+            TestContext.Current.CancellationToken);
+        await StartAndAdvanceAsync(engine, handle.SessionId, blocks: 20);
+
+        ActiveStationSnapshot[] stations =
+            [.. engine.GetSnapshot(handle.SessionId).ActiveStations ?? []];
+
+        Assert.NotEmpty(stations);
+        Assert.All(
+            stations,
+            station => Assert.InRange(
+                Int32.Parse(
+                    station.TrueExchange2,
+                    System.Globalization.CultureInfo.InvariantCulture),
+                expectedMinimum,
+                expectedMaximum));
+    }
+
+    [Fact]
     public async Task QskChangesStationAudioButRemainsSeedDeterministic()
     {
         SessionSettings baseSettings =
@@ -216,6 +509,14 @@ public sealed class StationLifecycleTests
                     sessionId,
                     TestClient),
                 TestContext.Current.CancellationToken)).Accepted);
+        await AdvanceAsync(engine, sessionId, blocks);
+    }
+
+    private static async Task AdvanceAsync(
+        MorseRunnerEngine engine,
+        SessionId sessionId,
+        int blocks)
+    {
         Assert.True(
             (await engine.ExecuteAsync(
                 new AdvanceSimulationCommand(
@@ -256,7 +557,26 @@ public sealed class StationLifecycleTests
         SessionHandle handle = await engine.CreateSessionAsync(
             settings,
             TestContext.Current.CancellationToken);
-        await StartAndAdvanceAsync(engine, handle.SessionId, blocks: 24);
+        Assert.True(
+            (await engine.ExecuteAsync(
+                new StartSessionCommand(
+                    RequestId.New(),
+                    handle.SessionId,
+                    TestClient),
+                TestContext.Current.CancellationToken)).Accepted);
+        Assert.True(
+            (await engine.ExecuteAsync(
+                new SendOperatorIntentCommand(
+                    RequestId.New(),
+                    handle.SessionId,
+                    TestClient,
+                    OperatorIntent.Cq,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty),
+                TestContext.Current.CancellationToken)).Accepted);
+        await AdvanceAsync(engine, handle.SessionId, blocks: 24);
         return sink.GetHash();
     }
 

@@ -4,6 +4,8 @@ public static class CompatibilityProfile
 {
     public const int SampleRate = 11_025;
     public const int BlockSize = 512;
+    public const int AudioStartupPrefillRequestCount = 4;
+    public const int AudioStartupRequestCount = 5;
 }
 
 public enum SessionState
@@ -18,21 +20,35 @@ public enum SessionState
     Closed,
 }
 
+public enum SerialNumberRangeMode
+{
+    StartOfContest = 0,
+    MidContest = 1,
+    EndOfContest = 2,
+    Custom = 3,
+}
+
 public sealed record SessionSettings(
     int Seed,
     ContestId ContestId,
     RunModeId RunModeId,
     long DurationBlocks)
 {
-    public string StationCall { get; init; } = "W7SST";
+    public string StationCall { get; init; } = "VE3NEA";
 
-    public int WordsPerMinute { get; init; } = 30;
+    public string OperatorExchange { get; init; } = string.Empty;
 
-    public int PitchHz { get; init; } = 600;
+    public int WordsPerMinute { get; init; } = 25;
 
-    public int BandwidthHz { get; init; } = 500;
+    public int PitchHz { get; init; } = 450;
 
-    public int Activity { get; init; } = 5;
+    public int BandwidthHz { get; init; } = 550;
+
+    public int Activity { get; init; } = 2;
+
+    public int CompetitionDurationMinutes { get; init; } = 60;
+
+    public int StationIdRate { get; init; } = 3;
 
     public bool Qsk { get; init; }
 
@@ -48,13 +64,35 @@ public sealed record SessionSettings(
 
     public double MonitorLevelDb { get; init; }
 
+    public int ReceiveSpeedBelowWpm { get; init; }
+
+    public int ReceiveSpeedAboveWpm { get; init; }
+
+    public SerialNumberRangeMode SerialNumberRange { get; init; }
+
+    public int CustomSerialNumberMinimum { get; init; } = 1;
+
+    public int CustomSerialNumberExclusiveMaximum { get; init; } = 99;
+
+    public int CustomSerialNumberMinimumDigits { get; init; } = 2;
+
+    public int CustomSerialNumberMaximumDigits { get; init; } = 2;
+
+    public string HstOperatorName { get; init; } = string.Empty;
+
+    public string? AudioOutputDeviceName { get; init; }
+
     public static SessionSettings CreateDefault(int seed)
     {
         return new(
             seed,
             ContestCatalog.All[0].Id,
             RunModeCatalog.All[1],
-            DurationBlocks: 0);
+            DurationBlocks: checked((long)Math.Ceiling(
+                30
+                * 60d
+                * CompatibilityProfile.SampleRate
+                / CompatibilityProfile.BlockSize)));
     }
 }
 
@@ -105,7 +143,10 @@ public sealed record SessionSnapshot(
     string? LastLoggedCall = null,
     OperatorState? ActiveOperatorState = null,
     int QsoRatePerHour = 0,
-    IReadOnlyList<ActiveStationSnapshot>? ActiveStations = null);
+    IReadOnlyList<ActiveStationSnapshot>? ActiveStations = null,
+    bool QsbEnabled = false,
+    double CurrentMonitorLevelDb = 0d,
+    bool QskEnabled = false);
 
 public sealed record AudioOutputDevice(
     string Name,

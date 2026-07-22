@@ -42,6 +42,49 @@ public sealed class AudioBlockQueueTests
     }
 
     [Fact]
+    public void QueueItselfContainsNoPhysicalStartupPrefix()
+    {
+        var queue = new AudioBlockQueue(capacity: 1, blockSize: 4);
+
+        Assert.Equal(0, queue.Count);
+        Assert.False(queue.TryReadSample(out float sample));
+        Assert.Equal(
+            0U,
+            BitConverter.SingleToUInt32Bits(sample));
+    }
+
+    [Fact]
+    public void BlockReadFreesCapacityAndPreservesSamples()
+    {
+        var queue = new AudioBlockQueue(capacity: 1, blockSize: 4);
+        Assert.True(queue.TryWrite([1f, 2f, 3f, 4f]));
+        Span<float> destination = stackalloc float[4];
+
+        Assert.True(queue.TryReadBlock(destination, out int length));
+
+        Assert.Equal(4, length);
+        Assert.True(destination.SequenceEqual([1f, 2f, 3f, 4f]));
+        Assert.Equal(0, queue.Count);
+        Assert.True(queue.TryWrite([5f, 6f, 7f, 8f]));
+    }
+
+    [Fact]
+    public void BlockReadReturnsTheUnreadRemainderOfAPartialBlock()
+    {
+        var queue = new AudioBlockQueue(capacity: 1, blockSize: 4);
+        Assert.True(queue.TryWrite([1f, 2f, 3f, 4f]));
+        Assert.True(queue.TryReadSample(out float first));
+        Span<float> destination = stackalloc float[4];
+
+        Assert.True(queue.TryReadBlock(destination, out int length));
+
+        Assert.Equal(1f, first);
+        Assert.Equal(3, length);
+        Assert.True(destination[..length].SequenceEqual([2f, 3f, 4f]));
+        Assert.Equal(0, queue.Count);
+    }
+
+    [Fact]
     public void CallbackWritesQueuedSamplesAndThenExplicitSilence()
     {
         var queue = new AudioBlockQueue(capacity: 1, blockSize: 4);

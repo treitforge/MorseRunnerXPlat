@@ -11,6 +11,94 @@ namespace MorseRunner.Grpc.Tests;
 public sealed class GrpcTransportTests
 {
     [Fact]
+    public void ContestDefinitionMetadataMapsWithoutLoss()
+    {
+        ContestDefinition expected = ContestCatalog.Get(new("scCwt"));
+
+        ContestDefinitionMessage actual =
+            TransportMapper.ToTransport(expected);
+
+        Assert.Equal(expected.Id.Value, actual.Id);
+        Assert.Equal(expected.Key, actual.Key);
+        Assert.Equal(expected.DisplayName, actual.DisplayName);
+        Assert.Equal(expected.ExchangeType1, actual.ExchangeType1);
+        Assert.Equal(expected.ExchangeType2, actual.ExchangeType2);
+        Assert.Equal(expected.ExchangeCaption1, actual.ExchangeCaption1);
+        Assert.Equal(expected.ExchangeCaption2, actual.ExchangeCaption2);
+        Assert.Equal(
+            expected.ExchangeFieldEditable,
+            actual.ExchangeFieldEditable);
+        Assert.Equal(expected.ExchangeDefault, actual.ExchangeDefault);
+        Assert.Equal(expected.ValidationMessage, actual.ValidationMessage);
+    }
+
+    [Fact]
+    public void AdvancedSessionSettingsRoundTripWithoutLoss()
+    {
+        SessionSettings expected = SessionSettings.CreateDefault(42) with
+        {
+            OperatorExchange = "599 #",
+            ReceiveSpeedBelowWpm = 6,
+            ReceiveSpeedAboveWpm = 2,
+            StationIdRate = 5,
+            CompetitionDurationMinutes = 23,
+            SerialNumberRange = SerialNumberRangeMode.Custom,
+            CustomSerialNumberMinimum = 70,
+            CustomSerialNumberExclusiveMaximum = 80,
+            CustomSerialNumberMinimumDigits = 3,
+            CustomSerialNumberMaximumDigits = 4,
+            HstOperatorName = "RANDY",
+            AudioOutputDeviceName = "Test Device",
+        };
+
+        SessionSettings actual = TransportMapper.ToDomain(
+            TransportMapper.ToTransport(expected));
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void OmittedStationIdRateUsesCeDefault()
+    {
+        SessionSettingsMessage transport = TransportMapper.ToTransport(
+            SessionSettings.CreateDefault(42));
+        transport.ClearStationIdRate();
+
+        SessionSettings actual = TransportMapper.ToDomain(transport);
+
+        Assert.Equal(3, actual.StationIdRate);
+    }
+
+    [Fact]
+    public void OmittedCompetitionDurationUsesCeDefault()
+    {
+        SessionSettingsMessage transport = TransportMapper.ToTransport(
+            SessionSettings.CreateDefault(42) with
+            {
+                CompetitionDurationMinutes = 23,
+            });
+        transport.ClearCompetitionDurationMinutes();
+
+        SessionSettings actual = TransportMapper.ToDomain(transport);
+
+        Assert.Equal(60, actual.CompetitionDurationMinutes);
+    }
+
+    [Fact]
+    public void OmittedCustomSerialNumberDigitsUseCeDefaults()
+    {
+        SessionSettingsMessage transport = TransportMapper.ToTransport(
+            SessionSettings.CreateDefault(42));
+        transport.ClearCustomSerialNumberMinimumDigits();
+        transport.ClearCustomSerialNumberMaximumDigits();
+
+        SessionSettings actual = TransportMapper.ToDomain(transport);
+
+        Assert.Equal(2, actual.CustomSerialNumberMinimumDigits);
+        Assert.Equal(2, actual.CustomSerialNumberMaximumDigits);
+    }
+
+    [Fact]
     public void QsoTruthAndCorrectionFieldsRoundTripWithoutLoss()
     {
         Qso expected = new()
@@ -47,6 +135,72 @@ public sealed class GrpcTransportTests
         };
 
         Qso actual = TransportMapper.ToDomain(
+            TransportMapper.ToTransport(expected));
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void SetRadioConditionCommandRoundTripsWithoutLoss()
+    {
+        MorseRunner.Domain.SetRadioConditionCommand expected = new(
+            RequestId.New(),
+            SessionId.New(),
+            new ClientId("condition"),
+            RadioCondition.Qsb,
+            Enabled: true,
+            ExpectedRevision: 14);
+
+        SessionCommand actual = TransportMapper.ToDomain(
+            TransportMapper.ToTransport(expected));
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void SetQskConditionCommandRoundTripsWithoutLoss()
+    {
+        MorseRunner.Domain.SetRadioConditionCommand expected = new(
+            RequestId.New(),
+            SessionId.New(),
+            new ClientId("condition"),
+            RadioCondition.Qsk,
+            Enabled: true,
+            ExpectedRevision: 15);
+
+        SessionCommand actual = TransportMapper.ToDomain(
+            TransportMapper.ToTransport(expected));
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void ResetOperatorEntryCommandRoundTripsWithoutLoss()
+    {
+        MorseRunner.Domain.ResetOperatorEntryCommand expected = new(
+            RequestId.New(),
+            SessionId.New(),
+            new ClientId("wipe"),
+            ExpectedRevision: 16);
+
+        SessionCommand actual = TransportMapper.ToDomain(
+            TransportMapper.ToTransport(expected));
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void MonitorLevelCommandRoundTripsWithoutLoss()
+    {
+        AdjustRadioControlCommand expected = new(
+            RequestId.New(),
+            SessionId.New(),
+            new ClientId("monitor"),
+            RadioControl.MonitorLevel,
+            Delta: -60,
+            ExpectedRevision: 15);
+
+        SessionCommand actual = TransportMapper.ToDomain(
             TransportMapper.ToTransport(expected));
 
         Assert.Equal(expected, actual);
@@ -292,6 +446,33 @@ public sealed class GrpcTransportTests
                 TestContext.Current.CancellationToken)).Accepted);
         Assert.True(
             (await client.ExecuteAsync(
+                new MorseRunner.Domain.SetRadioConditionCommand(
+                    RequestId.New(),
+                    sessionId,
+                    id,
+                    RadioCondition.Qsb,
+                    Enabled: true),
+                TestContext.Current.CancellationToken)).Accepted);
+        Assert.True(
+            (await client.ExecuteAsync(
+                new MorseRunner.Domain.SetRadioConditionCommand(
+                    RequestId.New(),
+                    sessionId,
+                    id,
+                    RadioCondition.Qsk,
+                    Enabled: true),
+                TestContext.Current.CancellationToken)).Accepted);
+        Assert.True(
+            (await client.ExecuteAsync(
+                new AdjustRadioControlCommand(
+                    RequestId.New(),
+                    sessionId,
+                    id,
+                    RadioControl.MonitorLevel,
+                    -60),
+                TestContext.Current.CancellationToken)).Accepted);
+        Assert.True(
+            (await client.ExecuteAsync(
                 new AdvanceSimulationCommand(
                     RequestId.New(),
                     sessionId,
@@ -336,5 +517,10 @@ public sealed class GrpcTransportTests
         Assert.Equal(expected.LastOperatorMessage, actual.LastOperatorMessage);
         Assert.Equal(expected.QsoCount, actual.QsoCount);
         Assert.Equal(expected.Score, actual.Score);
+        Assert.Equal(expected.QsbEnabled, actual.QsbEnabled);
+        Assert.Equal(expected.QskEnabled, actual.QskEnabled);
+        Assert.Equal(
+            expected.CurrentMonitorLevelDb,
+            actual.CurrentMonitorLevelDb);
     }
 }

@@ -5,11 +5,14 @@ namespace MorseRunner.Engine.Tests;
 public sealed class OperatorIntentTests
 {
     [Fact]
-    public async Task SemanticOperatorIntentIsAppliedByTheSessionLoop()
+    public async Task ExchangeIntentUsesTheSessionOwnedContestExchange()
     {
         await using var engine = new MorseRunnerEngine();
         SessionHandle handle = await engine.CreateSessionAsync(
-            SessionSettings.CreateDefault(12_345),
+            SessionSettings.CreateDefault(12_345) with
+            {
+                OperatorExchange = "599 #",
+            },
             TestContext.Current.CancellationToken);
         ClientId client = new("test");
         await engine.ExecuteAsync(
@@ -33,7 +36,7 @@ public sealed class OperatorIntentTests
 
         Assert.True(result.Accepted);
         Assert.Equal(
-            "5NN 123 OR",
+            "599 001",
             engine.GetSnapshot(handle.SessionId).LastOperatorMessage);
     }
 }

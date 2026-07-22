@@ -19,7 +19,9 @@ public sealed record RunModeOption(RunModeId Id, string DisplayName)
     public override string ToString() => DisplayName;
 }
 
-public sealed record DurationOption(int Minutes, string DisplayName)
+public sealed record SerialNumberRangeOption(
+    SerialNumberRangeMode Mode,
+    string DisplayName)
 {
     public override string ToString() => DisplayName;
 }
@@ -30,23 +32,32 @@ public sealed record QsoLogEntryViewModel(
     string Rst,
     string Exchange,
     int Points,
-    bool IsDuplicate)
+    bool IsDuplicate,
+    string ErrorText)
 {
     public string Result =>
         IsDuplicate
             ? "DUP"
-            : Points.ToString(CultureInfo.InvariantCulture);
+            : ErrorText.Length > 0
+                ? ErrorText
+                : Points.ToString(CultureInfo.InvariantCulture);
 }
 
 public sealed class ScoreSummaryEventArgs(
     int Score,
     int QsoCount,
+    int QsoRatePerHour,
+    int HighScore,
     string Contest,
     string Elapsed) : EventArgs
 {
     public int Score { get; } = Score;
 
     public int QsoCount { get; } = QsoCount;
+
+    public int QsoRatePerHour { get; } = QsoRatePerHour;
+
+    public int HighScore { get; } = HighScore;
 
     public string Contest { get; } = Contest;
 
@@ -64,6 +75,11 @@ public sealed class EntryFocusRequestedEventArgs(
 
 public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposable
 {
+    public const int MinimumDurationMinutes = 1;
+    public const int MaximumDurationMinutes = 240;
+    public const int MinimumCompetitionDurationMinutes = 1;
+    public const int MaximumCompetitionDurationMinutes = 60;
+
     private static readonly ClientId DesktopClientId = new("avalonia-desktop");
     private static readonly IReadOnlyList<RunModeOption> RunModeOptions =
     [
@@ -72,25 +88,28 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         new(new("rmWpx"), "WPX Competition"),
         new(new("rmHst"), "HST Competition"),
     ];
-    private static readonly IReadOnlyList<DurationOption> DurationOptions =
-    [
-        new(0, "Unlimited"),
-        new(5, "5 minutes"),
-        new(10, "10 minutes"),
-        new(15, "15 minutes"),
-        new(30, "30 minutes"),
-        new(60, "60 minutes"),
-        new(90, "90 minutes"),
-        new(120, "120 minutes"),
-    ];
+    private static readonly IReadOnlyList<SerialNumberRangeOption>
+        SerialNumberRangeOptions =
+        [
+            new(SerialNumberRangeMode.StartOfContest, "Start of contest"),
+            new(SerialNumberRangeMode.MidContest, "Mid contest (50-500)"),
+            new(SerialNumberRangeMode.EndOfContest, "End contest (500-5000)"),
+            new(SerialNumberRangeMode.Custom, "Custom range"),
+        ];
 
     private readonly IMorseRunnerClient _client;
     private readonly RecordingPreference? _recordingPreference;
     private readonly SettingsStore? _settingsStore;
+    private readonly HighScoreStore? _highScoreStore;
+    private readonly string? _resultsDirectory;
+    private readonly DxccDatabase _dxccDatabase;
     private readonly SynchronizationContext? _uiContext;
+    private readonly Dictionary<ContestId, string> _operatorExchanges = [];
     private readonly object _snapshotApplicationGate = new();
+    private readonly SemaphoreSlim _monitorLevelUpdateGate = new(1, 1);
     private readonly CancellationTokenSource _lifetime = new();
     private SessionId? _sessionId;
+    private SessionId? _recordedResultSessionId;
     private Task? _subscriptionTask;
     private SessionSnapshot? _pendingSnapshot;
     private int _snapshotDispatchScheduled;
@@ -98,7 +117,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private SessionState _sessionState = SessionState.Ready;
     private ContestOption _selectedContest;
     private RunModeOption _selectedRunMode = RunModeOptions[0];
-    private DurationOption _selectedDuration = DurationOptions[0];
+    private int _durationMinutes = 30;
+    private int _competitionDurationMinutes = 60;
+    private SerialNumberRangeOption _selectedSerialNumberRange =
+        SerialNumberRangeOptions[0];
     private string _status = "Ready. Configure a contest and press F9.";
     private long _simulationBlock;
     private string _elapsed = "00:00.000";
@@ -107,17 +129,30 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private int _activeCallerCount;
     private string _lastSent = "None";
     private string _callEntry = string.Empty;
-    private string _rstEntry = "5NN";
+    private string _rstEntry = string.Empty;
     private string _exchange1Entry = string.Empty;
     private string _exchange2Entry = string.Empty;
-    private string _stationCall = "W7SST";
+    private string _stationCall = "VE3NEA";
     private int _seed = 12_345;
-    private int _wordsPerMinute = 30;
-    private int _pitchHz = 600;
-    private int _bandwidthHz = 500;
+    private int _wordsPerMinute = 25;
+    private int _wpmStepRate = 2;
+    private int _pitchHz = 450;
+    private int _bandwidthHz = 550;
     private int _ritOffsetHz;
-    private int _activity = 5;
+    private int _activity = 2;
     private double _monitorLevel;
+    private double _appliedMonitorLevelDb;
+    private int _receiveSpeedBelowWpm;
+    private int _receiveSpeedAboveWpm;
+    private int _customSerialNumberMinimum = 1;
+    private int _customSerialNumberExclusiveMaximum = 99;
+    private int _customSerialNumberMinimumDigits = 2;
+    private int _customSerialNumberMaximumDigits = 2;
+    private string _hstOperatorName = string.Empty;
+    private bool _showCallsignInformation = true;
+    private string _callsignInformation = "No caller selected";
+    private AudioOutputDevice? _selectedAudioOutputDevice;
+    private string _audioDeviceStatus = "Audio devices have not been loaded.";
     private bool _qsk;
     private bool _qsb;
     private bool _qrm;
@@ -126,6 +161,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private bool _lids;
     private int _qsoCount;
     private int _score;
+    private int _qsoRatePerHour;
+    private int _highScore;
+    private string? _lastExportPath;
     private string _audioHealth = "Ready";
     private int _disposed;
     private int _initialized;
@@ -134,17 +172,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         IMorseRunnerClient client,
         SynchronizationContext? uiContext = null,
         RecordingPreference? recordingPreference = null,
-        SettingsStore? settingsStore = null)
+        SettingsStore? settingsStore = null,
+        HighScoreStore? highScoreStore = null,
+        string? resultsDirectory = null,
+        DxccDatabase? dxccDatabase = null)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _uiContext = uiContext ?? SynchronizationContext.Current;
         _recordingPreference = recordingPreference;
         _settingsStore = settingsStore;
+        _highScoreStore = highScoreStore;
+        _resultsDirectory = resultsDirectory;
+        _dxccDatabase = dxccDatabase ?? new DxccDatabase();
         Contests = ContestCatalog.All
             .Select(contest => new ContestOption(contest.Id, contest.DisplayName))
             .ToArray();
         RunModes = RunModeOptions;
-        Durations = DurationOptions;
         _selectedContest = Contests[0];
 
         StartCommand = new AsyncCommand(
@@ -195,16 +238,36 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         SendCallAndExchangeCommand = new AsyncCommand(
             SendCallAndExchangeAsync,
             () => _sessionState == SessionState.Running);
-        RitUpCommand = CreateRadioCommand(RadioControl.Rit, 10);
-        RitDownCommand = CreateRadioCommand(RadioControl.Rit, -10);
+        RitUpCommand = CreateRadioCommand(RadioControl.Rit, 50);
+        RitDownCommand = CreateRadioCommand(RadioControl.Rit, -50);
         BandwidthUpCommand = CreateRadioCommand(RadioControl.Bandwidth, 50);
         BandwidthDownCommand = CreateRadioCommand(RadioControl.Bandwidth, -50);
-        SpeedUpCommand = CreateRadioCommand(RadioControl.Speed, 1);
-        SpeedDownCommand = CreateRadioCommand(RadioControl.Speed, -1);
+        SpeedUpCommand = new AsyncCommand(
+            AdjustSpeedUpAsync,
+            () => _sessionState is SessionState.Running or SessionState.Paused);
+        SpeedDownCommand = new AsyncCommand(
+            AdjustSpeedDownAsync,
+            () => _sessionState is SessionState.Running or SessionState.Paused);
         ShowScoreCommand = new AsyncCommand(ShowScoreAsync);
+        ExportJsonCommand = new AsyncCommand(
+            () => ExportResultAsync(ResultExportFormat.Json),
+            CanExportResult);
+        ExportCabrilloCommand = new AsyncCommand(
+            () => ExportResultAsync(ResultExportFormat.Cabrillo),
+            CanExportResult);
+        OpenResultsFolderCommand = new AsyncCommand(
+            OpenResultsFolderAsync,
+            () => _resultsDirectory is not null
+                && Directory.Exists(_resultsDirectory));
         PlayRecordingCommand = new AsyncCommand(
             PlayRecordingAsync,
             () => CanPlayRecording);
+        RefreshAudioDevicesCommand =
+            new AsyncCommand(RefreshAudioDevicesAsync);
+        RecoverAudioCommand = new AsyncCommand(
+            RecoverAudioAsync,
+            () => _sessionId is not null
+                && _selectedAudioOutputDevice is not null);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -218,9 +281,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
 
     public IReadOnlyList<RunModeOption> RunModes { get; }
 
-    public IReadOnlyList<DurationOption> Durations { get; }
+    public IReadOnlyList<SerialNumberRangeOption> SerialNumberRanges { get; } =
+        SerialNumberRangeOptions;
 
     public ObservableCollection<QsoLogEntryViewModel> QsoLog { get; } = [];
+
+    public ObservableCollection<AudioOutputDevice> AudioOutputDevices { get; } =
+        [];
 
     public ContestOption SelectedContest
     {
@@ -230,6 +297,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             if (value is not null && SetField(ref _selectedContest, value))
             {
                 OnPropertyChanged(nameof(ContestName));
+                OnPropertyChanged(nameof(OperatorExchange));
             }
         }
     }
@@ -246,17 +314,43 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         }
     }
 
-    public DurationOption SelectedDuration
+    public int DurationMinutes
     {
-        get => _selectedDuration;
+        get => _durationMinutes;
+        set => SetField(
+            ref _durationMinutes,
+            Math.Clamp(
+                value,
+                MinimumDurationMinutes,
+                MaximumDurationMinutes));
+    }
+
+    public int CompetitionDurationMinutes
+    {
+        get => _competitionDurationMinutes;
+        set => SetField(
+            ref _competitionDurationMinutes,
+            Math.Clamp(
+                value,
+                MinimumCompetitionDurationMinutes,
+                MaximumCompetitionDurationMinutes));
+    }
+
+    public SerialNumberRangeOption SelectedSerialNumberRange
+    {
+        get => _selectedSerialNumberRange;
         set
         {
-            if (value is not null)
+            if (value is not null
+                && SetField(ref _selectedSerialNumberRange, value))
             {
-                SetField(ref _selectedDuration, value);
+                OnPropertyChanged(nameof(IsCustomSerialNumberRange));
             }
         }
     }
+
+    public bool IsCustomSerialNumberRange =>
+        SelectedSerialNumberRange.Mode == SerialNumberRangeMode.Custom;
 
     public string ContestName => SelectedContest.DisplayName;
 
@@ -268,6 +362,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         _sessionState is SessionState.Ready
             or SessionState.Created
             or SessionState.Completed;
+
+    public bool IsMonitorLevelEnabled =>
+        IsSetupEnabled
+        || _sessionState is SessionState.Running or SessionState.Paused;
 
     public string Status
     {
@@ -341,6 +439,29 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         set => SetField(ref _stationCall, value.ToUpperInvariant());
     }
 
+    public string OperatorExchange
+    {
+        get => _operatorExchanges.TryGetValue(
+            SelectedContest.Id,
+            out string? value)
+                ? value
+                : ContestCatalog.Get(SelectedContest.Id).ExchangeDefault;
+        set
+        {
+            string normalized = value.Trim().ToUpperInvariant();
+            if (String.Equals(
+                    OperatorExchange,
+                    normalized,
+                    StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _operatorExchanges[SelectedContest.Id] = normalized;
+            OnPropertyChanged(nameof(OperatorExchange));
+        }
+    }
+
     public int Seed
     {
         get => _seed;
@@ -350,7 +471,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     public int WordsPerMinute
     {
         get => _wordsPerMinute;
-        set => SetField(ref _wordsPerMinute, Math.Clamp(value, 10, 100));
+        set => SetField(ref _wordsPerMinute, Math.Clamp(value, 10, 120));
     }
 
     public int PitchHz
@@ -381,6 +502,172 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     {
         get => _monitorLevel;
         set => SetField(ref _monitorLevel, Math.Clamp(value, -60d, 0d));
+    }
+
+    public async Task SetMonitorLevelAsync(double requestedLevelDb)
+    {
+        double requested = Math.Round(
+            Math.Clamp(requestedLevelDb, -60d, 0d),
+            MidpointRounding.AwayFromZero);
+        MonitorLevel = requested;
+        if (_sessionState is not (SessionState.Running or SessionState.Paused))
+        {
+            return;
+        }
+
+        try
+        {
+            await _monitorLevelUpdateGate.WaitAsync(_lifetime.Token);
+        }
+        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
+        {
+            return;
+        }
+
+        try
+        {
+            if (_sessionState is not (
+                    SessionState.Running or SessionState.Paused))
+            {
+                return;
+            }
+
+            int delta = checked((int)(requested - _appliedMonitorLevelDb));
+            if (delta == 0)
+            {
+                return;
+            }
+
+            CommandResult result = await ExecuteAsync(
+                new AdjustRadioControlCommand(
+                    RequestId.New(),
+                    _sessionId!.Value,
+                    DesktopClientId,
+                    RadioControl.MonitorLevel,
+                    delta));
+            Status = result.Accepted
+                ? $"Adjusted monitor level to {requested:+0;-0;0} dB."
+                : result.Message ?? "Monitor level adjustment was rejected.";
+            await RefreshAsync();
+        }
+        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            Status = $"Monitor level adjustment failed: {exception.Message}";
+        }
+        finally
+        {
+            _monitorLevelUpdateGate.Release();
+        }
+    }
+
+    public int ReceiveSpeedBelowWpm
+    {
+        get => _receiveSpeedBelowWpm;
+        set => SetField(ref _receiveSpeedBelowWpm, Math.Clamp(value, 0, 10));
+    }
+
+    public int ReceiveSpeedAboveWpm
+    {
+        get => _receiveSpeedAboveWpm;
+        set => SetField(ref _receiveSpeedAboveWpm, Math.Clamp(value, 0, 10));
+    }
+
+    public int CustomSerialNumberMinimum
+    {
+        get => _customSerialNumberMinimum;
+        set
+        {
+            if (SetField(
+                    ref _customSerialNumberMinimum,
+                    Math.Clamp(value, 1, 9_998)))
+            {
+                CustomSerialNumberMinimumDigits = Math.Max(
+                    CustomSerialNumberMinimumDigits,
+                    DecimalDigitCount(_customSerialNumberMinimum));
+            }
+        }
+    }
+
+    public int CustomSerialNumberExclusiveMaximum
+    {
+        get => _customSerialNumberExclusiveMaximum;
+        set
+        {
+            if (SetField(
+                    ref _customSerialNumberExclusiveMaximum,
+                    Math.Clamp(value, 2, 9_999)))
+            {
+                CustomSerialNumberMaximumDigits = Math.Max(
+                    CustomSerialNumberMaximumDigits,
+                    DecimalDigitCount(_customSerialNumberExclusiveMaximum));
+            }
+        }
+    }
+
+    public int CustomSerialNumberMinimumDigits
+    {
+        get => _customSerialNumberMinimumDigits;
+        set => SetField(
+            ref _customSerialNumberMinimumDigits,
+            Math.Clamp(
+                value,
+                DecimalDigitCount(CustomSerialNumberMinimum),
+                4));
+    }
+
+    public int CustomSerialNumberMaximumDigits
+    {
+        get => _customSerialNumberMaximumDigits;
+        set => SetField(
+            ref _customSerialNumberMaximumDigits,
+            Math.Clamp(
+                value,
+                DecimalDigitCount(CustomSerialNumberExclusiveMaximum),
+                4));
+    }
+
+    public string HstOperatorName
+    {
+        get => _hstOperatorName;
+        set => SetField(
+            ref _hstOperatorName,
+            value.ToUpperInvariant());
+    }
+
+    public bool ShowCallsignInformation
+    {
+        get => _showCallsignInformation;
+        set
+        {
+            if (SetField(ref _showCallsignInformation, value))
+            {
+                OnPropertyChanged(nameof(CallsignInformation));
+            }
+        }
+    }
+
+    public string CallsignInformation =>
+        ShowCallsignInformation ? _callsignInformation : "Callsign information hidden";
+
+    public AudioOutputDevice? SelectedAudioOutputDevice
+    {
+        get => _selectedAudioOutputDevice;
+        set
+        {
+            if (SetField(ref _selectedAudioOutputDevice, value))
+            {
+                RecoverAudioCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public string AudioDeviceStatus
+    {
+        get => _audioDeviceStatus;
+        private set => SetField(ref _audioDeviceStatus, value);
     }
 
     public bool Qsk
@@ -422,14 +709,40 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     public int QsoCount
     {
         get => _qsoCount;
-        private set => SetField(ref _qsoCount, value);
+        private set
+        {
+            if (SetField(ref _qsoCount, value))
+            {
+                OnPropertyChanged(nameof(QsoEmptyMessage));
+            }
+        }
     }
+
+    public string QsoEmptyMessage =>
+        QsoCount == 0
+            ? "No contacts yet. Start a session and copy the next caller."
+            : string.Empty;
 
     public int Score
     {
         get => _score;
         private set => SetField(ref _score, value);
     }
+
+    public int QsoRatePerHour
+    {
+        get => _qsoRatePerHour;
+        private set => SetField(ref _qsoRatePerHour, value);
+    }
+
+    public int HighScore
+    {
+        get => _highScore;
+        private set => SetField(ref _highScore, value);
+    }
+
+    public string LastExportPath =>
+        _lastExportPath ?? "No result has been exported.";
 
     public string AudioHealth
     {
@@ -520,7 +833,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
 
     public AsyncCommand ShowScoreCommand { get; }
 
+    public AsyncCommand ExportJsonCommand { get; }
+
+    public AsyncCommand ExportCabrilloCommand { get; }
+
+    public AsyncCommand OpenResultsFolderCommand { get; }
+
     public AsyncCommand PlayRecordingCommand { get; }
+
+    public AsyncCommand RefreshAudioDevicesCommand { get; }
+
+    public AsyncCommand RecoverAudioCommand { get; }
 
     public async Task InitializeAsync()
     {
@@ -535,6 +858,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         IReadOnlyDictionary<string, string> values = result.Document.Values;
         StationCall = Get(values, "Station.Call", StationCall);
         WordsPerMinute = GetInt(values, "Station.Wpm", WordsPerMinute);
+        _wpmStepRate = Math.Clamp(
+            GetInt(
+                values,
+                "Settings.WpmStepRate",
+                _wpmStepRate),
+            1,
+            20);
         PitchHz = GetInt(values, "Station.Pitch", PitchHz);
         BandwidthHz = GetInt(values, "Station.BandWidth", BandwidthHz);
         Activity = GetInt(values, "Band.Activity", Activity);
@@ -542,6 +872,43 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             values,
             "Station.SelfMonVolume",
             MonitorLevel);
+        ReceiveSpeedBelowWpm = GetInt(
+            values,
+            "Station.CWMinRxSpeed",
+            ReceiveSpeedBelowWpm);
+        ReceiveSpeedAboveWpm = GetInt(
+            values,
+            "Station.CWMaxRxSpeed",
+            ReceiveSpeedAboveWpm);
+        (
+            int importedMinimum,
+            int importedMaximum,
+            int importedMinimumDigits,
+            int importedMaximumDigits) =
+            ParseSerialNumberRange(
+                Get(values, "Station.SerialNrCustomRange", "01-99"),
+                CustomSerialNumberMinimum,
+                CustomSerialNumberExclusiveMaximum,
+                CustomSerialNumberMinimumDigits,
+                CustomSerialNumberMaximumDigits);
+        CustomSerialNumberMinimum = GetInt(
+            values,
+            "Station.SerialNrCustomMinimum",
+            importedMinimum);
+        CustomSerialNumberExclusiveMaximum = GetInt(
+            values,
+            "Station.SerialNrCustomMaximum",
+            importedMaximum);
+        CustomSerialNumberMinimumDigits = importedMinimumDigits;
+        CustomSerialNumberMaximumDigits = importedMaximumDigits;
+        HstOperatorName = Get(
+            values,
+            "Station.Name",
+            HstOperatorName);
+        ShowCallsignInformation = GetBool(
+            values,
+            "System.ShowCallsignInfo",
+            ShowCallsignInformation);
         Qsk = GetBool(values, "Station.Qsk", Qsk);
         Qsb = GetBool(values, "Band.Qsb", Qsb);
         Qrm = GetBool(values, "Band.Qrm", Qrm);
@@ -560,6 +927,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         SelectedContest = Contests.FirstOrDefault(
                 option => option.Id.Value == contestId)
             ?? SelectedContest;
+        foreach (ContestDefinition contest in ContestCatalog.All)
+        {
+            _operatorExchanges[contest.Id] = Get(
+                values,
+                $"Contest.OperatorExchange.{contest.Id.Value}",
+                contest.ExchangeDefault).Trim().ToUpperInvariant();
+        }
+        OnPropertyChanged(nameof(OperatorExchange));
         string runModeId = Get(
             values,
             "Contest.DefaultRunMode",
@@ -570,13 +945,26 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         int duration = GetInt(
             values,
             "Contest.Duration",
-            SelectedDuration.Minutes);
-        SelectedDuration = Durations.FirstOrDefault(
-                option => option.Minutes == duration)
-            ?? SelectedDuration;
-        Status = result.Recovered
-            ? result.Diagnostic ?? "Settings recovered with defaults."
-            : "Ready. Configure a contest and press F9.";
+            DurationMinutes);
+        DurationMinutes = duration;
+        CompetitionDurationMinutes = GetInt(
+            values,
+            "Contest.CompetitionDuration",
+            CompetitionDurationMinutes);
+        int serialNumberRange = GetInt(
+            values,
+            "Station.SerialNR",
+            (int)SelectedSerialNumberRange.Mode);
+        SelectedSerialNumberRange = SerialNumberRanges.FirstOrDefault(
+                option => (int)option.Mode == serialNumberRange)
+            ?? SelectedSerialNumberRange;
+        await RefreshAudioDevicesAsync(
+            Get(values, "Station.AudioOutputDevice", string.Empty));
+        Status = !String.IsNullOrWhiteSpace(result.Diagnostic)
+            ? result.Diagnostic
+            : result.Recovered
+                ? "Settings recovered with defaults."
+                : "Ready. Configure a contest and press F9.";
     }
 
     public async ValueTask DisposeAsync()
@@ -604,6 +992,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         }
 
         await SaveSettingsAsync();
+        _highScoreStore?.Dispose();
         _lifetime.Dispose();
         await _client.DisposeAsync();
     }
@@ -637,13 +1026,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                 Seed,
                 SelectedContest.Id,
                 SelectedRunMode.Id,
-                DurationBlocks(SelectedDuration.Minutes))
+                DurationBlocks(DurationMinutes))
             {
                 StationCall = StationCall,
+                OperatorExchange = OperatorExchange,
                 WordsPerMinute = WordsPerMinute,
                 PitchHz = PitchHz,
                 BandwidthHz = BandwidthHz,
                 Activity = Activity,
+                CompetitionDurationMinutes = CompetitionDurationMinutes,
                 Qsk = Qsk,
                 Qsb = Qsb,
                 Qrm = Qrm,
@@ -651,14 +1042,45 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                 Flutter = Flutter,
                 Lids = Lids,
                 MonitorLevelDb = MonitorLevel,
+                ReceiveSpeedBelowWpm = ReceiveSpeedBelowWpm,
+                ReceiveSpeedAboveWpm = ReceiveSpeedAboveWpm,
+                SerialNumberRange = SelectedSerialNumberRange.Mode,
+                CustomSerialNumberMinimum = CustomSerialNumberMinimum,
+                CustomSerialNumberExclusiveMaximum =
+                    CustomSerialNumberExclusiveMaximum,
+                CustomSerialNumberMinimumDigits =
+                    CustomSerialNumberMinimumDigits,
+                CustomSerialNumberMaximumDigits =
+                    CustomSerialNumberMaximumDigits,
+                HstOperatorName = HstOperatorName.Trim(),
+                AudioOutputDeviceName = SelectedAudioOutputDevice?.Name,
             };
             SessionHandle handle = await _client.CreateSessionAsync(
                 settings,
                 _lifetime.Token);
             _sessionId = handle.SessionId;
+            _recordedResultSessionId = null;
             _lastAppliedSnapshotRevision = -1;
             _sessionState = handle.State;
             BeginSubscription(handle.SessionId);
+
+            if (SelectedAudioOutputDevice is not null)
+            {
+                CommandResult audioResult = await ExecuteAsync(
+                    new RecoverAudioCommand(
+                        RequestId.New(),
+                        handle.SessionId,
+                        DesktopClientId,
+                        SelectedAudioOutputDevice.Name));
+                if (!audioResult.Accepted
+                    && audioResult.ErrorCode
+                        != DomainErrorCodes.UnsupportedCapability)
+                {
+                    Status = audioResult.Message
+                        ?? "The selected audio device is unavailable.";
+                    return;
+                }
+            }
 
             CommandResult result = await ExecuteAsync(
                 new StartSessionCommand(
@@ -674,6 +1096,92 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         {
             Status = exception.Message;
         }
+    }
+
+    private Task RefreshAudioDevicesAsync() =>
+        RefreshAudioDevicesAsync(SelectedAudioOutputDevice?.Name);
+
+    private async Task RefreshAudioDevicesAsync(string? preferredDeviceName)
+    {
+        AudioDeviceStatus = "Loading audio devices...";
+        try
+        {
+            IReadOnlyList<AudioOutputDevice> devices =
+                await _client.GetAudioOutputDevicesAsync(_lifetime.Token);
+            Dispatch(
+                () =>
+                {
+                    AudioOutputDevices.Clear();
+                    foreach (AudioOutputDevice device in devices)
+                    {
+                        AudioOutputDevices.Add(device);
+                    }
+
+                    SelectedAudioOutputDevice = devices.FirstOrDefault(
+                            device => String.Equals(
+                                device.Name,
+                                preferredDeviceName,
+                                StringComparison.Ordinal))
+                        ?? devices.FirstOrDefault(device => device.IsDefault)
+                        ?? (devices.Count == 0 ? null : devices[0]);
+                    AudioDeviceStatus = devices.Count == 0
+                        ? "No playback devices were found."
+                        : $"{devices.Count} playback device(s) available.";
+                });
+        }
+        catch (Exception exception) when (
+            exception is not OperationCanceledException)
+        {
+            AudioDeviceStatus =
+                $"Audio device discovery failed: {exception.Message}";
+        }
+    }
+
+    private async Task RecoverAudioAsync()
+    {
+        if (_sessionId is not SessionId sessionId
+            || SelectedAudioOutputDevice is not AudioOutputDevice device)
+        {
+            AudioDeviceStatus =
+                "Choose an audio device after creating a session.";
+            return;
+        }
+
+        bool resume = _sessionState == SessionState.Running;
+        if (resume)
+        {
+            CommandResult pause = await ExecuteAsync(
+                new PauseSessionCommand(
+                    RequestId.New(),
+                    sessionId,
+                    DesktopClientId));
+            if (!pause.Accepted)
+            {
+                AudioDeviceStatus = pause.Message ?? "Could not pause audio.";
+                return;
+            }
+        }
+
+        CommandResult result = await ExecuteAsync(
+            new RecoverAudioCommand(
+                RequestId.New(),
+                sessionId,
+                DesktopClientId,
+                device.Name));
+        AudioDeviceStatus = result.Accepted
+            ? $"Using {device.Name}."
+            : result.Message ?? "Audio recovery failed.";
+
+        if (resume && result.Accepted)
+        {
+            await ExecuteAsync(
+                new ResumeSessionCommand(
+                    RequestId.New(),
+                    sessionId,
+                    DesktopClientId));
+        }
+
+        await RefreshAsync();
     }
 
     private static long DurationBlocks(int minutes)
@@ -709,6 +1217,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                 if (update.Snapshot is SessionSnapshot snapshot)
                 {
                     QueueSnapshot(snapshot);
+                    if (snapshot.State == SessionState.Completed
+                        && _recordedResultSessionId != snapshot.SessionId)
+                    {
+                        _recordedResultSessionId = snapshot.SessionId;
+                        await RefreshResultSummaryAsync(recordHighScore: true);
+                    }
                 }
             }
         }
@@ -768,6 +1282,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         await RefreshAsync();
     }
 
+    private Task AdjustSpeedUpAsync()
+    {
+        int delta = SelectedRunMode.Id.Value == "rmHst"
+            ? ((WordsPerMinute / 5) * 5 + 5) - WordsPerMinute
+            : _wpmStepRate;
+        return AdjustRadioAsync(RadioControl.Speed, delta);
+    }
+
+    private Task AdjustSpeedDownAsync()
+    {
+        int delta = SelectedRunMode.Id.Value == "rmHst"
+            ? (((WordsPerMinute + 4) / 5) * 5 - 5) - WordsPerMinute
+            : -_wpmStepRate;
+        return AdjustRadioAsync(RadioControl.Speed, delta);
+    }
+
     private async Task SendCallAndExchangeAsync()
     {
         await SendIntentAsync(OperatorIntent.HisCall);
@@ -792,6 +1322,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             Status = result.Message ?? "Enter Sends Message was rejected.";
             await RefreshAsync();
             return;
+        }
+
+        if (CallEntry.Length > 0
+            && RstEntry.Length == 0
+            && result.Accepted
+            && enter.SentMessages.Count > 0
+            && String.Equals(
+                ContestCatalog.Get(SelectedContest.Id).ExchangeType1,
+                "etRST",
+                StringComparison.Ordinal))
+        {
+            RstEntry = "599";
         }
 
         string loggedCall = CallEntry.ToUpperInvariant();
@@ -877,17 +1419,34 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         await RefreshAsync();
     }
 
-    private Task WipeAsync()
+    private async Task WipeAsync()
     {
+        if (_sessionId is SessionId sessionId
+            && _sessionState == SessionState.Running)
+        {
+            CommandResult result = await ExecuteAsync(
+                new ResetOperatorEntryCommand(
+                    RequestId.New(),
+                    sessionId,
+                    DesktopClientId));
+            if (!result.Accepted)
+            {
+                Status = result.Message ?? "Entry reset was rejected.";
+                return;
+            }
+        }
+
         ClearEntryFields();
+        EntryFocusRequested?.Invoke(
+            this,
+            new(EntryFocusTarget.Call, selectQuestionMark: false));
         Status = "Entry fields cleared.";
-        return Task.CompletedTask;
     }
 
     private void ClearEntryFields()
     {
         CallEntry = string.Empty;
-        RstEntry = "5NN";
+        RstEntry = string.Empty;
         Exchange1Entry = string.Empty;
         Exchange2Entry = string.Empty;
     }
@@ -923,14 +1482,121 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                 DesktopClientId));
         Status = result.Accepted ? "Session completed." : result.Message!;
         await RefreshAsync();
+        if (result.Accepted)
+        {
+            _recordedResultSessionId = _sessionId;
+            await RefreshResultSummaryAsync(recordHighScore: true);
+        }
     }
 
-    private Task ShowScoreAsync()
+    private async Task ShowScoreAsync()
     {
+        await RefreshResultSummaryAsync(recordHighScore: false);
         ShowScoreRequested?.Invoke(
             this,
-            new ScoreSummaryEventArgs(Score, QsoCount, ContestName, Elapsed));
+            new ScoreSummaryEventArgs(
+                Score,
+                QsoCount,
+                QsoRatePerHour,
+                HighScore,
+                ContestName,
+                Elapsed));
+    }
+
+    private bool CanExportResult() =>
+        _sessionId is not null && _resultsDirectory is not null;
+
+    private async Task ExportResultAsync(ResultExportFormat format)
+    {
+        if (_sessionId is not SessionId sessionId
+            || _resultsDirectory is null)
+        {
+            Status = "Start a session before exporting results.";
+            return;
+        }
+
+        try
+        {
+            SessionResult result = await _client.GetResultAsync(
+                sessionId,
+                _lifetime.Token);
+            IReadOnlyList<Qso> qsos =
+                await _client.ListCompletedQsosAsync(
+                    sessionId,
+                    _lifetime.Token);
+            ResultExportArtifact artifact = ResultExporter.Create(
+                result,
+                qsos,
+                format,
+                HstOperatorName);
+            _lastExportPath = await ResultExporter.SaveAtomicAsync(
+                _resultsDirectory,
+                artifact,
+                _lifetime.Token);
+            OnPropertyChanged(nameof(LastExportPath));
+            OpenResultsFolderCommand.RaiseCanExecuteChanged();
+            Status = $"Exported {Path.GetFileName(_lastExportPath)}.";
+        }
+        catch (Exception exception) when (
+            exception is not OperationCanceledException)
+        {
+            Status = $"Result export failed: {exception.Message}";
+        }
+    }
+
+    private Task OpenResultsFolderAsync()
+    {
+        if (_resultsDirectory is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        Directory.CreateDirectory(_resultsDirectory);
+        Process.Start(
+            new ProcessStartInfo(_resultsDirectory)
+            {
+                UseShellExecute = true,
+            });
         return Task.CompletedTask;
+    }
+
+    private async Task RefreshResultSummaryAsync(bool recordHighScore)
+    {
+        if (_sessionId is not SessionId sessionId)
+        {
+            return;
+        }
+
+        try
+        {
+            SessionResult result = await _client.GetResultAsync(
+                sessionId,
+                _lifetime.Token);
+            Score = result.Score;
+            QsoCount = result.QsoCount;
+            QsoRatePerHour = result.QsoRatePerHour;
+            if (_highScoreStore is not null)
+            {
+                ContestHighScore? highScore = recordHighScore
+                    ? await _highScoreStore.RecordAsync(
+                        result,
+                        HstOperatorName,
+                        _lifetime.Token)
+                    : await _highScoreStore.GetAsync(
+                        result.ContestId,
+                        _lifetime.Token);
+                HighScore = highScore?.Score ?? result.Score;
+            }
+            else
+            {
+                HighScore = Math.Max(HighScore, result.Score);
+            }
+        }
+        catch (Exception exception) when (
+            exception is not OperationCanceledException)
+        {
+            Status = $"Could not load result details: {exception.Message}";
+        }
     }
 
     private Task PlayRecordingAsync()
@@ -983,22 +1649,36 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         _sessionState = snapshot.State;
         OnPropertyChanged(nameof(SessionStateLabel));
         OnPropertyChanged(nameof(IsSetupEnabled));
+        OnPropertyChanged(nameof(IsMonitorLevelEnabled));
         SimulationBlock = snapshot.SimulationBlock;
         Elapsed = snapshot.ElapsedSimulationTime.ToString(
             @"mm\:ss\.fff",
             CultureInfo.InvariantCulture);
         LastCaller = snapshot.LastCaller ?? "Waiting";
+        IReadOnlyList<ActiveStationSnapshot>? activeStations =
+            snapshot.ActiveStations;
+        ActiveStationSnapshot? selectedStation = activeStations?
+            .FirstOrDefault(
+                station => station.Callsign.Equals(
+                    snapshot.LastCaller,
+                    StringComparison.Ordinal))
+            ?? (activeStations is null || activeStations.Count == 0
+                ? null
+                : activeStations[activeStations.Count - 1]);
+        _callsignInformation = FormatCallsignInformation(selectedStation);
+        OnPropertyChanged(nameof(CallsignInformation));
         CallerState = FormatOperatorState(snapshot.ActiveOperatorState);
         ActiveCallerCount = snapshot.ActiveStations?.Count ?? 0;
         LastSent = snapshot.LastOperatorMessage ?? "None";
         QsoCount = snapshot.QsoCount;
         Score = snapshot.Score;
+        QsoRatePerHour = snapshot.QsoRatePerHour;
         WordsPerMinute = snapshot.CurrentWordsPerMinute;
         BandwidthHz = snapshot.CurrentBandwidthHz;
         RitOffsetHz = snapshot.RitOffsetHz;
-        AudioHealth = snapshot.AudioOutputHealthy
-            ? $"Healthy, {snapshot.AudioQueuedBlocks} blocks queued"
-            : $"Needs attention, {snapshot.AudioUnderrunCount} underruns";
+        _appliedMonitorLevelDb = snapshot.CurrentMonitorLevelDb;
+        MonitorLevel = snapshot.CurrentMonitorLevelDb;
+        AudioHealth = FormatAudioHealth(snapshot);
         RaiseCommandStateChanged();
         OnPropertyChanged(nameof(CanPlayRecording));
         PlayRecordingCommand.RaiseCanExecuteChanged();
@@ -1018,6 +1698,38 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             OperatorState.Failed => "Gone",
             _ => throw new ArgumentOutOfRangeException(nameof(state), state, null),
         };
+
+    internal static string FormatAudioHealth(SessionSnapshot snapshot) =>
+        snapshot switch
+        {
+            { AudioOutputHealthy: false } =>
+                $"Needs attention, {snapshot.AudioUnderrunCount} underruns",
+            { AudioDroppedBlockCount: > 0 } =>
+                $"Degraded, {snapshot.AudioDroppedBlockCount} audio blocks dropped",
+            { AudioUnderrunCount: > 0 } =>
+                $"Degraded, {snapshot.AudioUnderrunCount} underruns",
+            _ => $"Healthy, {snapshot.AudioQueuedBlocks} blocks queued",
+        };
+
+    private string FormatCallsignInformation(ActiveStationSnapshot? station)
+    {
+        if (station is null)
+        {
+            return "No caller selected";
+        }
+
+        string radio = string.Create(
+            CultureInfo.InvariantCulture,
+            $"{station.WordsPerMinute} WPM | "
+            + $"{station.PitchOffsetHz:+0;-0;0} Hz");
+        return _dxccDatabase.TryFind(station.Callsign, out DxccRecord? record)
+            && record is not null
+            ? string.Create(
+                CultureInfo.InvariantCulture,
+                $"{station.Callsign} | {record.Entity} | "
+                + $"{record.Continent} | CQ {record.CqZones} | {radio}")
+            : $"{station.Callsign} | {radio}";
+    }
 
     private void QueueSnapshot(SessionSnapshot snapshot)
     {
@@ -1122,7 +1834,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                                 new[] { qso.Exchange1, qso.Exchange2 }
                                     .Where(value => value.Length > 0)),
                             qso.Points,
-                            qso.IsDuplicate));
+                            qso.IsDuplicate,
+                            qso.ErrorText));
                 }
             });
         return qsos.Count == 0 ? null : qsos[qsos.Count - 1];
@@ -1138,6 +1851,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         await _client.CloseSessionAsync(sessionId, _lifetime.Token);
         _sessionId = null;
         QsoLog.Clear();
+        RaiseCommandStateChanged();
     }
 
     private void Dispatch(Action action)
@@ -1184,6 +1898,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             BandwidthDownCommand,
             SpeedUpCommand,
             SpeedDownCommand,
+            RecoverAudioCommand,
+            ExportJsonCommand,
+            ExportCabrilloCommand,
         })
         {
             command.RaiseCanExecuteChanged();
@@ -1225,11 +1942,31 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             ["Station.Call"] = StationCall,
             ["Station.Wpm"] = WordsPerMinute.ToString(
                 CultureInfo.InvariantCulture),
+            ["Settings.WpmStepRate"] = _wpmStepRate.ToString(
+                CultureInfo.InvariantCulture),
             ["Station.Pitch"] = PitchHz.ToString(CultureInfo.InvariantCulture),
             ["Station.BandWidth"] = BandwidthHz.ToString(
                 CultureInfo.InvariantCulture),
             ["Station.SelfMonVolume"] = MonitorLevel.ToString(
                 CultureInfo.InvariantCulture),
+            ["Station.CWMinRxSpeed"] = ReceiveSpeedBelowWpm.ToString(
+                CultureInfo.InvariantCulture),
+            ["Station.CWMaxRxSpeed"] = ReceiveSpeedAboveWpm.ToString(
+                CultureInfo.InvariantCulture),
+            ["Station.SerialNR"] = ((int)SelectedSerialNumberRange.Mode).ToString(
+                CultureInfo.InvariantCulture),
+            ["Station.SerialNrCustomMinimum"] =
+                CustomSerialNumberMinimum.ToString(
+                    CultureInfo.InvariantCulture),
+            ["Station.SerialNrCustomMaximum"] =
+                CustomSerialNumberExclusiveMaximum.ToString(
+                    CultureInfo.InvariantCulture),
+            ["Station.SerialNrCustomRange"] = string.Create(
+                CultureInfo.InvariantCulture,
+                $"{CustomSerialNumberMinimum.ToString($"D{CustomSerialNumberMinimumDigits}", CultureInfo.InvariantCulture)}-{CustomSerialNumberExclusiveMaximum.ToString($"D{CustomSerialNumberMaximumDigits}", CultureInfo.InvariantCulture)}"),
+            ["Station.Name"] = HstOperatorName.Trim(),
+            ["Station.AudioOutputDevice"] =
+                SelectedAudioOutputDevice?.Name ?? string.Empty,
             ["Station.Qsk"] = Qsk.ToString(CultureInfo.InvariantCulture),
             ["Station.SaveWav"] = AudioRecordingEnabled.ToString(
                 CultureInfo.InvariantCulture),
@@ -1241,9 +1978,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             ["Band.Lids"] = Lids.ToString(CultureInfo.InvariantCulture),
             ["Contest.SimContest"] = SelectedContest.Id.Value,
             ["Contest.DefaultRunMode"] = SelectedRunMode.Id.Value,
-            ["Contest.Duration"] = SelectedDuration.Minutes.ToString(
+            ["Contest.Duration"] = DurationMinutes.ToString(
+                CultureInfo.InvariantCulture),
+            ["Contest.CompetitionDuration"] =
+                CompetitionDurationMinutes.ToString(
+                    CultureInfo.InvariantCulture),
+            ["System.ShowCallsignInfo"] = ShowCallsignInformation.ToString(
                 CultureInfo.InvariantCulture),
         };
+        foreach (ContestDefinition contest in ContestCatalog.All)
+        {
+            values[$"Contest.OperatorExchange.{contest.Id.Value}"] =
+                _operatorExchanges.TryGetValue(contest.Id, out string? exchange)
+                    ? exchange
+                    : contest.ExchangeDefault;
+        }
         await _settingsStore.SaveAsync(
             new(
                 SettingsDocument.CurrentSchemaVersion,
@@ -1282,6 +2031,51 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             out double parsed)
             ? parsed
             : fallback;
+
+    private static (
+        int Minimum,
+        int ExclusiveMaximum,
+        int MinimumDigits,
+        int MaximumDigits) ParseSerialNumberRange(
+        string value,
+        int fallbackMinimum,
+        int fallbackMaximum,
+        int fallbackMinimumDigits,
+        int fallbackMaximumDigits)
+    {
+        string[] parts = value.Split('-', 2);
+        return parts.Length == 2
+            && Int32.TryParse(
+                parts[0],
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out int minimum)
+            && Int32.TryParse(
+                parts[1],
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out int maximum)
+            && minimum >= 1
+            && maximum > minimum
+            && maximum <= 9_999
+            && parts[0].Length <= 4
+            && parts[1].Length <= 4
+                ? (minimum, maximum, parts[0].Length, parts[1].Length)
+                : (
+                    fallbackMinimum,
+                    fallbackMaximum,
+                    fallbackMinimumDigits,
+                    fallbackMaximumDigits);
+    }
+
+    private static int DecimalDigitCount(int value) =>
+        value switch
+        {
+            >= 1_000 => 4,
+            >= 100 => 3,
+            >= 10 => 2,
+            _ => 1,
+        };
 
     private static bool GetBool(
         IReadOnlyDictionary<string, string> values,

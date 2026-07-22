@@ -82,6 +82,34 @@ internal sealed class AudioBlockQueue
         return true;
     }
 
+    public bool TryReadBlock(
+        Span<float> destination,
+        out int length)
+    {
+        long readSequence = _readSequence;
+        if (readSequence >= Volatile.Read(ref _writeSequence))
+        {
+            length = 0;
+            return false;
+        }
+
+        int slot = (int)(readSequence % Capacity);
+        length = _lengths[slot] - _readOffset;
+        if (destination.Length < length)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(destination),
+                "The destination cannot hold the queued audio block.");
+        }
+
+        _blocks[slot]
+            .AsSpan(_readOffset, length)
+            .CopyTo(destination);
+        _readOffset = 0;
+        Volatile.Write(ref _readSequence, readSequence + 1);
+        return true;
+    }
+
     public bool FillInterleaved(
         AudioBuffer<float> output,
         ulong frameCount,

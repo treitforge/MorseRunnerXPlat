@@ -79,11 +79,9 @@ public sealed class WavAudioSink(string path) : IAudioSink
         for (int index = 0; index < source.Length; index++)
         {
             float normalized = Math.Clamp(source[index], -1F, 1F);
-            short pcm = normalized <= -1F
-                ? Int16.MinValue
-                : (short)Math.Round(
-                    normalized * Int16.MaxValue,
-                    MidpointRounding.AwayFromZero);
+            short pcm = (short)Math.Round(
+                normalized * Int16.MaxValue,
+                MidpointRounding.ToEven);
             BinaryPrimitives.WriteInt16LittleEndian(
                 destination.Slice(index * 2, 2),
                 pcm);

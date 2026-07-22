@@ -24,7 +24,7 @@ public sealed class ContestLoggingWorkflowTests
 
     [Theory]
     [MemberData(nameof(Contacts))]
-    public async Task InvalidAttemptCanBeCorrectedAndDuplicateGetsFeedback(
+    public async Task ValidDirectAttemptsRemainNilUntilLiveTruthExists(
         string contest,
         string call,
         string rst,
@@ -85,13 +85,14 @@ public sealed class ContestLoggingWorkflowTests
         IReadOnlyList<Qso> qsos =
             engine.GetCompletedQsos(handle.SessionId);
         Assert.Equal(2, qsos.Count);
-        Assert.False(qsos[0].IsDuplicate);
-        Assert.True(qsos[1].IsDuplicate);
-        Assert.Equal(LogError.Duplicate, qsos[1].ExchangeError);
-        Assert.Equal("DUP", qsos[1].ErrorText);
+        Assert.All(qsos, qso => Assert.Equal(LogError.Nil, qso.ExchangeError));
+        Assert.All(qsos, qso => Assert.False(qso.IsDuplicate));
+        Assert.All(qsos, qso => Assert.Empty(qso.TrueCall));
+        Assert.All(qsos, qso => Assert.Equal("NIL", qso.ErrorText));
         SessionSnapshot snapshot = engine.GetSnapshot(handle.SessionId);
         SessionResult result = engine.GetResult(handle.SessionId);
         Assert.Equal(qsos.Count, result.QsoCount);
+        Assert.Equal(0, snapshot.Score);
         Assert.Equal(snapshot.Score, result.Score);
     }
 

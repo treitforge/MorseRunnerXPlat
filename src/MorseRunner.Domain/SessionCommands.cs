@@ -76,6 +76,13 @@ public sealed record SendOperatorIntentCommand(
     long? ExpectedRevision = null)
     : SessionCommand(RequestId, SessionId, ClientId, ExpectedRevision);
 
+public sealed record ResetOperatorEntryCommand(
+    RequestId RequestId,
+    SessionId SessionId,
+    ClientId ClientId,
+    long? ExpectedRevision = null)
+    : SessionCommand(RequestId, SessionId, ClientId, ExpectedRevision);
+
 public sealed record QsoEntrySnapshot(
     string Call,
     string Rst,
@@ -120,6 +127,7 @@ public enum RadioControl
     Rit,
     Bandwidth,
     Speed,
+    MonitorLevel,
 }
 
 public sealed record AdjustRadioControlCommand(
@@ -128,6 +136,21 @@ public sealed record AdjustRadioControlCommand(
     ClientId ClientId,
     RadioControl Control,
     int Delta,
+    long? ExpectedRevision = null)
+    : SessionCommand(RequestId, SessionId, ClientId, ExpectedRevision);
+
+public enum RadioCondition
+{
+    Qsb,
+    Qsk,
+}
+
+public sealed record SetRadioConditionCommand(
+    RequestId RequestId,
+    SessionId SessionId,
+    ClientId ClientId,
+    RadioCondition Condition,
+    bool Enabled,
     long? ExpectedRevision = null)
     : SessionCommand(RequestId, SessionId, ClientId, ExpectedRevision);
 

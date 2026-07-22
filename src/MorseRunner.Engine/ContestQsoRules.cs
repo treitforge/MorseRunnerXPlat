@@ -30,46 +30,94 @@ public static class ContestQsoRules
 {
     private static readonly ContestDxccDatabase Dxcc = new();
 
+    public static ExchangeTypes ResolveExchangeTypes(
+        ContestId contestId,
+        string homeCall,
+        bool isSimulatedStation,
+        bool isReceivedMessage,
+        string stationCall,
+        string remoteCall)
+    {
+        ArgumentNullException.ThrowIfNull(homeCall);
+        ArgumentNullException.ThrowIfNull(stationCall);
+        ArgumentNullException.ThrowIfNull(remoteCall);
+
+        if (contestId.Value == "scArrlDx")
+        {
+            bool homeCallIsDx =
+                !StationReferenceCatalog.IsArrlDxHomeCallLocal(homeCall);
+            bool useDxTypes = homeCallIsDx
+                ^ isSimulatedStation
+                ^ isReceivedMessage;
+            return useDxTypes
+                ? new(ExchangeType1.Rst, ExchangeType2.Power)
+                : new(ExchangeType1.Rst, ExchangeType2.StateProvince);
+        }
+
+        if (contestId.Value == "scNaQp")
+        {
+            string sendingCall = isReceivedMessage
+                    && remoteCall.Length > 0
+                ? remoteCall
+                : stationCall;
+            bool sendingCallIsLocal =
+                StationReferenceCatalog.IsNaqpCallLocal(
+                    sendingCall,
+                    useFallback: false);
+            return sendingCallIsLocal
+                ? new(
+                    ExchangeType1.OperatorName,
+                    ExchangeType2.NaqpSecondField)
+                : new(
+                    ExchangeType1.OperatorName,
+                    ExchangeType2.NaqpNonNorthAmericaSecondField);
+        }
+
+        ContestRules rules = ContestRulesCatalog.Get(contestId);
+        return isReceivedMessage
+            ? rules.BaselineReceivedExchangeTypes
+            : rules.BaselineSentExchangeTypes;
+    }
+
     public static ContestValidation ValidateOwnExchange(
         ContestId contestId,
         string exchange)
     {
         ArgumentNullException.ThrowIfNull(exchange);
         string value = exchange.Trim().ToUpperInvariant();
+        string[] fields = value.Split(
+            ' ',
+            StringSplitOptions.RemoveEmptyEntries);
+        string first = fields.Length > 0 ? fields[0] : string.Empty;
+        string second = fields.Length > 1 ? fields[1] : string.Empty;
         bool valid = contestId.Value switch
         {
-            "scWpx" or "scHst" => Regex.IsMatch(
-                value,
-                @"^[1-5E][1-9N][1-9N] +([0-9OTN]+|#)$",
-                RegexOptions.CultureInvariant),
-            "scCwt" => Regex.IsMatch(
-                value,
-                @"^[A-Z][A-Z]* +[0-9A-Z]+$",
-                RegexOptions.CultureInvariant),
-            "scFieldDay" => Regex.IsMatch(
-                value,
-                @"^[1-9][0-9]*[A-F] +[A-Z]{2,3}$",
-                RegexOptions.CultureInvariant),
-            "scNaQp" or "scSst" => Regex.IsMatch(
-                value,
-                @"^[A-Z][A-Z]* +[0-9A-Z/]+$",
-                RegexOptions.CultureInvariant),
-            "scCQWW" => Regex.IsMatch(
-                value,
-                @"^[1-5E][1-9N][1-9N] +[0-9OANT]+$",
-                RegexOptions.CultureInvariant),
-            "scArrlDx" => Regex.IsMatch(
-                value,
-                @"^[1-5E][1-9N][1-9N] +[0-9A-Z]+$",
-                RegexOptions.CultureInvariant),
-            "scAllJa" or "scAcag" => Regex.IsMatch(
-                value,
-                @"^[1-5E][1-9N][1-9N] +[0-9AOTN]+[LMHP]$",
-                RegexOptions.CultureInvariant),
-            "scIaruHf" => Regex.IsMatch(
-                value,
-                @"^[1-5E][1-9N][1-9N] +[0-9A-Z]+$",
-                RegexOptions.CultureInvariant),
+            "scWpx" or "scHst" =>
+                Matches(first, @"[1-5E][1-9N][1-9N]")
+                && (Matches(second, @"[0-9OTN]+") || second == "#"),
+            "scCwt" =>
+                Matches(first, @"[A-Z][A-Z]*")
+                && Matches(second, @"[0-9A-Z]+"),
+            "scFieldDay" =>
+                Matches(first, @"[1-9][0-9]*[A-F]")
+                && Matches(second, @"[A-Z]{2,3}"),
+            "scNaQp" or "scSst" =>
+                Matches(first, @"[A-Z][A-Z]*")
+                && Matches(second, @"[0-9A-Z/]+"),
+            "scCQWW" =>
+                Matches(first, @"[1-5E][1-9N][1-9N]")
+                && Matches(second, @"[0-9OANT]+"),
+            "scArrlDx" =>
+                Matches(first, @"[1-5E][1-9N][1-9N]")
+                && Matches(
+                    second,
+                    @"[ABCDFGHIKLMNOPQRSTUVWY][ABCDEFHIJKLMNORSTUVXYZ]"),
+            "scAllJa" or "scAcag" =>
+                Matches(first, @"[1-5E][1-9N][1-9N]")
+                && Matches(second, @"[0-9AOTN]*[LMHP]"),
+            "scIaruHf" =>
+                Matches(first, @"[1-5E][1-9N][1-9N]")
+                && Matches(second, @"[0-9A-Z]+"),
             "scArrlSS" => SweepstakesExchangeParser.ParseOwn(value).IsValid,
             _ => false,
         };
@@ -77,6 +125,12 @@ public static class ContestQsoRules
             ? new(true, string.Empty)
             : new(false, InvalidOwnExchangeMessage(contestId, exchange));
     }
+
+    private static bool Matches(string value, string pattern) =>
+        Regex.IsMatch(
+            value,
+            $"^(?:{pattern})$",
+            RegexOptions.CultureInvariant);
 
     internal static ContestQsoEvaluation EvaluateReceived(
         ContestId contestId,
@@ -177,9 +231,12 @@ public static class ContestQsoRules
     internal static string ComposeOwnExchange(
         ContestId contestId,
         string stationCall,
-        int serialNumber)
+        int serialNumber,
+        string operatorExchange)
     {
-        string exchange = ContestCatalog.Get(contestId).ExchangeDefault;
+        string exchange = String.IsNullOrWhiteSpace(operatorExchange)
+            ? ContestCatalog.Get(contestId).ExchangeDefault
+            : operatorExchange.Trim().ToUpperInvariant();
         if (contestId.Value == "scArrlSS")
         {
             string[] fields = exchange.Split(
@@ -630,32 +687,9 @@ public static class ContestQsoRules
         ContestId contestId,
         string exchange)
     {
-        string expectation = contestId.Value switch
-        {
-            "scWpx" or "scHst" =>
-                "'RST <serial>' (e.g. 5NN #).",
-            "scCwt" =>
-                "'<name> <member nr|qth>' (e.g. DAVID 123).",
-            "scFieldDay" =>
-                "'<class> <section>' (e.g. 3A OR).",
-            "scNaQp" =>
-                "'<name> [<state|prov|dxcc-entity>]' (e.g. ALEX ON).",
-            "scCQWW" =>
-                "'RST <cq-zone>' (e.g. 5NN 3).",
-            "scArrlDx" =>
-                "'RST <state|province|power>' (e.g. 5NN ON).",
-            "scSst" =>
-                "'<op name> <State|Prov|DX>' (e.g. BRUCE MA).",
-            "scAllJa" =>
-                "'RST <Pref><Power>' (e.g. 5NN 10H).",
-            "scAcag" =>
-                "'RST <City|Gun|Ku><Power>' (e.g. 5NN 1002H).",
-            "scIaruHf" =>
-                "'RST <Itu-zone|IARU Society>' (e.g. 5NN 6).",
-            "scArrlSS" =>
-                "'[#|123] <precedence> <check> <section>' (e.g. A 72 OR).",
-            _ => "'supported contest exchange'.",
-        };
-        return $"Invalid exchange: '{exchange}' - expecting {expectation}";
+        string expectation = ContestCatalog.All.FirstOrDefault(
+            definition => definition.Id == contestId)?.ValidationMessage
+            ?? "'supported contest exchange'";
+        return $"Invalid exchange: '{exchange}' - expecting {expectation}.";
     }
 }

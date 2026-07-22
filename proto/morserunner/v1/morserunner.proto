@@ -69,6 +69,9 @@ message ContestDefinitionMessage {
   string exchange_type_2 = 5;
   bool exchange_field_editable = 6;
   string exchange_default = 7;
+  string exchange_caption_1 = 8;
+  string exchange_caption_2 = 9;
+  string validation_message = 10;
 }
 
 message ListContestsResponse {
@@ -110,6 +113,26 @@ message SessionSettingsMessage {
   bool flutter = 14;
   bool lids = 15;
   optional double monitor_level_db = 16;
+  optional int32 receive_speed_below_wpm = 17;
+  optional int32 receive_speed_above_wpm = 18;
+  SerialNumberRangeModeMessage serial_number_range = 19;
+  optional int32 custom_serial_number_minimum = 20;
+  optional int32 custom_serial_number_exclusive_maximum = 21;
+  string hst_operator_name = 22;
+  string audio_output_device_name = 23;
+  optional int32 station_id_rate = 24;
+  optional int32 custom_serial_number_minimum_digits = 25;
+  optional int32 custom_serial_number_maximum_digits = 26;
+  optional int32 competition_duration_minutes = 27;
+  string operator_exchange = 28;
+}
+
+enum SerialNumberRangeModeMessage {
+  SERIAL_NUMBER_RANGE_MODE_MESSAGE_UNSPECIFIED = 0;
+  SERIAL_NUMBER_RANGE_MODE_MESSAGE_START_OF_CONTEST = 1;
+  SERIAL_NUMBER_RANGE_MODE_MESSAGE_MID_CONTEST = 2;
+  SERIAL_NUMBER_RANGE_MODE_MESSAGE_END_OF_CONTEST = 3;
+  SERIAL_NUMBER_RANGE_MODE_MESSAGE_CUSTOM = 4;
 }
 
 message SessionHandleMessage {
@@ -161,6 +184,8 @@ message CommandEnvelope {
     LogQsoCommand log_qso = 17;
     RecoverAudioCommand recover_audio = 18;
     EnterSendMessageCommand enter_send_message = 19;
+    SetRadioConditionCommand set_radio_condition = 20;
+    ResetOperatorEntryCommand reset_operator_entry = 21;
   }
 }
 
@@ -193,16 +218,30 @@ message OperatorIntentCommand {
   string exchange_2 = 5;
 }
 
+message ResetOperatorEntryCommand {}
+
 enum RadioControlMessage {
   RADIO_CONTROL_MESSAGE_UNSPECIFIED = 0;
   RADIO_CONTROL_MESSAGE_RIT = 1;
   RADIO_CONTROL_MESSAGE_BANDWIDTH = 2;
   RADIO_CONTROL_MESSAGE_SPEED = 3;
+  RADIO_CONTROL_MESSAGE_MONITOR_LEVEL = 4;
 }
 
 message RadioControlCommand {
   RadioControlMessage control = 1;
   int32 delta = 2;
+}
+
+enum RadioConditionMessage {
+  RADIO_CONDITION_MESSAGE_UNSPECIFIED = 0;
+  RADIO_CONDITION_MESSAGE_QSB = 1;
+  RADIO_CONDITION_MESSAGE_QSK = 2;
+}
+
+message SetRadioConditionCommand {
+  RadioConditionMessage condition = 1;
+  bool enabled = 2;
 }
 
 message LogQsoCommand {
@@ -293,6 +332,9 @@ message SessionSnapshotMessage {
   OperatorStateMessage active_operator_state = 25;
   int32 qso_rate_per_hour = 26;
   repeated ActiveStationMessage active_stations = 27;
+  bool qsb_enabled = 28;
+  double current_monitor_level_db = 29;
+  bool qsk_enabled = 30;
 }
 
 message ActiveStationMessage {

@@ -54,6 +54,16 @@ public sealed class InProcessMorseRunnerClient(
                 }));
     }
 
+    public static InProcessMorseRunnerClient CreateWithBufferedWavAudio(
+        string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        string fullPath = Path.GetFullPath(path);
+        return new(
+            new MorseRunnerEngine(
+                _ => new BufferedWavAudioSink(fullPath)));
+    }
+
     public Task<EngineInfo> GetEngineInfoAsync(
         CancellationToken cancellationToken)
     {
@@ -69,6 +79,7 @@ public sealed class InProcessMorseRunnerClient(
         cancellationToken.ThrowIfCancellationRequested();
         IReadOnlyList<AudioOutputDevice> devices = PhysicalAudioSink
             .GetPlaybackDevices()
+            .Where(device => !string.IsNullOrWhiteSpace(device.Name))
             .Select(device => new AudioOutputDevice(
                 device.Name,
                 device.Index,

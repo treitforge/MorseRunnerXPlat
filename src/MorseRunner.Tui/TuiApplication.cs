@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Channels;
 using MorseRunner.Client;
 using MorseRunner.Domain;
+using MorseRunner.Infrastructure;
 
 namespace MorseRunner.Tui;
 
@@ -22,21 +23,52 @@ public sealed class TuiApplication : IDisposable
                 SingleWriter = true,
             });
     private readonly CancellationTokenSource _lifetime = new();
+    private readonly SettingsStore? _settingsStore;
+    private readonly HighScoreStore? _highScoreStore;
+    private readonly TuiRecordingPreference? _recordingPreference;
+    private readonly string? _resultsDirectory;
+    private readonly Func<string, Task> _artifactLauncher;
+    private readonly bool _forceNoColor;
     private SessionId? _sessionId;
     private Task? _subscriptionTask;
+    private SessionId? _recordedResultSessionId;
     private string[]? _lastFrameLines;
     private int _lastFrameWidth;
     private int _lastFrameHeight;
     private long _lastRenderTimestamp;
+    private int _wpmStepRate = 2;
     private bool _quit;
     private volatile bool _dirty = true;
 
-    public TuiApplication(IMorseRunnerClient client, bool isHosted)
+    public TuiApplication(
+        IMorseRunnerClient client,
+        bool isHosted,
+        ApplicationPaths? paths = null,
+        TuiRecordingPreference? recordingPreference = null,
+        Func<string, Task>? artifactLauncher = null,
+        bool forceNoColor = false)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
+        _recordingPreference = recordingPreference
+            ?? (paths is null ? null : new TuiRecordingPreference(paths));
+        _settingsStore = paths is null
+            ? null
+            : new SettingsStore(
+                Path.Combine(paths.Settings, "settings.json"),
+                paths.LegacySettingsImport);
+        _highScoreStore = paths is null
+            ? null
+            : new HighScoreStore(
+                Path.Combine(paths.Results, "high-scores.json"));
+        _resultsDirectory = paths?.Results;
+        _artifactLauncher = artifactLauncher ?? OpenArtifactAsync;
+        _forceNoColor = forceNoColor;
         State = new TuiState
         {
             IsHosted = isHosted,
+            ConnectionStatus = isHosted
+                ? "Connecting to authenticated local host."
+                : "Local in-process engine.",
         };
     }
 
@@ -45,7 +77,47 @@ public sealed class TuiApplication : IDisposable
     public void Dispose()
     {
         _lifetime.Cancel();
+        _highScoreStore?.Dispose();
         _lifetime.Dispose();
+    }
+
+    public async Task InitializeAsync(CancellationToken cancellationToken)
+    {
+        if (_settingsStore is not null)
+        {
+            SettingsLoadResult result = await _settingsStore.LoadAsync(
+                cancellationToken);
+            ApplyPreferences(result.Document.Values);
+            if (!String.IsNullOrWhiteSpace(result.Diagnostic))
+            {
+                State.Status = result.Diagnostic;
+            }
+        }
+
+        if (_recordingPreference is not null)
+        {
+            _recordingPreference.Enabled =
+                State.RecordingEnabled && !State.IsHosted;
+            State.LastRecordingPath = _recordingPreference.DiscoverLatest();
+        }
+
+        try
+        {
+            EngineInfo info = await _client.GetEngineInfoAsync(cancellationToken);
+            State.EngineDiagnostic =
+                $"{info.DisplayName} {info.DiagnosticVersion} | "
+                + $"{(info.IsInProcess ? "in-process" : "hosted")} | "
+                + $"{String.Join(", ", info.Capabilities)}";
+            State.ConnectionStatus = State.IsHosted
+                ? "Connected to authenticated local host."
+                : "Local in-process engine ready.";
+        }
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            State.ConnectionStatus =
+                $"Connection failed: {exception.Message}";
+            State.Status = State.ConnectionStatus;
+        }
     }
 
     public async Task<int> RunAsync(CancellationToken cancellationToken)
@@ -56,8 +128,9 @@ public sealed class TuiApplication : IDisposable
                 _lifetime.Token);
         Console.OutputEncoding = Encoding.UTF8;
         Console.CancelKeyPress += Cancel;
-        bool ansi = SupportsAnsi();
-        if (ansi)
+        TerminalCapabilities capabilities =
+            TerminalCapabilities.Detect(_forceNoColor);
+        if (capabilities.UseAnsi)
         {
             Console.Write("\u001b[?1049h\u001b[?25l");
         }
@@ -72,14 +145,14 @@ public sealed class TuiApplication : IDisposable
                     _dirty = true;
                 }
 
-                if (WindowSizeChanged(ansi))
+                if (WindowSizeChanged(capabilities.UseAnsi))
                 {
                     _dirty = true;
                 }
 
                 if (_dirty && RenderIntervalElapsed())
                 {
-                    Draw(ansi);
+                    Draw(capabilities);
                     _dirty = false;
                 }
 
@@ -87,7 +160,7 @@ public sealed class TuiApplication : IDisposable
                 {
                     ConsoleKeyInfo key = Console.ReadKey(intercept: true);
                     await HandleAsync(TuiKeyRouter.Map(key), linked.Token);
-                    Draw(ansi);
+                    Draw(capabilities);
                     _dirty = false;
                     continue;
                 }
@@ -107,7 +180,7 @@ public sealed class TuiApplication : IDisposable
             }
             finally
             {
-                if (ansi)
+                if (capabilities.UseAnsi)
                 {
                     Console.Write("\u001b[?25h\u001b[?1049l");
                 }
@@ -125,6 +198,51 @@ public sealed class TuiApplication : IDisposable
         TuiAction action,
         CancellationToken cancellationToken)
     {
+        try
+        {
+            await HandleCoreAsync(action, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            State.ConnectionStatus = State.IsHosted
+                ? $"Hosted connection error: {exception.Message}"
+                : State.ConnectionStatus;
+            State.Status = $"Command failed: {exception.Message}";
+            _dirty = true;
+        }
+    }
+
+    private async Task HandleCoreAsync(
+        TuiAction action,
+        CancellationToken cancellationToken)
+    {
+        if (State.View == TuiView.Settings
+            && await HandleSettingsActionAsync(action, cancellationToken))
+        {
+            return;
+        }
+
+        if (State.View != TuiView.Operator
+            && action.Kind == TuiActionKind.Abort)
+        {
+            State.View = TuiView.Operator;
+            return;
+        }
+
+        if (State.View is TuiView.Results
+                or TuiView.Diagnostics
+                or TuiView.Help
+            && !IsViewAction(action.Kind))
+        {
+            State.Status =
+                "Press Escape or the current view shortcut to return.";
+            return;
+        }
+
         switch (action.Kind)
         {
             case TuiActionKind.InsertCharacter:
@@ -159,6 +277,12 @@ public sealed class TuiApplication : IDisposable
                         TuiClientId),
                     "Session completed.",
                     cancellationToken);
+                if (State.Snapshot?.State == SessionState.Completed)
+                {
+                    await RefreshResultAsync(
+                        recordHighScore: true,
+                        cancellationToken);
+                }
                 break;
             case TuiActionKind.Pause:
                 await ExecuteStateCommandAsync(
@@ -223,17 +347,16 @@ public sealed class TuiApplication : IDisposable
                     cancellationToken);
                 break;
             case TuiActionKind.Wipe:
-                State.ClearEntry();
-                State.Status = "Entry fields cleared.";
+                await WipeAsync(cancellationToken);
                 break;
             case TuiActionKind.Abort:
                 await SendAsync(OperatorIntent.Abort, cancellationToken);
                 break;
             case TuiActionKind.RitUp:
-                await AdjustAsync(RadioControl.Rit, 10, cancellationToken);
+                await AdjustAsync(RadioControl.Rit, 50, cancellationToken);
                 break;
             case TuiActionKind.RitDown:
-                await AdjustAsync(RadioControl.Rit, -10, cancellationToken);
+                await AdjustAsync(RadioControl.Rit, -50, cancellationToken);
                 break;
             case TuiActionKind.BandwidthUp:
                 await AdjustAsync(RadioControl.Bandwidth, 50, cancellationToken);
@@ -242,10 +365,16 @@ public sealed class TuiApplication : IDisposable
                 await AdjustAsync(RadioControl.Bandwidth, -50, cancellationToken);
                 break;
             case TuiActionKind.SpeedUp:
-                await AdjustAsync(RadioControl.Speed, 1, cancellationToken);
+                await AdjustAsync(
+                    RadioControl.Speed,
+                    GetSpeedUpDelta(),
+                    cancellationToken);
                 break;
             case TuiActionKind.SpeedDown:
-                await AdjustAsync(RadioControl.Speed, -1, cancellationToken);
+                await AdjustAsync(
+                    RadioControl.Speed,
+                    GetSpeedDownDelta(),
+                    cancellationToken);
                 break;
             case TuiActionKind.NextContest:
                 ChangeSetup(
@@ -293,8 +422,48 @@ public sealed class TuiApplication : IDisposable
             case TuiActionKind.ToggleLids:
                 ChangeSetup(() => State.Lids = !State.Lids);
                 break;
+            case TuiActionKind.ToggleSettings:
+                State.View = State.View == TuiView.Settings
+                    ? TuiView.Operator
+                    : TuiView.Settings;
+                break;
+            case TuiActionKind.ToggleResults:
+                State.View = State.View == TuiView.Results
+                    ? TuiView.Operator
+                    : TuiView.Results;
+                await RefreshResultAsync(
+                    recordHighScore: false,
+                    cancellationToken);
+                break;
+            case TuiActionKind.ToggleDiagnostics:
+                State.View = State.View == TuiView.Diagnostics
+                    ? TuiView.Operator
+                    : TuiView.Diagnostics;
+                await RefreshSnapshotAsync(cancellationToken);
+                break;
+            case TuiActionKind.ToggleRecording:
+                ToggleRecording();
+                break;
+            case TuiActionKind.ExportJson:
+                await ExportResultAsync(
+                    ResultExportFormat.Json,
+                    cancellationToken);
+                break;
+            case TuiActionKind.ExportCabrillo:
+                await ExportResultAsync(
+                    ResultExportFormat.Cabrillo,
+                    cancellationToken);
+                break;
+            case TuiActionKind.OpenRecording:
+                await OpenRecordingAsync();
+                break;
+            case TuiActionKind.IncreaseSetting:
+            case TuiActionKind.DecreaseSetting:
+                break;
             case TuiActionKind.ToggleHelp:
-                State.ShowHelp = !State.ShowHelp;
+                State.View = State.View == TuiView.Help
+                    ? TuiView.Operator
+                    : TuiView.Help;
                 break;
             case TuiActionKind.Quit:
                 _quit = true;
@@ -302,6 +471,11 @@ public sealed class TuiApplication : IDisposable
             case TuiActionKind.None:
             default:
                 break;
+        }
+
+        if (ShouldPersist(action.Kind))
+        {
+            await SavePreferencesAsync(cancellationToken);
         }
     }
 
@@ -325,17 +499,45 @@ public sealed class TuiApplication : IDisposable
             State.RunMode,
             DurationBlocks(State.DurationMinutes))
         {
+            StationCall = State.StationCall,
+            OperatorExchange = State.OperatorExchange,
+            WordsPerMinute = State.WordsPerMinute,
+            PitchHz = State.PitchHz,
+            BandwidthHz = State.BandwidthHz,
+            Activity = State.Activity,
+            CompetitionDurationMinutes = State.CompetitionDurationMinutes,
             Qsk = State.Qsk,
             Qsb = State.Qsb,
             Qrm = State.Qrm,
             Qrn = State.Qrn,
             Flutter = State.Flutter,
             Lids = State.Lids,
-            MonitorLevelDb = 0d,
+            MonitorLevelDb = State.MonitorLevelDb,
+            ReceiveSpeedBelowWpm = State.ReceiveSpeedBelowWpm,
+            ReceiveSpeedAboveWpm = State.ReceiveSpeedAboveWpm,
+            SerialNumberRange = State.SerialNumberRange,
+            CustomSerialNumberMinimum =
+                State.CustomSerialNumberMinimum,
+            CustomSerialNumberExclusiveMaximum =
+                State.CustomSerialNumberExclusiveMaximum,
+            CustomSerialNumberMinimumDigits =
+                State.CustomSerialNumberMinimumDigits,
+            CustomSerialNumberMaximumDigits =
+                State.CustomSerialNumberMaximumDigits,
+            HstOperatorName = State.HstOperatorName,
         };
-        SessionHandle handle = await _client.CreateSessionAsync(
-            settings,
-            cancellationToken);
+        SessionHandle handle;
+        try
+        {
+            handle = await _client.CreateSessionAsync(
+                settings,
+                cancellationToken);
+        }
+        catch (ArgumentException exception)
+        {
+            State.Status = exception.Message;
+            return;
+        }
         _sessionId = handle.SessionId;
         _subscriptionTask = ObserveAsync(
             handle.SessionId,
@@ -349,7 +551,11 @@ public sealed class TuiApplication : IDisposable
         State.Status = result.Accepted
             ? $"{RunModeName(State.RunMode)} running."
             : result.Message ?? "Start rejected.";
+        State.ConnectionStatus = State.IsHosted
+            ? "Connected to authenticated local host."
+            : "Local in-process engine ready.";
         await RefreshSnapshotAsync(cancellationToken);
+        await SavePreferencesAsync(cancellationToken);
     }
 
     private async Task ObserveAsync(
@@ -365,6 +571,17 @@ public sealed class TuiApplication : IDisposable
                 if (update.Snapshot is SessionSnapshot snapshot)
                 {
                     _snapshots.Writer.TryWrite(snapshot);
+                    State.ConnectionStatus = State.IsHosted
+                        ? "Connected to authenticated local host."
+                        : State.ConnectionStatus;
+                    if (snapshot.State == SessionState.Completed
+                        && _recordedResultSessionId != snapshot.SessionId)
+                    {
+                        _recordedResultSessionId = snapshot.SessionId;
+                        await RefreshResultAsync(
+                            recordHighScore: true,
+                            cancellationToken);
+                    }
                 }
             }
         }
@@ -373,6 +590,9 @@ public sealed class TuiApplication : IDisposable
         }
         catch (Exception exception)
         {
+            State.ConnectionStatus = State.IsHosted
+                ? $"Disconnected after reconnect attempt: {exception.Message}"
+                : State.ConnectionStatus;
             State.Status = $"Live update stopped: {exception.Message}";
             _dirty = true;
         }
@@ -402,6 +622,29 @@ public sealed class TuiApplication : IDisposable
         State.Status = result.Accepted
             ? $"Sent {intent}."
             : result.Message ?? "Send rejected.";
+        await RefreshSnapshotAsync(cancellationToken);
+    }
+
+    private async Task WipeAsync(CancellationToken cancellationToken)
+    {
+        if (_sessionId is SessionId sessionId)
+        {
+            CommandResult result = await _client.ExecuteAsync(
+                new ResetOperatorEntryCommand(
+                    RequestId.New(),
+                    sessionId,
+                    TuiClientId),
+                cancellationToken);
+            if (!result.Accepted)
+            {
+                State.Status = result.Message ?? "Entry reset was rejected.";
+                await RefreshSnapshotAsync(cancellationToken);
+                return;
+            }
+        }
+
+        State.ClearEntry();
+        State.Status = "Entry fields cleared.";
         await RefreshSnapshotAsync(cancellationToken);
     }
 
@@ -543,6 +786,24 @@ public sealed class TuiApplication : IDisposable
         await RefreshSnapshotAsync(cancellationToken);
     }
 
+    private int GetSpeedUpDelta()
+    {
+        SessionSnapshot? snapshot = State.Snapshot;
+        return snapshot?.RunModeId.Value == "rmHst"
+            ? ((snapshot.CurrentWordsPerMinute / 5) * 5 + 5)
+                - snapshot.CurrentWordsPerMinute
+            : _wpmStepRate;
+    }
+
+    private int GetSpeedDownDelta()
+    {
+        SessionSnapshot? snapshot = State.Snapshot;
+        return snapshot?.RunModeId.Value == "rmHst"
+            ? (((snapshot.CurrentWordsPerMinute + 4) / 5) * 5 - 5)
+                - snapshot.CurrentWordsPerMinute
+            : -_wpmStepRate;
+    }
+
     private async Task ExecuteStateCommandAsync(
         Func<SessionId, SessionCommand> createCommand,
         string success,
@@ -561,6 +822,414 @@ public sealed class TuiApplication : IDisposable
             ? success
             : result.Message ?? "Command rejected.";
         await RefreshSnapshotAsync(cancellationToken);
+    }
+
+    private async Task<bool> HandleSettingsActionAsync(
+        TuiAction action,
+        CancellationToken cancellationToken)
+    {
+        switch (action.Kind)
+        {
+            case TuiActionKind.ToggleSettings:
+            case TuiActionKind.Abort:
+                State.View = TuiView.Operator;
+                State.Status = "Advanced settings saved.";
+                await SavePreferencesAsync(cancellationToken);
+                return true;
+            case TuiActionKind.NextField:
+            case TuiActionKind.RitDown:
+                State.SettingsIndex = (State.SettingsIndex + 1) % 22;
+                return true;
+            case TuiActionKind.PreviousField:
+            case TuiActionKind.RitUp:
+                State.SettingsIndex = (State.SettingsIndex + 21) % 22;
+                return true;
+            case TuiActionKind.IncreaseSetting:
+            case TuiActionKind.EnterSendMessage:
+                AdjustCurrentSetting(1);
+                await SavePreferencesAsync(cancellationToken);
+                return true;
+            case TuiActionKind.DecreaseSetting:
+                AdjustCurrentSetting(-1);
+                await SavePreferencesAsync(cancellationToken);
+                return true;
+            case TuiActionKind.SpeedUp:
+                AdjustCurrentSetting(10);
+                await SavePreferencesAsync(cancellationToken);
+                return true;
+            case TuiActionKind.SpeedDown:
+                AdjustCurrentSetting(-10);
+                await SavePreferencesAsync(cancellationToken);
+                return true;
+            case TuiActionKind.InsertCharacter:
+                EditCurrentText(action.Character);
+                await SavePreferencesAsync(cancellationToken);
+                return true;
+            case TuiActionKind.Backspace:
+                BackspaceCurrentText();
+                await SavePreferencesAsync(cancellationToken);
+                return true;
+            case TuiActionKind.Wipe:
+                ClearCurrentText();
+                await SavePreferencesAsync(cancellationToken);
+                return true;
+            case TuiActionKind.ToggleRecording:
+                ToggleRecording();
+                await SavePreferencesAsync(cancellationToken);
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private void AdjustCurrentSetting(int direction)
+    {
+        static int Step(int value, int delta, int minimum, int maximum) =>
+            Math.Clamp(value + delta, minimum, maximum);
+
+        switch (State.SettingsIndex)
+        {
+            case 2:
+                State.WordsPerMinute = Step(
+                    State.WordsPerMinute,
+                    direction,
+                    10,
+                    120);
+                break;
+            case 3:
+                State.PitchHz = Step(
+                    State.PitchHz,
+                    direction * 10,
+                    100,
+                    2_000);
+                break;
+            case 4:
+                State.BandwidthHz = Step(
+                    State.BandwidthHz,
+                    direction * 50,
+                    50,
+                    5_000);
+                break;
+            case 5:
+                State.Activity = Step(State.Activity, direction, 1, 9);
+                break;
+            case 6:
+                State.MonitorLevelDb = Math.Clamp(
+                    State.MonitorLevelDb + direction,
+                    -60d,
+                    12d);
+                break;
+            case 7:
+                State.ReceiveSpeedBelowWpm = NextReceiveOffset(
+                    State.ReceiveSpeedBelowWpm,
+                    Math.Sign(direction));
+                break;
+            case 8:
+                State.ReceiveSpeedAboveWpm = NextReceiveOffset(
+                    State.ReceiveSpeedAboveWpm,
+                    Math.Sign(direction));
+                break;
+            case 9:
+                State.SerialNumberRange = (SerialNumberRangeMode)
+                    Mod(
+                        (int)State.SerialNumberRange + Math.Sign(direction),
+                        Enum.GetValues<SerialNumberRangeMode>().Length);
+                break;
+            case 10:
+                State.CustomSerialNumberMinimum = Step(
+                    State.CustomSerialNumberMinimum,
+                    direction,
+                    1,
+                    State.CustomSerialNumberExclusiveMaximum - 1);
+                State.CustomSerialNumberMinimumDigits = Math.Max(
+                    State.CustomSerialNumberMinimumDigits,
+                    DecimalDigitCount(State.CustomSerialNumberMinimum));
+                break;
+            case 11:
+                State.CustomSerialNumberExclusiveMaximum = Step(
+                    State.CustomSerialNumberExclusiveMaximum,
+                    direction,
+                    State.CustomSerialNumberMinimum + 1,
+                    9_999);
+                State.CustomSerialNumberMaximumDigits = Math.Max(
+                    State.CustomSerialNumberMaximumDigits,
+                    DecimalDigitCount(
+                        State.CustomSerialNumberExclusiveMaximum));
+                break;
+            case 12:
+                State.CustomSerialNumberMinimumDigits = Step(
+                    State.CustomSerialNumberMinimumDigits,
+                    direction,
+                    DecimalDigitCount(State.CustomSerialNumberMinimum),
+                    4);
+                break;
+            case 13:
+                State.CustomSerialNumberMaximumDigits = Step(
+                    State.CustomSerialNumberMaximumDigits,
+                    direction,
+                    DecimalDigitCount(
+                        State.CustomSerialNumberExclusiveMaximum),
+                    4);
+                break;
+            case 15:
+                State.Qsk = !State.Qsk;
+                break;
+            case 16:
+                State.Qsb = !State.Qsb;
+                break;
+            case 17:
+                State.Qrm = !State.Qrm;
+                break;
+            case 18:
+                State.Qrn = !State.Qrn;
+                break;
+            case 19:
+                State.Flutter = !State.Flutter;
+                break;
+            case 20:
+                State.Lids = !State.Lids;
+                break;
+            case 21:
+                ToggleRecording();
+                break;
+        }
+
+        State.Status = "Advanced setting updated.";
+    }
+
+    private void EditCurrentText(char character)
+    {
+        character = Char.ToUpperInvariant(character);
+        if (State.SettingsIndex == 0
+            && State.StationCall.Length < 18
+            && (Char.IsAsciiLetterOrDigit(character) || character == '/'))
+        {
+            State.StationCall += character;
+        }
+        else if (State.SettingsIndex == 1
+            && State.OperatorExchange.Length < 32
+            && (Char.IsAsciiLetterOrDigit(character)
+                || character is ' ' or '#' or '/'))
+        {
+            State.OperatorExchange += character;
+        }
+        else if (State.SettingsIndex == 14
+            && State.HstOperatorName.Length < 32
+            && !Char.IsControl(character))
+        {
+            State.HstOperatorName += character;
+        }
+    }
+
+    private void BackspaceCurrentText()
+    {
+        if (State.SettingsIndex == 0 && State.StationCall.Length > 0)
+        {
+            State.StationCall = State.StationCall[..^1];
+        }
+        else if (State.SettingsIndex == 1
+            && State.OperatorExchange.Length > 0)
+        {
+            State.OperatorExchange = State.OperatorExchange[..^1];
+        }
+        else if (State.SettingsIndex == 14
+            && State.HstOperatorName.Length > 0)
+        {
+            State.HstOperatorName = State.HstOperatorName[..^1];
+        }
+    }
+
+    private void ClearCurrentText()
+    {
+        if (State.SettingsIndex == 0)
+        {
+            State.StationCall = string.Empty;
+        }
+        else if (State.SettingsIndex == 1)
+        {
+            State.OperatorExchange = string.Empty;
+        }
+        else if (State.SettingsIndex == 14)
+        {
+            State.HstOperatorName = string.Empty;
+        }
+    }
+
+    private void ToggleRecording()
+    {
+        if (State.IsHosted)
+        {
+            State.Status =
+                "Hosted recording is controlled by the engine host.";
+            return;
+        }
+
+        if (_recordingPreference is null)
+        {
+            State.Status = "Recording storage is unavailable.";
+            return;
+        }
+
+        State.RecordingEnabled = !State.RecordingEnabled;
+        _recordingPreference.Enabled = State.RecordingEnabled;
+        State.Status = State.RecordingEnabled
+            ? "Buffered WAV recording enabled for the next session."
+            : "WAV recording disabled.";
+    }
+
+    private async Task RefreshResultAsync(
+        bool recordHighScore,
+        CancellationToken cancellationToken)
+    {
+        if (_sessionId is not SessionId sessionId
+            || State.Snapshot?.State != SessionState.Completed)
+        {
+            return;
+        }
+
+        State.Result = await _client.GetResultAsync(
+            sessionId,
+            cancellationToken);
+        if (_highScoreStore is not null)
+        {
+            State.PersonalHighScore = recordHighScore
+                ? await _highScoreStore.RecordAsync(
+                    State.Result,
+                    State.HstOperatorName,
+                    cancellationToken)
+                : await _highScoreStore.GetAsync(
+                    State.Result.ContestId,
+                    cancellationToken);
+        }
+
+        if (_recordingPreference is not null)
+        {
+            State.LastRecordingPath =
+                _recordingPreference.DiscoverLatest();
+        }
+    }
+
+    private async Task ExportResultAsync(
+        ResultExportFormat format,
+        CancellationToken cancellationToken)
+    {
+        await RefreshResultAsync(
+            recordHighScore: false,
+            cancellationToken);
+        if (State.Result is null
+            || _sessionId is not SessionId sessionId
+            || String.IsNullOrWhiteSpace(_resultsDirectory))
+        {
+            State.Status =
+                "Complete a session before exporting its result.";
+            return;
+        }
+
+        IReadOnlyList<Qso> qsos =
+            await _client.ListCompletedQsosAsync(
+                sessionId,
+                cancellationToken);
+        ResultExportArtifact artifact = ResultExporter.Create(
+            State.Result,
+            qsos,
+            format,
+            State.HstOperatorName);
+        State.LastExportPath = await ResultExporter.SaveAtomicAsync(
+            _resultsDirectory,
+            artifact,
+            cancellationToken);
+        State.View = TuiView.Results;
+        State.Status =
+            $"Exported {format} result to {State.LastExportPath}.";
+    }
+
+    private async Task OpenRecordingAsync()
+    {
+        string? path = _recordingPreference?.DiscoverLatest()
+            ?? State.LastRecordingPath;
+        if (String.IsNullOrWhiteSpace(path) || !File.Exists(path))
+        {
+            State.Status = "No completed WAV recording was found.";
+            return;
+        }
+
+        State.LastRecordingPath = path;
+        await _artifactLauncher(path);
+        State.Status = $"Opened recording {path}.";
+    }
+
+    public async Task SavePreferencesAsync(
+        CancellationToken cancellationToken)
+    {
+        if (_settingsStore is null)
+        {
+            return;
+        }
+
+        var values = new Dictionary<string, string>(
+            StringComparer.OrdinalIgnoreCase)
+        {
+            ["Station.Call"] = State.StationCall,
+            ["Station.Wpm"] = State.WordsPerMinute.ToString(
+                CultureInfo.InvariantCulture),
+            ["Settings.WpmStepRate"] = _wpmStepRate.ToString(
+                CultureInfo.InvariantCulture),
+            ["Station.Pitch"] = State.PitchHz.ToString(
+                CultureInfo.InvariantCulture),
+            ["Station.BandWidth"] = State.BandwidthHz.ToString(
+                CultureInfo.InvariantCulture),
+            ["Station.SelfMonVolume"] = State.MonitorLevelDb.ToString(
+                CultureInfo.InvariantCulture),
+            ["Station.CWMinRxSpeed"] =
+                State.ReceiveSpeedBelowWpm.ToString(
+                    CultureInfo.InvariantCulture),
+            ["Station.CWMaxRxSpeed"] =
+                State.ReceiveSpeedAboveWpm.ToString(
+                    CultureInfo.InvariantCulture),
+            ["Station.SerialNR"] = ((int)State.SerialNumberRange).ToString(
+                CultureInfo.InvariantCulture),
+            ["Station.SerialNrCustomMinimum"] =
+                State.CustomSerialNumberMinimum.ToString(
+                    CultureInfo.InvariantCulture),
+            ["Station.SerialNrCustomMaximum"] =
+                State.CustomSerialNumberExclusiveMaximum.ToString(
+                    CultureInfo.InvariantCulture),
+            ["Station.SerialNrCustomRange"] = string.Create(
+                CultureInfo.InvariantCulture,
+                $"{State.CustomSerialNumberMinimum.ToString($"D{State.CustomSerialNumberMinimumDigits}", CultureInfo.InvariantCulture)}-{State.CustomSerialNumberExclusiveMaximum.ToString($"D{State.CustomSerialNumberMaximumDigits}", CultureInfo.InvariantCulture)}"),
+            ["Station.Name"] = State.HstOperatorName,
+            ["Station.Qsk"] = State.Qsk.ToString(
+                CultureInfo.InvariantCulture),
+            ["Station.SaveWav"] = State.RecordingEnabled.ToString(
+                CultureInfo.InvariantCulture),
+            ["Band.Activity"] = State.Activity.ToString(
+                CultureInfo.InvariantCulture),
+            ["Band.Qsb"] = State.Qsb.ToString(
+                CultureInfo.InvariantCulture),
+            ["Band.Qrm"] = State.Qrm.ToString(
+                CultureInfo.InvariantCulture),
+            ["Band.Qrn"] = State.Qrn.ToString(
+                CultureInfo.InvariantCulture),
+            ["Band.Flutter"] = State.Flutter.ToString(
+                CultureInfo.InvariantCulture),
+            ["Band.Lids"] = State.Lids.ToString(
+                CultureInfo.InvariantCulture),
+            ["Contest.SimContest"] = State.Contest.Id.Value,
+            ["Contest.DefaultRunMode"] = State.RunMode.Value,
+            ["Contest.Duration"] = State.DurationMinutes.ToString(
+                CultureInfo.InvariantCulture),
+            ["Contest.CompetitionDuration"] =
+                State.CompetitionDurationMinutes.ToString(
+                    CultureInfo.InvariantCulture),
+        };
+        foreach (ContestDefinition contest in ContestCatalog.All)
+        {
+            values[$"Contest.OperatorExchange.{contest.Id.Value}"] =
+                State.GetOperatorExchange(contest.Id);
+        }
+        await _settingsStore.SaveAsync(
+            new(SettingsDocument.CurrentSchemaVersion, values),
+            cancellationToken);
     }
 
     private async Task RefreshSnapshotAsync(CancellationToken cancellationToken)
@@ -674,15 +1343,15 @@ public sealed class TuiApplication : IDisposable
         }
     }
 
-    private void Draw(bool ansi)
+    private void Draw(TerminalCapabilities capabilities)
     {
-        (int width, int height) = GetViewportSize(ansi);
+        (int width, int height) = GetViewportSize(capabilities.UseAnsi);
         string frame = TuiRenderer.Render(
             State,
             width,
             height,
-            useColor: ansi);
-        if (ansi)
+            useColor: capabilities.UseColor);
+        if (capabilities.UseAnsi)
         {
             WriteAnsiFrame(frame, width, height);
         }
@@ -775,10 +1444,289 @@ public sealed class TuiApplication : IDisposable
         _lifetime.Cancel();
     }
 
-    private static bool SupportsAnsi()
+    private void ApplyPreferences(
+        IReadOnlyDictionary<string, string> values)
     {
-        string? term = Environment.GetEnvironmentVariable("TERM");
-        return !String.Equals(term, "dumb", StringComparison.OrdinalIgnoreCase);
+        State.StationCall = Get(values, "Station.Call", State.StationCall);
+        State.WordsPerMinute = GetInt(
+            values,
+            "Station.Wpm",
+            State.WordsPerMinute);
+        _wpmStepRate = Math.Clamp(
+            GetInt(
+                values,
+                "Settings.WpmStepRate",
+                _wpmStepRate),
+            1,
+            20);
+        State.PitchHz = GetInt(values, "Station.Pitch", State.PitchHz);
+        State.BandwidthHz = GetInt(
+            values,
+            "Station.BandWidth",
+            State.BandwidthHz);
+        State.MonitorLevelDb = GetDouble(
+            values,
+            "Station.SelfMonVolume",
+            State.MonitorLevelDb);
+        State.ReceiveSpeedBelowWpm = GetInt(
+            values,
+            "Station.CWMinRxSpeed",
+            State.ReceiveSpeedBelowWpm);
+        State.ReceiveSpeedAboveWpm = GetInt(
+            values,
+            "Station.CWMaxRxSpeed",
+            State.ReceiveSpeedAboveWpm);
+        State.SerialNumberRange = (SerialNumberRangeMode)Math.Clamp(
+            GetInt(
+                values,
+                "Station.SerialNR",
+                (int)State.SerialNumberRange),
+            0,
+            Enum.GetValues<SerialNumberRangeMode>().Length - 1);
+        State.CustomSerialNumberMinimum = GetInt(
+            values,
+            "Station.SerialNrCustomMinimum",
+            State.CustomSerialNumberMinimum);
+        State.CustomSerialNumberExclusiveMaximum = GetInt(
+            values,
+            "Station.SerialNrCustomMaximum",
+            State.CustomSerialNumberExclusiveMaximum);
+        if (TryParseSerialNumberRange(
+                Get(
+                    values,
+                    "Station.SerialNrCustomRange",
+                    string.Create(
+                        CultureInfo.InvariantCulture,
+                        $"{State.CustomSerialNumberMinimum.ToString($"D{State.CustomSerialNumberMinimumDigits}", CultureInfo.InvariantCulture)}-{State.CustomSerialNumberExclusiveMaximum.ToString($"D{State.CustomSerialNumberMaximumDigits}", CultureInfo.InvariantCulture)}")),
+                out int minimum,
+                out int maximum,
+                out int minimumDigits,
+                out int maximumDigits))
+        {
+            State.CustomSerialNumberMinimum = minimum;
+            State.CustomSerialNumberExclusiveMaximum = maximum;
+            State.CustomSerialNumberMinimumDigits = minimumDigits;
+            State.CustomSerialNumberMaximumDigits = maximumDigits;
+        }
+
+        if (State.CustomSerialNumberMinimum < 1
+            || State.CustomSerialNumberExclusiveMaximum
+                <= State.CustomSerialNumberMinimum
+            || State.CustomSerialNumberExclusiveMaximum > 9_999)
+        {
+            State.CustomSerialNumberMinimum = 1;
+            State.CustomSerialNumberExclusiveMaximum = 99;
+            State.CustomSerialNumberMinimumDigits = 2;
+            State.CustomSerialNumberMaximumDigits = 2;
+        }
+
+        State.HstOperatorName = Get(
+            values,
+            "Station.Name",
+            State.HstOperatorName);
+        State.Qsk = GetBool(values, "Station.Qsk", State.Qsk);
+        State.RecordingEnabled = GetBool(
+            values,
+            "Station.SaveWav",
+            State.RecordingEnabled);
+        State.Activity = GetInt(values, "Band.Activity", State.Activity);
+        State.Qsb = GetBool(values, "Band.Qsb", State.Qsb);
+        State.Qrm = GetBool(values, "Band.Qrm", State.Qrm);
+        State.Qrn = GetBool(values, "Band.Qrn", State.Qrn);
+        State.Flutter = GetBool(
+            values,
+            "Band.Flutter",
+            State.Flutter);
+        State.Lids = GetBool(values, "Band.Lids", State.Lids);
+
+        string contestId = Get(
+            values,
+            "Contest.SimContest",
+            State.Contest.Id.Value);
+        int contestIndex = ContestCatalog.All
+            .Select((contest, index) => (contest, index))
+            .FirstOrDefault(
+                item => item.contest.Id.Value == contestId)
+            .index;
+        if (ContestCatalog.All[contestIndex].Id.Value == contestId)
+        {
+            State.ContestIndex = contestIndex;
+        }
+        foreach (ContestDefinition contest in ContestCatalog.All)
+        {
+            State.SetOperatorExchange(contest.Id, Get(
+                values,
+                $"Contest.OperatorExchange.{contest.Id.Value}",
+                contest.ExchangeDefault));
+        }
+
+        string runMode = Get(
+            values,
+            "Contest.DefaultRunMode",
+            State.RunMode.Value);
+        int runModeIndex = TuiState.RunModes
+            .Select((mode, index) => (mode, index))
+            .FirstOrDefault(item => item.mode.Value == runMode)
+            .index;
+        if (TuiState.RunModes[runModeIndex].Value == runMode)
+        {
+            State.RunModeIndex = runModeIndex;
+        }
+
+        int duration = GetInt(
+            values,
+            "Contest.Duration",
+            State.DurationMinutes);
+        int durationIndex = -1;
+        for (int index = 0;
+            index < TuiState.DurationMinutesValues.Count;
+            index++)
+        {
+            if (TuiState.DurationMinutesValues[index] == duration)
+            {
+                durationIndex = index;
+                break;
+            }
+        }
+        if (durationIndex >= 0)
+        {
+            State.DurationIndex = durationIndex;
+        }
+        State.CompetitionDurationMinutes = Math.Clamp(
+            GetInt(
+                values,
+                "Contest.CompetitionDuration",
+                State.CompetitionDurationMinutes),
+            1,
+            60);
+    }
+
+    private static bool ShouldPersist(TuiActionKind action) =>
+        action is TuiActionKind.NextContest
+            or TuiActionKind.PreviousContest
+            or TuiActionKind.NextRunMode
+            or TuiActionKind.PreviousRunMode
+            or TuiActionKind.NextDuration
+            or TuiActionKind.ToggleQsk
+            or TuiActionKind.ToggleQsb
+            or TuiActionKind.ToggleQrm
+            or TuiActionKind.ToggleQrn
+            or TuiActionKind.ToggleFlutter
+            or TuiActionKind.ToggleLids
+            or TuiActionKind.ToggleRecording
+            or TuiActionKind.Quit;
+
+    private static bool IsViewAction(TuiActionKind action) =>
+        action is TuiActionKind.ToggleSettings
+            or TuiActionKind.ToggleResults
+            or TuiActionKind.ToggleDiagnostics
+            or TuiActionKind.ToggleRecording
+            or TuiActionKind.ExportJson
+            or TuiActionKind.ExportCabrillo
+            or TuiActionKind.OpenRecording
+            or TuiActionKind.ToggleHelp
+            or TuiActionKind.Quit;
+
+    private static int NextReceiveOffset(int current, int direction)
+    {
+        int[] values = [0, 1, 2, 4, 6, 8, 10];
+        int index = Array.IndexOf(values, current);
+        index = index < 0 ? 0 : index;
+        return values[Mod(index + direction, values.Length)];
+    }
+
+    private static int Mod(int value, int modulus) =>
+        ((value % modulus) + modulus) % modulus;
+
+    private static int DecimalDigitCount(int value) =>
+        value switch
+        {
+            >= 1_000 => 4,
+            >= 100 => 3,
+            >= 10 => 2,
+            _ => 1,
+        };
+
+    private static bool TryParseSerialNumberRange(
+        string value,
+        out int minimum,
+        out int maximum,
+        out int minimumDigits,
+        out int maximumDigits)
+    {
+        string[] parts = value.Split('-', 2);
+        minimum = 0;
+        maximum = 0;
+        bool valid = parts.Length == 2
+            && Int32.TryParse(
+                parts[0],
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out minimum)
+            && Int32.TryParse(
+                parts[1],
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out maximum)
+            && minimum >= 1
+            && maximum > minimum
+            && maximum <= 9_999
+            && parts[0].Length <= 4
+            && parts[1].Length <= 4;
+        minimumDigits = valid ? parts[0].Length : 0;
+        maximumDigits = valid ? parts[1].Length : 0;
+        return valid;
+    }
+
+    private static string Get(
+        IReadOnlyDictionary<string, string> values,
+        string key,
+        string fallback) =>
+        values.TryGetValue(key, out string? value) ? value : fallback;
+
+    private static int GetInt(
+        IReadOnlyDictionary<string, string> values,
+        string key,
+        int fallback) =>
+        values.TryGetValue(key, out string? value)
+        && Int32.TryParse(
+            value,
+            NumberStyles.Integer,
+            CultureInfo.InvariantCulture,
+            out int parsed)
+            ? parsed
+            : fallback;
+
+    private static double GetDouble(
+        IReadOnlyDictionary<string, string> values,
+        string key,
+        double fallback) =>
+        values.TryGetValue(key, out string? value)
+        && Double.TryParse(
+            value,
+            NumberStyles.Float,
+            CultureInfo.InvariantCulture,
+            out double parsed)
+            ? parsed
+            : fallback;
+
+    private static bool GetBool(
+        IReadOnlyDictionary<string, string> values,
+        string key,
+        bool fallback) =>
+        values.TryGetValue(key, out string? value)
+        && Boolean.TryParse(value, out bool parsed)
+            ? parsed
+            : fallback;
+
+    private static Task OpenArtifactAsync(string path)
+    {
+        _ = Process.Start(
+            new ProcessStartInfo(path)
+            {
+                UseShellExecute = true,
+            });
+        return Task.CompletedTask;
     }
 
     private static long DurationBlocks(int minutes)

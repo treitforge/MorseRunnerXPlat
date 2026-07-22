@@ -8,7 +8,8 @@ internal sealed record ContestDxccRecord(
     string Entity,
     string Continent,
     string ItuZones,
-    string CqZones);
+    string CqZones,
+    string PrefixPattern);
 
 internal sealed class ContestDxccDatabase
 {
@@ -86,7 +87,8 @@ internal sealed class ContestDxccDatabase
                     fields[2],
                     fields[3],
                     fields[4],
-                    fields[5]));
+                    fields[5],
+                    fields[1]));
         }
     }
 

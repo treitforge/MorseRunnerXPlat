@@ -38,6 +38,14 @@ namespace MorseRunner.EngineHost
             bool usePhysicalAudio = builder.Configuration.GetValue(
                 "physical-audio",
                 false);
+            int shutdownAfterSeconds = builder.Configuration.GetValue(
+                "shutdown-after-seconds",
+                0);
+            if (shutdownAfterSeconds is < 0 or > 300)
+            {
+                throw new InvalidOperationException(
+                    "Shutdown delay must be between 0 and 300 seconds.");
+            }
 
             await using var client = new InProcessMorseRunnerClient(
                 usePhysicalAudio
@@ -76,7 +84,17 @@ namespace MorseRunner.EngineHost
                         DateTimeOffset.UtcNow),
                     CancellationToken.None);
                 HostReady(application.Logger, endpoint, null);
-                await application.WaitForShutdownAsync();
+                if (shutdownAfterSeconds == 0)
+                {
+                    await application.WaitForShutdownAsync();
+                }
+                else
+                {
+                    await Task.Delay(
+                        TimeSpan.FromSeconds(shutdownAfterSeconds));
+                    await application.StopAsync();
+                }
+
                 return 0;
             }
             finally

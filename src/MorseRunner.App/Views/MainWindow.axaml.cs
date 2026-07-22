@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
@@ -41,6 +42,8 @@ public sealed partial class MainWindow : Window
             new ScoreWindowViewModel(
                 args.Score,
                 args.QsoCount,
+                args.QsoRatePerHour,
+                args.HighScore,
                 args.Contest,
                 args.Elapsed));
         _ = window.ShowDialog(this);
@@ -82,6 +85,13 @@ public sealed partial class MainWindow : Window
     private void FocusSetupClick(object? sender, RoutedEventArgs args)
     {
         this.FindControl<TextBox>("StationCallBox")?.Focus();
+    }
+
+    private async void MonitorLevelChanged(
+        object? sender,
+        RangeBaseValueChangedEventArgs args)
+    {
+        await ViewModel.SetMonitorLevelAsync(args.NewValue);
     }
 
     private void KeyboardHelpClick(object? sender, RoutedEventArgs args)
@@ -173,11 +183,7 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        if (args.KeyModifiers == KeyModifiers.None
-            && args.Key is Key.OemPeriod
-                or Key.OemComma
-                or Key.OemPlus
-                or Key.OemOpenBrackets)
+        if (IsQsoCompletionShortcut(args.Key, args.KeyModifiers))
         {
             _ = ViewModel.CompleteQsoCommand.ExecuteAsync(null);
             args.Handled = true;
@@ -206,6 +212,13 @@ public sealed partial class MainWindow : Window
             }
         }
     }
+
+    internal static bool IsQsoCompletionShortcut(
+        Key key,
+        KeyModifiers modifiers) =>
+        modifiers == KeyModifiers.None
+            && key is Key.OemPeriod or Key.OemComma or Key.OemOpenBrackets
+        || modifiers == KeyModifiers.Shift && key is Key.OemPlus;
 
     private static void EntryGotFocus(
         object? sender,

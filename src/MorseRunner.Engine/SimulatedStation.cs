@@ -7,10 +7,18 @@ namespace MorseRunner.Engine;
 public sealed class SimulatedStation
 {
     private readonly MorseToneRenderer _renderer;
+    private readonly LegacyRandom _random;
+    private readonly ContestId _contestId;
+    private readonly SerialNumberRangeMode _serialNumberRange;
+    private readonly int _customSerialNumberMinimum;
+    private readonly int _customSerialNumberMinimumDigits;
+    private readonly QsbProcessor? _qsb;
+    private readonly LegacyStationMixer _mixer;
     private readonly float[] _scratch =
         new float[CompatibilityProfile.BlockSize];
-    private double _bfoPhase;
     private int _timeoutBlocks = int.MaxValue;
+    private bool _numberWithError;
+    private bool _transmissionCompletedInRenderedBlock;
 
     public SimulatedStation(
         StationIdentity identity,
@@ -20,25 +28,39 @@ public sealed class SimulatedStation
         OperatorRunMode runMode,
         bool lids = false,
         bool sweepstakes = false,
-        OperatorState initialOperatorState = OperatorState.NeedPreviousEnd)
+        OperatorState initialOperatorState = OperatorState.NeedPreviousEnd,
+        ContestId? contestId = null,
+        SerialNumberRangeMode serialNumberRange =
+            SerialNumberRangeMode.StartOfContest,
+        int customSerialNumberMinimum = 1,
+        int customSerialNumberMinimumDigits = 2)
     {
         Identity = identity ?? throw new ArgumentNullException(nameof(identity));
+        _random = random ?? throw new ArgumentNullException(nameof(random));
+        _contestId = contestId ?? new("scWpx");
+        _serialNumberRange = serialNumberRange;
+        _customSerialNumberMinimum = customSerialNumberMinimum;
+        _customSerialNumberMinimumDigits = customSerialNumberMinimumDigits;
         WordsPerMinute = wordsPerMinute;
         PitchOffsetHz = pitchOffsetHz;
         Operator = new(
             identity.Callsign,
             initialOperatorState,
-            random,
+            _random,
             runMode,
             lids,
             sweepstakes);
         State = StationState.Copying;
+        R1 = 0f;
+        Amplitude = 36_000f;
+        CharacterWordsPerMinute = wordsPerMinute;
         _renderer = new(
             CompatibilityProfile.SampleRate,
             CompatibilityProfile.BlockSize,
             wordsPerMinute,
             carrierFrequency: 600f,
             gain: 1f);
+        _mixer = new(CompatibilityProfile.SampleRate);
     }
 
     public StationIdentity Identity { get; }
@@ -49,7 +71,13 @@ public sealed class SimulatedStation
 
     public int WordsPerMinute { get; }
 
+    internal int CharacterWordsPerMinute { get; }
+
     public int PitchOffsetHz { get; }
+
+    internal float R1 { get; private set; }
+
+    internal float Amplitude { get; private set; }
 
     public StationReply LastReply { get; private set; }
 
@@ -58,6 +86,146 @@ public sealed class SimulatedStation
     public bool IsComplete =>
         Operator.State is OperatorState.Done or OperatorState.Failed;
 
+    private SimulatedStation(
+        StationIdentity identity,
+        int wordsPerMinute,
+        int characterWordsPerMinute,
+        int pitchOffsetHz,
+        LegacyRandom random,
+        SimulatedOperator simulatedOperator,
+        QsbProcessor qsb,
+        float r1,
+        float amplitude,
+        bool numberWithError,
+        ContestId contestId,
+        SerialNumberRangeMode serialNumberRange,
+        int customSerialNumberMinimum,
+        int customSerialNumberMinimumDigits)
+    {
+        Identity = identity;
+        _random = random;
+        _contestId = contestId;
+        _serialNumberRange = serialNumberRange;
+        _customSerialNumberMinimum = customSerialNumberMinimum;
+        _customSerialNumberMinimumDigits = customSerialNumberMinimumDigits;
+        WordsPerMinute = wordsPerMinute;
+        CharacterWordsPerMinute = characterWordsPerMinute;
+        PitchOffsetHz = pitchOffsetHz;
+        Operator = simulatedOperator;
+        State = StationState.Copying;
+        _qsb = qsb;
+        R1 = r1;
+        Amplitude = amplitude;
+        _numberWithError = numberWithError;
+        _renderer = new(
+            CompatibilityProfile.SampleRate,
+            CompatibilityProfile.BlockSize,
+            wordsPerMinute,
+            carrierFrequency: 600f,
+            gain: 1f);
+        _mixer = new(CompatibilityProfile.SampleRate);
+    }
+
+    internal static SimulatedStation CreateCandidate(
+        Func<StationIdentity> identityFactory,
+        Func<int> wordsPerMinuteFactory,
+        LegacyRandom random,
+        LegacyRandomEffects randomEffects,
+        OperatorRunMode runMode,
+        bool lids,
+        bool sweepstakes,
+        bool flutter,
+        ContestId contestId,
+        SerialNumberRangeMode serialNumberRange,
+        int customSerialNumberMinimum,
+        int customSerialNumberMinimumDigits)
+    {
+        ArgumentNullException.ThrowIfNull(identityFactory);
+        ArgumentNullException.ThrowIfNull(wordsPerMinuteFactory);
+        ArgumentNullException.ThrowIfNull(random);
+        ArgumentNullException.ThrowIfNull(randomEffects);
+
+        float r1 = random.NextSingle();
+        StationIdentity identity = identityFactory();
+        var simulatedOperator = new SimulatedOperator(
+            identity.Callsign,
+            OperatorState.NeedPreviousEnd,
+            random,
+            runMode,
+            lids,
+            sweepstakes);
+        bool numberWithError = lids && random.NextDouble() < 0.1d;
+        int wordsPerMinute = wordsPerMinuteFactory();
+        if (lids && random.NextDouble() < 0.03d)
+        {
+            identity = identity with
+            {
+                Rst = (559 + (10 * random.Next(4))).ToString(
+                    CultureInfo.InvariantCulture),
+            };
+        }
+
+        var qsb = new QsbProcessor(randomEffects)
+        {
+            Bandwidth = (float)(
+                0.1d + (random.NextDouble() / 2d)),
+        };
+        if (flutter && random.NextDouble() < 0.3d)
+        {
+            qsb.Bandwidth = (float)(
+                3d + (random.NextDouble() * 30d));
+        }
+
+        float amplitude = (float)(
+            9_000f
+            + (18_000f * (1f + randomEffects.UShaped())));
+        int pitchRange = runMode == OperatorRunMode.SingleCall ? 50 : 300;
+        int pitchOffsetHz = (int)MathF.Round(
+            randomEffects.GaussianLimited(0f, pitchRange),
+            MidpointRounding.ToEven);
+        return new(
+            identity,
+            wordsPerMinute,
+            wordsPerMinute,
+            pitchOffsetHz,
+            random,
+            simulatedOperator,
+            qsb,
+            r1,
+            amplitude,
+            numberWithError,
+            contestId,
+            serialNumberRange,
+            customSerialNumberMinimum,
+            customSerialNumberMinimumDigits);
+    }
+
+    internal static SimulatedStation CreateScriptedForParity(
+        StationIdentity identity,
+        int wordsPerMinute,
+        int pitchOffsetHz,
+        float amplitude,
+        OperatorRunMode runMode,
+        string message)
+    {
+        ArgumentNullException.ThrowIfNull(identity);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(wordsPerMinute);
+        if (!float.IsFinite(amplitude) || amplitude <= 0f)
+        {
+            throw new ArgumentOutOfRangeException(nameof(amplitude));
+        }
+
+        var station = new SimulatedStation(
+            identity,
+            wordsPerMinute,
+            pitchOffsetHz,
+            new LegacyRandom(1),
+            runMode);
+        station.Amplitude = amplitude;
+        station.StartScriptedTransmissionForParity(message);
+        return station;
+    }
+
     public static SimulatedStation CreateReadyCaller(
         StationIdentity identity,
         int wordsPerMinute,
@@ -65,7 +233,12 @@ public sealed class SimulatedStation
         LegacyRandom random,
         OperatorRunMode runMode,
         bool lids,
-        bool sweepstakes)
+        bool sweepstakes,
+        ContestId? contestId = null,
+        SerialNumberRangeMode serialNumberRange =
+            SerialNumberRangeMode.StartOfContest,
+        int customSerialNumberMinimum = 1,
+        int customSerialNumberMinimumDigits = 2)
     {
         var station = new SimulatedStation(
             identity,
@@ -75,10 +248,21 @@ public sealed class SimulatedStation
             runMode,
             lids,
             sweepstakes,
-            OperatorState.NeedQso);
+            OperatorState.NeedQso,
+            contestId,
+            serialNumberRange,
+            customSerialNumberMinimum,
+            customSerialNumberMinimumDigits);
         station.State = StationState.PreparingToSend;
         station._timeoutBlocks = station.Operator.GetSendDelay(wordsPerMinute);
         return station;
+    }
+
+    internal void PrepareReadyCaller()
+    {
+        Operator.SetState(OperatorState.NeedQso);
+        State = StationState.PreparingToSend;
+        _timeoutBlocks = Operator.GetSendDelay(WordsPerMinute);
     }
 
     public void ReceiveOperatorStarted()
@@ -140,55 +324,104 @@ public sealed class SimulatedStation
         }
     }
 
-    public void AdvanceBlock(
+    internal void RenderBlock(
         Span<float> receiverReal,
         Span<float> receiverImaginary,
-        bool mixOutput = true)
+        bool qsbEnabled,
+        int ritOffsetHz,
+        float ritPhase,
+        bool mixOutput = true,
+        Span<float> envelopeObservation = default)
     {
-        if (State == StationState.Sending)
+        _transmissionCompletedInRenderedBlock = false;
+        if (State != StationState.Sending)
         {
-            bool hadAudio = _renderer.HasPendingAudio;
-            _renderer.RenderEnvelope(_scratch);
-            if (mixOutput)
-            {
-                double phaseStep =
-                    2d * Math.PI * PitchOffsetHz
-                    / CompatibilityProfile.SampleRate;
-                for (int index = 0; index < receiverReal.Length; index++)
-                {
-                    float amplitude = _scratch[index] * 36_000f;
-                    receiverReal[index] +=
-                        amplitude * (float)Math.Cos(_bfoPhase);
-                    receiverImaginary[index] -=
-                        amplitude * (float)Math.Sin(_bfoPhase);
-                    _bfoPhase += phaseStep;
-                    if (_bfoPhase >= 2d * Math.PI)
-                    {
-                        _bfoPhase -= 2d * Math.PI;
-                    }
-                    else if (_bfoPhase <= -2d * Math.PI)
-                    {
-                        _bfoPhase += 2d * Math.PI;
-                    }
-                }
-            }
-
-            if (hadAudio && !_renderer.HasPendingAudio)
-            {
-                FinishTransmission();
-            }
-
             return;
         }
 
-        if (_timeoutBlocks != int.MaxValue)
+        bool hadAudio = _renderer.HasPendingAudio;
+        _renderer.RenderEnvelope(_scratch);
+        if (qsbEnabled)
         {
-            _timeoutBlocks--;
-            if (_timeoutBlocks == 0)
-            {
-                ExpireTimeout();
-            }
+            (_qsb
+                ?? throw new InvalidOperationException(
+                    "The QSB-enabled station has no QSB processor."))
+                .Apply(_scratch);
         }
+
+        if (!envelopeObservation.IsEmpty)
+        {
+            if (envelopeObservation.Length != _scratch.Length)
+            {
+                throw new ArgumentException(
+                    "The station envelope observation must match the "
+                    + "compatibility block size.",
+                    nameof(envelopeObservation));
+            }
+
+            _scratch.CopyTo(envelopeObservation);
+        }
+
+        if (mixOutput)
+        {
+            for (int index = 0; index < _scratch.Length; index++)
+            {
+                _scratch[index] *= Amplitude;
+            }
+
+            _mixer.MixBlock(
+                _scratch,
+                receiverReal,
+                receiverImaginary,
+                ritOffsetHz,
+                ritPhase);
+        }
+
+        _transmissionCompletedInRenderedBlock =
+            hadAudio && !_renderer.HasPendingAudio;
+    }
+
+    internal void StartScriptedTransmissionForParity(string message)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(message);
+        if (State == StationState.Sending || _renderer.HasPendingAudio)
+        {
+            throw new InvalidOperationException(
+                "The station already has a pending transmission.");
+        }
+
+        _mixer.BeginTransmission(PitchOffsetHz);
+        _renderer.LoadMessage(message);
+        State = StationState.Sending;
+        _timeoutBlocks = int.MaxValue;
+    }
+
+    internal StationBlockTransition Tick()
+    {
+        if (State == StationState.Sending
+            && _transmissionCompletedInRenderedBlock)
+        {
+            _transmissionCompletedInRenderedBlock = false;
+            FinishTransmission();
+            return StationBlockTransition.ReplyCompleted;
+        }
+
+        if (State == StationState.Sending
+            || _timeoutBlocks == int.MaxValue)
+        {
+            return StationBlockTransition.None;
+        }
+
+        _timeoutBlocks--;
+        if (_timeoutBlocks != 0)
+        {
+            return StationBlockTransition.None;
+        }
+
+        ExpireTimeout();
+        return State == StationState.Sending
+            ? StationBlockTransition.ReplyStarted
+            : StationBlockTransition.None;
     }
 
     public void ExpireTimeout()
@@ -219,6 +452,7 @@ public sealed class SimulatedStation
 
     public void FinishTransmission()
     {
+        _transmissionCompletedInRenderedBlock = false;
         State = StationState.Listening;
         _timeoutBlocks = Operator.GetReplyTimeout(WordsPerMinute);
     }
@@ -251,6 +485,7 @@ public sealed class SimulatedStation
         string message = string.Join(
             ' ',
             Enumerable.Repeat(LastReplyText, Operator.RepeatCount));
+        _mixer.BeginTransmission(PitchOffsetHz);
         _renderer.LoadMessage(message);
         State = StationState.Sending;
         _timeoutBlocks = int.MaxValue;
@@ -284,6 +519,53 @@ public sealed class SimulatedStation
 
     private string FormatExchange()
     {
+        if (_contestId.Value == "scCwt")
+        {
+            return $"{Identity.Exchange1}  {Identity.Exchange2}";
+        }
+
+        if (_contestId.Value is "scFieldDay" or "scSst")
+        {
+            return $"{Identity.Exchange1} {Identity.Exchange2}";
+        }
+
+        if (_contestId.Value == "scNaQp")
+        {
+            return string.IsNullOrWhiteSpace(Identity.Exchange2)
+                ? Identity.Exchange1
+                : $"{Identity.Exchange1} {Identity.Exchange2}";
+        }
+
+        if (_contestId.Value == "scArrlSS")
+        {
+            return $"{Identity.Exchange1} {Identity.Callsign} {Identity.Exchange2}";
+        }
+
+        if (_contestId.Value == "scCQWW")
+        {
+            return FormatCqwwExchange();
+        }
+
+        if (_contestId.Value == "scArrlDx")
+        {
+            return FormatArrlDxExchange();
+        }
+
+        if (_contestId.Value is "scAllJa" or "scAcag")
+        {
+            return FormatJarlExchange();
+        }
+
+        if (_contestId.Value == "scIaruHf")
+        {
+            return FormatIaruHfExchange();
+        }
+
+        if (_contestId.Value is "scWpx" or "scHst")
+        {
+            return FormatSerialExchange();
+        }
+
         string rst = ToCutNumbers(Identity.Rst);
         string exchange = Identity.Exchange2;
         if (int.TryParse(exchange, out int number))
@@ -297,8 +579,242 @@ public sealed class SimulatedStation
             : rst + exchange;
     }
 
+    private string FormatSerialExchange()
+    {
+        int minimumDigits = GetSerialMinimumDigits();
+        string result = Identity.Rst
+            + Identity.Number.ToString(
+                $"D{minimumDigits}",
+                CultureInfo.InvariantCulture);
+        result = ApplyNumberError(result);
+
+        if (Operator.RunMode == OperatorRunMode.Hst)
+        {
+            return result.Replace("599", "5NN", StringComparison.Ordinal);
+        }
+
+        if (_random.NextDouble() < 0.05d)
+        {
+            result = result.Replace("599", "ENN", StringComparison.Ordinal);
+        }
+
+        result = result
+            .Replace("599", "5NN", StringComparison.Ordinal)
+            .Replace("000", "TTT", StringComparison.Ordinal)
+            .Replace("00", "TT", StringComparison.Ordinal);
+        if (_random.NextDouble() < 0.98d)
+        {
+            result = result.Replace('0', 'T');
+        }
+
+        if (_random.NextDouble() < 0.4d)
+        {
+            result = result.Replace('0', 'O');
+        }
+        else if (_random.NextDouble() < 0.97d)
+        {
+            result = result.Replace('0', 'T');
+        }
+
+        if (_random.NextDouble() < 0.97d)
+        {
+            result = result.Replace('9', 'N');
+        }
+
+        return result;
+    }
+
+    private string ApplyNumberError(string result)
+    {
+        if (!_numberWithError)
+        {
+            return result;
+        }
+
+        _numberWithError = false;
+        int digitIndex = result.Length - 1;
+        if (digitIndex >= 0 && !IsEligibleErrorDigit(result[digitIndex]))
+        {
+            digitIndex--;
+        }
+
+        if (digitIndex < 0 || !IsEligibleErrorDigit(result[digitIndex]))
+        {
+            return result;
+        }
+
+        char[] characters = result.ToCharArray();
+        characters[digitIndex] = _random.NextDouble() < 0.5d
+            ? (char)(characters[digitIndex] - 1)
+            : (char)(characters[digitIndex] + 1);
+        return new string(characters)
+            + "EEEEE "
+            + Identity.Number.ToString("000", CultureInfo.InvariantCulture);
+    }
+
+    private int GetSerialMinimumDigits()
+    {
+        if (_contestId.Value == "scHst")
+        {
+            return 3;
+        }
+
+        return _serialNumberRange switch
+        {
+            SerialNumberRangeMode.StartOfContest => 3,
+            SerialNumberRangeMode.MidContest => 2,
+            SerialNumberRangeMode.EndOfContest => 3,
+            SerialNumberRangeMode.Custom when R1 < 0.5f =>
+                _customSerialNumberMinimumDigits,
+            SerialNumberRangeMode.Custom =>
+                DecimalDigitCount(_customSerialNumberMinimum),
+            _ => throw new InvalidOperationException(
+                $"Unknown serial-number range '{_serialNumberRange}'."),
+        };
+    }
+
+    private static bool IsEligibleErrorDigit(char value) =>
+        value is >= '2' and <= '7';
+
+    private string FormatJarlExchange()
+    {
+        string result = $"{Identity.Exchange1} {Identity.Exchange2}";
+        if (Operator.RunMode == OperatorRunMode.Hst)
+        {
+            return result;
+        }
+
+        if (_random.NextDouble() < 0.05d)
+        {
+            result = result.Replace("599", "ENN", StringComparison.Ordinal);
+        }
+
+        result = result.Replace("599", "5NN", StringComparison.Ordinal);
+        if (_random.NextDouble() < 0.4d)
+        {
+            result = result
+                .Replace("00", "TT", StringComparison.Ordinal)
+                .Replace('0', 'O');
+        }
+        else if (_random.NextDouble() < 0.8d)
+        {
+            result = result.Replace('0', 'T');
+        }
+
+        if (_random.NextDouble() < 0.1d)
+        {
+            result = result.Replace('9', 'N');
+        }
+
+        return result;
+    }
+
+    private string FormatArrlDxExchange()
+    {
+        string result = $"{Identity.Exchange1} {Identity.Exchange2}";
+        if (Operator.RunMode == OperatorRunMode.Hst)
+        {
+            return result;
+        }
+
+        if (_random.NextDouble() < 0.05d)
+        {
+            result = result.Replace("599", "ENN", StringComparison.Ordinal);
+        }
+
+        result = result.Replace("599", "5NN", StringComparison.Ordinal);
+        if (!int.TryParse(Identity.Exchange2, out _))
+        {
+            return result;
+        }
+
+        result = result
+            .Replace("000", "TTT", StringComparison.Ordinal)
+            .Replace("00", "TT", StringComparison.Ordinal);
+        if (_random.NextDouble() < 0.4d)
+        {
+            result = result.Replace('0', 'O');
+        }
+        else if (_random.NextDouble() < 0.97d)
+        {
+            result = result.Replace('0', 'T');
+        }
+
+        return R1 < 0.70f
+            ? ToFullCutNumbers(result)
+            : result;
+    }
+
+    private string FormatCqwwExchange()
+    {
+        string result = $"{Identity.Exchange1} {Identity.Exchange2}";
+        if (Operator.RunMode != OperatorRunMode.Hst
+            && _random.NextDouble() < 0.05d)
+        {
+            result = result.Replace("599", "ENN", StringComparison.Ordinal);
+        }
+
+        result = result.Replace("599", "5NN", StringComparison.Ordinal);
+        if (Operator.RunMode == OperatorRunMode.Hst)
+        {
+            return result;
+        }
+
+        result = result
+            .Replace("000", "TTT", StringComparison.Ordinal)
+            .Replace("00", "TT", StringComparison.Ordinal);
+
+        // CE evaluates both random operands before the CQ-zone exclusions.
+        _ = _random.NextDouble();
+        _ = _random.NextDouble();
+
+        return R1 < 0.70f
+            ? ToFullCutNumbers(result)
+            : result;
+    }
+
+    private string FormatIaruHfExchange()
+    {
+        string result = $"{Identity.Exchange1} {Identity.Exchange2}";
+        if (Operator.RunMode == OperatorRunMode.Hst)
+        {
+            return result;
+        }
+
+        if (_random.NextDouble() < 0.05d)
+        {
+            result = result.Replace("599", "ENN", StringComparison.Ordinal);
+        }
+
+        return result.Replace("599", "5NN", StringComparison.Ordinal);
+    }
+
+    internal string ObserveExchangeForParity()
+    {
+        return FormatExchange();
+    }
+
     private static string ToCutNumbers(string value) =>
         value.Replace('9', 'N').Replace('0', 'T');
+
+    private static string ToFullCutNumbers(string value) =>
+        ToCutNumbers(value).Replace('1', 'A');
+
+    private static int DecimalDigitCount(int value) =>
+        value switch
+        {
+            >= 1_000 => 4,
+            >= 100 => 3,
+            >= 10 => 2,
+            _ => 1,
+        };
+}
+
+internal enum StationBlockTransition
+{
+    None,
+    ReplyStarted,
+    ReplyCompleted,
 }
 
 public sealed record StationIdentity(
@@ -309,4 +825,6 @@ public sealed record StationIdentity(
     string Exchange2,
     string Precedence = "",
     int Check = 0,
-    string Section = "");
+    string Section = "",
+    string OperatorName = "",
+    string UserText = "");

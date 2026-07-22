@@ -24,7 +24,10 @@ public sealed class App : Application
             paths.EnsureWritableDirectories();
             var recording = new RecordingPreference(paths);
             var settings = new SettingsStore(
-                Path.Combine(paths.Settings, "settings.json"));
+                Path.Combine(paths.Settings, "settings.json"),
+                paths.LegacySettingsImport);
+            var highScores = new HighScoreStore(
+                Path.Combine(paths.Results, "high-scores.json"));
             InProcessMorseRunnerClient client =
                 InProcessMorseRunnerClient.CreateWithPhysicalAudio(
                     recordingPathProvider: recording.CreatePath);
@@ -32,7 +35,9 @@ public sealed class App : Application
                 new MainWindowViewModel(
                     client,
                     recordingPreference: recording,
-                    settingsStore: settings));
+                    settingsStore: settings,
+                    highScoreStore: highScores,
+                    resultsDirectory: paths.Results));
         }
 
         base.OnFrameworkInitializationCompleted();

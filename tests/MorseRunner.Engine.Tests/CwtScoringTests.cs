@@ -8,7 +8,7 @@ public sealed class CwtScoringTests
     private static readonly ClientId Client = new("cwt-tests");
 
     [Fact]
-    public async Task ScoreUsesPointsTimesUniqueWorkedCalls()
+    public async Task DirectLogWithoutStationTruthDoesNotScore()
     {
         await using var engine =
             new MorseRunnerEngine(_ => new NullAudioSink());
@@ -26,27 +26,24 @@ public sealed class CwtScoringTests
                 Client),
             TestContext.Current.CancellationToken);
 
-        foreach (string call in
-                 new[] { "K1ABC", "K2XYZ", "K1ABC", "K2XYZ/P" })
-        {
-            Assert.True(
-                (await engine.ExecuteAsync(
-                    new LogQsoCommand(
-                        RequestId.New(),
-                        handle.SessionId,
-                        Client,
-                        call,
-                        "599",
-                        "DAVID",
-                        "123"),
-                    TestContext.Current.CancellationToken)).Accepted);
-        }
+        Assert.True(
+            (await engine.ExecuteAsync(
+                new LogQsoCommand(
+                    RequestId.New(),
+                    handle.SessionId,
+                    Client,
+                    "K1ABC",
+                    "599",
+                    "DAVID",
+                    "123"),
+                TestContext.Current.CancellationToken)).Accepted);
 
-        IReadOnlyList<Qso> qsos =
-            engine.GetCompletedQsos(handle.SessionId);
-        Assert.Equal([false, false, true, false], qsos.Select(qso => qso.IsDuplicate));
-        Assert.All(qsos, qso => Assert.Equal(qso.Call, qso.Multiplier));
-        Assert.Equal(9, engine.GetSnapshot(handle.SessionId).Score);
+        Qso qso = Assert.Single(engine.GetCompletedQsos(handle.SessionId));
+        Assert.Equal(qso.Call, qso.Multiplier);
+        Assert.Equal(LogError.Nil, qso.ExchangeError);
+        Assert.Empty(qso.TrueCall);
+        Assert.Equal(0, qso.Points);
+        Assert.Equal(0, engine.GetSnapshot(handle.SessionId).Score);
     }
 
     [Theory]

@@ -17,18 +17,99 @@ public sealed class EnterSendMessageTests
         Assert.Equal(
             EnterSendMessageOutcome.SendCq,
             result.EnterSendMessage?.Outcome);
-        Assert.Equal(["CQ TEST"], result.EnterSendMessage?.SentMessages);
-        Assert.Equal("CQ TEST", session.Snapshot.LastOperatorMessage);
+        Assert.Equal(
+            ["CQ W7SST TEST"],
+            result.EnterSendMessage?.SentMessages);
+        Assert.Equal(
+            "CQ W7SST TEST",
+            session.Snapshot.LastOperatorMessage);
         Assert.Equal(0, session.Snapshot.QsoCount);
     }
 
+    [Fact]
+    public async Task ExplicitCqUsesConfiguredCallForCqWpx()
+    {
+        await using var session = await StartedSession.CreateAsync();
+
+        CommandResult result = await session.SendAsync(OperatorIntent.Cq);
+
+        Assert.True(result.Accepted);
+        Assert.Equal(
+            "CQ W7SST TEST",
+            session.Snapshot.LastOperatorMessage);
+    }
+
     [Theory]
-    [InlineData("KC", false)]
-    [InlineData("KC?", true)]
-    [InlineData("KC7?", true)]
-    public async Task PartialOrUncertainCallSendsOnlyEnteredCall(
-        string call,
-        bool selectQuestionMark)
+    [InlineData("scWpx", "CQ W7SST TEST")]
+    [InlineData("scCwt", "CQ CWT W7SST")]
+    [InlineData("scFieldDay", "CQ FD W7SST")]
+    [InlineData("scNaQp", "CQ W7SST TEST")]
+    [InlineData("scHst", "CQ W7SST TEST")]
+    [InlineData("scCQWW", "CQ W7SST TEST")]
+    [InlineData("scArrlDx", "CQ W7SST TEST")]
+    [InlineData("scSst", "CQ SST W7SST")]
+    [InlineData("scAllJa", "CQ W7SST TEST")]
+    [InlineData("scAcag", "CQ W7SST TEST")]
+    [InlineData("scIaruHf", "CQ W7SST TEST")]
+    [InlineData("scArrlSS", "CQ SS W7SST")]
+    public async Task ExplicitCqUsesCeContestText(
+        string contestId,
+        string expected)
+    {
+        await using var session = await StartedSession.CreateAsync(
+            new(contestId));
+
+        CommandResult result = await session.SendAsync(OperatorIntent.Cq);
+
+        Assert.True(result.Accepted);
+        Assert.Equal(expected, session.Snapshot.LastOperatorMessage);
+    }
+
+    [Fact]
+    public async Task ShortCqWpxCallSendsOnlyCallAndFocusesSerialExchange()
+    {
+        await using var session = await StartedSession.CreateAsync();
+
+        CommandResult result = await session.EnterAsync("KC", "5NN", "", "");
+
+        Assert.True(result.Accepted);
+        Assert.Equal(
+            EnterSendMessageOutcome.SendEnteredCall,
+            result.EnterSendMessage?.Outcome);
+        Assert.Equal(["KC"], result.EnterSendMessage?.SentMessages);
+        Assert.Equal(
+            EntryFocusTarget.Exchange1,
+            result.EnterSendMessage?.FocusTarget);
+        Assert.False(result.EnterSendMessage?.SelectQuestionMark);
+        Assert.False(result.EnterSendMessage?.ClearEntry);
+        Assert.Equal("KC", session.Snapshot.LastOperatorMessage);
+        Assert.Equal(0, session.Snapshot.QsoCount);
+    }
+
+    [Fact]
+    public async Task ShortCallOutsideCertifiedWpxRouteRetainsCallFocus()
+    {
+        await using var session = await StartedSession.CreateAsync(
+            new("scCwt"));
+
+        CommandResult result = await session.EnterAsync("KC", "", "", "");
+
+        Assert.True(result.Accepted);
+        Assert.Equal(
+            EnterSendMessageOutcome.SendEnteredCall,
+            result.EnterSendMessage?.Outcome);
+        Assert.Equal(["KC"], result.EnterSendMessage?.SentMessages);
+        Assert.Equal(
+            EntryFocusTarget.Call,
+            result.EnterSendMessage?.FocusTarget);
+        Assert.False(result.EnterSendMessage?.SelectQuestionMark);
+    }
+
+    [Theory]
+    [InlineData("KC?")]
+    [InlineData("KC7?")]
+    public async Task UncertainCallSendsOnlyEnteredCallAndSelectsQuestionMark(
+        string call)
     {
         await using var session = await StartedSession.CreateAsync();
 
@@ -40,9 +121,7 @@ public sealed class EnterSendMessageTests
             result.EnterSendMessage?.Outcome);
         Assert.Equal([call], result.EnterSendMessage?.SentMessages);
         Assert.Equal(EntryFocusTarget.Call, result.EnterSendMessage?.FocusTarget);
-        Assert.Equal(
-            selectQuestionMark,
-            result.EnterSendMessage?.SelectQuestionMark);
+        Assert.True(result.EnterSendMessage?.SelectQuestionMark);
         Assert.False(result.EnterSendMessage?.ClearEntry);
         Assert.Equal(call, session.Snapshot.LastOperatorMessage);
         Assert.Equal(0, session.Snapshot.QsoCount);
@@ -64,6 +143,79 @@ public sealed class EnterSendMessageTests
             result.EnterSendMessage?.SentMessages);
         Assert.Equal("KC7AVA 5NN 001", session.Snapshot.LastOperatorMessage);
         Assert.Equal(0, session.Snapshot.QsoCount);
+    }
+
+    [Fact]
+    public async Task WipeResetsEsmStateWithoutSendingAnAbortMessage()
+    {
+        await using var session = await StartedSession.CreateAsync();
+        _ = await session.SendAsync(OperatorIntent.HisCall);
+        _ = await session.SendAsync(OperatorIntent.Exchange);
+
+        CommandResult wiped = await session.Engine.ExecuteAsync(
+            new ResetOperatorEntryCommand(
+                RequestId.New(),
+                session.SessionId,
+                TestClient),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(wiped.Accepted);
+        Assert.Equal("5NN 001", session.Snapshot.LastOperatorMessage);
+
+        CommandResult result = await session.EnterAsync("KC7AVA", "5NN", "123", "");
+
+        Assert.True(result.Accepted);
+        Assert.Equal(
+            EnterSendMessageOutcome.SendCallAndExchange,
+            result.EnterSendMessage?.Outcome);
+        Assert.Equal(
+            ["KC7AVA", "5NN 001"],
+            result.EnterSendMessage?.SentMessages);
+        Assert.Equal(0, session.Snapshot.QsoCount);
+    }
+
+    [Fact]
+    public async Task AbortResetsEsmStateBeforeTheNextEnterWorkflow()
+    {
+        await using var session = await StartedSession.CreateAsync();
+        _ = await session.SendAsync(OperatorIntent.HisCall);
+        _ = await session.SendAsync(OperatorIntent.Exchange);
+
+        CommandResult aborted = await session.SendAsync(OperatorIntent.Abort);
+
+        Assert.True(aborted.Accepted);
+        Assert.Empty(session.Snapshot.LastOperatorMessage ?? string.Empty);
+
+        CommandResult result = await session.EnterAsync("KC7AVA", "5NN", "123", "");
+
+        Assert.True(result.Accepted);
+        Assert.Equal(
+            EnterSendMessageOutcome.SendCallAndExchange,
+            result.EnterSendMessage?.Outcome);
+        Assert.Equal(
+            ["KC7AVA", "5NN 001"],
+            result.EnterSendMessage?.SentMessages);
+        Assert.Equal(0, session.Snapshot.QsoCount);
+    }
+
+    [Fact]
+    public async Task CqWpxCallWithBlankRstStillFocusesSerialExchange()
+    {
+        await using var session = await StartedSession.CreateAsync();
+
+        CommandResult result = await session.EnterAsync(
+            "KC7AVA",
+            "",
+            "",
+            "");
+
+        Assert.True(result.Accepted);
+        Assert.Equal(
+            EnterSendMessageOutcome.SendCallAndExchange,
+            result.EnterSendMessage?.Outcome);
+        Assert.Equal(
+            EntryFocusTarget.Exchange1,
+            result.EnterSendMessage?.FocusTarget);
     }
 
     [Fact]
@@ -181,7 +333,9 @@ public sealed class EnterSendMessageTests
         Assert.Equal(
             EnterSendMessageOutcome.SendCq,
             next.EnterSendMessage?.Outcome);
-        Assert.Equal("CQ TEST", session.Snapshot.LastOperatorMessage);
+        Assert.Equal(
+            "CQ W7SST TEST",
+            session.Snapshot.LastOperatorMessage);
         Assert.Equal(1, session.Snapshot.QsoCount);
     }
 
@@ -199,6 +353,30 @@ public sealed class EnterSendMessageTests
 
         Assert.Equal("?", session.Snapshot.LastOperatorMessage);
         Assert.Equal(0, session.Snapshot.QsoCount);
+    }
+
+    [Fact]
+    public async Task StationIdRateAddsCallAtThresholdAndResetsAfterTuFinishes()
+    {
+        await using var session = await StartedSession.CreateAsync(
+            new("scWpx"),
+            new("rmPileup"),
+            stationIdRate: 3);
+
+        _ = await session.SendAsync(OperatorIntent.ThankYou);
+        Assert.Equal("TU", session.Snapshot.LastOperatorMessage);
+        _ = await session.SendAsync(OperatorIntent.Abort);
+
+        _ = await session.LogAsync("K1ABC", "5NN", "123", "");
+        _ = await session.LogAsync("K1ABC", "5NN", "123", "");
+        _ = await session.SendAsync(OperatorIntent.ThankYou);
+        Assert.Equal("TU W7SST", session.Snapshot.LastOperatorMessage);
+
+        _ = await session.LogAsync("K1ABC", "5NN", "123", "");
+        _ = await session.AdvanceAsync(128);
+        _ = await session.SendAsync(OperatorIntent.ThankYou);
+
+        Assert.Equal("TU", session.Snapshot.LastOperatorMessage);
     }
 
     [Theory]
@@ -241,7 +419,9 @@ public sealed class EnterSendMessageTests
         Assert.Equal(
             EnterSendMessageOutcome.CompleteAndLogQso,
             completed.EnterSendMessage?.Outcome);
-        Assert.Equal(["TU"], completed.EnterSendMessage?.SentMessages);
+        Assert.Equal(
+            contestId == "scSst" ? ["TU W7SST"] : ["TU"],
+            completed.EnterSendMessage?.SentMessages);
         Assert.Equal(1, session.Snapshot.QsoCount);
     }
 
@@ -260,13 +440,25 @@ public sealed class EnterSendMessageTests
         public SessionSnapshot Snapshot => Engine.GetSnapshot(SessionId);
 
         public static async Task<StartedSession> CreateAsync(
-            ContestId? contestId = null)
+            ContestId? contestId = null,
+            RunModeId? runModeId = null,
+            int stationIdRate = 3)
         {
             var engine = new MorseRunnerEngine();
-            SessionSettings settings = SessionSettings.CreateDefault(12_345);
+            SessionSettings settings = SessionSettings.CreateDefault(12_345)
+                with
+            {
+                StationCall = "W7SST",
+                StationIdRate = stationIdRate,
+            };
             if (contestId is ContestId selectedContest)
             {
                 settings = settings with { ContestId = selectedContest };
+            }
+
+            if (runModeId is RunModeId selectedRunMode)
+            {
+                settings = settings with { RunModeId = selectedRunMode };
             }
 
             SessionHandle handle = await engine.CreateSessionAsync(
@@ -305,6 +497,31 @@ public sealed class EnterSendMessageTests
                     "5NN",
                     "",
                     ""),
+                TestContext.Current.CancellationToken);
+
+        public Task<CommandResult> LogAsync(
+            string call,
+            string rst,
+            string exchange1,
+            string exchange2) =>
+            Engine.ExecuteAsync(
+                new LogQsoCommand(
+                    RequestId.New(),
+                    SessionId,
+                    TestClient,
+                    call,
+                    rst,
+                    exchange1,
+                    exchange2),
+                TestContext.Current.CancellationToken);
+
+        public Task<CommandResult> AdvanceAsync(int blockCount) =>
+            Engine.ExecuteAsync(
+                new AdvanceSimulationCommand(
+                    RequestId.New(),
+                    SessionId,
+                    TestClient,
+                    blockCount),
                 TestContext.Current.CancellationToken);
 
         public ValueTask DisposeAsync() => Engine.DisposeAsync();

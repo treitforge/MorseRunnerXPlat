@@ -50,6 +50,9 @@ public static class TransportMapper
             ExchangeType2 = value.ExchangeType2,
             ExchangeFieldEditable = value.ExchangeFieldEditable,
             ExchangeDefault = value.ExchangeDefault,
+            ExchangeCaption1 = value.ExchangeCaption1,
+            ExchangeCaption2 = value.ExchangeCaption2,
+            ValidationMessage = value.ValidationMessage,
         };
 
     public static Contract.SessionSettingsMessage ToTransport(
@@ -61,10 +64,13 @@ public static class TransportMapper
             RunModeId = value.RunModeId.Value,
             DurationBlocks = value.DurationBlocks,
             StationCall = value.StationCall,
+            OperatorExchange = value.OperatorExchange,
             WordsPerMinute = value.WordsPerMinute,
             PitchHz = value.PitchHz,
             BandwidthHz = value.BandwidthHz,
             Activity = value.Activity,
+            CompetitionDurationMinutes = value.CompetitionDurationMinutes,
+            StationIdRate = value.StationIdRate,
             Qsk = value.Qsk,
             Qsb = value.Qsb,
             Qrm = value.Qrm,
@@ -72,6 +78,18 @@ public static class TransportMapper
             Flutter = value.Flutter,
             Lids = value.Lids,
             MonitorLevelDb = value.MonitorLevelDb,
+            ReceiveSpeedBelowWpm = value.ReceiveSpeedBelowWpm,
+            ReceiveSpeedAboveWpm = value.ReceiveSpeedAboveWpm,
+            SerialNumberRange = ToTransport(value.SerialNumberRange),
+            CustomSerialNumberMinimum = value.CustomSerialNumberMinimum,
+            CustomSerialNumberExclusiveMaximum =
+                value.CustomSerialNumberExclusiveMaximum,
+            CustomSerialNumberMinimumDigits =
+                value.CustomSerialNumberMinimumDigits,
+            CustomSerialNumberMaximumDigits =
+                value.CustomSerialNumberMaximumDigits,
+            HstOperatorName = value.HstOperatorName,
+            AudioOutputDeviceName = value.AudioOutputDeviceName ?? string.Empty,
         };
 
     public static Domain.SessionSettings ToDomain(
@@ -83,10 +101,18 @@ public static class TransportMapper
             value.DurationBlocks)
         {
             StationCall = value.StationCall,
+            OperatorExchange = value.OperatorExchange,
             WordsPerMinute = value.WordsPerMinute,
             PitchHz = value.PitchHz,
             BandwidthHz = value.BandwidthHz,
             Activity = value.HasActivity ? value.Activity : 5,
+            CompetitionDurationMinutes =
+                value.HasCompetitionDurationMinutes
+                    ? value.CompetitionDurationMinutes
+                    : 60,
+            StationIdRate = value.HasStationIdRate
+                ? value.StationIdRate
+                : 3,
             Qsk = value.Qsk,
             Qsb = value.Qsb,
             Qrm = value.Qrm,
@@ -96,6 +122,30 @@ public static class TransportMapper
             MonitorLevelDb = value.HasMonitorLevelDb
                 ? value.MonitorLevelDb
                 : -15d,
+            ReceiveSpeedBelowWpm = value.HasReceiveSpeedBelowWpm
+                ? value.ReceiveSpeedBelowWpm
+                : -1,
+            ReceiveSpeedAboveWpm = value.HasReceiveSpeedAboveWpm
+                ? value.ReceiveSpeedAboveWpm
+                : -1,
+            SerialNumberRange = ToDomain(value.SerialNumberRange),
+            CustomSerialNumberMinimum = value.HasCustomSerialNumberMinimum
+                ? value.CustomSerialNumberMinimum
+                : 1,
+            CustomSerialNumberExclusiveMaximum =
+                value.HasCustomSerialNumberExclusiveMaximum
+                ? value.CustomSerialNumberExclusiveMaximum
+                : 99,
+            CustomSerialNumberMinimumDigits =
+                value.HasCustomSerialNumberMinimumDigits
+                ? value.CustomSerialNumberMinimumDigits
+                : 2,
+            CustomSerialNumberMaximumDigits =
+                value.HasCustomSerialNumberMaximumDigits
+                ? value.CustomSerialNumberMaximumDigits
+                : 2,
+            HstOperatorName = value.HstOperatorName,
+            AudioOutputDeviceName = EmptyToNull(value.AudioOutputDeviceName),
         };
 
     public static Contract.SessionHandleMessage ToTransport(
@@ -206,6 +256,9 @@ public static class TransportMapper
                     Exchange2 = intent.Exchange2,
                 };
                 break;
+            case Domain.ResetOperatorEntryCommand:
+                message.ResetOperatorEntry = new();
+                break;
             case Domain.TriggerEnterSendMessageCommand enter:
                 message.EnterSendMessage = new()
                 {
@@ -223,6 +276,13 @@ public static class TransportMapper
                 {
                     Control = ToTransport(control.Control),
                     Delta = control.Delta,
+                };
+                break;
+            case Domain.SetRadioConditionCommand condition:
+                message.SetRadioCondition = new()
+                {
+                    Condition = ToTransport(condition.Condition),
+                    Enabled = condition.Enabled,
                 };
                 break;
             case Domain.LogQsoCommand qso:
@@ -305,6 +365,12 @@ public static class TransportMapper
                     value.OperatorIntent.Exchange1,
                     value.OperatorIntent.Exchange2,
                     revision),
+            Contract.CommandEnvelope.PayloadOneofCase.ResetOperatorEntry =>
+                new Domain.ResetOperatorEntryCommand(
+                    requestId,
+                    sessionId,
+                    clientId,
+                    revision),
             Contract.CommandEnvelope.PayloadOneofCase.EnterSendMessage =>
                 new Domain.TriggerEnterSendMessageCommand(
                     requestId,
@@ -323,6 +389,14 @@ public static class TransportMapper
                     clientId,
                     ToDomain(value.RadioControl.Control),
                     value.RadioControl.Delta,
+                    revision),
+            Contract.CommandEnvelope.PayloadOneofCase.SetRadioCondition =>
+                new Domain.SetRadioConditionCommand(
+                    requestId,
+                    sessionId,
+                    clientId,
+                    ToDomain(value.SetRadioCondition.Condition),
+                    value.SetRadioCondition.Enabled,
                     revision),
             Contract.CommandEnvelope.PayloadOneofCase.LogQso =>
                 new Domain.LogQsoCommand(
@@ -371,6 +445,9 @@ public static class TransportMapper
             LastLoggedCall = value.LastLoggedCall ?? String.Empty,
             ActiveOperatorState = ToTransport(value.ActiveOperatorState),
             QsoRatePerHour = value.QsoRatePerHour,
+            QsbEnabled = value.QsbEnabled,
+            CurrentMonitorLevelDb = value.CurrentMonitorLevelDb,
+            QskEnabled = value.QskEnabled,
         };
         if (lease is not null)
         {
@@ -416,7 +493,10 @@ public static class TransportMapper
             EmptyToNull(value.LastLoggedCall),
             ToDomain(value.ActiveOperatorState),
             value.QsoRatePerHour,
-            value.ActiveStations.Select(ToDomain).ToArray());
+            value.ActiveStations.Select(ToDomain).ToArray(),
+            value.QsbEnabled,
+            value.CurrentMonitorLevelDb,
+            value.QskEnabled);
 
     private static Contract.ActiveStationMessage ToTransport(
         Domain.ActiveStationSnapshot value) =>
@@ -758,6 +838,37 @@ public static class TransportMapper
             _ => throw new ArgumentOutOfRangeException(nameof(value)),
         };
 
+    private static Contract.SerialNumberRangeModeMessage ToTransport(
+        Domain.SerialNumberRangeMode value) =>
+        value switch
+        {
+            Domain.SerialNumberRangeMode.StartOfContest =>
+                Contract.SerialNumberRangeModeMessage.StartOfContest,
+            Domain.SerialNumberRangeMode.MidContest =>
+                Contract.SerialNumberRangeModeMessage.MidContest,
+            Domain.SerialNumberRangeMode.EndOfContest =>
+                Contract.SerialNumberRangeModeMessage.EndOfContest,
+            Domain.SerialNumberRangeMode.Custom =>
+                Contract.SerialNumberRangeModeMessage.Custom,
+            _ => throw new ArgumentOutOfRangeException(nameof(value)),
+        };
+
+    private static Domain.SerialNumberRangeMode ToDomain(
+        Contract.SerialNumberRangeModeMessage value) =>
+        value switch
+        {
+            Contract.SerialNumberRangeModeMessage.Unspecified
+                or Contract.SerialNumberRangeModeMessage.StartOfContest =>
+                Domain.SerialNumberRangeMode.StartOfContest,
+            Contract.SerialNumberRangeModeMessage.MidContest =>
+                Domain.SerialNumberRangeMode.MidContest,
+            Contract.SerialNumberRangeModeMessage.EndOfContest =>
+                Domain.SerialNumberRangeMode.EndOfContest,
+            Contract.SerialNumberRangeModeMessage.Custom =>
+                Domain.SerialNumberRangeMode.Custom,
+            _ => throw new ArgumentOutOfRangeException(nameof(value)),
+        };
+
     private static Contract.OperatorIntentMessage ToTransport(
         Domain.OperatorIntent value) =>
         (Contract.OperatorIntentMessage)((int)value + 1);
@@ -811,6 +922,19 @@ public static class TransportMapper
         int numeric = (int)value - 1;
         return System.Enum.IsDefined(typeof(Domain.RadioControl), numeric)
             ? (Domain.RadioControl)numeric
+            : throw new ArgumentOutOfRangeException(nameof(value));
+    }
+
+    private static Contract.RadioConditionMessage ToTransport(
+        Domain.RadioCondition value) =>
+        (Contract.RadioConditionMessage)((int)value + 1);
+
+    private static Domain.RadioCondition ToDomain(
+        Contract.RadioConditionMessage value)
+    {
+        int numeric = (int)value - 1;
+        return System.Enum.IsDefined(typeof(Domain.RadioCondition), numeric)
+            ? (Domain.RadioCondition)numeric
             : throw new ArgumentOutOfRangeException(nameof(value));
     }
 

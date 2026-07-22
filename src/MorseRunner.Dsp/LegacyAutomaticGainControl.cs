@@ -37,10 +37,11 @@ internal sealed class LegacyAutomaticGainControl
         float noiseOutput = MathF.Min(
             0.25f * maxOutput,
             (float)Math.Pow(10d, 0.05d * noiseOutputDb));
+        float compressionRatio =
+            maxOutput / (maxOutput - noiseOutput);
         _beta = (float)(
             noiseInput
-            / Math.Log(
-                (double)maxOutput / (maxOutput - noiseOutput)));
+            / Math.Log(compressionRatio));
     }
 
     public void Process(ReadOnlySpan<float> input, Span<float> output)
@@ -88,9 +89,10 @@ internal sealed class LegacyAutomaticGainControl
         }
 
         envelope = (float)Math.Exp(envelope);
+        float exponent = -envelope / _beta;
         return (float)(
             _maxOutput
-            * (1d - Math.Exp(-(double)envelope / _beta))
+            * (1d - Math.Exp(exponent))
             / envelope);
     }
 }

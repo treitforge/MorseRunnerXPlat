@@ -5,25 +5,36 @@ using MorseRunner.Engine;
 
 namespace MorseRunner.Audio;
 
-public sealed class BufferedWavAudioSink : IAudioSink
+public sealed class BufferedWavAudioSink : IAudioSink, IAudioSinkMetricsSource
 {
     private const int QueueCapacity = 128;
     private readonly WavAudioSink _wav;
-    private readonly Channel<RecordedBlock> _blocks =
-        Channel.CreateBounded<RecordedBlock>(
-            new BoundedChannelOptions(QueueCapacity)
+    private readonly Channel<RecordedBlock> _blocks;
+    private readonly CancellationTokenSource _lifetime = new();
+    private readonly Task? _writerStartGate;
+    private Task? _writer;
+    private int _completed;
+    private long _droppedBlockCount;
+
+    public BufferedWavAudioSink(string path)
+        : this(path, QueueCapacity, writerStartGate: null)
+    {
+    }
+
+    internal BufferedWavAudioSink(
+        string path,
+        int queueCapacity,
+        Task? writerStartGate)
+    {
+        _wav = new WavAudioSink(path);
+        _blocks = Channel.CreateBounded<RecordedBlock>(
+            new BoundedChannelOptions(queueCapacity)
             {
                 FullMode = BoundedChannelFullMode.Wait,
                 SingleReader = true,
                 SingleWriter = true,
             });
-    private readonly CancellationTokenSource _lifetime = new();
-    private Task? _writer;
-    private int _completed;
-
-    public BufferedWavAudioSink(string path)
-    {
-        _wav = new WavAudioSink(path);
+        _writerStartGate = writerStartGate;
     }
 
     public string Path => _wav.Path;
@@ -50,9 +61,7 @@ public sealed class BufferedWavAudioSink : IAudioSink
                 new RecordedBlock(buffer, samples.Length, simulationBlock)))
         {
             ArrayPool<float>.Shared.Return(buffer);
-            return ValueTask.FromException(
-                new IOException(
-                    "The WAV recording queue is full."));
+            Interlocked.Increment(ref _droppedBlockCount);
         }
 
         return ValueTask.CompletedTask;
@@ -74,6 +83,13 @@ public sealed class BufferedWavAudioSink : IAudioSink
         await _wav.CompleteAsync(cancellationToken);
     }
 
+    public AudioSinkMetrics GetMetrics() =>
+        new(
+            _blocks.Reader.Count,
+            0,
+            Interlocked.Read(ref _droppedBlockCount),
+            true);
+
     public async ValueTask DisposeAsync()
     {
         try
@@ -90,6 +106,11 @@ public sealed class BufferedWavAudioSink : IAudioSink
 
     private async Task WriteBlocksAsync(CancellationToken cancellationToken)
     {
+        if (_writerStartGate is not null)
+        {
+            await _writerStartGate.WaitAsync(cancellationToken);
+        }
+
         await foreach (RecordedBlock block in _blocks.Reader.ReadAllAsync(
             cancellationToken))
         {

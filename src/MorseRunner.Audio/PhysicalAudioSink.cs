@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Diagnostics;
 using MiniAudioExNET;
 using MorseRunner.Domain;
@@ -23,6 +24,11 @@ public enum PhysicalAudioSinkState
     Disposed,
 }
 
+public sealed record PhysicalAudioSinkStartupFrame(
+    int LogicalRequestNumber,
+    bool IsSynchronousPrefill,
+    ImmutableArray<float> Samples);
+
 public sealed record PhysicalAudioSinkDiagnostics(
     PhysicalAudioSinkState State,
     int QueuedBlocks,
@@ -31,7 +37,8 @@ public sealed record PhysicalAudioSinkDiagnostics(
     long DroppedBlockCount,
     long CallbackFaultCount,
     long LastSimulationBlock,
-    TimeSpan TimeSinceLastCallback);
+    TimeSpan TimeSinceLastCallback,
+    ImmutableArray<PhysicalAudioSinkStartupFrame> StartupFraming);
 
 public sealed class PhysicalAudioSink :
     IAudioSink,
@@ -45,6 +52,7 @@ public sealed class PhysicalAudioSink :
     private readonly int _prebufferBlockCount;
     private string? _deviceName;
     private AudioBlockQueue? _queue;
+    private PhysicalAudioPlaybackCoordinator? _playbackCoordinator;
     private AudioSource? _source;
     private AudioStreamFormat _format;
     private SessionId _sessionId;
@@ -53,8 +61,10 @@ public sealed class PhysicalAudioSink :
     private long _underrunCount;
     private long _droppedBlockCount;
     private long _callbackFaultCount;
+    private long _callbackFaultGenerationBaseline;
     private long _lastSimulationBlock = -1;
     private int _playbackStarted;
+    private int _physicalInitializationAttempted;
     private int _state = (int)PhysicalAudioSinkState.Created;
 
     public PhysicalAudioSink(PhysicalAudioSinkOptions? options = null)
@@ -76,21 +86,124 @@ public sealed class PhysicalAudioSink :
             .ToArray();
     }
 
+    internal void PrepareDeviceFreeDiagnostics(int canonicalBlockSize)
+    {
+        if (canonicalBlockSize != CompatibilityProfile.BlockSize)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(canonicalBlockSize),
+                "Device-free diagnostics require the canonical "
+                + "audio block size.");
+        }
+
+        lock (ContextGate)
+        {
+            EnsureDeviceFreeDiagnosticState();
+            if (_playbackCoordinator is null)
+            {
+                PreparePlaybackState(
+                    default,
+                    AudioStreamFormat.Compatibility);
+            }
+            else if (_playbackCoordinator.CanonicalBlockSize
+                != canonicalBlockSize)
+            {
+                throw new InvalidOperationException(
+                    "The device-free diagnostic block size changed.");
+            }
+            else
+            {
+                _playbackCoordinator
+                    .PresentSynchronousStartupPrefill();
+            }
+        }
+    }
+
+    internal bool FillDeviceFreeDiagnostics(
+        ReadOnlySpan<float> canonicalBlock,
+        AudioBuffer<float> output,
+        ulong frameCount,
+        int channels)
+    {
+        if (canonicalBlock.Length != CompatibilityProfile.BlockSize)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(canonicalBlock),
+                "Device-free diagnostics require one canonical audio block.");
+        }
+
+        lock (ContextGate)
+        {
+            EnsureDeviceFreeDiagnosticState();
+            PhysicalAudioPlaybackCoordinator? playbackCoordinator =
+                _playbackCoordinator;
+            if (playbackCoordinator is null)
+            {
+                throw new InvalidOperationException(
+                    "Device-free diagnostics require explicit "
+                    + "startup preparation.");
+            }
+            if (playbackCoordinator.CanonicalBlockSize
+                != canonicalBlock.Length)
+            {
+                throw new InvalidOperationException(
+                    "The device-free diagnostic block size changed.");
+            }
+
+            AudioBlockQueue queue = _queue
+                ?? throw new InvalidOperationException(
+                    "The device-free diagnostic queue is unavailable.");
+            if (!queue.TryWrite(canonicalBlock))
+            {
+                throw new InvalidOperationException(
+                    "The device-free diagnostic queue is full.");
+            }
+
+            return FillPlaybackCore(
+                output,
+                frameCount,
+                channels);
+        }
+    }
+
+    private void EnsureDeviceFreeDiagnosticState()
+    {
+        PhysicalAudioSinkState state =
+            (PhysicalAudioSinkState)Volatile.Read(ref _state);
+        ObjectDisposedException.ThrowIf(
+            state == PhysicalAudioSinkState.Disposed,
+            this);
+        if (state != PhysicalAudioSinkState.Created
+            || _source is not null
+            || Volatile.Read(ref _physicalInitializationAttempted) != 0)
+        {
+            throw new InvalidOperationException(
+                "Device-free diagnostics require a new, "
+                + "uninitialized sink.");
+        }
+    }
+
     public PhysicalAudioSinkDiagnostics GetDiagnostics()
     {
+        PhysicalAudioPlaybackCoordinator? playbackCoordinator =
+            Volatile.Read(ref _playbackCoordinator);
         long callbackTimestamp = Volatile.Read(ref _lastCallbackTimestamp);
         TimeSpan elapsed = callbackTimestamp == 0
             ? TimeSpan.MaxValue
             : Stopwatch.GetElapsedTime(callbackTimestamp);
+        int queuedBlocks = (_queue?.Count ?? 0)
+            + (playbackCoordinator?.StagedCanonicalBlockCount ?? 0);
         return new(
             (PhysicalAudioSinkState)Volatile.Read(ref _state),
-            _queue?.Count ?? 0,
+            queuedBlocks,
             Interlocked.Read(ref _callbackCount),
             Interlocked.Read(ref _underrunCount),
             Interlocked.Read(ref _droppedBlockCount),
             Interlocked.Read(ref _callbackFaultCount),
             Interlocked.Read(ref _lastSimulationBlock),
-            elapsed);
+            elapsed,
+            playbackCoordinator?.GetObservedStartupFraming()
+                ?? ImmutableArray<PhysicalAudioSinkStartupFrame>.Empty);
     }
 
     public AudioSinkMetrics GetMetrics()
@@ -99,7 +212,9 @@ public sealed class PhysicalAudioSink :
         bool awaitingPrebuffer = diagnostics.State == PhysicalAudioSinkState.Running
             && Volatile.Read(ref _playbackStarted) == 0;
         bool isHealthy = diagnostics.State == PhysicalAudioSinkState.Running
-            && diagnostics.CallbackFaultCount == 0
+            && diagnostics.CallbackFaultCount
+                == Interlocked.Read(
+                    ref _callbackFaultGenerationBaseline)
             && (awaitingPrebuffer
                 || diagnostics.TimeSinceLastCallback < TimeSpan.FromSeconds(2));
         return new(
@@ -129,6 +244,7 @@ public sealed class PhysicalAudioSink :
             ObjectDisposedException.ThrowIf(
                 state == PhysicalAudioSinkState.Disposed,
                 this);
+            Volatile.Write(ref _physicalInitializationAttempted, 1);
 
             if (_source is not null)
             {
@@ -145,11 +261,7 @@ public sealed class PhysicalAudioSink :
             s_contextOwner = this;
             try
             {
-                _format = format;
-                _sessionId = sessionId;
-                _queue = new AudioBlockQueue(
-                    _options.QueueDepth,
-                    format.BlockSize);
+                PreparePlaybackState(sessionId, format);
                 DeviceInfo? device = SelectDevice(_deviceName);
                 AudioContext.Initialize(
                     checked((uint)format.SampleRate),
@@ -166,6 +278,9 @@ public sealed class PhysicalAudioSink :
                 Volatile.Write(
                     ref _lastCallbackTimestamp,
                     Stopwatch.GetTimestamp());
+                Interlocked.Exchange(
+                    ref _callbackFaultGenerationBaseline,
+                    Interlocked.Read(ref _callbackFaultCount));
                 Volatile.Write(
                     ref _state,
                     (int)PhysicalAudioSinkState.Running);
@@ -178,6 +293,37 @@ public sealed class PhysicalAudioSink :
         }
 
         return ValueTask.CompletedTask;
+    }
+
+    private PhysicalAudioPlaybackCoordinator PreparePlaybackState(
+        SessionId sessionId,
+        AudioStreamFormat format)
+    {
+        PhysicalAudioPlaybackCoordinator? playbackCoordinator =
+            _playbackCoordinator;
+        if (playbackCoordinator is null
+            || _sessionId != sessionId
+            || _format.BlockSize != format.BlockSize)
+        {
+            playbackCoordinator =
+                new PhysicalAudioPlaybackCoordinator(
+                    format.BlockSize);
+            Volatile.Write(
+                ref _playbackCoordinator,
+                playbackCoordinator);
+        }
+        else
+        {
+            playbackCoordinator.DiscardCanonicalStaging();
+        }
+
+        _format = format;
+        _sessionId = sessionId;
+        _queue = new AudioBlockQueue(
+            _options.QueueDepth,
+            format.BlockSize);
+        playbackCoordinator.PresentSynchronousStartupPrefill();
+        return playbackCoordinator;
     }
 
     public ValueTask WriteAsync(
@@ -294,7 +440,10 @@ public sealed class PhysicalAudioSink :
     {
         try
         {
-            if (!_queue!.FillInterleaved(output, frameCount, channels))
+            if (!FillPlaybackCore(
+                    output,
+                    frameCount,
+                    channels))
             {
                 Interlocked.Increment(ref _underrunCount);
             }
@@ -317,6 +466,30 @@ public sealed class PhysicalAudioSink :
         }
     }
 
+    private bool FillPlaybackCore(
+        AudioBuffer<float> output,
+        ulong frameCount,
+        int channels)
+    {
+        PhysicalAudioPlaybackCoordinator playbackCoordinator =
+            _playbackCoordinator
+            ?? throw new InvalidOperationException(
+                "Physical playback has not been prepared.");
+        AudioBlockQueue queue = _queue
+            ?? throw new InvalidOperationException(
+                "The physical playback queue is unavailable.");
+        if (frameCount > 0)
+        {
+            playbackCoordinator.PresentCompletionDrivenStartup();
+        }
+
+        return playbackCoordinator.FillInterleaved(
+            queue,
+            output,
+            frameCount,
+            channels);
+    }
+
     private void ReleaseContext(PhysicalAudioSinkState finalState)
     {
         if (_source is not null)
@@ -334,6 +507,7 @@ public sealed class PhysicalAudioSink :
         }
 
         _queue = null;
+        _playbackCoordinator?.DiscardCanonicalStaging();
         Volatile.Write(ref _playbackStarted, 0);
         Volatile.Write(ref _state, (int)finalState);
     }

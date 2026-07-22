@@ -8,40 +8,24 @@ public sealed class CqWpxScoringTests
     private static readonly ClientId Client = new("cq-wpx-test");
 
     [Fact]
-    public async Task ScoreUsesPointsTimesUniquePrefixesAndExcludesDuplicates()
+    public async Task DirectLogWithoutStationTruthDoesNotScore()
     {
         await using var engine =
             new MorseRunnerEngine(_ => new NullAudioSink());
         SessionHandle handle = await StartAsync(engine);
-        string[] calls = ["K1ABC", "K2XYZ", "K1ABC", "DL2XYZ", "F6/W7SST"];
-        int[] expectedScores = [1, 4, 4, 9, 16];
+        CommandResult result = await LogAsync(
+            engine,
+            handle.SessionId,
+            "K1ABC",
+            serialNumber: 1);
 
-        for (int index = 0; index < calls.Length; index++)
-        {
-            CommandResult result = await LogAsync(
-                engine,
-                handle.SessionId,
-                calls[index],
-                index + 1);
-
-            Assert.True(result.Accepted, result.Message);
-            Assert.Equal(
-                expectedScores[index],
-                engine.GetSnapshot(handle.SessionId).Score);
-        }
-
-        IReadOnlyList<Qso> qsos =
-            engine.GetCompletedQsos(handle.SessionId);
-        Assert.Equal(5, qsos.Count);
-        Assert.Equal(
-            ["K1", "K2", "K1", "DL2", "F6"],
-            qsos.Select(qso => qso.Prefix));
-        Assert.Equal(
-            [false, false, true, false, false],
-            qsos.Select(qso => qso.IsDuplicate));
-        Assert.Equal(LogError.Duplicate, qsos[2].ExchangeError);
-        Assert.Equal("DUP", qsos[2].ErrorText);
-        Assert.All(qsos, qso => Assert.Equal(1, qso.Points));
+        Qso qso = Assert.Single(engine.GetCompletedQsos(handle.SessionId));
+        Assert.True(result.Accepted, result.Message);
+        Assert.Equal("K1", qso.Prefix);
+        Assert.Equal(LogError.Nil, qso.ExchangeError);
+        Assert.Empty(qso.TrueCall);
+        Assert.Equal(0, qso.Points);
+        Assert.Equal(0, engine.GetSnapshot(handle.SessionId).Score);
     }
 
     [Theory]

@@ -1,5 +1,8 @@
 using System.Diagnostics;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using MorseRunner.Domain;
 using MorseRunner.Dsp;
 
 namespace MorseRunner.Dsp.Tests;
@@ -136,6 +139,7 @@ public sealed class LegacyDspVectorTests
     }
 
     [Fact]
+    [Trait("Category", "Performance")]
     public void ToneRendererMeetsTheCompatibilityBlockBudget()
     {
         var renderer = new MorseToneRenderer(11_025, 512);
@@ -143,11 +147,14 @@ public sealed class LegacyDspVectorTests
         var block = new float[512];
         var durations = new long[1_000];
 
-        for (int index = 0; index < 8; index++)
+        // Complete tiered compilation before measuring the callback's steady state.
+        for (int index = 0; index < 64; index++)
         {
             renderer.Render(block);
         }
 
+        _ = Stopwatch.GetTimestamp();
+        _ = Stopwatch.Frequency;
         long allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
         for (int index = 0; index < durations.Length; index++)
         {
@@ -175,29 +182,124 @@ public sealed class LegacyDspVectorTests
             sampleRate: 11_025,
             blockSize: 512,
             bandwidthHz: 500,
-            requestedCarrierHz: 600);
+            requestedCarrierHz: 600,
+            initialAbsoluteRequestCount: 0);
 
         Assert.Equal(612.5f, receiver.EffectiveCarrierHz);
     }
 
     [Fact]
+    public void ReceiverPipelineWithFreshStartupPhaseSwapsAfterFifthAndFifteenthCalls()
+    {
+        var receiver = CreateReceiver(initialAbsoluteRequestCount: 5);
+        object initialActiveFilter = GetFilter(receiver, "_activeFilter");
+        object initialStandbyFilter = GetFilter(receiver, "_standbyFilter");
+
+        ProcessBlocks(receiver, count: 4);
+
+        Assert.Same(initialActiveFilter, GetFilter(receiver, "_activeFilter"));
+        ProcessBlocks(receiver, count: 1);
+        Assert.Same(initialStandbyFilter, GetFilter(receiver, "_activeFilter"));
+
+        ProcessBlocks(receiver, count: 9);
+
+        Assert.Same(initialStandbyFilter, GetFilter(receiver, "_activeFilter"));
+        ProcessBlocks(receiver, count: 1);
+        Assert.Same(initialActiveFilter, GetFilter(receiver, "_activeFilter"));
+    }
+
+    [Fact]
+    public void ReceiverPipelineWithZeroStartupPhasePreservesTenthCallSwap()
+    {
+        var receiver = CreateReceiver(initialAbsoluteRequestCount: 0);
+        object initialActiveFilter = GetFilter(receiver, "_activeFilter");
+        object initialStandbyFilter = GetFilter(receiver, "_standbyFilter");
+
+        ProcessBlocks(receiver, count: 9);
+
+        Assert.Same(initialActiveFilter, GetFilter(receiver, "_activeFilter"));
+        ProcessBlocks(receiver, count: 1);
+        Assert.Same(initialStandbyFilter, GetFilter(receiver, "_activeFilter"));
+    }
+
+    [Fact]
+    public void ReceiverBandwidthChangeResetsBothFiltersAndPreservesSwapPhase()
+    {
+        var receiver = CreateReceiver(initialAbsoluteRequestCount: 5);
+        ProcessBlocks(receiver, count: 1);
+        object previousActiveFilter = GetFilter(receiver, "_activeFilter");
+        object previousStandbyFilter = GetFilter(receiver, "_standbyFilter");
+
+        receiver.SetBandwidth(250);
+
+        object resetActiveFilter = GetFilter(receiver, "_activeFilter");
+        object resetStandbyFilter = GetFilter(receiver, "_standbyFilter");
+        Assert.NotSame(previousActiveFilter, resetActiveFilter);
+        Assert.NotSame(previousStandbyFilter, resetStandbyFilter);
+        Assert.Equal(612.5f, receiver.EffectiveCarrierHz);
+
+        ProcessBlocks(receiver, count: 3);
+
+        Assert.Same(resetActiveFilter, GetFilter(receiver, "_activeFilter"));
+        ProcessBlocks(receiver, count: 1);
+        Assert.Same(resetStandbyFilter, GetFilter(receiver, "_activeFilter"));
+    }
+
+    [Fact]
+    public void ReceiverBandwidthChangeRejectsNonpositiveValues()
+    {
+        var receiver = CreateReceiver(initialAbsoluteRequestCount: 5);
+
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => receiver.SetBandwidth(0));
+    }
+
+    [Fact]
+    public void ReceiverPipelineRejectsNegativeInitialAbsoluteRequestCount()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => CreateReceiver(initialAbsoluteRequestCount: -1));
+    }
+
+    [Fact]
+    public void ReceiverPipelineProductionStartupVectorIsDeterministic()
+    {
+        float[] first = RenderReceiverVector(
+            CompatibilityProfile.AudioStartupRequestCount);
+        float[] second = RenderReceiverVector(
+            CompatibilityProfile.AudioStartupRequestCount);
+
+        Assert.Equal(first, second);
+        string actualHash = Convert.ToHexString(
+            SHA256.HashData(MemoryMarshal.AsBytes(first.AsSpan())));
+        Assert.Equal(
+            "040792CDB70B2FFABC27C93BB37836BE8CF0EE5766DB021D629363A9BB51D057",
+            actualHash);
+    }
+
+    [Fact]
+    [Trait("Category", "Performance")]
     public void ReceiverPipelineMeetsTheCompatibilityBlockBudget()
     {
         var receiver = new LegacyReceiverPipeline(
             sampleRate: 11_025,
             blockSize: 512,
             bandwidthHz: 500,
-            requestedCarrierHz: 600);
+            requestedCarrierHz: 600,
+            initialAbsoluteRequestCount: 0);
         var real = new float[512];
         var imaginary = new float[512];
         var output = new float[512];
         var durations = new long[200];
 
-        for (int index = 0; index < 8; index++)
+        // Exercise filter rotation and reset before measuring steady-state work.
+        for (int index = 0; index < 64; index++)
         {
             receiver.Process(real, imaginary, output);
         }
 
+        _ = Stopwatch.GetTimestamp();
+        _ = Stopwatch.Frequency;
         long allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
         for (int index = 0; index < durations.Length; index++)
         {
@@ -222,5 +324,76 @@ public sealed class LegacyDspVectorTests
         Assert.True(
             p95Milliseconds < blockPeriodMilliseconds,
             $"p95 receiver duration was {p95Milliseconds:F3} ms.");
+    }
+
+    private static LegacyReceiverPipeline CreateReceiver(
+        int initialAbsoluteRequestCount)
+    {
+        return new(
+            sampleRate: CompatibilityProfile.SampleRate,
+            blockSize: CompatibilityProfile.BlockSize,
+            bandwidthHz: 500,
+            requestedCarrierHz: 600,
+            initialAbsoluteRequestCount);
+    }
+
+    private static object GetFilter(
+        LegacyReceiverPipeline receiver,
+        string fieldName)
+    {
+        FieldInfo? field = typeof(LegacyReceiverPipeline).GetField(
+            fieldName,
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(field);
+        object? filter = field.GetValue(receiver);
+        Assert.NotNull(filter);
+        return filter;
+    }
+
+    private static void ProcessBlocks(
+        LegacyReceiverPipeline receiver,
+        int count)
+    {
+        var real = new float[CompatibilityProfile.BlockSize];
+        var imaginary = new float[CompatibilityProfile.BlockSize];
+        var output = new float[CompatibilityProfile.BlockSize];
+        for (int index = 0; index < count; index++)
+        {
+            receiver.Process(real, imaginary, output);
+        }
+    }
+
+    private static float[] RenderReceiverVector(
+        int initialAbsoluteRequestCount)
+    {
+        const int BlockCount = 20;
+        var receiver = CreateReceiver(initialAbsoluteRequestCount);
+        var random = new LegacyRandom(seed: 12_345);
+        var real = new float[CompatibilityProfile.BlockSize];
+        var imaginary = new float[CompatibilityProfile.BlockSize];
+        var output = new float[
+            BlockCount * CompatibilityProfile.BlockSize];
+
+        for (int block = 0; block < BlockCount; block++)
+        {
+            for (int index = 0;
+                 index < CompatibilityProfile.BlockSize;
+                 index++)
+            {
+                real[index] = (float)(
+                    18_000d * (random.NextDouble() - 0.5d));
+                imaginary[index] = (float)(
+                    18_000d * (random.NextDouble() - 0.5d));
+            }
+
+            receiver.Process(
+                real,
+                imaginary,
+                output.AsSpan(
+                    block * CompatibilityProfile.BlockSize,
+                    CompatibilityProfile.BlockSize));
+        }
+
+        return output;
     }
 }

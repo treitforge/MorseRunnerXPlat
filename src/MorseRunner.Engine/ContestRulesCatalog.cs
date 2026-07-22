@@ -10,10 +10,9 @@ public sealed record ContestValidation(bool IsValid, string Error);
 
 public sealed record ContestRules(
     ContestId Id,
-    ExchangeTypes SentExchangeTypes,
-    ExchangeTypes ReceivedExchangeTypes,
-    bool AllowsFarnsworth,
-    bool DefaultExchangeIsValid)
+    ExchangeTypes BaselineSentExchangeTypes,
+    ExchangeTypes BaselineReceivedExchangeTypes,
+    bool AllowsFarnsworth)
 {
     public static bool LoadCallHistory(string userCallsign)
     {
@@ -30,13 +29,7 @@ public sealed record ContestRules(
 
     public ContestValidation ValidateMyExchange(string exchange)
     {
-        ArgumentNullException.ThrowIfNull(exchange);
-        return DefaultExchangeIsValid
-            ? new ContestValidation(true, string.Empty)
-            : new ContestValidation(
-                false,
-                $"Invalid exchange: '{exchange}' - expecting "
-                + "'RST <serial>' (e.g. 5NN #|123).");
+        return ContestQsoRules.ValidateOwnExchange(Id, exchange);
     }
 
     private static Regex CallsignPattern() =>
@@ -50,31 +43,67 @@ public static class ContestRulesCatalog
     private static readonly ExchangeTypes RstSerial =
         new(ExchangeType1.Rst, ExchangeType2.SerialNumber);
 
+    private static readonly ExchangeTypes OperatorNameGeneric =
+        new(ExchangeType1.OperatorName, ExchangeType2.GenericField);
+
+    // Exchange pairs are the pinned W7SST-to-F6ABC baseline. ARRL DX and
+    // NAQP require call-dependent resolution before these values can serve
+    // general runtime entry layout or validation.
     private static readonly ReadOnlyCollection<ContestRules> Rules =
         Array.AsReadOnly<ContestRules>(
         [
-            new(new("scWpx"), RstSerial, RstSerial, false, true),
-            new(new("scCwt"), RstSerial, RstSerial, false, false),
-            new(new("scFieldDay"), RstSerial, RstSerial, false, false),
+            new(new("scWpx"), RstSerial, RstSerial, false),
+            new(
+                new("scCwt"),
+                OperatorNameGeneric,
+                OperatorNameGeneric,
+                false),
+            new(
+                new("scFieldDay"),
+                new(ExchangeType1.FieldDayClass, ExchangeType2.ArrlSection),
+                new(ExchangeType1.FieldDayClass, ExchangeType2.ArrlSection),
+                false),
             new(
                 new("scNaQp"),
                 new(ExchangeType1.OperatorName, ExchangeType2.NaqpSecondField),
                 new(ExchangeType1.OperatorName, ExchangeType2.NaqpSecondField),
-                false,
-                true),
-            new(new("scHst"), RstSerial, RstSerial, false, true),
-            new(new("scCQWW"), RstSerial, RstSerial, false, true),
+                false),
+            new(new("scHst"), RstSerial, RstSerial, false),
+            new(
+                new("scCQWW"),
+                new(ExchangeType1.Rst, ExchangeType2.CqZone),
+                new(ExchangeType1.Rst, ExchangeType2.CqZone),
+                false),
             new(
                 new("scArrlDx"),
                 new(ExchangeType1.Rst, ExchangeType2.StateProvince),
                 new(ExchangeType1.Rst, ExchangeType2.StateProvince),
-                false,
-                true),
-            new(new("scSst"), RstSerial, RstSerial, true, false),
-            new(new("scAllJa"), RstSerial, RstSerial, false, false),
-            new(new("scAcag"), RstSerial, RstSerial, false, false),
-            new(new("scIaruHf"), RstSerial, RstSerial, false, true),
-            new(new("scArrlSS"), RstSerial, RstSerial, false, true),
+                false),
+            new(new("scSst"), OperatorNameGeneric, OperatorNameGeneric, true),
+            new(
+                new("scAllJa"),
+                new(ExchangeType1.Rst, ExchangeType2.JapanPrefecture),
+                new(ExchangeType1.Rst, ExchangeType2.JapanPrefecture),
+                false),
+            new(
+                new("scAcag"),
+                new(ExchangeType1.Rst, ExchangeType2.JapanCity),
+                new(ExchangeType1.Rst, ExchangeType2.JapanCity),
+                false),
+            new(
+                new("scIaruHf"),
+                new(ExchangeType1.Rst, ExchangeType2.GenericField),
+                new(ExchangeType1.Rst, ExchangeType2.GenericField),
+                false),
+            new(
+                new("scArrlSS"),
+                new(
+                    ExchangeType1.SweepstakesNumberPrecedence,
+                    ExchangeType2.SweepstakesCheckSection),
+                new(
+                    ExchangeType1.SweepstakesNumberPrecedence,
+                    ExchangeType2.SweepstakesCheckSection),
+                false),
         ]);
 
     public static IReadOnlyList<ContestRules> All => Rules;

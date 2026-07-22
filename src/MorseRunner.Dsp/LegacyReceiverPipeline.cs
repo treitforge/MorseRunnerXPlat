@@ -3,6 +3,8 @@ namespace MorseRunner.Dsp;
 public sealed class LegacyReceiverPipeline
 {
     private const float Pcm16Scale = 32_768f;
+    private readonly int _sampleRate;
+    private readonly int _blockSize;
     private readonly float[] _standbyReal;
     private readonly float[] _standbyImaginary;
     private readonly float[] _filteredReal;
@@ -13,19 +15,22 @@ public sealed class LegacyReceiverPipeline
     private LegacyMovingAverageFilter _standbyFilter;
     private readonly LegacyModulator _modulator;
     private readonly LegacyAutomaticGainControl _agc = new();
-    private int _blockNumber;
+    private int _absoluteRequestCount;
 
     public LegacyReceiverPipeline(
         int sampleRate,
         int blockSize,
         int bandwidthHz,
-        int requestedCarrierHz)
+        int requestedCarrierHz,
+        int initialAbsoluteRequestCount)
     {
-        int points = (int)MathF.Round(
-            0.7f * sampleRate / bandwidthHz);
-        float gainDb = 10f * MathF.Log10(500f / bandwidthHz);
-        _activeFilter = new(blockSize, points, passes: 3, gainDb);
-        _standbyFilter = new(blockSize, points, passes: 3, gainDb);
+        ArgumentOutOfRangeException.ThrowIfNegative(
+            initialAbsoluteRequestCount);
+
+        _sampleRate = sampleRate;
+        _blockSize = blockSize;
+        _activeFilter = CreateFilter(bandwidthHz);
+        _standbyFilter = CreateFilter(bandwidthHz);
         _modulator = new(sampleRate, requestedCarrierHz);
         _standbyReal = new float[blockSize];
         _standbyImaginary = new float[blockSize];
@@ -33,9 +38,16 @@ public sealed class LegacyReceiverPipeline
         _filteredImaginary = new float[blockSize];
         _modulated = new float[blockSize];
         _agcOutput = new float[blockSize];
+        _absoluteRequestCount = initialAbsoluteRequestCount;
     }
 
     public float EffectiveCarrierHz => _modulator.EffectiveCarrierHz;
+
+    public void SetBandwidth(int bandwidthHz)
+    {
+        _activeFilter = CreateFilter(bandwidthHz);
+        _standbyFilter = CreateFilter(bandwidthHz);
+    }
 
     public void Process(
         ReadOnlySpan<float> realInput,
@@ -61,6 +73,17 @@ public sealed class LegacyReceiverPipeline
         _agcOutput.AsSpan().CopyTo(output);
     }
 
+    private LegacyMovingAverageFilter CreateFilter(int bandwidthHz)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(bandwidthHz);
+        int points = checked((int)Math.Round(
+            0.7d * _sampleRate / bandwidthHz,
+            MidpointRounding.ToEven));
+        float gainDb = (float)(
+            10d * Math.Log10(500d / bandwidthHz));
+        return new(_blockSize, points, passes: 3, gainDb);
+    }
+
     private void ProcessCore(
         ReadOnlySpan<float> realInput,
         ReadOnlySpan<float> imaginaryInput)
@@ -75,8 +98,8 @@ public sealed class LegacyReceiverPipeline
             imaginaryInput,
             _filteredReal,
             _filteredImaginary);
-        _blockNumber++;
-        if ((_blockNumber % 10) == 0)
+        _absoluteRequestCount++;
+        if ((_absoluteRequestCount % 10) == 0)
         {
             (_activeFilter, _standbyFilter) =
                 (_standbyFilter, _activeFilter);
