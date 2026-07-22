@@ -20,7 +20,7 @@ public sealed class TuiState
 
     public int RunModeIndex { get; set; }
 
-    public int DurationIndex { get; set; } = 4;
+    public int DurationIndex { get; set; } = 30;
 
     public int ActiveField { get; set; }
 
@@ -119,7 +119,7 @@ public sealed class TuiState
     ];
 
     public static IReadOnlyList<int> DurationMinutesValues { get; } =
-        [0, 5, 10, 15, 30, 60, 90, 120];
+        Enumerable.Range(0, 241).ToArray();
 
     public void ClearEntry()
     {

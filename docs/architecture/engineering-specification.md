@@ -3948,9 +3948,11 @@ Current Phase 5 implementation inventory, not parity certification:
   station and radio controls, band conditions, QSO entry and a live QSO log,
   score, contest and run-mode selection, duration, message keys, and score
   dialog.
-- The Avalonia duration editor accepts and persists every whole-minute CE value
-  from 1 through 240. Values loaded or assigned outside that range clamp at the
-  corresponding CE boundary before session creation.
+- The Avalonia duration editor and TUI duration selector accept and persist
+  every whole-minute CE value from 1 through 240. Avalonia values loaded or
+  assigned outside that range clamp at the corresponding CE boundary before
+  session creation. The TUI also retains its explicit zero-minute unlimited
+  extension.
 - The desktop exposes F1 through F12, modifier, entry-field, abort, wipe,
   complete-QSO, RIT, bandwidth, and speed command paths. The audit found that
   several mappings, focus transitions, partial-call Enter behavior, exchange

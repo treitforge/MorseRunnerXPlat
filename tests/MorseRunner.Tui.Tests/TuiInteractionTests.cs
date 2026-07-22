@@ -32,6 +32,17 @@ public sealed class TuiInteractionTests
     }
 
     [Theory]
+    [InlineData(1)]
+    [InlineData(240)]
+    public void DurationSelectorSupportsEveryCeWholeMinute(int minutes)
+    {
+        var state = new TuiState { DurationIndex = minutes };
+
+        Assert.Equal(minutes, state.DurationMinutes);
+        Assert.Contains(minutes, TuiState.DurationMinutesValues);
+    }
+
+    [Theory]
     [InlineData(ConsoleKey.F1, '\0', ConsoleModifiers.None, TuiActionKind.SendCq)]
     [InlineData(ConsoleKey.F9, '\0', ConsoleModifiers.None, TuiActionKind.StartPileup)]
     [InlineData(ConsoleKey.F9, '\0', ConsoleModifiers.Shift, TuiActionKind.StartSingle)]
