@@ -8,6 +8,45 @@ namespace MorseRunner.Audio.Tests;
 public sealed class BufferedWavAudioSinkTests
 {
     [Fact]
+    public async Task FullRecordingQueueDropsOnlyTheRecordingBlock()
+    {
+        string path = Path.Combine(
+            Path.GetTempPath(),
+            $"MorseRunnerXPlat-{Guid.NewGuid():N}.wav");
+        var writerStart = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        try
+        {
+            CancellationToken cancellationToken =
+                TestContext.Current.CancellationToken;
+            await using var sink = new BufferedWavAudioSink(
+                path,
+                queueCapacity: 1,
+                writerStart.Task);
+            await sink.InitializeAsync(
+                SessionId.New(),
+                AudioStreamFormat.Compatibility,
+                cancellationToken);
+            float[] samples = new float[CompatibilityProfile.BlockSize];
+
+            await sink.WriteAsync(samples, 0, cancellationToken);
+            await sink.WriteAsync(samples, 1, cancellationToken);
+
+            AudioSinkMetrics metrics = sink.GetMetrics();
+            Assert.Equal(1, metrics.QueuedBlocks);
+            Assert.Equal(1, metrics.DroppedBlockCount);
+
+            writerStart.SetResult();
+            await sink.CompleteAsync(cancellationToken);
+        }
+        finally
+        {
+            writerStart.TrySetResult();
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
     public async Task BufferedSinkWritesACompletePcm16WaveFile()
     {
         string path = Path.Combine(

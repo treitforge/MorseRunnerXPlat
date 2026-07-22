@@ -8,6 +8,33 @@ namespace MorseRunner.App.Tests;
 public sealed class MainWindowViewModelTests
 {
     [Fact]
+    public void AudioDropIsReportedAsDegradedHealth()
+    {
+        var snapshot = new SessionSnapshot(
+            Guid.NewGuid(),
+            SessionId.New(),
+            SessionState.Running,
+            1,
+            0,
+            0,
+            TimeSpan.Zero,
+            12_345,
+            new ContestId("scWpx"),
+            new RunModeId("rmPileup"),
+            null,
+            0,
+            0,
+            null,
+            AudioQueuedBlocks: 4,
+            AudioDroppedBlockCount: 2,
+            AudioOutputHealthy: true);
+
+        Assert.Equal(
+            "Degraded, 2 audio blocks dropped",
+            MainWindowViewModel.FormatAudioHealth(snapshot));
+    }
+
+    [Fact]
     public async Task CleanProfileMatchesCeDefaults()
     {
         await using var viewModel = new MainWindowViewModel(

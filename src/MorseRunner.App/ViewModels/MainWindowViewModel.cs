@@ -1678,9 +1678,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         RitOffsetHz = snapshot.RitOffsetHz;
         _appliedMonitorLevelDb = snapshot.CurrentMonitorLevelDb;
         MonitorLevel = snapshot.CurrentMonitorLevelDb;
-        AudioHealth = snapshot.AudioOutputHealthy
-            ? $"Healthy, {snapshot.AudioQueuedBlocks} blocks queued"
-            : $"Needs attention, {snapshot.AudioUnderrunCount} underruns";
+        AudioHealth = FormatAudioHealth(snapshot);
         RaiseCommandStateChanged();
         OnPropertyChanged(nameof(CanPlayRecording));
         PlayRecordingCommand.RaiseCanExecuteChanged();
@@ -1699,6 +1697,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             OperatorState.Done => "Complete",
             OperatorState.Failed => "Gone",
             _ => throw new ArgumentOutOfRangeException(nameof(state), state, null),
+        };
+
+    internal static string FormatAudioHealth(SessionSnapshot snapshot) =>
+        snapshot switch
+        {
+            { AudioOutputHealthy: false } =>
+                $"Needs attention, {snapshot.AudioUnderrunCount} underruns",
+            { AudioDroppedBlockCount: > 0 } =>
+                $"Degraded, {snapshot.AudioDroppedBlockCount} audio blocks dropped",
+            { AudioUnderrunCount: > 0 } =>
+                $"Degraded, {snapshot.AudioUnderrunCount} underruns",
+            _ => $"Healthy, {snapshot.AudioQueuedBlocks} blocks queued",
         };
 
     private string FormatCallsignInformation(ActiveStationSnapshot? station)
