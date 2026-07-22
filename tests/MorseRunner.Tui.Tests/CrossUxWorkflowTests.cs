@@ -119,7 +119,7 @@ public sealed class CrossUxWorkflowTests
     }
 
     [Fact]
-    public async Task CqWpxScoringAndDuplicatesMatchAcrossBothUxSurfaces()
+    public async Task CqWpxNilRowsDoNotScoreOrCreateDuplicatesAcrossBothUxSurfaces()
     {
         await using var avalonia = new MainWindowViewModel(
             InProcessMorseRunnerClient.CreateDefault());
@@ -150,17 +150,14 @@ public sealed class CrossUxWorkflowTests
         }
 
         Assert.NotNull(tui.State.Snapshot);
-        Assert.Equal(4, avalonia.Score);
+        Assert.Equal(0, avalonia.Score);
         Assert.Equal(avalonia.Score, tui.State.Snapshot.Score);
         Assert.Equal(3, avalonia.QsoCount);
         Assert.Equal(3, tui.State.Qsos.Count);
-        Assert.True(avalonia.QsoLog[0].IsDuplicate);
-        Assert.True(tui.State.Qsos[^1].IsDuplicate);
-        Assert.Equal("DUP", avalonia.QsoLog[0].Result);
-        Assert.Contains(
-            "duplicate",
-            tui.State.Status,
-            StringComparison.OrdinalIgnoreCase);
+        Assert.All(avalonia.QsoLog, qso => Assert.False(qso.IsDuplicate));
+        Assert.All(tui.State.Qsos, qso => Assert.False(qso.IsDuplicate));
+        Assert.All(avalonia.QsoLog, qso => Assert.Equal("NIL", qso.Result));
+        Assert.All(tui.State.Qsos, qso => Assert.Equal("NIL", qso.ErrorText));
     }
 
     [Fact]

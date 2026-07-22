@@ -32,12 +32,15 @@ public sealed record QsoLogEntryViewModel(
     string Rst,
     string Exchange,
     int Points,
-    bool IsDuplicate)
+    bool IsDuplicate,
+    string ErrorText)
 {
     public string Result =>
         IsDuplicate
             ? "DUP"
-            : Points.ToString(CultureInfo.InvariantCulture);
+            : ErrorText.Length > 0
+                ? ErrorText
+                : Points.ToString(CultureInfo.InvariantCulture);
 }
 
 public sealed class ScoreSummaryEventArgs(
@@ -1770,7 +1773,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                                 new[] { qso.Exchange1, qso.Exchange2 }
                                     .Where(value => value.Length > 0)),
                             qso.Points,
-                            qso.IsDuplicate));
+                            qso.IsDuplicate,
+                            qso.ErrorText));
                 }
             });
         return qsos.Count == 0 ? null : qsos[qsos.Count - 1];

@@ -334,7 +334,7 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task OperatorIntentAndQsoLoggingUseSemanticClientCommands()
+    public async Task OperatorIntentAndNilQsoLoggingUseSemanticClientCommands()
     {
         await using var viewModel = new MainWindowViewModel(
             InProcessMorseRunnerClient.CreateDefault());
@@ -351,7 +351,8 @@ public sealed class MainWindowViewModelTests
         await viewModel.CompleteQsoCommand.ExecuteAsync(null);
 
         Assert.Equal(1, viewModel.QsoCount);
-        Assert.Equal(1, viewModel.Score);
+        Assert.Equal(0, viewModel.Score);
+        Assert.Equal("NIL", Assert.Single(viewModel.QsoLog).Result);
         Assert.Empty(viewModel.CallEntry);
     }
 
