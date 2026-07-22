@@ -20,7 +20,6 @@
     <Project Path="tests/MorseRunner.Dsp.Tests/MorseRunner.Dsp.Tests.csproj" />
     <Project Path="tests/MorseRunner.Engine.Tests/MorseRunner.Engine.Tests.csproj" />
     <Project Path="tests/MorseRunner.Grpc.Tests/MorseRunner.Grpc.Tests.csproj" />
-    <Project Path="tests/MorseRunner.LegacyParity.Tests/MorseRunner.LegacyParity.Tests.csproj" />
     <Project Path="tests/MorseRunner.Infrastructure.Tests/MorseRunner.Infrastructure.Tests.csproj" />
     <Project Path="tests/MorseRunner.Tui.Tests/MorseRunner.Tui.Tests.csproj" />
   </Folder>

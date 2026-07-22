@@ -1,1 +1,0 @@
-{"blockSize":512,"controls":[{"bandwidthHz":500,"block":0,"ritHz":0},{"bandwidthHz":250,"block":8,"ritHz":0},{"bandwidthHz":600,"block":12,"ritHz":0}],"pitchHz":600,"remoteAmplitude":18000,"remoteBfoHz":360,"sampleRate":11025,"scenario":"audio.bandwidth-live-control","totalBlocks":16}

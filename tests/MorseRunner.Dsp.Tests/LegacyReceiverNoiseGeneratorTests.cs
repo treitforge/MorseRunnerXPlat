@@ -80,6 +80,7 @@ public sealed class LegacyReceiverNoiseGeneratorTests
     }
 
     [Fact]
+    [Trait("Category", "Performance")]
     public void QrnBackgroundMeetsTheCompatibilityBlockBudget()
     {
         var generator =

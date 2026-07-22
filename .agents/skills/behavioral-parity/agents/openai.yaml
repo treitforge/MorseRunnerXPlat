@@ -1,4 +1,0 @@
-interface:
-  display_name: "Behavioral Parity"
-  short_description: "Compare the .NET implementation with legacy MorseRunner"
-  default_prompt: "Apply the behavioral-parity workflow to this MorseRunnerXPlat task."

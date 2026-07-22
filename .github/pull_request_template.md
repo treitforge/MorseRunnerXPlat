@@ -2,19 +2,15 @@
 
 Describe the observable change and why it is needed.
 
-## Architecture and compatibility
+## Design
 
 - Owning layer:
-- Parity manifest IDs:
-- Legacy acceptance result:
-- Pre-implementation XPlat red evidence:
-- Current XPlat acceptance result:
-- Engineering specification updated:
+- Architecture or contract impact:
 - Cross-platform impact:
 
 ## Validation
 
-List the exact commands, scenarios, seeds, benchmarks, and visual checks run.
+List the exact commands, scenarios, benchmarks, and visual checks run.
 
 ## Risk
 

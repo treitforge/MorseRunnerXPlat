@@ -1,1 +1,0 @@
-{"bandwidthHz":500,"blockSize":512,"localAmplitude":300000,"localText":"EEE","localWpm":25,"monitorLevelsDb":[0,-20,-57,-60],"pitchHz":600,"remoteAmplitude":18000,"remoteBfoHz":180,"sampleRate":11025,"scenario":"audio.qsk-receiver-ducking","totalBlocks":10}

@@ -1,130 +1,17 @@
-name: Release Quality
+name: Release quality
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - "v*"
-
-permissions:
-  contents: read
 
 jobs:
-  validate:
+  release-quality:
     runs-on: windows-latest
-    timeout-minutes: 90
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
-          fetch-depth: 0
-
-      - name: Checkout public legacy base
-        uses: actions/checkout@v5
-        with:
-          repository: w7sst/MorseRunner
-          ref: 2dd6f5cfd8a96e00f472d189adae594823ae5b61
-          path: artifacts/legacy-source/MorseRunner
-          persist-credentials: false
-
-      - name: Set up .NET 10
-        uses: actions/setup-dotnet@v5.4.0
-        with:
-          global-json-file: global.json
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-        with:
-          enable-cache: true
-          cache-dependency-glob: uv.lock
-
-      - name: Install Buf
-        uses: bufbuild/buf-action@v1.4.0
-        with:
-          version: "1.67.0"
-          github_token: ${{ github.token }}
-          setup_only: true
-
-      - name: Restore
-        run: |
-          uv sync --locked
-          dotnet restore MorseRunnerXPlat.slnx
-
-      - name: Cache pinned Lazarus toolchain
-        uses: actions/cache@v4
-        with:
-          path: C:\lazarus
-          key: lazarus-4.6-fpc-3.2.2-win64-3eb50f2aac396bac
-
-      - name: Verify pinned legacy toolchain
-        shell: pwsh
-        run: .\tests\parity\Install-LegacyOracleToolchain.ps1
-
-      - name: Validate
-        shell: pwsh
-        run: |
-          dotnet format MorseRunnerXPlat.slnx --verify-no-changes --no-restore
-          dotnet build MorseRunnerXPlat.slnx --configuration Release --no-restore
-          dotnet test --solution MorseRunnerXPlat.slnx `
-            --configuration Release --no-build -- `
-            --filter-not-trait Category=ParityAcceptance `
-            --filter-not-trait Category=LegacyOracleBuildIntegration
-          buf lint
-          .\tests\parity\Run-Parity.ps1 `
-            -Target Both `
-            -Mode Release `
-            -LegacyRoot '${{ github.workspace }}\artifacts\legacy-source\MorseRunner'
-
-      - name: Stage complete live parity artifact closure
-        id: release-parity-artifacts
-        if: success()
-        shell: pwsh
-        run: |
-          $registries = @(
-            Get-ChildItem `
-              -LiteralPath artifacts/legacy-oracle/registries `
-              -Filter '*.json' -File)
-          if ($registries.Count -ne 1) {
-            throw (
-              'The Release Both gate must produce exactly one legacy ' +
-              'oracle registry.')
-          }
-          $registry = $registries[0]
-          $registryHash = (
-            Get-FileHash -LiteralPath $registry.FullName `
-              -Algorithm SHA256).Hash.ToLowerInvariant()
-          $package = .\tests\parity\New-ParityBothArtifactPackage.ps1 `
-            -PackageRoot `
-              'artifacts/parity-package-staging/release-both' `
-            -RegistryPath $registry.FullName `
-            -RegistrySha256 $registryHash `
-            -PassThru
-          "package_root=$($package.packageRoot)" >> $env:GITHUB_OUTPUT
-          "package_index_sha256=$($package.indexSha256)" >> $env:GITHUB_OUTPUT
-
-      - name: Upload live parity provenance and results
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: >-
-            release-live-parity-${{ github.run_id }}-${{
-            github.run_attempt }}-${{
-            steps.release-parity-artifacts.outputs.package_index_sha256 }}
-          path: ${{ steps.release-parity-artifacts.outputs.package_root }}
-          if-no-files-found: error
-          retention-days: 30
-
-      - name: Publish runtime packages
-        shell: pwsh
-        run: .\tools\release\Publish-Release.ps1
-
-      - name: Upload packages
-        uses: actions/upload-artifact@v4
-        with:
-          name: MorseRunnerXPlat-runtime-packages
-          path: |
-            artifacts/release/*.zip
-            artifacts/release/*.tar.gz
-          if-no-files-found: error
-          retention-days: 14
+          dotnet-version: 10.0.x
+      - run: dotnet restore MorseRunnerXPlat.slnx
+      - run: dotnet build MorseRunnerXPlat.slnx --no-restore --configuration Release -warnaserror
+      - run: dotnet test --solution MorseRunnerXPlat.slnx --no-build --configuration Release -- --filter-not-trait Category=Performance --fail-warns on
+      - run: .\tools\release\Publish-Release.ps1

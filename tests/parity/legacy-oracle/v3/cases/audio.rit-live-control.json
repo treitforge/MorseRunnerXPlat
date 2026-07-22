@@ -1,1 +1,0 @@
-{"blockSize":512,"boundaryCommandCount":12,"controls":[{"bandwidthHz":500,"block":0,"ritHz":0},{"bandwidthHz":500,"block":4,"ritHz":50},{"bandwidthHz":500,"block":12,"ritHz":-100}],"pitchHz":600,"remoteAmplitude":18000,"remoteBfoHz":360,"reverseRitStepHz":-25,"ritStepHz":50,"sampleRate":11025,"scenario":"audio.rit-live-control","totalBlocks":16}

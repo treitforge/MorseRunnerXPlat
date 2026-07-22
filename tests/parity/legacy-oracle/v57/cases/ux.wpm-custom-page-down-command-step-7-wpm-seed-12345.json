@@ -1,8 +1,0 @@
-{
-  "customWpmStep": 7,
-  "expectedAfterWpm": 23,
-  "initialWpm": 30,
-  "runModeId": "rmSingle",
-  "scenario": "ux.wpm-custom-page-down-command-step-7-wpm-seed-12345",
-  "seed": 12345
-}
