@@ -893,6 +893,7 @@ internal sealed class EngineSession : IAsyncDisposable
             RecoverAudioCommand recover => await ApplyAudioRecoveryAsync(recover),
             AdvanceSimulationCommand advance => await ApplyAdvanceAsync(advance),
             SendOperatorIntentCommand intent => ApplyOperatorIntent(intent),
+            ResetOperatorEntryCommand => ApplyResetOperatorEntry(),
             TriggerEnterSendMessageCommand enter =>
                 ApplyEnterSendMessage(enter),
             AdjustRadioControlCommand control => ApplyRadioControl(control),
@@ -1766,6 +1767,19 @@ internal sealed class EngineSession : IAsyncDisposable
             _esmExchangeSent = true;
         }
 
+        _revision++;
+        return AcceptedResult();
+    }
+
+    private CommandResult ApplyResetOperatorEntry()
+    {
+        if (_state != SessionState.Running)
+        {
+            return InvalidState("reset the operator entry");
+        }
+
+        _esmSentCall = null;
+        _esmExchangeSent = false;
         _revision++;
         return AcceptedResult();
     }

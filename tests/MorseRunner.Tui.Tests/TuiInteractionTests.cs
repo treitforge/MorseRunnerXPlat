@@ -146,6 +146,39 @@ public sealed class TuiInteractionTests
     }
 
     [Fact]
+    public async Task WipeResetsRunningSessionEsmState()
+    {
+        await using InProcessMorseRunnerClient client =
+            InProcessMorseRunnerClient.CreateDefault();
+        using var application = new TuiApplication(client, isHosted: false);
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        await application.InitializeAsync(cancellationToken);
+        await application.HandleAsync(
+            new(TuiActionKind.StartPileup),
+            cancellationToken);
+        application.State.Call = "KC7AVA";
+        await application.HandleAsync(
+            new(TuiActionKind.SendHisCall),
+            cancellationToken);
+        await application.HandleAsync(
+            new(TuiActionKind.SendExchange),
+            cancellationToken);
+
+        await application.HandleAsync(new(TuiActionKind.Wipe), cancellationToken);
+        application.State.Call = "KC7AVA";
+        application.State.Rst = "5NN";
+        application.State.Exchange1 = "123";
+        await application.HandleAsync(
+            new(TuiActionKind.EnterSendMessage),
+            cancellationToken);
+
+        Assert.Equal(
+            "KC7AVA 5NN 001",
+            application.State.Snapshot?.LastOperatorMessage);
+        Assert.Equal(0, application.State.Snapshot?.QsoCount);
+    }
+
+    [Fact]
     public async Task SpeedUpUsesCeDefaultTwoWpmStep()
     {
         await using InProcessMorseRunnerClient client =

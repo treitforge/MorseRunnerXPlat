@@ -1419,11 +1419,25 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         await RefreshAsync();
     }
 
-    private Task WipeAsync()
+    private async Task WipeAsync()
     {
+        if (_sessionId is SessionId sessionId
+            && _sessionState == SessionState.Running)
+        {
+            CommandResult result = await ExecuteAsync(
+                new ResetOperatorEntryCommand(
+                    RequestId.New(),
+                    sessionId,
+                    DesktopClientId));
+            if (!result.Accepted)
+            {
+                Status = result.Message ?? "Entry reset was rejected.";
+                return;
+            }
+        }
+
         ClearEntryFields();
         Status = "Entry fields cleared.";
-        return Task.CompletedTask;
     }
 
     private void ClearEntryFields()

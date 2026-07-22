@@ -2169,6 +2169,10 @@ a concrete client use case.
 - Represent Enter Sends Message as an additive command payload. Its result is
   an additive command-result message so in-process and gRPC clients receive
   identical outcome and focus guidance.
+- Represent a wipe as the additive `ResetOperatorEntry` command. It clears
+  only the engine-owned ESM call and exchange bookkeeping at a session-loop
+  command boundary. Clients clear their editable entry fields after acceptance;
+  the command does not abort an in-flight operator message.
 - Represent receive-speed bounds, serial-number ranges, HST operator identity,
   preferred audio-device name, and station-ID rate as additive
   session-setting fields. An omitted station-ID rate uses the CE default of

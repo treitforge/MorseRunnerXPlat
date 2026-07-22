@@ -256,6 +256,9 @@ public static class TransportMapper
                     Exchange2 = intent.Exchange2,
                 };
                 break;
+            case Domain.ResetOperatorEntryCommand:
+                message.ResetOperatorEntry = new();
+                break;
             case Domain.TriggerEnterSendMessageCommand enter:
                 message.EnterSendMessage = new()
                 {
@@ -361,6 +364,12 @@ public static class TransportMapper
                     value.OperatorIntent.Rst,
                     value.OperatorIntent.Exchange1,
                     value.OperatorIntent.Exchange2,
+                    revision),
+            Contract.CommandEnvelope.PayloadOneofCase.ResetOperatorEntry =>
+                new Domain.ResetOperatorEntryCommand(
+                    requestId,
+                    sessionId,
+                    clientId,
                     revision),
             Contract.CommandEnvelope.PayloadOneofCase.EnterSendMessage =>
                 new Domain.TriggerEnterSendMessageCommand(

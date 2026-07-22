@@ -347,8 +347,7 @@ public sealed class TuiApplication : IDisposable
                     cancellationToken);
                 break;
             case TuiActionKind.Wipe:
-                State.ClearEntry();
-                State.Status = "Entry fields cleared.";
+                await WipeAsync(cancellationToken);
                 break;
             case TuiActionKind.Abort:
                 await SendAsync(OperatorIntent.Abort, cancellationToken);
@@ -623,6 +622,29 @@ public sealed class TuiApplication : IDisposable
         State.Status = result.Accepted
             ? $"Sent {intent}."
             : result.Message ?? "Send rejected.";
+        await RefreshSnapshotAsync(cancellationToken);
+    }
+
+    private async Task WipeAsync(CancellationToken cancellationToken)
+    {
+        if (_sessionId is SessionId sessionId)
+        {
+            CommandResult result = await _client.ExecuteAsync(
+                new ResetOperatorEntryCommand(
+                    RequestId.New(),
+                    sessionId,
+                    TuiClientId),
+                cancellationToken);
+            if (!result.Accepted)
+            {
+                State.Status = result.Message ?? "Entry reset was rejected.";
+                await RefreshSnapshotAsync(cancellationToken);
+                return;
+            }
+        }
+
+        State.ClearEntry();
+        State.Status = "Entry fields cleared.";
         await RefreshSnapshotAsync(cancellationToken);
     }
 

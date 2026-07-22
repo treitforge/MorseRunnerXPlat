@@ -185,6 +185,7 @@ message CommandEnvelope {
     RecoverAudioCommand recover_audio = 18;
     EnterSendMessageCommand enter_send_message = 19;
     SetRadioConditionCommand set_radio_condition = 20;
+    ResetOperatorEntryCommand reset_operator_entry = 21;
   }
 }
 
@@ -216,6 +217,8 @@ message OperatorIntentCommand {
   string exchange_1 = 4;
   string exchange_2 = 5;
 }
+
+message ResetOperatorEntryCommand {}
 
 enum RadioControlMessage {
   RADIO_CONTROL_MESSAGE_UNSPECIFIED = 0;

@@ -76,6 +76,13 @@ public sealed record SendOperatorIntentCommand(
     long? ExpectedRevision = null)
     : SessionCommand(RequestId, SessionId, ClientId, ExpectedRevision);
 
+public sealed record ResetOperatorEntryCommand(
+    RequestId RequestId,
+    SessionId SessionId,
+    ClientId ClientId,
+    long? ExpectedRevision = null)
+    : SessionCommand(RequestId, SessionId, ClientId, ExpectedRevision);
+
 public sealed record QsoEntrySnapshot(
     string Call,
     string Rst,

@@ -55,6 +55,26 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task WipeResetsRunningSessionEsmState()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+        await viewModel.StartCommand.ExecuteAsync(null);
+        viewModel.CallEntry = "KC7AVA";
+        await viewModel.SendHisCallCommand.ExecuteAsync(null);
+        await viewModel.SendExchangeCommand.ExecuteAsync(null);
+
+        await viewModel.WipeCommand.ExecuteAsync(null);
+        viewModel.CallEntry = "KC7AVA";
+        viewModel.RstEntry = "5NN";
+        viewModel.Exchange1Entry = "123";
+        await viewModel.EnterSendMessageCommand.ExecuteAsync(null);
+
+        Assert.Equal("KC7AVA 5NN 001", viewModel.LastSent);
+        Assert.Equal(0, viewModel.QsoCount);
+    }
+
+    [Fact]
     public async Task CommandsDriveTheSessionThroughTheClientBoundary()
     {
         await using var viewModel = new MainWindowViewModel(

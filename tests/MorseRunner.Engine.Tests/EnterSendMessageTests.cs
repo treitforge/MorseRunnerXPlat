@@ -146,6 +146,35 @@ public sealed class EnterSendMessageTests
     }
 
     [Fact]
+    public async Task WipeResetsEsmStateWithoutSendingAnAbortMessage()
+    {
+        await using var session = await StartedSession.CreateAsync();
+        _ = await session.SendAsync(OperatorIntent.HisCall);
+        _ = await session.SendAsync(OperatorIntent.Exchange);
+
+        CommandResult wiped = await session.Engine.ExecuteAsync(
+            new ResetOperatorEntryCommand(
+                RequestId.New(),
+                session.SessionId,
+                TestClient),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(wiped.Accepted);
+        Assert.Equal("5NN 001", session.Snapshot.LastOperatorMessage);
+
+        CommandResult result = await session.EnterAsync("KC7AVA", "5NN", "123", "");
+
+        Assert.True(result.Accepted);
+        Assert.Equal(
+            EnterSendMessageOutcome.SendCallAndExchange,
+            result.EnterSendMessage?.Outcome);
+        Assert.Equal(
+            ["KC7AVA", "5NN 001"],
+            result.EnterSendMessage?.SentMessages);
+        Assert.Equal(0, session.Snapshot.QsoCount);
+    }
+
+    [Fact]
     public async Task CqWpxCallWithBlankRstStillFocusesSerialExchange()
     {
         await using var session = await StartedSession.CreateAsync();

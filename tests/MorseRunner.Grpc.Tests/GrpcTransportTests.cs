@@ -175,6 +175,21 @@ public sealed class GrpcTransportTests
     }
 
     [Fact]
+    public void ResetOperatorEntryCommandRoundTripsWithoutLoss()
+    {
+        MorseRunner.Domain.ResetOperatorEntryCommand expected = new(
+            RequestId.New(),
+            SessionId.New(),
+            new ClientId("wipe"),
+            ExpectedRevision: 16);
+
+        SessionCommand actual = TransportMapper.ToDomain(
+            TransportMapper.ToTransport(expected));
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
     public void MonitorLevelCommandRoundTripsWithoutLoss()
     {
         AdjustRadioControlCommand expected = new(
