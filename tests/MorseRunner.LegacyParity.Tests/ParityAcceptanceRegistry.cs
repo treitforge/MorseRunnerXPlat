@@ -13,6 +13,18 @@ public static class ParityAcceptanceRegistry
         new Dictionary<string, ParityAcceptanceRegistration>(
             StringComparer.Ordinal)
         {
+            [XPlatNilWithoutLiveStationTruthTarget.ParityId] =
+                new ParityAcceptanceRegistration(
+                    XPlatNilWithoutLiveStationTruthTarget.ParityId,
+                    "LegacyOracleTarget",
+                    nameof(XPlatNilWithoutLiveStationTruthTarget),
+                    XPlatNilWithoutLiveStationTruthTarget
+                        .FunctionalDivergenceCode,
+                    static scenario =>
+                        _ = NilWithoutLiveStationTruthInput.Parse(scenario),
+                    static () => new LegacyOracleTarget(),
+                    static () =>
+                        new XPlatNilWithoutLiveStationTruthTarget()),
             [XPlatLegacySerialRangeErrorsTarget.ParityId] =
                 new ParityAcceptanceRegistration(
                     XPlatLegacySerialRangeErrorsTarget.ParityId,

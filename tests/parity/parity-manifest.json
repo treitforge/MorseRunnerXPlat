@@ -251,8 +251,10 @@
         "linux",
         "macos"
       ],
-      "acceptanceStatus": "not-authored",
-      "caseIds": []
+      "acceptanceStatus": "partial",
+      "caseIds": [
+        "logging.nil-without-live-station-truth-seed-12345"
+      ]
     },
     {
       "id": "logging.scoring-rate-and-results",
@@ -757,7 +759,7 @@
     {"id": "engine.confidence-lid-repeat-and-f12-branches", "capabilityId": "simulation.runtime-routines", "behavior": "Confidence, LID, Sweepstakes correction, call-and-number repeat, and F12 probability branches match CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "engine.reset-and-restart-state", "capabilityId": "simulation.state-models", "behavior": "Reset and restart clear and recreate the same authoritative state at the same ordered boundaries as CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "contest.exchange-shapes-and-constructor-metadata", "capabilityId": "contest.legacy-implementations", "behavior": "All 12 contest constructors expose the same exchange enum pair, default own exchange acceptance, and Farnsworth flag as CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["ACAG.pas:107", "ALLJA.pas:107", "ArrlDx.pas:58", "ArrlFd.pas:372", "ArrlSS.pas:137", "CqWpx.pas:100", "CqWW.pas:127", "CWOPS.pas:114", "CWSST.pas:116", "IaruHf.pas:57", "NaQp.pas:214"], "legacySurfaceSelectors": ["legacy.support.contest.routine.acag.tacag.create", "legacy.support.contest.routine.allja.tallja.create", "legacy.support.contest.routine.arrldx.tarrldx.create", "legacy.support.contest.routine.arrlfd.tarrlfieldday.create", "legacy.support.contest.routine.arrlss.tsweepstakes.create", "legacy.support.contest.routine.cqwpx.tcqwpx.create", "legacy.support.contest.routine.cqww.tcqww.create", "legacy.support.contest.routine.cwops.tcwops.create", "legacy.support.contest.routine.cwsst.tcwsst.create", "legacy.support.contest.routine.iaruhf.tiaruhf.create", "legacy.support.contest.routine.naqp.tncjnaqp.create"], "acceptanceStatus": "partial", "caseIds": ["contest.exchange-shapes"]},
-    {"id": "logging.nil-without-live-station-truth", "capabilityId": "logging.qso-model", "behavior": "Logging without a completed matching live station produces CE-compatible NIL truth rather than fabricated truth.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
+    {"id": "logging.nil-without-live-station-truth", "capabilityId": "logging.qso-model", "behavior": "Logging without a completed matching live station produces CE-compatible NIL truth rather than fabricated truth.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "bound", "legacySources": ["Log.pas", "Contest.pas"], "legacySurfaceSelectors": ["legacy.log.routine.log.saveqso", "legacy.log.routine.log.checkerr", "legacy.sim.routine.contest.tcontest.findqsoerrors"], "acceptanceStatus": "partial", "caseIds": ["logging.nil-without-live-station-truth-seed-12345"]},
     {"id": "logging.worked-call-after-verified-success", "capabilityId": "logging.qso-model", "behavior": "A call enters worked-call state only when CE would accept verified truth, so an initial error does not poison correction.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "logging.duplicate-requires-prior-correct-qso", "capabilityId": "logging.qso-model", "behavior": "Duplicate classification requires the same prior verified-correct QSO conditions as CE.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
     {"id": "logging.complete-copied-true-error-model", "capabilityId": "logging.qso-model", "behavior": "QSO records preserve true WPM, copied and true fields, per-field errors, corrections, and contest column flags.", "platforms": ["windows", "linux", "macos"], "sourceBindingStatus": "pending", "legacySources": [], "legacySurfaceSelectors": [], "acceptanceStatus": "not-authored", "caseIds": []},
@@ -6164,6 +6166,67 @@
       "failureCode": "settings-legacy-malformed-obsolete-mismatch",
       "fixture": "tests/parity/fixtures/legacy/settings-legacy-malformed-obsolete.json",
       "evidence": "tests/parity/evidence/settings-legacy-malformed-obsolete.baseline.json",
+      "firstGreenCommit": null
+    },
+    {
+      "id": "logging.nil-without-live-station-truth-seed-12345",
+      "capabilityId": "logging.qso-model",
+      "obligationIds": [
+        "logging.nil-without-live-station-truth"
+      ],
+      "behavior": "A valid CQ WPX QSO logged before any remote station exists retains empty true fields and is classified NIL.",
+      "legacyOracle": {
+        "adapterId": "LegacyOracleTarget",
+        "versionId": "legacy-oracle-v79",
+        "source": "tests/parity/legacy-oracle/v79/LegacyOracle.lpr",
+        "sourceSha256": "d641f3c4784682a3f29bb3fb45af7d98cbe8a1c2a22c8522dd3fb6d51c4fdf80",
+        "buildRecipe": "tests/parity/legacy-oracle/v79/build-recipe.json",
+        "buildRecipeSha256": "e550a2b778dbf8a2bd11473e88d30a086a176a93e699fc9fee3f307b87e52904"
+      },
+      "legacySources": [
+        "Log.pas",
+        "Contest.pas"
+      ],
+      "legacySurfaceSelectors": [
+        "legacy.log.routine.log.saveqso",
+        "legacy.log.routine.log.checkerr",
+        "legacy.sim.routine.contest.tcontest.findqsoerrors"
+      ],
+      "preconditions": [
+        "The live CE adapter executes Log.CheckErr on a CQ WPX QSO whose entered fields are valid but whose true station fields remain empty because no completed station supplied truth.",
+        "The XPlat adapter starts a production session and immediately executes LogQsoCommand before any station is created.",
+        "This vector isolates NIL truth and error classification; raw scoring, duplicate history, correction presentation, and later station completion remain separate boundaries."
+      ],
+      "input": {
+        "scenario": "logging.nil-without-live-station-truth-seed-12345",
+        "seed": 12345,
+        "contestId": "scWpx",
+        "call": "K1ABC",
+        "rst": 599,
+        "number": 1
+      },
+      "targetAdapters": [
+        "LegacyOracleTarget",
+        "XPlatNilWithoutLiveStationTruthTarget"
+      ],
+      "assertions": {
+        "fixtureComparison": "exact",
+        "observedValueCount": 2,
+        "observedValuesSha256": "4c0708d3245f825171e7f70f257b7ca9b88479249e8529d9e20ee83a1cde4a23",
+        "firstDivergence": "EngineSession initially treats a session that has never created a station as a direct-log scenario, reports no error, and copies entered fields into the true fields.",
+        "functionalDivergenceCode": "logging-nil-without-live-station-truth-mismatch"
+      },
+      "platforms": [
+        "windows",
+        "linux",
+        "macos"
+      ],
+      "legacyTestStatus": "pass",
+      "xplatTestStatus": "fail",
+      "status": "legacy-green-xplat-red",
+      "failureCode": "logging-nil-without-live-station-truth-mismatch",
+      "fixture": "tests/parity/fixtures/legacy/logging-nil-without-live-station-truth-seed-12345.json",
+      "evidence": "tests/parity/evidence/logging-nil-without-live-station-truth-seed-12345.baseline.json",
       "firstGreenCommit": null
     },
     {
