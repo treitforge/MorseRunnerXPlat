@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 namespace MorseRunner.Infrastructure;
 
 [Flags]
-public enum LegacySettingOperation
+public enum IniSettingOperation
 {
     None = 0,
     Read = 1 << 0,
@@ -12,18 +12,18 @@ public enum LegacySettingOperation
     Exists = 1 << 3,
 }
 
-public sealed record LegacySettingDescriptor(
+public sealed record IniSettingDescriptor(
     string Section,
     string Key,
-    LegacySettingOperation Operations);
+    IniSettingOperation Operations);
 
-public static class LegacySettingSchema
+public static class IniSettingSchema
 {
-    private const LegacySettingOperation ReadWrite =
-        LegacySettingOperation.Read | LegacySettingOperation.Write;
+    private const IniSettingOperation ReadWrite =
+        IniSettingOperation.Read | IniSettingOperation.Write;
 
-    private static readonly ReadOnlyCollection<LegacySettingDescriptor> Descriptors =
-        Array.AsReadOnly<LegacySettingDescriptor>(
+    private static readonly ReadOnlyCollection<IniSettingDescriptor> Descriptors =
+        Array.AsReadOnly<IniSettingDescriptor>(
         [
             D("Band", "Activity", ReadWrite),
             D("Band", "Flutter", ReadWrite),
@@ -36,11 +36,11 @@ public static class LegacySettingSchema
             D("Contest", "Duration", ReadWrite),
             D("Contest", "HiScore", ReadWrite),
             D("Contest", "SimContest", ReadWrite),
-            D("Debug", "AllStationsWpmS", LegacySettingOperation.Read),
-            D("Debug", "DebugCwDecoder", LegacySettingOperation.Read),
-            D("Debug", "DebugExchSettings", LegacySettingOperation.Read),
-            D("Debug", "DebugGhosting", LegacySettingOperation.Read),
-            D("Debug", "F8", LegacySettingOperation.Read),
+            D("Debug", "AllStationsWpmS", IniSettingOperation.Read),
+            D("Debug", "DebugCwDecoder", IniSettingOperation.Read),
+            D("Debug", "DebugExchSettings", IniSettingOperation.Read),
+            D("Debug", "DebugGhosting", IniSettingOperation.Read),
+            D("Debug", "F8", IniSettingOperation.Read),
             D("Settings", "FarnsworthCharacterRate", ReadWrite),
             D("Settings", "RitStepIncr", ReadWrite),
             D("Settings", "ShowCheckSection", ReadWrite),
@@ -56,48 +56,48 @@ public static class LegacySettingSchema
             D("Station", "ArrlSection", ReadWrite),
             D("Station", "BandWidth", ReadWrite),
             D("Station", "Call", ReadWrite),
-            D("Station", "CallsFromKeyer", LegacySettingOperation.Read),
+            D("Station", "CallsFromKeyer", IniSettingOperation.Read),
             D("Station", "CqWpxExchange", ReadWrite),
             D("Station", "CQWWExchange", ReadWrite),
             D("Station", "CWMaxRxSpeed", ReadWrite),
             D("Station", "CWMinRxSpeed", ReadWrite),
-            D("Station", "cwopsnum", LegacySettingOperation.Delete),
+            D("Station", "cwopsnum", IniSettingOperation.Delete),
             D("Station", "CwtExchange", ReadWrite),
-            D("Station", "GetWpmUsesGaussian", LegacySettingOperation.Read),
+            D("Station", "GetWpmUsesGaussian", IniSettingOperation.Read),
             D("Station", "HSTExchange", ReadWrite),
             D("Station", "IaruHfExchange", ReadWrite),
-            D("Station", "Name", LegacySettingOperation.Read),
+            D("Station", "Name", IniSettingOperation.Read),
             D("Station", "NAQPExchange", ReadWrite),
             D(
                 "Station",
                 "NRDigits",
-                LegacySettingOperation.Read
-                    | LegacySettingOperation.Delete
-                    | LegacySettingOperation.Exists),
+                IniSettingOperation.Read
+                    | IniSettingOperation.Delete
+                    | IniSettingOperation.Exists),
             D("Station", "Pitch", ReadWrite),
             D("Station", "Qsk", ReadWrite),
             D("Station", "SaveWav", ReadWrite),
             D("Station", "SelfMonVolume", ReadWrite),
             D("Station", "SerialNR", ReadWrite),
             D("Station", "SerialNrCustomRange", ReadWrite),
-            D("Station", "SerialNrEndContest", LegacySettingOperation.Read),
-            D("Station", "SerialNrMidContest", LegacySettingOperation.Read),
+            D("Station", "SerialNrEndContest", IniSettingOperation.Read),
+            D("Station", "SerialNrMidContest", IniSettingOperation.Read),
             D("Station", "SSCWExchange", ReadWrite),
             D("Station", "SstExchange", ReadWrite),
             D("Station", "Wpm", ReadWrite),
             D("System", "BufSize", ReadWrite),
-            D("System", "PostMethod", LegacySettingOperation.Read),
+            D("System", "PostMethod", IniSettingOperation.Read),
             D("System", "ShowCallsignInfo", ReadWrite),
-            D("System", "SubmitHiScoreURL", LegacySettingOperation.Read),
-            D("System", "WebServer", LegacySettingOperation.Read),
+            D("System", "SubmitHiScoreURL", IniSettingOperation.Read),
+            D("System", "WebServer", IniSettingOperation.Read),
         ]);
 
-    public static IReadOnlyList<LegacySettingDescriptor> All => Descriptors;
+    public static IReadOnlyList<IniSettingDescriptor> All => Descriptors;
 
     public static bool TryGet(
         string section,
         string key,
-        out LegacySettingDescriptor? descriptor)
+        out IniSettingDescriptor? descriptor)
     {
         descriptor = Descriptors.SingleOrDefault(
             item => string.Equals(
@@ -111,9 +111,9 @@ public static class LegacySettingSchema
         return descriptor is not null;
     }
 
-    private static LegacySettingDescriptor D(
+    private static IniSettingDescriptor D(
         string section,
         string key,
-        LegacySettingOperation operations) =>
+        IniSettingOperation operations) =>
         new(section, key, operations);
 }

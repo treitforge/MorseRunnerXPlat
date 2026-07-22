@@ -49,7 +49,7 @@ public sealed class MorseKeyerFarnsworthTests
     [InlineData("._", 8_496)]
     [InlineData(".~", 6_907)]
     [InlineData("._ ", 16_441)]
-    public void CeMarkersUseExactCharacterAndAdjustedDurations(
+    public void MessageMarkersUseExactCharacterAndAdjustedDurations(
         string encoded,
         int expectedLength)
     {

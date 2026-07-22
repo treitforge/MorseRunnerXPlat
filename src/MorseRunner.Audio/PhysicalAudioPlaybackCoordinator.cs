@@ -31,7 +31,7 @@ internal sealed class PhysicalAudioPlaybackCoordinator
             SynchronousPrefillFraming.Add(
                 new PhysicalAudioSinkStartupFrame(
                     LogicalRequestNumber:
-                        CompatibilityProfile.AudioStartupRequestCount,
+                        SimulationAudioProfile.AudioStartupRequestCount,
                     IsSynchronousPrefill: false,
                     Samples: PositiveZeroSamples));
     }
@@ -55,7 +55,7 @@ internal sealed class PhysicalAudioPlaybackCoordinator
             int completedCount = Volatile.Read(
                 ref _synchronousPrefillPresentationCount);
             if (completedCount
-                >= CompatibilityProfile.AudioStartupPrefillRequestCount)
+                >= SimulationAudioProfile.AudioStartupPrefillRequestCount)
             {
                 return;
             }
@@ -71,7 +71,7 @@ internal sealed class PhysicalAudioPlaybackCoordinator
     {
         if (Volatile.Read(
                 ref _synchronousPrefillPresentationCount)
-            != CompatibilityProfile.AudioStartupPrefillRequestCount)
+            != SimulationAudioProfile.AudioStartupPrefillRequestCount)
         {
             throw new InvalidOperationException(
                 "Completion-driven startup requires the synchronous "
@@ -90,7 +90,7 @@ internal sealed class PhysicalAudioPlaybackCoordinator
         int synchronousCount = Math.Min(
             Volatile.Read(
                 ref _synchronousPrefillPresentationCount),
-            CompatibilityProfile.AudioStartupPrefillRequestCount);
+            SimulationAudioProfile.AudioStartupPrefillRequestCount);
         if (Volatile.Read(
                 ref _completionDrivenPresentationCompleted) != 0)
         {
@@ -98,7 +98,7 @@ internal sealed class PhysicalAudioPlaybackCoordinator
         }
 
         return synchronousCount
-            == CompatibilityProfile.AudioStartupPrefillRequestCount
+            == SimulationAudioProfile.AudioStartupPrefillRequestCount
             ? SynchronousPrefillFraming
             : SynchronousPrefillFraming.Slice(
                 0,
@@ -165,7 +165,7 @@ internal sealed class PhysicalAudioPlaybackCoordinator
     private bool TryGetStartupSample(out float sample)
     {
         if (_startupOutputSampleIndex
-            >= CompatibilityProfile.AudioStartupRequestCount)
+            >= SimulationAudioProfile.AudioStartupRequestCount)
         {
             sample = 0f;
             return false;
@@ -231,10 +231,10 @@ internal sealed class PhysicalAudioPlaybackCoordinator
     {
         var frames =
             ImmutableArray.CreateBuilder<PhysicalAudioSinkStartupFrame>(
-                CompatibilityProfile.AudioStartupPrefillRequestCount);
+                SimulationAudioProfile.AudioStartupPrefillRequestCount);
         for (int index = 0;
              index
-                < CompatibilityProfile.AudioStartupPrefillRequestCount;
+                < SimulationAudioProfile.AudioStartupPrefillRequestCount;
              index++)
         {
             frames.Add(

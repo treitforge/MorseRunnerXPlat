@@ -23,7 +23,7 @@ public sealed record SettingsLoadResult(
     bool Recovered,
     string? Diagnostic);
 
-public sealed record LegacySettingsImportResult(
+public sealed record IniSettingsImportResult(
     SettingsDocument Document,
     IReadOnlyList<string> Diagnostics);
 
@@ -37,15 +37,15 @@ public sealed class SettingsStore
     };
 
     private readonly string _path;
-    private readonly string? _legacyIniPath;
+    private readonly string? _iniImportPath;
 
-    public SettingsStore(string path, string? legacyIniPath = null)
+    public SettingsStore(string path, string? iniImportPath = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         _path = Path.GetFullPath(path);
-        _legacyIniPath = String.IsNullOrWhiteSpace(legacyIniPath)
+        _iniImportPath = String.IsNullOrWhiteSpace(iniImportPath)
             ? null
-            : Path.GetFullPath(legacyIniPath);
+            : Path.GetFullPath(iniImportPath);
     }
 
     public async Task<SettingsLoadResult> LoadAsync(
@@ -53,9 +53,9 @@ public sealed class SettingsStore
     {
         if (!File.Exists(_path))
         {
-            if (_legacyIniPath is not null && File.Exists(_legacyIniPath))
+            if (_iniImportPath is not null && File.Exists(_iniImportPath))
             {
-                return await ImportLegacyAsync(cancellationToken);
+                return await ImportIniAsync(cancellationToken);
             }
 
             return new SettingsLoadResult(SettingsDocument.Empty, false, null);
@@ -194,19 +194,19 @@ public sealed class SettingsStore
         return new(document.SchemaVersion, values);
     }
 
-    private async Task<SettingsLoadResult> ImportLegacyAsync(
+    private async Task<SettingsLoadResult> ImportIniAsync(
         CancellationToken cancellationToken)
     {
         try
         {
             string text = await File.ReadAllTextAsync(
-                _legacyIniPath!,
+                _iniImportPath!,
                 cancellationToken);
-            LegacySettingsImportResult imported =
-                LegacySettingsImporter.ImportWithDiagnostics(
-                    LegacyIniDocument.Parse(text));
+            IniSettingsImportResult imported =
+                IniSettingsImporter.ImportWithDiagnostics(
+                    IniDocument.Parse(text));
             await SaveAsync(imported.Document, cancellationToken);
-            string diagnostic = "Imported legacy settings from MorseRunner.ini.";
+            string diagnostic = "Imported MorseRunner.ini settings.";
             if (imported.Diagnostics.Count > 0)
             {
                 diagnostic += "\n" + String.Join("\n", imported.Diagnostics);
@@ -225,12 +225,12 @@ public sealed class SettingsStore
             return new SettingsLoadResult(
                 SettingsDocument.Empty,
                 true,
-                $"Legacy settings recovery: {exception.Message}");
+                $"MorseRunner.ini recovery: {exception.Message}");
         }
     }
 }
 
-public static class LegacySettingsImporter
+public static class IniSettingsImporter
 {
     private static readonly (string Key, string DefaultValue)[]
         SerialRangeSettings =
@@ -279,12 +279,12 @@ public static class LegacySettingsImporter
         };
 
     public static SettingsDocument Import(
-        LegacyIniDocument source,
+        IniDocument source,
         SettingsDocument? existing = null) =>
         ImportWithDiagnostics(source, existing).Document;
 
-    public static LegacySettingsImportResult ImportWithDiagnostics(
-        LegacyIniDocument source,
+    public static IniSettingsImportResult ImportWithDiagnostics(
+        IniDocument source,
         SettingsDocument? existing = null)
     {
         ArgumentNullException.ThrowIfNull(source);
@@ -293,9 +293,9 @@ public static class LegacySettingsImporter
             existing?.Values
                 ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
             StringComparer.OrdinalIgnoreCase);
-        foreach (LegacySettingDescriptor descriptor in LegacySettingSchema.All)
+        foreach (IniSettingDescriptor descriptor in IniSettingSchema.All)
         {
-            if ((descriptor.Operations & LegacySettingOperation.Read) == 0
+            if ((descriptor.Operations & IniSettingOperation.Read) == 0
                 || !source.TryGet(descriptor.Section, descriptor.Key, out string? value))
             {
                 continue;
@@ -307,11 +307,11 @@ public static class LegacySettingsImporter
                 TranslateValue(targetKey, value!));
         }
 
-        if (source.TryGet("Station", "NRDigits", out string? legacyDigits))
+        if (source.TryGet("Station", "NRDigits", out string? importedDigits))
         {
             values.Remove("Station.NRDigits");
-            values["Station.SerialNR"] = TranslateLegacyNRDigits(
-                legacyDigits!);
+            values["Station.SerialNR"] = TranslateNrDigits(
+                importedDigits!);
         }
 
         foreach ((string key, string defaultValue) in SerialRangeSettings)
@@ -334,7 +334,7 @@ public static class LegacySettingsImporter
         {
             foreach ((string key, string value) in entries)
             {
-                if (LegacySettingSchema.TryGet(section, key, out _))
+                if (IniSettingSchema.TryGet(section, key, out _))
                 {
                     continue;
                 }
@@ -343,7 +343,7 @@ public static class LegacySettingsImporter
             }
         }
 
-        return new LegacySettingsImportResult(
+        return new IniSettingsImportResult(
             new SettingsDocument(SettingsDocument.CurrentSchemaVersion, values),
             diagnostics);
     }
@@ -352,7 +352,7 @@ public static class LegacySettingsImporter
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(section);
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
-        return "LegacyIni.Preserved."
+        return "ImportedIni.Preserved."
             + Convert.ToHexString(Encoding.UTF8.GetBytes(section))
             + "."
             + Convert.ToHexString(Encoding.UTF8.GetBytes(key));
@@ -458,10 +458,10 @@ public static class LegacySettingsImporter
         return (64 << effectiveExponent).ToString(CultureInfo.InvariantCulture);
     }
 
-    private static string TranslateLegacyNRDigits(string value)
+    private static string TranslateNrDigits(string value)
     {
-        int serialMode = TryParseInteger(value, out int legacyDigits)
-            ? legacyDigits switch
+        int serialMode = TryParseInteger(value, out int importedDigits)
+            ? importedDigits switch
             {
                 2 => 3,
                 3 => 1,

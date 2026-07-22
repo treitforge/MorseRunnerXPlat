@@ -148,118 +148,6 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
                 snapshot.ElapsedSimulationTime));
     }
 
-    internal Task<float> TakeNextSessionRandomSingleForParityAsync(
-        SessionId sessionId,
-        long expectedRevision,
-        long expectedSimulationBlock,
-        CancellationToken cancellationToken)
-    {
-        ThrowIfDisposed();
-        return GetSession(sessionId)
-            .TakeNextRandomSingleForParityAsync(
-                expectedRevision,
-                expectedSimulationBlock,
-                cancellationToken);
-    }
-
-    internal Task<QrnBurstParityObservation>
-        ObserveQrnBurstForParityAsync(
-            SessionId sessionId,
-            long expectedRevision,
-            long expectedSimulationBlock,
-            CancellationToken cancellationToken)
-    {
-        ThrowIfDisposed();
-        return GetSession(sessionId)
-            .ObserveQrnBurstForParityAsync(
-                expectedRevision,
-                expectedSimulationBlock,
-                cancellationToken);
-    }
-
-    internal Task<QrmStationParityObservation>
-        ObserveQrmStationForParityAsync(
-            SessionId sessionId,
-            long expectedRevision,
-            long expectedSimulationBlock,
-            CancellationToken cancellationToken)
-    {
-        ThrowIfDisposed();
-        return GetSession(sessionId)
-            .ObserveQrmStationForParityAsync(
-                expectedRevision,
-                expectedSimulationBlock,
-                cancellationToken);
-    }
-
-    internal Task<CallerCollisionParityObservation>
-        ObserveCallerCollisionForParityAsync(
-            SessionId sessionId,
-            long expectedRevision,
-            long expectedSimulationBlock,
-            string collisionCall,
-            int retryLimit,
-            CancellationToken cancellationToken)
-    {
-        ThrowIfDisposed();
-        return GetSession(sessionId)
-            .ObserveCallerCollisionForParityAsync(
-                expectedRevision,
-                expectedSimulationBlock,
-                collisionCall,
-                retryLimit,
-                cancellationToken);
-    }
-
-    internal Task<QsbRuntimeParityObservation>
-        ObserveQsbRuntimeForParityAsync(
-            SessionId sessionId,
-            long expectedRevision,
-            long expectedSimulationBlock,
-            string stationCall,
-            string message,
-            int blockCount,
-            int toggleAfterBlockCount,
-            bool runtimeToggle,
-            CancellationToken cancellationToken)
-    {
-        ThrowIfDisposed();
-        return GetSession(sessionId)
-            .ObserveQsbRuntimeForParityAsync(
-                expectedRevision,
-                expectedSimulationBlock,
-                stationCall,
-                message,
-                blockCount,
-                toggleAfterBlockCount,
-                runtimeToggle,
-            cancellationToken);
-    }
-
-    internal Task AddScriptedStationForParityAsync(
-        SessionId sessionId,
-        long expectedRevision,
-        long expectedSimulationBlock,
-        string stationCall,
-        string message,
-        int wordsPerMinute,
-        int pitchOffsetHz,
-        float amplitude,
-        CancellationToken cancellationToken)
-    {
-        ThrowIfDisposed();
-        return GetSession(sessionId)
-            .AddScriptedStationForParityAsync(
-                expectedRevision,
-                expectedSimulationBlock,
-                stationCall,
-                message,
-                wordsPerMinute,
-                pitchOffsetHz,
-                amplitude,
-                cancellationToken);
-    }
-
     public async Task CloseSessionAsync(
         SessionId sessionId,
         CancellationToken cancellationToken)
@@ -327,10 +215,10 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
                 "Monitor level must be between -60 dB and 0 dB.");
         }
 
-        bool usesLegacyOriginalSpeed =
+        bool usesOriginalSpeed =
             settings.ReceiveSpeedBelowWpm == -1
             && settings.ReceiveSpeedAboveWpm == -1;
-        if (!usesLegacyOriginalSpeed
+        if (!usesOriginalSpeed
             && (settings.ReceiveSpeedBelowWpm is < 0 or > 10
                 || settings.ReceiveSpeedAboveWpm is < 0 or > 10))
         {
@@ -404,8 +292,8 @@ public sealed class MorseRunnerEngine : IAsyncDisposable
             (long)Math.Ceiling(
                 settings.CompetitionDurationMinutes
                 * 60d
-                * CompatibilityProfile.SampleRate
-                / CompatibilityProfile.BlockSize));
+                * SimulationAudioProfile.SampleRate
+                / SimulationAudioProfile.BlockSize));
         return settings.RunModeId.Value switch
         {
             "rmWpx" => settings with

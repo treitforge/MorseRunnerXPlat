@@ -17,7 +17,7 @@ public sealed class QrmCatalogTests
 
         StationIdentity station = StationReferenceCatalog
             .Load(id)
-            .Pick(new LegacyRandom(12_345), id, serialNumber: 1);
+            .Pick(new DeterministicRandom(12_345), id, serialNumber: 1);
 
         Assert.Equal(expectedCall, station.Callsign);
         Assert.Equal("599", station.Exchange1);
@@ -29,7 +29,7 @@ public sealed class QrmCatalogTests
     {
         StationReferenceCatalog catalog =
             StationReferenceCatalog.Load(new ContestId("scWpx"));
-        var random = new LegacyRandom(1_843);
+        var random = new DeterministicRandom(1_843);
         for (int ordinal = 0; ordinal < 1_027; ordinal++)
         {
             _ = random.NextSingle();
@@ -57,19 +57,19 @@ public sealed class QrmCatalogTests
         int stoppedCount = stopped.QrmCallsignCount;
 
         _ = stopped.PickCallsignForQrm(
-            new LegacyRandom(81),
+            new DeterministicRandom(81),
             new RunModeId("rmStop"));
 
         Assert.Equal(stoppedCount, stopped.QrmCallsignCount);
 
         StationReferenceCatalog competing =
             StationReferenceCatalog.Load(new ContestId("scHst"));
-        int expectedIndex = new LegacyRandom(81).Next(
+        int expectedIndex = new DeterministicRandom(81).Next(
             competing.QrmCallsignCount);
         string expectedCall = competing.GetQrmCallsignAt(expectedIndex);
 
         string selected = competing.PickCallsignForQrm(
-            new LegacyRandom(81),
+            new DeterministicRandom(81),
             new RunModeId("rmHst"));
 
         Assert.Equal(expectedCall, selected);
@@ -83,7 +83,7 @@ public sealed class QrmCatalogTests
             StationReferenceCatalog.Load(new ContestId("scWpx"));
         int wpxCount = wpx.QrmCallsignCount;
         _ = wpx.PickCallsignForQrm(
-            new LegacyRandom(81),
+            new DeterministicRandom(81),
             new RunModeId("rmHst"));
         Assert.Equal(wpxCount - 1, wpx.QrmCallsignCount);
 
@@ -91,7 +91,7 @@ public sealed class QrmCatalogTests
             StationReferenceCatalog.Load(new ContestId("scCwt"));
         int cwtCount = cwt.QrmCallsignCount;
         _ = cwt.PickCallsignForQrm(
-            new LegacyRandom(81),
+            new DeterministicRandom(81),
             new RunModeId("rmHst"));
         Assert.Equal(cwtCount, cwt.QrmCallsignCount);
     }
@@ -101,8 +101,8 @@ public sealed class QrmCatalogTests
     {
         StationReferenceCatalog catalog =
             StationReferenceCatalog.Load(new ContestId("scHst"));
-        var actualRandom = new LegacyRandom(704);
-        var expectedRandom = new LegacyRandom(704);
+        var actualRandom = new DeterministicRandom(704);
+        var expectedRandom = new DeterministicRandom(704);
 
         for (int remaining = catalog.QrmCallsignCount;
              remaining > 0;
@@ -154,8 +154,8 @@ public sealed class QrmCatalogTests
         {
             StationReferenceCatalog catalog =
                 StationReferenceCatalog.Load(new ContestId(contestId));
-            var actual = new LegacyRandom(6_031);
-            var expected = new LegacyRandom(6_031);
+            var actual = new DeterministicRandom(6_031);
+            var expected = new DeterministicRandom(6_031);
 
             Assert.Throws<InvalidOperationException>(
                 () => catalog.PickCallsignForQrm(
@@ -177,7 +177,7 @@ public sealed class QrmCatalogTests
         var dxcc = new ContestDxccDatabase();
         const int seed = 649;
         int initialCount = catalog.QrmCallsignCount;
-        var replay = new LegacyRandom(seed);
+        var replay = new DeterministicRandom(seed);
         int rejectedIndex = replay.Next(initialCount);
         string rejectedCall =
             catalog.GetQrmCallsignAt(rejectedIndex);
@@ -187,9 +187,9 @@ public sealed class QrmCatalogTests
                 new ContestId("scArrlDx"),
                 "W7SST");
         _ = warmup.PickCallsignForQrm(
-            new LegacyRandom(seed),
+            new DeterministicRandom(seed),
             new RunModeId("rmStop"));
-        var actual = new LegacyRandom(seed);
+        var actual = new DeterministicRandom(seed);
 
         long allocatedBefore =
             GC.GetAllocatedBytesForCurrentThread();
@@ -227,7 +227,7 @@ public sealed class QrmCatalogTests
         var dxcc = new ContestDxccDatabase();
         const int seed = 319;
         int initialCount = catalog.QrmCallsignCount;
-        var replay = new LegacyRandom(seed);
+        var replay = new DeterministicRandom(seed);
         int rejectedIndex = replay.Next(initialCount);
         string rejectedCall =
             catalog.GetQrmCallsignAt(rejectedIndex);
@@ -237,9 +237,9 @@ public sealed class QrmCatalogTests
                 new ContestId("scNaQp"),
                 "F6ABC");
         _ = warmup.PickCallsignForQrm(
-            new LegacyRandom(seed),
+            new DeterministicRandom(seed),
             new RunModeId("rmStop"));
-        var actual = new LegacyRandom(seed);
+        var actual = new DeterministicRandom(seed);
 
         long allocatedBefore =
             GC.GetAllocatedBytesForCurrentThread();
@@ -274,7 +274,7 @@ public sealed class QrmCatalogTests
             StationReferenceCatalog.Load(
                 new ContestId("scNaQp"),
                 "W7SST");
-        var random = new LegacyRandom(319);
+        var random = new DeterministicRandom(319);
 
         Assert.Equal("SV2AEL", catalog.GetQrmCallsignAt(9_257));
         Assert.Equal(
@@ -299,9 +299,9 @@ public sealed class QrmCatalogTests
         StationReferenceCatalog warmup =
             StationReferenceCatalog.Load(contestId, "W7SST");
         _ = warmup.PickCallsignForQrm(
-            new LegacyRandom(seed),
+            new DeterministicRandom(seed),
             new RunModeId("rmStop"));
-        var qrmRandom = new LegacyRandom(seed);
+        var qrmRandom = new DeterministicRandom(seed);
 
         long allocatedBefore =
             GC.GetAllocatedBytesForCurrentThread();
@@ -317,7 +317,7 @@ public sealed class QrmCatalogTests
         Assert.Equal(0, allocated);
 
         StationIdentity caller = catalog.Pick(
-            new LegacyRandom(callerSeed),
+            new DeterministicRandom(callerSeed),
             contestId,
             serialNumber: 1);
 
@@ -431,7 +431,7 @@ public sealed class QrmCatalogTests
         ContestId contestId = new("scWpx");
         StationReferenceCatalog catalog =
             StationReferenceCatalog.Load(contestId);
-        var random = new LegacyRandom(1_843);
+        var random = new DeterministicRandom(1_843);
         _ = ContestQrmMessageCatalog.CreateInitial(
             contestId,
             2,

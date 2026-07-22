@@ -1195,8 +1195,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             (long)Math.Ceiling(
                 minutes
                 * 60d
-                * CompatibilityProfile.SampleRate
-                / CompatibilityProfile.BlockSize));
+                * SimulationAudioProfile.SampleRate
+                / SimulationAudioProfile.BlockSize));
     }
 
     private void BeginSubscription(SessionId sessionId)

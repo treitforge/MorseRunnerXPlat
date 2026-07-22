@@ -5,12 +5,12 @@ public sealed class QsbProcessor
     private const int SampleRate = 11_025;
     private const int BlockSize = 512;
     private const int GainBlockSize = BlockSize / 4;
-    private readonly LegacyRandomEffects _effects;
+    private readonly RandomEffects _effects;
     private readonly QuickAverage _filter = new();
     private float _gain;
     private float _bandwidth;
 
-    public QsbProcessor(LegacyRandomEffects effects)
+    public QsbProcessor(RandomEffects effects)
     {
         _effects = effects ?? throw new ArgumentNullException(nameof(effects));
         _filter.Passes = 3;

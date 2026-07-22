@@ -10,7 +10,7 @@ namespace MorseRunner.Engine.Tests;
 [Collection(QrnPerformanceTestGroup.Name)]
 public sealed class QrnBurstStationTests
 {
-    private const int BlockSize = CompatibilityProfile.BlockSize;
+    private const int BlockSize = SimulationAudioProfile.BlockSize;
     private const int PerformanceWarmupBlockCount = 256;
     private const int PerformanceMeasuredBlockCount = 4_096;
     private static readonly JsonSerializerOptions
@@ -22,8 +22,8 @@ public sealed class QrnBurstStationTests
     [Fact]
     public void Seed1903MatchesTheCeEagerEnvelopeAndDrawOrder()
     {
-        var random = new LegacyRandom(1_903);
-        var noiseGenerator = new LegacyReceiverNoiseGenerator(random);
+        var random = new DeterministicRandom(1_903);
+        var noiseGenerator = new ReceiverNoiseGenerator(random);
         var noiseReal = new float[BlockSize];
         var noiseImaginary = new float[BlockSize];
 
@@ -86,7 +86,7 @@ public sealed class QrnBurstStationTests
     [Fact]
     public void ZeroDurationStillConsumesAmplitudeAndCompletesOneBlock()
     {
-        var random = new LegacyRandom(9);
+        var random = new DeterministicRandom(9);
         var station = new QrnBurstStation();
         station.Activate(random);
 
@@ -122,7 +122,7 @@ public sealed class QrnBurstStationTests
     public void MaximumDurationUsesExactlyTwentyTwoBlocks()
     {
         var station = new QrnBurstStation();
-        station.Activate(new LegacyRandom(1_989));
+        station.Activate(new DeterministicRandom(1_989));
         var real = new float[BlockSize];
         var imaginary = new float[BlockSize];
 
@@ -149,14 +149,14 @@ public sealed class QrnBurstStationTests
     public void DurationConversionUsesCeBinary64ArithmeticAfterSingleRounding()
     {
         const int seed = 3_235_522;
-        var durationRandom = new LegacyRandom(seed);
+        var durationRandom = new DeterministicRandom(seed);
         Assert.Equal(
             0x3E82_C658U,
             BitConverter.SingleToUInt32Bits(
                 durationRandom.NextSingle()));
 
         var station = new QrnBurstStation();
-        station.Activate(new LegacyRandom(seed));
+        station.Activate(new DeterministicRandom(seed));
         var real = new float[BlockSize];
         var imaginary = new float[BlockSize];
 
@@ -178,14 +178,14 @@ public sealed class QrnBurstStationTests
         var real = new float[BlockSize];
         var imaginary = new float[BlockSize];
 
-        station.Activate(new LegacyRandom(21));
+        station.Activate(new DeterministicRandom(21));
         Assert.Equal(1, station.DurationBlocks);
         station.MixNextBlock(real, imaginary);
         Assert.Contains(real, sample => sample != 0f);
         station.Release();
 
         Array.Clear(real);
-        station.Activate(new LegacyRandom(3_914));
+        station.Activate(new DeterministicRandom(3_914));
         Assert.Equal(1, station.DurationBlocks);
         station.MixNextBlock(real, imaginary);
 
@@ -199,10 +199,10 @@ public sealed class QrnBurstStationTests
     }
 
     [Fact]
-    public void MixRequiresCompleteCompatibilityBuffers()
+    public void MixRequiresCompleteSimulationBuffers()
     {
         var station = new QrnBurstStation();
-        station.Activate(new LegacyRandom(21));
+        station.Activate(new DeterministicRandom(21));
         var real = new float[BlockSize];
         var imaginary = new float[BlockSize];
         var shortBuffer = new float[BlockSize - 1];
@@ -227,7 +227,7 @@ public sealed class QrnBurstStationTests
         var warmupImaginary = new float[BlockSize];
         for (int iteration = 0; iteration < warmupCount; iteration++)
         {
-            warmup.Activate(new LegacyRandom(1_989));
+            warmup.Activate(new DeterministicRandom(1_989));
             while (!warmup.HasRenderedEnvelope)
             {
                 warmup.MixNextBlock(
@@ -241,10 +241,10 @@ public sealed class QrnBurstStationTests
         var station = new QrnBurstStation();
         var real = new float[BlockSize];
         var imaginary = new float[BlockSize];
-        var randomSources = new LegacyRandom[iterationCount];
+        var randomSources = new DeterministicRandom[iterationCount];
         for (int index = 0; index < randomSources.Length; index++)
         {
-            randomSources[index] = new LegacyRandom(1_989);
+            randomSources[index] = new DeterministicRandom(1_989);
         }
 
         long allocatedBefore =
@@ -272,12 +272,12 @@ public sealed class QrnBurstStationTests
     [Fact]
     public void WorstCaseConcurrentBurstBlockMeetsTheRenderBudget()
     {
-        var randomSources = new LegacyRandom[
+        var randomSources = new DeterministicRandom[
             PerformanceWarmupBlockCount
             + PerformanceMeasuredBlockCount];
         for (int index = 0; index < randomSources.Length; index++)
         {
-            randomSources[index] = new LegacyRandom(1_989);
+            randomSources[index] = new DeterministicRandom(1_989);
         }
 
         var harness = new QrnWorstCaseBlockHarness();
@@ -418,8 +418,8 @@ public sealed class QrnBurstStationTests
             },
             scenario = new
             {
-                sampleRate = CompatibilityProfile.SampleRate,
-                blockSize = CompatibilityProfile.BlockSize,
+                sampleRate = SimulationAudioProfile.SampleRate,
+                blockSize = SimulationAudioProfile.BlockSize,
                 seed = 1_989,
                 durationBlocks =
                     QrnBurstStation.MaximumConcurrentStations,
@@ -502,7 +502,7 @@ public sealed class QrnBurstStationTests
 
         public int PeakActiveCount { get; private set; }
 
-        public void RenderBlock(LegacyRandom random)
+        public void RenderBlock(DeterministicRandom random)
         {
             _receiverReal.AsSpan().Clear();
             _receiverImaginary.AsSpan().Clear();

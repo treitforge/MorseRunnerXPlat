@@ -88,7 +88,7 @@ public sealed class PhysicalAudioSink :
 
     internal void PrepareDeviceFreeDiagnostics(int canonicalBlockSize)
     {
-        if (canonicalBlockSize != CompatibilityProfile.BlockSize)
+        if (canonicalBlockSize != SimulationAudioProfile.BlockSize)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(canonicalBlockSize),
@@ -103,7 +103,7 @@ public sealed class PhysicalAudioSink :
             {
                 PreparePlaybackState(
                     default,
-                    AudioStreamFormat.Compatibility);
+                    AudioStreamFormat.Default);
             }
             else if (_playbackCoordinator.CanonicalBlockSize
                 != canonicalBlockSize)
@@ -125,7 +125,7 @@ public sealed class PhysicalAudioSink :
         ulong frameCount,
         int channels)
     {
-        if (canonicalBlock.Length != CompatibilityProfile.BlockSize)
+        if (canonicalBlock.Length != SimulationAudioProfile.BlockSize)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(canonicalBlock),

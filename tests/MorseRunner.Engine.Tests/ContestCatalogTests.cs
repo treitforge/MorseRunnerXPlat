@@ -5,7 +5,7 @@ namespace MorseRunner.Engine.Tests;
 public sealed class ContestCatalogTests
 {
     [Fact]
-    public void CatalogPreservesLegacyContestAndRunModeOrder()
+    public void CatalogPreservesPinnedContestAndRunModeOrder()
     {
         Assert.Equal(
             [
@@ -29,7 +29,7 @@ public sealed class ContestCatalogTests
     }
 
     [Fact]
-    public void CatalogPreservesLegacyDefinitionValues()
+    public void CatalogPreservesPinnedDefinitionValues()
     {
         Assert.Equal(
             [

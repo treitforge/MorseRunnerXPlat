@@ -22,7 +22,7 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
         coordinator.PresentSynchronousStartupPrefill();
         AssertObservedFraming(
             coordinator,
-            CompatibilityProfile.AudioStartupPrefillRequestCount);
+            SimulationAudioProfile.AudioStartupPrefillRequestCount);
         Assert.All(
             coordinator.GetObservedStartupFraming(),
             frame => Assert.True(frame.IsSynchronousPrefill));
@@ -30,7 +30,7 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
         coordinator.PresentSynchronousStartupPrefill();
         AssertObservedFraming(
             coordinator,
-            CompatibilityProfile.AudioStartupPrefillRequestCount);
+            SimulationAudioProfile.AudioStartupPrefillRequestCount);
 
         CallbackResult firstCallback = Read(
             coordinator,
@@ -44,7 +44,7 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
                 Assert.Single(firstCallback.Samples)));
         AssertObservedFraming(
             coordinator,
-            CompatibilityProfile.AudioStartupRequestCount);
+            SimulationAudioProfile.AudioStartupRequestCount);
         Assert.False(
             coordinator.GetObservedStartupFraming()[^1]
                 .IsSynchronousPrefill);
@@ -77,7 +77,7 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
                     memory));
             AssertObservedFraming(
                 coordinator,
-                CompatibilityProfile.AudioStartupPrefillRequestCount);
+                SimulationAudioProfile.AudioStartupPrefillRequestCount);
         }
         finally
         {
@@ -144,7 +144,7 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
                 BitConverter.SingleToUInt32Bits(sample)));
         AssertObservedFraming(
             coordinator,
-            CompatibilityProfile.AudioStartupRequestCount);
+            SimulationAudioProfile.AudioStartupRequestCount);
         Assert.Equal(0, queue.Count);
         Assert.Equal(0, coordinator.StagedCanonicalBlockCount);
     }
@@ -236,7 +236,7 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
         Read(
             firstCoordinator,
             queue,
-            frameCount: CompatibilityProfile.AudioStartupRequestCount);
+            frameCount: SimulationAudioProfile.AudioStartupRequestCount);
         AssertObservedFraming(firstCoordinator, expectedCount: 5);
 
         var freshCoordinator = new PhysicalAudioPlaybackCoordinator(
@@ -405,7 +405,7 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
     {
         var sink = new PhysicalAudioSink();
         var canonicalBlock =
-            new float[CompatibilityProfile.BlockSize];
+            new float[SimulationAudioProfile.BlockSize];
         for (int index = 0; index < canonicalBlock.Length; index++)
         {
             canonicalBlock[index] = index + 1;
@@ -417,7 +417,7 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
             sink.GetDiagnostics();
         AssertObservedFraming(
             prepared.StartupFraming,
-            CompatibilityProfile.AudioStartupPrefillRequestCount);
+            SimulationAudioProfile.AudioStartupPrefillRequestCount);
         Assert.All(
             prepared.StartupFraming,
             frame => Assert.True(frame.IsSynchronousPrefill));
@@ -428,18 +428,18 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
         sink.PrepareDeviceFreeDiagnostics(canonicalBlock.Length);
         AssertObservedFraming(
             sink.GetDiagnostics().StartupFraming,
-            CompatibilityProfile.AudioStartupPrefillRequestCount);
+            SimulationAudioProfile.AudioStartupPrefillRequestCount);
 
         CallbackResult result = ReadFromSink(
             sink,
             canonicalBlock,
             frameCount:
-                CompatibilityProfile.AudioStartupRequestCount
-                + CompatibilityProfile.BlockSize);
+                SimulationAudioProfile.AudioStartupRequestCount
+                + SimulationAudioProfile.BlockSize);
 
         Assert.True(result.Complete);
         for (int index = 0;
-             index < CompatibilityProfile.AudioStartupRequestCount;
+             index < SimulationAudioProfile.AudioStartupRequestCount;
              index++)
         {
             Assert.Equal(
@@ -449,14 +449,14 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
 
         Assert.True(
             result.Samples[
-                CompatibilityProfile.AudioStartupRequestCount..]
+                SimulationAudioProfile.AudioStartupRequestCount..]
                 .AsSpan()
                 .SequenceEqual(canonicalBlock));
         PhysicalAudioSinkDiagnostics diagnostics = sink.GetDiagnostics();
         Assert.Equal(PhysicalAudioSinkState.Created, diagnostics.State);
         AssertObservedFraming(
             diagnostics.StartupFraming,
-            CompatibilityProfile.AudioStartupRequestCount);
+            SimulationAudioProfile.AudioStartupRequestCount);
         Assert.Equal(0, diagnostics.QueuedBlocks);
         Assert.Equal(0, diagnostics.CallbackCount);
         Assert.Equal(-1, diagnostics.LastSimulationBlock);
@@ -469,7 +469,7 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
     {
         await using var sink = new PhysicalAudioSink();
         var canonicalBlock =
-            new float[CompatibilityProfile.BlockSize];
+            new float[SimulationAudioProfile.BlockSize];
         IntPtr memory = Marshal.AllocHGlobal(sizeof(float));
         try
         {
@@ -491,7 +491,7 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
     public async Task DeviceFreeSinkSeamRejectsNonCreatedSinkStates()
     {
         var canonicalBlock =
-            new float[CompatibilityProfile.BlockSize];
+            new float[SimulationAudioProfile.BlockSize];
         IntPtr memory = Marshal.AllocHGlobal(sizeof(float));
         try
         {
@@ -546,7 +546,7 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
         await using var sink = new PhysicalAudioSink(
             new PhysicalAudioSinkOptions(QueueDepth: 1));
         var canonicalBlock =
-            new float[CompatibilityProfile.BlockSize];
+            new float[SimulationAudioProfile.BlockSize];
         IntPtr memory = Marshal.AllocHGlobal(sizeof(float));
         try
         {
@@ -561,7 +561,7 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
             sink.PrepareDeviceFreeDiagnostics(canonicalBlock.Length);
             AssertObservedFraming(
                 sink.GetDiagnostics().StartupFraming,
-                CompatibilityProfile.AudioStartupPrefillRequestCount);
+                SimulationAudioProfile.AudioStartupPrefillRequestCount);
             Assert.True(
                 sink.FillDeviceFreeDiagnostics(
                     canonicalBlock,
@@ -576,7 +576,7 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
                     frameCount: 0));
             AssertObservedFraming(
                 sink.GetDiagnostics().StartupFraming,
-                CompatibilityProfile.AudioStartupPrefillRequestCount);
+                SimulationAudioProfile.AudioStartupPrefillRequestCount);
             Assert.Equal(1, sink.GetDiagnostics().QueuedBlocks);
         }
         finally
@@ -640,14 +640,14 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
             PreparePlaybackState(
                 sink,
                 sessionId,
-                AudioStreamFormat.Compatibility);
+                AudioStreamFormat.Default);
         AudioBlockQueue initialQueue =
             GetField<AudioBlockQueue>(sink, "_queue");
         AssertObservedFraming(
             initialCoordinator,
-            CompatibilityProfile.AudioStartupPrefillRequestCount);
+            SimulationAudioProfile.AudioStartupPrefillRequestCount);
         Assert.True(initialQueue.TryWrite(
-            new float[CompatibilityProfile.BlockSize]));
+            new float[SimulationAudioProfile.BlockSize]));
         Read(initialCoordinator, initialQueue, frameCount: 2);
         AssertObservedFraming(initialCoordinator, expectedCount: 5);
         Assert.Equal(1, initialCoordinator.StagedCanonicalBlockCount);
@@ -656,7 +656,7 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
             PreparePlaybackState(
                 sink,
                 sessionId,
-                AudioStreamFormat.Compatibility);
+                AudioStreamFormat.Default);
 
         Assert.Same(initialCoordinator, recoveredCoordinator);
         AssertObservedFraming(recoveredCoordinator, expectedCount: 5);
@@ -676,16 +676,16 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
             PreparePlaybackState(
                 sink,
                 SessionId.New(),
-                AudioStreamFormat.Compatibility);
+                AudioStreamFormat.Default);
 
         Assert.NotSame(recoveredCoordinator, freshCoordinator);
         AssertObservedFraming(
             freshCoordinator,
-            CompatibilityProfile.AudioStartupPrefillRequestCount);
+            SimulationAudioProfile.AudioStartupPrefillRequestCount);
         AudioBlockQueue freshQueue =
             GetField<AudioBlockQueue>(sink, "_queue");
         var freshCanonical =
-            new float[CompatibilityProfile.BlockSize];
+            new float[SimulationAudioProfile.BlockSize];
         freshCanonical[0] = 0.75f;
         Assert.True(freshQueue.TryWrite(freshCanonical));
         CallbackResult freshPrefix = Read(
@@ -753,7 +753,7 @@ public sealed class PhysicalAudioPlaybackCoordinatorTests
             Assert.Equal(index + 1, frame.LogicalRequestNumber);
             Assert.Equal(
                 index
-                    < CompatibilityProfile
+                    < SimulationAudioProfile
                         .AudioStartupPrefillRequestCount,
                 frame.IsSynchronousPrefill);
             Assert.False(frame.Samples.IsDefault);

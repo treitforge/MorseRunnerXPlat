@@ -68,8 +68,8 @@ public sealed class MorseKeyer
         int rampLength = (int)Math.Round(
             2.7d * (double)RiseTimeSeconds * SampleRate,
             MidpointRounding.ToEven);
-        _rampOn = LegacyMorseRamp.CreateOn(rampLength);
-        _rampOff = LegacyMorseRamp.CreateOff(_rampOn);
+        _rampOn = MorseRamp.CreateOn(rampLength);
+        _rampOff = MorseRamp.CreateOff(_rampOn);
     }
 
     public int SampleRate { get; }
@@ -442,7 +442,7 @@ public sealed class MorseKeyer
         {
             _morseMessage = morseMessage;
             // Base Encode emits no TFarns markers and exactly one terminal
-            // message marker. Internal message markers identify a CE piece
+            // message marker. Internal message markers identify a piece
             // stream whose raw separator spaces must remain unchanged.
             _translateEncodedSpaces =
                 morseMessage.IndexOf('^') < 0
@@ -496,7 +496,7 @@ public sealed class MorseKeyer
             }
 
             // Encode replaces the last base space with '~'. A preceding run
-            // therefore represents trailing text spaces, without a CE '~'.
+            // therefore represents trailing text spaces without a marker.
             if (_position == _morseMessage.Length - 1
                 && _morseMessage[_position] == '~')
             {

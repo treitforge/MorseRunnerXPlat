@@ -1,8 +1,8 @@
 namespace MorseRunner.Dsp;
 
-public sealed class LegacyMorseEnvelopeCursor
+public sealed class MorseEnvelopeCursor
 {
-    private readonly LegacyMorseKeyingProfile _profile;
+    private readonly MorseKeyingProfile _profile;
     private MorseSymbolEnumerator _symbols;
     private int _samplesPerCharacterUnit;
     private int _samplesPerAdjustedUnit;
@@ -11,14 +11,14 @@ public sealed class LegacyMorseEnvelopeCursor
     private int _currentSymbolPosition;
     private int _currentSymbolSampleCount;
 
-    public LegacyMorseEnvelopeCursor(
-        LegacyMorseKeyingProfile profile)
+    public MorseEnvelopeCursor(
+        MorseKeyingProfile profile)
     {
         ArgumentNullException.ThrowIfNull(profile);
         _profile = profile;
     }
 
-    public LegacyMorseKeyingProfile Profile => _profile;
+    public MorseKeyingProfile Profile => _profile;
 
     public int SendingWordsPerMinute { get; private set; }
 
@@ -40,11 +40,11 @@ public sealed class LegacyMorseEnvelopeCursor
         SendPosition < PaddedEnvelopeSampleCount;
 
     public void Reset(
-        LegacyMorseText text,
+        MorseText text,
         int wordsPerMinute,
         float amplitude)
     {
-        LegacyMorseKeyingProfile.ValidateQrmWordsPerMinute(
+        MorseKeyingProfile.ValidateQrmWordsPerMinute(
             wordsPerMinute);
         if (!float.IsFinite(amplitude) || amplitude < 0f)
         {
@@ -125,7 +125,7 @@ public sealed class LegacyMorseEnvelopeCursor
 
     private void CalculateUnitWidths(int wordsPerMinute)
     {
-        if (_profile.Mode == LegacyMorseKeyingMode.Standard)
+        if (_profile.Mode == MorseKeyingMode.Standard)
         {
             _samplesPerCharacterUnit = (int)Math.Round(
                 60d / 48d
@@ -165,7 +165,7 @@ public sealed class LegacyMorseEnvelopeCursor
     private int GetSymbolSampleCount(char symbol) =>
         _profile.Mode switch
         {
-            LegacyMorseKeyingMode.Standard => symbol switch
+            MorseKeyingMode.Standard => symbol switch
             {
                 '.' => checked(2 * _samplesPerCharacterUnit),
                 '-' => checked(4 * _samplesPerCharacterUnit),
@@ -175,7 +175,7 @@ public sealed class LegacyMorseEnvelopeCursor
                     "The standard Morse stream contains an invalid "
                     + "symbol."),
             },
-            LegacyMorseKeyingMode.SstFarnsworth => symbol switch
+            MorseKeyingMode.SstFarnsworth => symbol switch
             {
                 '.' => checked(2 * _samplesPerCharacterUnit),
                 '-' => checked(4 * _samplesPerCharacterUnit),
@@ -245,8 +245,8 @@ public sealed class LegacyMorseEnvelopeCursor
 
     private struct MorseSymbolEnumerator
     {
-        private readonly LegacyMorseKeyingMode _mode;
-        private LegacyMorseText.CharacterEnumerator _characters;
+        private readonly MorseKeyingMode _mode;
+        private MorseText.CharacterEnumerator _characters;
         private string? _pattern;
         private int _patternPosition;
         private bool _separatorPending;
@@ -254,8 +254,8 @@ public sealed class LegacyMorseEnvelopeCursor
         private char _pendingRawSymbol;
 
         public MorseSymbolEnumerator(
-            LegacyMorseText text,
-            LegacyMorseKeyingMode mode)
+            MorseText text,
+            MorseKeyingMode mode)
         {
             _mode = mode;
             _characters = text.GetEnumerator();
@@ -268,7 +268,7 @@ public sealed class LegacyMorseEnvelopeCursor
 
         public bool MoveNext(out char symbol)
         {
-            return _mode == LegacyMorseKeyingMode.Standard
+            return _mode == MorseKeyingMode.Standard
                 ? MoveNextStandard(out symbol)
                 : MoveNextSst(out symbol);
         }
@@ -347,7 +347,7 @@ public sealed class LegacyMorseEnvelopeCursor
                 {
                     _separatorPending = false;
                     symbol =
-                        _mode == LegacyMorseKeyingMode.Standard
+                        _mode == MorseKeyingMode.Standard
                             ? ' '
                             : '^';
                     return true;

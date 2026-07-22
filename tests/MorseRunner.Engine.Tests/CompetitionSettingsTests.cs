@@ -103,6 +103,6 @@ public sealed class CompetitionSettingsTests
         checked((long)Math.Ceiling(
             minutes
             * 60d
-            * CompatibilityProfile.SampleRate
-            / CompatibilityProfile.BlockSize));
+            * SimulationAudioProfile.SampleRate
+            / SimulationAudioProfile.BlockSize));
 }

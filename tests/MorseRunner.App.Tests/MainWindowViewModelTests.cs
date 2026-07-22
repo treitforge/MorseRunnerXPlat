@@ -604,18 +604,18 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task LegacySerialRangeErrorsAreVisibleAfterStartupImport()
+    public async Task ImportedSerialRangeErrorsAreVisibleAfterStartupImport()
     {
         string root = Path.Combine(
             Path.GetTempPath(),
             $"MorseRunnerXPlat-range-errors-{Guid.NewGuid():N}");
         string settingsPath = Path.Combine(root, "settings.json");
-        string legacyPath = Path.Combine(root, "MorseRunner.ini");
+        string iniPath = Path.Combine(root, "MorseRunner.ini");
         try
         {
             Directory.CreateDirectory(root);
             await File.WriteAllTextAsync(
-                legacyPath,
+                iniPath,
                 """
                 [Station]
                 SerialNrCustomRange=99-1
@@ -623,7 +623,7 @@ public sealed class MainWindowViewModelTests
                 TestContext.Current.CancellationToken);
             await using var viewModel = new MainWindowViewModel(
                 InProcessMorseRunnerClient.CreateDefault(),
-                settingsStore: new SettingsStore(settingsPath, legacyPath));
+                settingsStore: new SettingsStore(settingsPath, iniPath));
 
             await viewModel.InitializeAsync();
 

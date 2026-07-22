@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace MorseRunner.Dsp.Tests;
 
-public sealed class LegacyReceiverNoiseGeneratorTests
+public sealed class ReceiverNoiseGeneratorTests
 {
     private static readonly int[] ExpectedReplacementIndexes =
     [
@@ -17,12 +17,12 @@ public sealed class LegacyReceiverNoiseGeneratorTests
     [Fact]
     public void QrnBackgroundMatchesCeReplacementAndDrawOrder()
     {
-        var cleanRandom = new LegacyRandom(12_345);
-        var qrnRandom = new LegacyRandom(12_345);
+        var cleanRandom = new DeterministicRandom(12_345);
+        var qrnRandom = new DeterministicRandom(12_345);
         var cleanGenerator =
-            new LegacyReceiverNoiseGenerator(cleanRandom);
+            new ReceiverNoiseGenerator(cleanRandom);
         var qrnGenerator =
-            new LegacyReceiverNoiseGenerator(qrnRandom);
+            new ReceiverNoiseGenerator(qrnRandom);
         var cleanReal = new float[512];
         var cleanImaginary = new float[512];
         var qrnReal = new float[512];
@@ -70,7 +70,7 @@ public sealed class LegacyReceiverNoiseGeneratorTests
     public void ReceiverInputRequiresEqualComplexBufferLengths()
     {
         var generator =
-            new LegacyReceiverNoiseGenerator(new LegacyRandom(12_345));
+            new ReceiverNoiseGenerator(new DeterministicRandom(12_345));
 
         Assert.Throws<ArgumentException>(
             () => generator.PrepareInput(
@@ -81,10 +81,10 @@ public sealed class LegacyReceiverNoiseGeneratorTests
 
     [Fact]
     [Trait("Category", "Performance")]
-    public void QrnBackgroundMeetsTheCompatibilityBlockBudget()
+    public void QrnBackgroundMeetsTheRealtimeBlockBudget()
     {
         var generator =
-            new LegacyReceiverNoiseGenerator(new LegacyRandom(12_345));
+            new ReceiverNoiseGenerator(new DeterministicRandom(12_345));
         var real = new float[512];
         var imaginary = new float[512];
         var durations = new long[1_000];

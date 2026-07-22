@@ -1,6 +1,6 @@
 namespace MorseRunner.Dsp;
 
-public readonly struct LegacyMorseText
+public readonly struct MorseText
 {
     public const int MaximumSegmentCount = 8;
 
@@ -13,7 +13,7 @@ public readonly struct LegacyMorseText
     private readonly string? _segment6;
     private readonly string? _segment7;
 
-    public LegacyMorseText(
+    public MorseText(
         string segment0,
         string? segment1 = null,
         string? segment2 = null,
@@ -92,11 +92,11 @@ public readonly struct LegacyMorseText
 
     internal struct CharacterEnumerator
     {
-        private readonly LegacyMorseText _text;
+        private readonly MorseText _text;
         private int _segmentIndex;
         private int _characterIndex;
 
-        public CharacterEnumerator(LegacyMorseText text)
+        public CharacterEnumerator(MorseText text)
         {
             _text = text;
             _segmentIndex = 0;

@@ -81,8 +81,8 @@ internal sealed class EngineSession : IAsyncDisposable
     private readonly SessionId _sessionId;
     private readonly SessionSettings _settings;
     private readonly IAudioSink _audioSink;
-    private readonly LegacyRandom _random;
-    private readonly LegacyRandomEffects _randomEffects;
+    private readonly DeterministicRandom _random;
+    private readonly RandomEffects _randomEffects;
     private readonly StationReferenceCatalog _stationCatalog;
     private readonly List<SimulatedStation> _stations = [];
     private readonly List<ReceiverSource> _receiverSources;
@@ -98,24 +98,24 @@ internal sealed class EngineSession : IAsyncDisposable
     private readonly TaskCompletionSource<SessionHandle> _initialized =
         new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly float[] _renderBuffer =
-        new float[CompatibilityProfile.BlockSize];
+        new float[SimulationAudioProfile.BlockSize];
     private readonly float[] _operatorBuffer =
-        new float[CompatibilityProfile.BlockSize];
+        new float[SimulationAudioProfile.BlockSize];
     private readonly float[] _receiverReal =
-        new float[CompatibilityProfile.BlockSize];
+        new float[SimulationAudioProfile.BlockSize];
     private readonly float[] _receiverImaginary =
-        new float[CompatibilityProfile.BlockSize];
+        new float[SimulationAudioProfile.BlockSize];
     private readonly float[] _qrmEnvelopeBuffer =
-        new float[CompatibilityProfile.BlockSize];
+        new float[SimulationAudioProfile.BlockSize];
     private readonly MorseToneRenderer _toneRenderer;
-    private readonly LegacyReceiverPipeline _receiverPipeline;
-    private readonly LegacyReceiverNoiseGenerator _receiverNoiseGenerator;
+    private readonly ReceiverPipeline _receiverPipeline;
+    private readonly ReceiverNoiseGenerator _receiverNoiseGenerator;
     private float _monitorGain;
     private readonly bool _automaticTiming;
     private readonly TimeSpan _blockPeriod;
     private readonly AutomaticBlockClock _automaticBlockClock = new(
-        CompatibilityProfile.SampleRate,
-        CompatibilityProfile.BlockSize);
+        SimulationAudioProfile.SampleRate,
+        SimulationAudioProfile.BlockSize);
     private readonly Task _worker;
     private PeriodicTimer? _automaticTimer;
     private SessionSnapshot _snapshot;
@@ -141,7 +141,6 @@ internal sealed class EngineSession : IAsyncDisposable
     private int _qsoCountSinceStationId;
     private int _score;
     private int _nextStationSerial = 1;
-    private bool _hasCreatedStation;
     private int _verifiedPoints;
     private readonly HashSet<string> _workedCalls =
         new(StringComparer.Ordinal);
@@ -149,9 +148,6 @@ internal sealed class EngineSession : IAsyncDisposable
         new(StringComparer.Ordinal);
     private Qso[] _completedQsos = [];
     private string? _lastLoggedCall;
-    private bool _parityRandomCheckpointTaken;
-    private bool _callerCollisionParityProbeTaken;
-    private bool _qsbRuntimeParityProbeTaken;
     private int _disposed;
 
     public EngineSession(
@@ -176,12 +172,12 @@ internal sealed class EngineSession : IAsyncDisposable
             : StationReferenceCatalog.Load(settings.ContestId);
         if (settings.Qrm)
         {
-            var qrmKeyingProfile = new LegacyMorseKeyingProfile(
-                CompatibilityProfile.SampleRate,
-                CompatibilityProfile.BlockSize,
+            var qrmKeyingProfile = new MorseKeyingProfile(
+                SimulationAudioProfile.SampleRate,
+                SimulationAudioProfile.BlockSize,
                 settings.ContestId.Value == "scSst"
-                    ? LegacyMorseKeyingMode.SstFarnsworth
-                    : LegacyMorseKeyingMode.Standard);
+                    ? MorseKeyingMode.SstFarnsworth
+                    : MorseKeyingMode.Standard);
             int qrmCapacity =
                 QrmStation.CalculateMaximumConcurrentStations(
                     qrmKeyingProfile,
@@ -212,22 +208,22 @@ internal sealed class EngineSession : IAsyncDisposable
             _qrnBurstPool[index] = new QrnBurstStation();
         }
         _currentMonitorLevelDb = settings.MonitorLevelDb;
-        _monitorGain = CalculateLegacyMonitorGain(_currentMonitorLevelDb);
+        _monitorGain = CalculateMonitorGain(_currentMonitorLevelDb);
         _currentWordsPerMinute = settings.WordsPerMinute;
         _currentBandwidthHz = settings.BandwidthHz;
         _qsbEnabled = settings.Qsb;
         _qskEnabled = settings.Qsk;
         _toneRenderer = new(
-            CompatibilityProfile.SampleRate,
-            CompatibilityProfile.BlockSize,
+            SimulationAudioProfile.SampleRate,
+            SimulationAudioProfile.BlockSize,
             settings.WordsPerMinute,
             settings.PitchHz);
         _receiverPipeline = new(
-            CompatibilityProfile.SampleRate,
-            CompatibilityProfile.BlockSize,
+            SimulationAudioProfile.SampleRate,
+            SimulationAudioProfile.BlockSize,
             settings.BandwidthHz,
             settings.PitchHz,
-            CompatibilityProfile.AudioStartupRequestCount);
+            SimulationAudioProfile.AudioStartupRequestCount);
         _commands = Channel.CreateBounded<WorkItem>(
             new BoundedChannelOptions(CommandCapacity)
             {
@@ -401,338 +397,6 @@ internal sealed class EngineSession : IAsyncDisposable
         await completion.Task.WaitAsync(cancellationToken);
     }
 
-    internal async Task<float> TakeNextRandomSingleForParityAsync(
-        long expectedRevision,
-        long expectedSimulationBlock,
-        CancellationToken cancellationToken)
-    {
-        if (_automaticTiming)
-        {
-            throw new InvalidOperationException(
-                "Parity random checkpoints require manual timing.");
-        }
-
-        ArgumentOutOfRangeException.ThrowIfNegative(expectedRevision);
-        ArgumentOutOfRangeException.ThrowIfNegative(
-            expectedSimulationBlock);
-        cancellationToken.ThrowIfCancellationRequested();
-
-        TaskCompletionSource<float> completion =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
-        if (!_commands.Writer.TryWrite(
-                new RandomCheckpointWorkItem(
-                    expectedRevision,
-                    expectedSimulationBlock,
-                    completion)))
-        {
-            throw new InvalidOperationException(
-                "Could not enqueue the parity random checkpoint.");
-        }
-
-        Task completed = await Task.WhenAny(
-                completion.Task,
-                _worker);
-        if (completion.Task.IsCompleted)
-        {
-            return await completion.Task;
-        }
-
-        if (completed == _worker && _worker.IsFaulted)
-        {
-            throw new InvalidOperationException(
-                "The session faulted before the parity random "
-                + "checkpoint was observed.",
-                _worker.Exception);
-        }
-
-        throw new InvalidOperationException(
-            "The session stopped before the parity random checkpoint "
-            + "was observed.");
-    }
-
-    internal async Task<QrnBurstParityObservation>
-        ObserveQrnBurstForParityAsync(
-            long expectedRevision,
-            long expectedSimulationBlock,
-            CancellationToken cancellationToken)
-    {
-        if (_automaticTiming)
-        {
-            throw new InvalidOperationException(
-                "QRN burst parity observations require manual timing.");
-        }
-
-        ArgumentOutOfRangeException.ThrowIfNegative(expectedRevision);
-        ArgumentOutOfRangeException.ThrowIfNegative(
-            expectedSimulationBlock);
-        cancellationToken.ThrowIfCancellationRequested();
-
-        TaskCompletionSource<QrnBurstParityObservation> completion =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
-        if (!_commands.Writer.TryWrite(
-                new QrnBurstObservationWorkItem(
-                    expectedRevision,
-                    expectedSimulationBlock,
-                    completion)))
-        {
-            throw new InvalidOperationException(
-                "Could not enqueue the QRN burst parity observation.");
-        }
-
-        Task completed = await Task.WhenAny(
-                completion.Task,
-                _worker);
-        if (completion.Task.IsCompleted)
-        {
-            return await completion.Task;
-        }
-
-        if (completed == _worker && _worker.IsFaulted)
-        {
-            throw new InvalidOperationException(
-                "The session faulted before the QRN burst parity "
-                + "observation completed.",
-                _worker.Exception);
-        }
-
-        throw new InvalidOperationException(
-            "The session stopped before the QRN burst parity "
-            + "observation completed.");
-    }
-
-    internal async Task<QrmStationParityObservation>
-        ObserveQrmStationForParityAsync(
-            long expectedRevision,
-            long expectedSimulationBlock,
-            CancellationToken cancellationToken)
-    {
-        if (_automaticTiming)
-        {
-            throw new InvalidOperationException(
-                "QRM station parity observations require manual timing.");
-        }
-
-        ArgumentOutOfRangeException.ThrowIfNegative(expectedRevision);
-        ArgumentOutOfRangeException.ThrowIfNegative(
-            expectedSimulationBlock);
-        cancellationToken.ThrowIfCancellationRequested();
-
-        TaskCompletionSource<QrmStationParityObservation> completion =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
-        if (!_commands.Writer.TryWrite(
-                new QrmStationObservationWorkItem(
-                    expectedRevision,
-                    expectedSimulationBlock,
-                    completion)))
-        {
-            throw new InvalidOperationException(
-                "Could not enqueue the QRM station parity observation.");
-        }
-
-        Task completed = await Task.WhenAny(
-                completion.Task,
-                _worker);
-        if (completion.Task.IsCompleted)
-        {
-            return await completion.Task;
-        }
-
-        if (completed == _worker && _worker.IsFaulted)
-        {
-            throw new InvalidOperationException(
-                "The session faulted before the QRM station parity "
-                + "observation completed.",
-                _worker.Exception);
-        }
-
-        throw new InvalidOperationException(
-            "The session stopped before the QRM station parity "
-            + "observation completed.");
-    }
-
-    internal async Task<CallerCollisionParityObservation>
-        ObserveCallerCollisionForParityAsync(
-            long expectedRevision,
-            long expectedSimulationBlock,
-            string collisionCall,
-            int retryLimit,
-            CancellationToken cancellationToken)
-    {
-        if (_automaticTiming)
-        {
-            throw new InvalidOperationException(
-                "Caller collision parity observations require manual "
-                + "timing.");
-        }
-
-        ArgumentOutOfRangeException.ThrowIfNegative(expectedRevision);
-        ArgumentOutOfRangeException.ThrowIfNegative(
-            expectedSimulationBlock);
-        ArgumentException.ThrowIfNullOrWhiteSpace(collisionCall);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(retryLimit);
-        cancellationToken.ThrowIfCancellationRequested();
-
-        TaskCompletionSource<CallerCollisionParityObservation> completion =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
-        if (!_commands.Writer.TryWrite(
-                new CallerCollisionObservationWorkItem(
-                    expectedRevision,
-                    expectedSimulationBlock,
-                    collisionCall,
-                    retryLimit,
-                    completion)))
-        {
-            throw new InvalidOperationException(
-                "Could not enqueue the caller collision parity "
-                + "observation.");
-        }
-
-        Task completed = await Task.WhenAny(completion.Task, _worker);
-        if (completion.Task.IsCompleted)
-        {
-            return await completion.Task;
-        }
-
-        if (completed == _worker && _worker.IsFaulted)
-        {
-            throw new InvalidOperationException(
-                "The session faulted before the caller collision "
-                + "parity observation completed.",
-                _worker.Exception);
-        }
-
-        throw new InvalidOperationException(
-            "The session stopped before the caller collision parity "
-            + "observation completed.");
-    }
-
-    internal async Task<QsbRuntimeParityObservation>
-        ObserveQsbRuntimeForParityAsync(
-            long expectedRevision,
-            long expectedSimulationBlock,
-            string stationCall,
-            string message,
-            int blockCount,
-            int toggleAfterBlockCount,
-            bool runtimeToggle,
-            CancellationToken cancellationToken)
-    {
-        if (_automaticTiming)
-        {
-            throw new InvalidOperationException(
-                "QSB runtime parity observations require manual timing.");
-        }
-
-        ArgumentOutOfRangeException.ThrowIfNegative(expectedRevision);
-        ArgumentOutOfRangeException.ThrowIfNegative(
-            expectedSimulationBlock);
-        ArgumentException.ThrowIfNullOrWhiteSpace(stationCall);
-        ArgumentException.ThrowIfNullOrWhiteSpace(message);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(blockCount);
-        ArgumentOutOfRangeException.ThrowIfNegative(
-            toggleAfterBlockCount);
-        cancellationToken.ThrowIfCancellationRequested();
-
-        TaskCompletionSource<QsbRuntimeParityObservation> completion =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
-        if (!_commands.Writer.TryWrite(
-                new QsbRuntimeObservationWorkItem(
-                    expectedRevision,
-                    expectedSimulationBlock,
-                    stationCall,
-                    message,
-                    blockCount,
-                    toggleAfterBlockCount,
-                    runtimeToggle,
-                    completion)))
-        {
-            throw new InvalidOperationException(
-                "Could not enqueue the QSB runtime parity observation.");
-        }
-
-        Task completed = await Task.WhenAny(completion.Task, _worker);
-        if (completion.Task.IsCompleted)
-        {
-            return await completion.Task;
-        }
-
-        if (completed == _worker && _worker.IsFaulted)
-        {
-            throw new InvalidOperationException(
-                "The session faulted before the QSB runtime parity "
-                + "observation completed.",
-                _worker.Exception);
-        }
-
-        throw new InvalidOperationException(
-            "The session stopped before the QSB runtime parity "
-            + "observation completed.");
-    }
-
-    internal async Task AddScriptedStationForParityAsync(
-        long expectedRevision,
-        long expectedSimulationBlock,
-        string stationCall,
-        string message,
-        int wordsPerMinute,
-        int pitchOffsetHz,
-        float amplitude,
-        CancellationToken cancellationToken)
-    {
-        if (_automaticTiming)
-        {
-            throw new InvalidOperationException(
-                "Scripted station parity setup requires manual timing.");
-        }
-
-        ArgumentOutOfRangeException.ThrowIfNegative(expectedRevision);
-        ArgumentOutOfRangeException.ThrowIfNegative(
-            expectedSimulationBlock);
-        ArgumentException.ThrowIfNullOrWhiteSpace(stationCall);
-        ArgumentException.ThrowIfNullOrWhiteSpace(message);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(wordsPerMinute);
-        if (!float.IsFinite(amplitude) || amplitude <= 0f)
-        {
-            throw new ArgumentOutOfRangeException(nameof(amplitude));
-        }
-
-        cancellationToken.ThrowIfCancellationRequested();
-        TaskCompletionSource completion = new(
-            TaskCreationOptions.RunContinuationsAsynchronously);
-        if (!_commands.Writer.TryWrite(
-                new ScriptedStationSetupWorkItem(
-                    expectedRevision,
-                    expectedSimulationBlock,
-                    stationCall,
-                    message,
-                    wordsPerMinute,
-                    pitchOffsetHz,
-                    amplitude,
-                    completion)))
-        {
-            throw new InvalidOperationException(
-                "Could not enqueue the scripted station parity setup.");
-        }
-
-        Task completed = await Task.WhenAny(completion.Task, _worker);
-        if (completion.Task.IsCompleted)
-        {
-            await completion.Task;
-            return;
-        }
-
-        if (completed == _worker && _worker.IsFaulted)
-        {
-            throw new InvalidOperationException(
-                "The session faulted before the scripted station "
-                + "parity setup completed.",
-                _worker.Exception);
-        }
-
-        throw new InvalidOperationException(
-            "The session stopped before the scripted station parity "
-            + "setup completed.");
-    }
 
     public async ValueTask DisposeAsync()
     {
@@ -763,7 +427,7 @@ internal sealed class EngineSession : IAsyncDisposable
             PublishEvent(SessionEventKind.Created, null);
             await _audioSink.InitializeAsync(
                 _sessionId,
-                AudioStreamFormat.Compatibility,
+                AudioStreamFormat.Default,
                 _lifetime.Token);
             _state = SessionState.Ready;
             _revision++;
@@ -843,24 +507,6 @@ internal sealed class EngineSession : IAsyncDisposable
             case CommandWorkItem command:
                 await ApplyCommandAsync(command.Record);
                 return true;
-            case RandomCheckpointWorkItem checkpoint:
-                ApplyRandomCheckpoint(checkpoint);
-                return true;
-            case QrnBurstObservationWorkItem observation:
-                ApplyQrnBurstObservation(observation);
-                return true;
-            case QrmStationObservationWorkItem observation:
-                ApplyQrmStationObservation(observation);
-                return true;
-            case CallerCollisionObservationWorkItem observation:
-                ApplyCallerCollisionObservation(observation);
-                return true;
-            case QsbRuntimeObservationWorkItem observation:
-                ApplyQsbRuntimeObservation(observation);
-                return true;
-            case ScriptedStationSetupWorkItem setup:
-                ApplyScriptedStationSetup(setup);
-                return true;
             case CloseWorkItem close:
                 ApplyClose(close.Completion);
                 return false;
@@ -928,378 +574,6 @@ internal sealed class EngineSession : IAsyncDisposable
         request.Completion.TrySetResult(result);
     }
 
-    private void ApplyRandomCheckpoint(
-        RandomCheckpointWorkItem checkpoint)
-    {
-        if (_revision != checkpoint.ExpectedRevision
-            || _simulationBlock != checkpoint.ExpectedSimulationBlock)
-        {
-            checkpoint.Completion.TrySetException(
-                new InvalidOperationException(
-                    "The parity random checkpoint did not match the "
-                    + "expected session revision and simulation "
-                    + "block."));
-            return;
-        }
-
-        if (_parityRandomCheckpointTaken)
-        {
-            checkpoint.Completion.TrySetException(
-                new InvalidOperationException(
-                    "The terminal parity random checkpoint was already "
-                    + "observed for this session."));
-            return;
-        }
-
-        _parityRandomCheckpointTaken = true;
-        checkpoint.Completion.TrySetResult(_random.NextSingle());
-    }
-
-    private void ApplyQrnBurstObservation(
-        QrnBurstObservationWorkItem observation)
-    {
-        if (_revision != observation.ExpectedRevision
-            || _simulationBlock
-                != observation.ExpectedSimulationBlock)
-        {
-            observation.Completion.TrySetException(
-                new InvalidOperationException(
-                    "The QRN burst parity observation did not match "
-                    + "the expected session revision and simulation "
-                    + "block."));
-            return;
-        }
-
-        int activeCount = 0;
-        QrnBurstStation? observedBurst = null;
-        for (int index = 0; index < _receiverSources.Count; index++)
-        {
-            QrnBurstStation? burst =
-                _receiverSources[index].QrnBurst;
-            if (burst is null || !burst.IsActive)
-            {
-                continue;
-            }
-
-            activeCount++;
-            observedBurst ??= burst;
-        }
-
-        observation.Completion.TrySetResult(
-            activeCount == 0
-                ? QrnBurstParityObservation.Empty
-                : new(
-                    activeCount,
-                    observedBurst!.IsSending,
-                    observedBurst!.EnvelopeSampleCount));
-    }
-
-    private void ApplyQrmStationObservation(
-        QrmStationObservationWorkItem observation)
-    {
-        if (_revision != observation.ExpectedRevision
-            || _simulationBlock
-                != observation.ExpectedSimulationBlock)
-        {
-            observation.Completion.TrySetException(
-                new InvalidOperationException(
-                    "The QRM station parity observation did not match "
-                    + "the expected session revision and simulation "
-                    + "block."));
-            return;
-        }
-
-        int activeCount = 0;
-        QrmStation? observedStation = null;
-        for (int index = 0; index < _receiverSources.Count; index++)
-        {
-            QrmStation? station =
-                _receiverSources[index].QrmStation;
-            if (station is null || !station.IsActive)
-            {
-                continue;
-            }
-
-            activeCount++;
-            observedStation ??= station;
-        }
-
-        observation.Completion.TrySetResult(
-            activeCount == 0
-                ? QrmStationParityObservation.Empty
-                : new(
-                    activeCount,
-                    observedStation!.IsSending,
-                    observedStation.MyCall,
-                    observedStation.HisCall,
-                    observedStation.R1,
-                    observedStation.Amplitude,
-                    observedStation.PitchOffsetHz,
-                    observedStation.SendingWordsPerMinute,
-                    observedStation.CharacterWordsPerMinute,
-                    observedStation.MessageSet,
-                    observedStation.MessageText,
-                    observedStation.EnvelopeSampleCount,
-                    observedStation.SendPosition));
-    }
-
-    private void ApplyCallerCollisionObservation(
-        CallerCollisionObservationWorkItem observation)
-    {
-        if (_revision != observation.ExpectedRevision
-            || _simulationBlock
-                != observation.ExpectedSimulationBlock)
-        {
-            observation.Completion.TrySetException(
-                new InvalidOperationException(
-                    "The caller collision parity observation did not "
-                    + "match the expected session revision and "
-                    + "simulation block."));
-            return;
-        }
-
-        if (_callerCollisionParityProbeTaken)
-        {
-            observation.Completion.TrySetException(
-                new InvalidOperationException(
-                    "The caller collision parity observation was "
-                    + "already executed for this session."));
-            return;
-        }
-
-        if (!_settings.Qrm || _qrmStationPool.Length == 0)
-        {
-            observation.Completion.TrySetException(
-                new InvalidOperationException(
-                    "The caller collision parity observation requires "
-                    + "QRM."));
-            return;
-        }
-
-        if (observation.RetryLimit != 10)
-        {
-            observation.Completion.TrySetException(
-                new InvalidOperationException(
-                    "The caller collision parity observation requires "
-                    + "the CE retry limit of 10."));
-            return;
-        }
-
-        _callerCollisionParityProbeTaken = true;
-        QrmStation qrm = _qrmStationPool[0];
-        qrm.Activate(
-            _random,
-            _randomEffects,
-            _stationCatalog,
-            _settings.ContestId,
-            _settings.RunModeId,
-            _settings.StationCall,
-            () => observation.CollisionCall);
-        AddReceiverSource(ReceiverSource.FromQrmStation(qrm));
-
-        var candidates = new List<CallerCandidateParityObservation>(
-            observation.RetryLimit);
-        int identitySelectionCount = 0;
-        SimulatedStation? accepted = AddCaller(
-            ToOperatorRunMode(_settings.RunModeId),
-            attempt =>
-            {
-                identitySelectionCount++;
-                return new(
-                    observation.CollisionCall,
-                    "599",
-                    1000 + attempt,
-                    $"EX{attempt:00}",
-                    $"ID{attempt}",
-                    OperatorName: $"OP{attempt}",
-                    UserText: $"catalog-row-{attempt}");
-            },
-            (attempt, candidate) =>
-                candidates.Add(
-                    new(
-                        attempt,
-                        candidate.Identity,
-                        candidate.R1,
-                        candidate.WordsPerMinute,
-                        candidate.CharacterWordsPerMinute,
-                        candidate.Operator.Skills,
-                        candidate.Operator.Patience,
-                        candidate.Operator.State,
-                        candidate.Amplitude,
-                        candidate.PitchOffsetHz)),
-            prepareForArrival: false);
-
-        int duplicateActiveCallsignCount =
-            (qrm.MyCall == observation.CollisionCall ? 1 : 0)
-            + _stations.Count(
-                station => station.Identity.Callsign.Equals(
-                    observation.CollisionCall,
-                    StringComparison.Ordinal));
-        QrmStationParityObservation qrmObservation = new(
-            1,
-            qrm.IsSending,
-            qrm.MyCall,
-            qrm.HisCall,
-            qrm.R1,
-            qrm.Amplitude,
-            qrm.PitchOffsetHz,
-            qrm.SendingWordsPerMinute,
-            qrm.CharacterWordsPerMinute,
-            qrm.MessageSet,
-            qrm.MessageText,
-            qrm.EnvelopeSampleCount,
-            qrm.SendPosition);
-        observation.Completion.TrySetResult(
-            new(
-                qrmObservation,
-                candidates,
-                identitySelectionCount,
-                candidates.Count == 0 ? 0 : candidates[^1].Attempt,
-                accepted?.CreateSnapshot(),
-                accepted?.Identity.OperatorName ?? string.Empty,
-                accepted?.Identity.UserText ?? string.Empty,
-                duplicateActiveCallsignCount,
-                _random.NextSingle()));
-    }
-
-    private void ApplyQsbRuntimeObservation(
-        QsbRuntimeObservationWorkItem observation)
-    {
-        if (_revision != observation.ExpectedRevision
-            || _simulationBlock
-                != observation.ExpectedSimulationBlock)
-        {
-            observation.Completion.TrySetException(
-                new InvalidOperationException(
-                    "The QSB runtime parity observation did not match "
-                    + "the expected session revision and simulation "
-                    + "block."));
-            return;
-        }
-
-        if (_qsbRuntimeParityProbeTaken)
-        {
-            observation.Completion.TrySetException(
-                new InvalidOperationException(
-                    "The QSB runtime parity observation was already "
-                    + "executed for this session."));
-            return;
-        }
-
-        if (_state != SessionState.Ready
-            || _qsbEnabled
-            || _settings.Qrm
-            || _settings.Qrn
-            || _settings.Flutter
-            || _qskEnabled
-            || _settings.Lids
-            || _stations.Count != 0
-            || _hasCreatedStation
-            || observation.BlockCount != 4
-            || observation.ToggleAfterBlockCount != 2)
-        {
-            observation.Completion.TrySetException(
-                new InvalidOperationException(
-                    "The QSB runtime parity observation requires the "
-                    + "fresh CE-compatible station configuration."));
-            return;
-        }
-
-        _qsbRuntimeParityProbeTaken = true;
-        // The CE fixture seeds before TContest construction. Its home station
-        // consumes one R1 draw during construction and one during contest Init.
-        _ = _random.NextSingle();
-        _ = _random.NextSingle();
-        SimulatedStation? station = AddCaller(
-            ToOperatorRunMode(_settings.RunModeId),
-            _ => new(
-                observation.StationCall,
-                "599",
-                123,
-                "Randy",
-                "WA",
-                OperatorName: "Randy"),
-            prepareForArrival: false);
-        if (station is null)
-        {
-            observation.Completion.TrySetException(
-                new InvalidOperationException(
-                    "The QSB runtime parity station was not created."));
-            return;
-        }
-
-        station.StartScriptedTransmissionForParity(observation.Message);
-        var receiverReal = new float[CompatibilityProfile.BlockSize];
-        var receiverImaginary = new float[CompatibilityProfile.BlockSize];
-        var blocks = new float[observation.BlockCount][];
-        for (int blockIndex = 0;
-             blockIndex < blocks.Length;
-             blockIndex++)
-        {
-            if (observation.RuntimeToggle
-                && blockIndex == observation.ToggleAfterBlockCount)
-            {
-                _qsbEnabled = true;
-            }
-
-            float[] block = new float[CompatibilityProfile.BlockSize];
-            station.RenderBlock(
-                receiverReal,
-                receiverImaginary,
-                _qsbEnabled,
-                ritOffsetHz: 0,
-                ritPhase: 0f,
-                mixOutput: false,
-                envelopeObservation: block);
-            blocks[blockIndex] = block;
-        }
-
-        observation.Completion.TrySetResult(
-            new(blocks, _random.NextSingle()));
-    }
-
-    private void ApplyScriptedStationSetup(
-        ScriptedStationSetupWorkItem setup)
-    {
-        if (_revision != setup.ExpectedRevision
-            || _simulationBlock != setup.ExpectedSimulationBlock
-            || _state != SessionState.Running
-            || _settings.Qrm
-            || _settings.Qrn
-            || _qsbEnabled
-            || _settings.Flutter
-            || _qskEnabled
-            || _settings.Lids
-            || _stations.Count != 0
-            || _receiverSources.Count != 0
-            || _hasCreatedStation)
-        {
-            setup.Completion.TrySetException(
-                new InvalidOperationException(
-                    "The scripted station parity setup requires the "
-                    + "fresh CE-compatible running configuration."));
-            return;
-        }
-
-        SimulatedStation station =
-            SimulatedStation.CreateScriptedForParity(
-                new(
-                    setup.StationCall,
-                    "599",
-                    1,
-                    string.Empty,
-                    string.Empty),
-                setup.WordsPerMinute,
-                setup.PitchOffsetHz,
-                setup.Amplitude,
-                ToOperatorRunMode(_settings.RunModeId),
-                setup.Message);
-        _stations.Add(station);
-        _hasCreatedStation = true;
-        ReserveReceiverCapacityForCaller();
-        AddReceiverSource(ReceiverSource.FromCaller(station));
-        setup.Completion.TrySetResult();
-    }
 
     private CommandResult ApplyStart()
     {
@@ -1442,11 +716,11 @@ internal sealed class EngineSession : IAsyncDisposable
                     _ritPhase,
                     mixOutput: _qskEnabled || !operatorIsSending);
             }
-            _ritPhase = LegacyStationMixer.AdvanceRitPhase(
+            _ritPhase = StationMixer.AdvanceRitPhase(
                 _ritPhase,
-                CompatibilityProfile.BlockSize,
+                SimulationAudioProfile.BlockSize,
                 _ritOffsetHz,
-                CompatibilityProfile.SampleRate);
+                SimulationAudioProfile.SampleRate);
             MixOperatorMonitorIntoReceiver(operatorIsSending);
             _receiverPipeline.Process(
                 _receiverReal,
@@ -1462,7 +736,7 @@ internal sealed class EngineSession : IAsyncDisposable
             }
             TickReceiverSources();
             _simulationBlock++;
-            _renderedSamples += CompatibilityProfile.BlockSize;
+            _renderedSamples += SimulationAudioProfile.BlockSize;
             _revision++;
 
             RemoveFailedStations();
@@ -1514,7 +788,7 @@ internal sealed class EngineSession : IAsyncDisposable
         }
 
         throw new InvalidOperationException(
-            "The CE QRN burst concurrency bound was exceeded.");
+            "The QRN burst concurrency bound was exceeded.");
     }
 
     private void AddQrmStation()
@@ -1539,7 +813,7 @@ internal sealed class EngineSession : IAsyncDisposable
         }
 
         throw new InvalidOperationException(
-            "The CE QRM station concurrency bound was exceeded.");
+            "The QRM station concurrency bound was exceeded.");
     }
 
     private void TickReceiverSources()
@@ -1681,7 +955,7 @@ internal sealed class EngineSession : IAsyncDisposable
         }
     }
 
-    private static float CalculateLegacyMonitorGain(double monitorLevelDb)
+    private static float CalculateMonitorGain(double monitorLevelDb)
     {
         float sliderValue = Math.Clamp(
             ((float)monitorLevelDb / 60f) + 1f,
@@ -2184,7 +1458,6 @@ internal sealed class EngineSession : IAsyncDisposable
         ReserveReceiverCapacityForCaller();
         _stations.Add(station);
         AddReceiverSource(ReceiverSource.FromCaller(station));
-        _hasCreatedStation = true;
         _lastCaller = station.Identity.Callsign;
         PublishEvent(
             SessionEventKind.CallerJoined,
@@ -2361,7 +1634,7 @@ internal sealed class EngineSession : IAsyncDisposable
                     _currentMonitorLevelDb + command.Delta,
                     -60d,
                     0d);
-                _monitorGain = CalculateLegacyMonitorGain(
+                _monitorGain = CalculateMonitorGain(
                     _currentMonitorLevelDb);
                 break;
             default:
@@ -2474,7 +1747,7 @@ internal sealed class EngineSession : IAsyncDisposable
         {
             Timestamp = DateTimeOffset.UnixEpoch
                 + TimeSpan.FromSeconds(
-                    (double)_renderedSamples / CompatibilityProfile.SampleRate),
+                    (double)_renderedSamples / SimulationAudioProfile.SampleRate),
             Call = _lastLoggedCall,
             TrueCall = truth?.Callsign ?? string.Empty,
             RawCallsign = command.Call,
@@ -2779,7 +2052,7 @@ internal sealed class EngineSession : IAsyncDisposable
                 DroppedBlockCount: 0,
                 IsHealthy: true);
         TimeSpan elapsed = TimeSpan.FromSeconds(
-            (double)_renderedSamples / CompatibilityProfile.SampleRate);
+            (double)_renderedSamples / SimulationAudioProfile.SampleRate);
         ActiveStationSnapshot[] activeStations = _stations
             .Select(station => station.CreateSnapshot())
             .ToArray();
@@ -2879,53 +2152,6 @@ internal sealed class EngineSession : IAsyncDisposable
     private abstract record WorkItem;
 
     private sealed record CommandWorkItem(RequestRecord Record) : WorkItem;
-
-    private sealed record RandomCheckpointWorkItem(
-        long ExpectedRevision,
-        long ExpectedSimulationBlock,
-        TaskCompletionSource<float> Completion) : WorkItem;
-
-    private sealed record QrnBurstObservationWorkItem(
-        long ExpectedRevision,
-        long ExpectedSimulationBlock,
-        TaskCompletionSource<QrnBurstParityObservation> Completion)
-        : WorkItem;
-
-    private sealed record QrmStationObservationWorkItem(
-        long ExpectedRevision,
-        long ExpectedSimulationBlock,
-        TaskCompletionSource<QrmStationParityObservation> Completion)
-        : WorkItem;
-
-    private sealed record CallerCollisionObservationWorkItem(
-        long ExpectedRevision,
-        long ExpectedSimulationBlock,
-        string CollisionCall,
-        int RetryLimit,
-        TaskCompletionSource<CallerCollisionParityObservation> Completion)
-        : WorkItem;
-
-    private sealed record QsbRuntimeObservationWorkItem(
-        long ExpectedRevision,
-        long ExpectedSimulationBlock,
-        string StationCall,
-        string Message,
-        int BlockCount,
-        int ToggleAfterBlockCount,
-        bool RuntimeToggle,
-        TaskCompletionSource<QsbRuntimeParityObservation> Completion)
-        : WorkItem;
-
-    private sealed record ScriptedStationSetupWorkItem(
-        long ExpectedRevision,
-        long ExpectedSimulationBlock,
-        string StationCall,
-        string Message,
-        int WordsPerMinute,
-        int PitchOffsetHz,
-        float Amplitude,
-        TaskCompletionSource Completion)
-        : WorkItem;
 
     private sealed record CloseWorkItem(
         TaskCompletionSource<bool> Completion) : WorkItem;

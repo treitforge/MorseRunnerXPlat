@@ -12,7 +12,7 @@ public sealed class SimulationAndScoringTests
         var value = new SimulatedOperator(
             "W7SST",
             OperatorState.NeedPreviousEnd,
-            new LegacyRandom(12_345),
+            new DeterministicRandom(12_345),
             OperatorRunMode.Pileup);
 
         Assert.Equal(3, value.Skills);
@@ -27,12 +27,12 @@ public sealed class SimulationAndScoringTests
     }
 
     [Fact]
-    public void OperatorNormalAndCallCorrectionFlowsMatchLegacyStates()
+    public void OperatorNormalAndCallCorrectionFlowsMatchPinnedStates()
     {
         var normal = new SimulatedOperator(
             "K1ABC",
             OperatorState.NeedQso,
-            new LegacyRandom(24_680),
+            new DeterministicRandom(24_680),
             OperatorRunMode.SingleCall);
 
         normal.Receive(StationMessage.HisCall, "K1ABC");
@@ -45,7 +45,7 @@ public sealed class SimulationAndScoringTests
         var correction = new SimulatedOperator(
             "K1ABC",
             OperatorState.NeedQso,
-            new LegacyRandom(24_680),
+            new DeterministicRandom(24_680),
             OperatorRunMode.SingleCall);
 
         correction.Receive(StationMessage.HisCall, "K1AB");
@@ -70,11 +70,11 @@ public sealed class SimulationAndScoringTests
                 "123"),
             wordsPerMinute: 25,
             pitchOffsetHz: 0,
-            new LegacyRandom(12_345),
+            new DeterministicRandom(12_345),
             OperatorRunMode.Pileup,
             contestId: new("scCwt"));
 
-        Assert.Equal("DAVID  123", station.ObserveExchangeForParity());
+        Assert.Equal("DAVID  123", station.CreateExchangeText());
     }
 
     [Fact]
@@ -89,11 +89,11 @@ public sealed class SimulationAndScoringTests
                 "OR"),
             wordsPerMinute: 25,
             pitchOffsetHz: 0,
-            new LegacyRandom(12_345),
+            new DeterministicRandom(12_345),
             OperatorRunMode.Pileup,
             contestId: new("scFieldDay"));
 
-        Assert.Equal("3A OR", station.ObserveExchangeForParity());
+        Assert.Equal("3A OR", station.CreateExchangeText());
     }
 
     [Fact]
@@ -108,11 +108,11 @@ public sealed class SimulationAndScoringTests
                 "MA"),
             wordsPerMinute: 25,
             pitchOffsetHz: 0,
-            new LegacyRandom(12_345),
+            new DeterministicRandom(12_345),
             OperatorRunMode.Pileup,
             contestId: new("scSst"));
 
-        Assert.Equal("BRUCE MA", station.ObserveExchangeForParity());
+        Assert.Equal("BRUCE MA", station.CreateExchangeText());
     }
 
     [Fact]
@@ -127,14 +127,14 @@ public sealed class SimulationAndScoringTests
                 "72 OR"),
             wordsPerMinute: 25,
             pitchOffsetHz: 0,
-            new LegacyRandom(12_345),
+            new DeterministicRandom(12_345),
             OperatorRunMode.Pileup,
             sweepstakes: true,
             contestId: new("scArrlSS"));
 
         Assert.Equal(
             "123 A K1ABC 72 OR",
-            station.ObserveExchangeForParity());
+            station.CreateExchangeText());
     }
 
     [Theory]
@@ -156,11 +156,11 @@ public sealed class SimulationAndScoringTests
                 exchange2),
             wordsPerMinute: 25,
             pitchOffsetHz: 0,
-            new LegacyRandom(12_345),
+            new DeterministicRandom(12_345),
             OperatorRunMode.Pileup,
             contestId: new(contestId));
 
-        Assert.Equal(expected, station.ObserveExchangeForParity());
+        Assert.Equal(expected, station.CreateExchangeText());
     }
 
     [Theory]
@@ -171,7 +171,7 @@ public sealed class SimulationAndScoringTests
         string exchange2,
         string expected)
     {
-        var random = new LegacyRandom(12_345);
+        var random = new DeterministicRandom(12_345);
         var station = new SimulatedStation(
             new StationIdentity(
                 "JA1ABC",
@@ -187,7 +187,7 @@ public sealed class SimulationAndScoringTests
 
         _ = random.NextDouble();
 
-        Assert.Equal(expected, station.ObserveExchangeForParity());
+        Assert.Equal(expected, station.CreateExchangeText());
     }
 
     [Theory]
@@ -208,17 +208,17 @@ public sealed class SimulationAndScoringTests
                 exchange2),
             wordsPerMinute: 25,
             pitchOffsetHz: 0,
-            new LegacyRandom(12_345),
+            new DeterministicRandom(12_345),
             OperatorRunMode.Pileup,
             contestId: new(contestId));
 
-        Assert.Equal(expected, station.ObserveExchangeForParity());
+        Assert.Equal(expected, station.CreateExchangeText());
     }
 
     [Fact]
     public void ArrlDxHigherR1PowerKeepsLeadingDoubleZeroCut()
     {
-        var random = new LegacyRandom(12_345);
+        var random = new DeterministicRandom(12_345);
         var station = SimulatedStation.CreateCandidate(
             () => new StationIdentity(
                 "JA1ABC",
@@ -228,7 +228,7 @@ public sealed class SimulationAndScoringTests
                 "100"),
             () => 25,
             random,
-            new LegacyRandomEffects(random),
+            new RandomEffects(random),
             OperatorRunMode.Pileup,
             lids: false,
             sweepstakes: false,
@@ -243,13 +243,13 @@ public sealed class SimulationAndScoringTests
             (int)MathF.Round(
                 station.R1 * 1_000f,
                 MidpointRounding.ToEven));
-        Assert.Equal("5NN 1TT", station.ObserveExchangeForParity());
+        Assert.Equal("5NN 1TT", station.CreateExchangeText());
     }
 
     [Fact]
     public void CqwwHigherR1ConsumesSuppressedRemoteCutDecisions()
     {
-        var random = new LegacyRandom(12_345);
+        var random = new DeterministicRandom(12_345);
         var station = SimulatedStation.CreateCandidate(
             () => new StationIdentity(
                 "K1ABC",
@@ -259,7 +259,7 @@ public sealed class SimulationAndScoringTests
                 "10"),
             () => 25,
             random,
-            new LegacyRandomEffects(random),
+            new RandomEffects(random),
             OperatorRunMode.Pileup,
             lids: false,
             sweepstakes: false,
@@ -274,7 +274,7 @@ public sealed class SimulationAndScoringTests
             (int)MathF.Round(
                 station.R1 * 1_000f,
                 MidpointRounding.ToEven));
-        Assert.Equal("5NN 10", station.ObserveExchangeForParity());
+        Assert.Equal("5NN 10", station.CreateExchangeText());
         Assert.Equal(
             0x3F15_06E1U,
             BitConverter.SingleToUInt32Bits(random.NextSingle()));
@@ -283,7 +283,7 @@ public sealed class SimulationAndScoringTests
     [Fact]
     public void IaruHeadquartersExchangeUsesRareRemoteRstErrorDraw()
     {
-        var random = new LegacyRandom(12_345);
+        var random = new DeterministicRandom(12_345);
         var station = new SimulatedStation(
             new StationIdentity(
                 "DL1ABC",
@@ -301,7 +301,7 @@ public sealed class SimulationAndScoringTests
             _ = random.NextDouble();
         }
 
-        Assert.Equal("ENN ARRL", station.ObserveExchangeForParity());
+        Assert.Equal("ENN ARRL", station.CreateExchangeText());
         Assert.Equal(0.20456027938053012d, random.NextDouble());
     }
 
@@ -321,17 +321,17 @@ public sealed class SimulationAndScoringTests
                 location),
             wordsPerMinute: 25,
             pitchOffsetHz: 0,
-            new LegacyRandom(12_345),
+            new DeterministicRandom(12_345),
             OperatorRunMode.Pileup,
             contestId: new("scNaQp"));
 
-        Assert.Equal(expected, station.ObserveExchangeForParity());
+        Assert.Equal(expected, station.CreateExchangeText());
     }
 
     [Fact]
     public void LidCandidateSendsOneCorrectedSerialThenClearsTheError()
     {
-        var random = new LegacyRandom(16);
+        var random = new DeterministicRandom(16);
         var station = SimulatedStation.CreateCandidate(
             () => new StationIdentity(
                 "K1ABC",
@@ -341,7 +341,7 @@ public sealed class SimulationAndScoringTests
                 "123"),
             () => 25,
             random,
-            new LegacyRandomEffects(random),
+            new RandomEffects(random),
             OperatorRunMode.Wpx,
             lids: true,
             sweepstakes: false,
@@ -358,14 +358,14 @@ public sealed class SimulationAndScoringTests
                 MidpointRounding.ToEven));
         Assert.Equal(
             "5NN124EEEEE 123",
-            station.ObserveExchangeForParity());
-        Assert.Equal("5NN123", station.ObserveExchangeForParity());
+            station.CreateExchangeText());
+        Assert.Equal("5NN123", station.CreateExchangeText());
     }
 
     [Fact]
     public void NonLidCandidateDoesNotSendSerialCorrection()
     {
-        var random = new LegacyRandom(16);
+        var random = new DeterministicRandom(16);
         var station = SimulatedStation.CreateCandidate(
             () => new StationIdentity(
                 "K1ABC",
@@ -375,7 +375,7 @@ public sealed class SimulationAndScoringTests
                 "123"),
             () => 25,
             random,
-            new LegacyRandomEffects(random),
+            new RandomEffects(random),
             OperatorRunMode.Wpx,
             lids: false,
             sweepstakes: false,
@@ -385,7 +385,7 @@ public sealed class SimulationAndScoringTests
             customSerialNumberMinimum: 1,
             customSerialNumberMinimumDigits: 2);
 
-        Assert.Equal("5NN123", station.ObserveExchangeForParity());
+        Assert.Equal("5NN123", station.CreateExchangeText());
     }
 
     [Theory]
@@ -404,11 +404,11 @@ public sealed class SimulationAndScoringTests
                 serialNumber.ToString(CultureInfo.InvariantCulture)),
             wordsPerMinute: 25,
             pitchOffsetHz: 0,
-            new LegacyRandom(12_345),
+            new DeterministicRandom(12_345),
             OperatorRunMode.Hst,
             contestId: new("scHst"));
 
-        Assert.Equal(expected, station.ObserveExchangeForParity());
+        Assert.Equal(expected, station.CreateExchangeText());
     }
 
     [Fact]
@@ -423,12 +423,12 @@ public sealed class SimulationAndScoringTests
                 "57"),
             wordsPerMinute: 25,
             pitchOffsetHz: 0,
-            new LegacyRandom(12_345),
+            new DeterministicRandom(12_345),
             OperatorRunMode.Wpx,
             contestId: new("scWpx"),
             serialNumberRange: SerialNumberRangeMode.MidContest);
 
-        Assert.Equal("5NN57", station.ObserveExchangeForParity());
+        Assert.Equal("5NN57", station.CreateExchangeText());
     }
 
     [Fact]
@@ -443,14 +443,14 @@ public sealed class SimulationAndScoringTests
                 "7"),
             wordsPerMinute: 25,
             pitchOffsetHz: 0,
-            new LegacyRandom(12_345),
+            new DeterministicRandom(12_345),
             OperatorRunMode.Wpx,
             contestId: new("scWpx"),
             serialNumberRange: SerialNumberRangeMode.Custom,
             customSerialNumberMinimum: 1,
             customSerialNumberMinimumDigits: 2);
 
-        Assert.Equal("5NNT7", station.ObserveExchangeForParity());
+        Assert.Equal("5NNT7", station.CreateExchangeText());
     }
 
     [Fact]

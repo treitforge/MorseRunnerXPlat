@@ -9,7 +9,7 @@ public sealed class DataParserTests
     [InlineData("F6/W7SST", "W7SST", "F6", "F6")]
     [InlineData("W7SST/P", "W7SST", "W7", "W7SST")]
     [InlineData("RC2FX", "RC2FX", "RC2", "RC2FX")]
-    public void CallsignUtilitiesMatchLegacyRules(
+    public void CallsignUtilitiesMatchApplicationRules(
         string input,
         string callsign,
         string wpxPrefix,

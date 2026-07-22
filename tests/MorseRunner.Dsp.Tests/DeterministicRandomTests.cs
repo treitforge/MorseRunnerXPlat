@@ -1,11 +1,11 @@
 namespace MorseRunner.Dsp.Tests;
 
-public sealed class LegacyRandomTests
+public sealed class DeterministicRandomTests
 {
     [Fact]
     public void ZeroBoundReturnsZeroAndConsumesOneDraw()
     {
-        var random = new LegacyRandom(12_345);
+        var random = new DeterministicRandom(12_345);
 
         int value = random.Next(0);
 
@@ -22,7 +22,7 @@ public sealed class LegacyRandomTests
         int bound,
         int expected)
     {
-        var random = new LegacyRandom(12_345);
+        var random = new DeterministicRandom(12_345);
 
         Assert.Equal(expected, random.Next(bound));
         Assert.Equal(
@@ -37,7 +37,7 @@ public sealed class LegacyRandomTests
         long bound,
         long expected)
     {
-        var random = new LegacyRandom(12_345);
+        var random = new DeterministicRandom(12_345);
 
         Assert.Equal(expected, random.NextInt64(bound));
         Assert.Equal(

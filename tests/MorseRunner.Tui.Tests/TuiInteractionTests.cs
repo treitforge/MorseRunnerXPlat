@@ -7,7 +7,7 @@ namespace MorseRunner.Tui.Tests;
 public sealed class TuiInteractionTests
 {
     [Fact]
-    public void CleanProfileMatchesCeDefaults()
+    public void CleanProfileMatchesIniDefaults()
     {
         var state = new TuiState();
 
@@ -63,7 +63,7 @@ public sealed class TuiInteractionTests
     [InlineData(ConsoleKey.G, '\a', ConsoleModifiers.Control, TuiActionKind.ToggleDiagnostics)]
     [InlineData(ConsoleKey.A, '\u0001', ConsoleModifiers.Control, TuiActionKind.ToggleRecording)]
     [InlineData(ConsoleKey.E, '\u0005', ConsoleModifiers.Control, TuiActionKind.ExportJson)]
-    public void LegacyKeysMapToSemanticActions(
+    public void AlternateKeysMapToSemanticActions(
         ConsoleKey key,
         char character,
         ConsoleModifiers modifiers,
@@ -86,7 +86,7 @@ public sealed class TuiInteractionTests
     [InlineData('+', TuiActionKind.LogQso)]
     [InlineData('[', TuiActionKind.LogQso)]
     [InlineData('?', TuiActionKind.ToggleHelp)]
-    public void LegacyPunctuationMapsToSemanticActions(
+    public void AlternatePunctuationMapsToSemanticActions(
         char character,
         TuiActionKind expected)
     {

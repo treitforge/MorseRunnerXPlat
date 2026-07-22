@@ -18,7 +18,7 @@ public sealed class ApplicationPaths
 
     public string Settings => Path.Combine(Root, "settings");
 
-    public string LegacySettingsImport => Path.Combine(Root, "MorseRunner.ini");
+    public string IniSettingsImport => Path.Combine(Root, "MorseRunner.ini");
 
     public string Results => Path.Combine(Root, "results");
 

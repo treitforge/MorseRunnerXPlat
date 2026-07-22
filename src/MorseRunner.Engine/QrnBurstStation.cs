@@ -10,7 +10,7 @@ internal sealed class QrnBurstStation
     private const double TriggerProbability = 0.01d;
     private const double MinimumAmplitude = 100_000d;
     private const int MaximumEnvelopeSampleCount =
-        MaximumConcurrentStations * CompatibilityProfile.BlockSize;
+        MaximumConcurrentStations * SimulationAudioProfile.BlockSize;
     private readonly float[] _envelope =
         new float[MaximumEnvelopeSampleCount];
     private int _sendPosition;
@@ -27,7 +27,7 @@ internal sealed class QrnBurstStation
 
     internal float Amplitude { get; private set; }
 
-    internal void Activate(LegacyRandom random)
+    internal void Activate(DeterministicRandom random)
     {
         ArgumentNullException.ThrowIfNull(random);
         if (IsActive)
@@ -39,7 +39,7 @@ internal sealed class QrnBurstStation
         float durationSeconds = random.NextSingle();
         int durationBlocks = SecondsToBlocks(durationSeconds);
         int envelopeSampleCount =
-            durationBlocks * CompatibilityProfile.BlockSize;
+            durationBlocks * SimulationAudioProfile.BlockSize;
         _envelope.AsSpan(0, envelopeSampleCount).Clear();
 
         float amplitude = (float)(
@@ -67,12 +67,12 @@ internal sealed class QrnBurstStation
         Span<float> receiverReal,
         Span<float> receiverImaginary)
     {
-        if (receiverReal.Length != CompatibilityProfile.BlockSize
-            || receiverImaginary.Length != CompatibilityProfile.BlockSize)
+        if (receiverReal.Length != SimulationAudioProfile.BlockSize
+            || receiverImaginary.Length != SimulationAudioProfile.BlockSize)
         {
             throw new ArgumentException(
                 "QRN receiver buffers must each contain one "
-                + "compatibility block.");
+                + "simulation block.");
         }
 
         if (!IsActive)
@@ -92,14 +92,14 @@ internal sealed class QrnBurstStation
             ReadOnlySpan<float> envelopeBlock =
                 _envelope.AsSpan(
                     _sendPosition,
-                    CompatibilityProfile.BlockSize);
+                    SimulationAudioProfile.BlockSize);
             for (int index = 0; index < receiverReal.Length; index++)
             {
                 receiverReal[index] += envelopeBlock[index];
             }
         }
 
-        _sendPosition += CompatibilityProfile.BlockSize;
+        _sendPosition += SimulationAudioProfile.BlockSize;
         if (_sendPosition >= EnvelopeSampleCount)
         {
             HasRenderedEnvelope = true;
@@ -131,8 +131,8 @@ internal sealed class QrnBurstStation
 
     private static int SecondsToBlocks(float seconds) =>
         (int)Math.Round(
-            (double)CompatibilityProfile.SampleRate
-            / CompatibilityProfile.BlockSize
+            (double)SimulationAudioProfile.SampleRate
+            / SimulationAudioProfile.BlockSize
             * seconds,
             MidpointRounding.ToEven);
 }

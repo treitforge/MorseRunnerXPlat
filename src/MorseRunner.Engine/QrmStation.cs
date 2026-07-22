@@ -15,12 +15,12 @@ internal sealed class QrmStation
     private const int RetryLimitSeconds = 2;
     private const int MaximumRetryTimeoutBlocks = 129;
 
-    private readonly LegacyMorseEnvelopeCursor _envelope;
-    private readonly LegacyStationMixer _mixer;
+    private readonly MorseEnvelopeCursor _envelope;
+    private readonly StationMixer _mixer;
     private ContestQrmMessageDescriptor _message;
     private bool _hasMessageText;
 
-    internal QrmStation(LegacyMorseKeyingProfile keyingProfile)
+    internal QrmStation(MorseKeyingProfile keyingProfile)
     {
         _envelope = new(keyingProfile);
         _mixer = new(keyingProfile.SampleRate);
@@ -67,8 +67,8 @@ internal sealed class QrmStation
         IsSending ? _envelope.RemainingBlockCount : 0;
 
     internal void Activate(
-        LegacyRandom random,
-        LegacyRandomEffects randomEffects,
+        DeterministicRandom random,
+        RandomEffects randomEffects,
         StationReferenceCatalog stationCatalog,
         ContestId contestId,
         RunModeId runModeId,
@@ -146,7 +146,7 @@ internal sealed class QrmStation
     }
 
     internal bool Tick(
-        LegacyRandomEffects randomEffects,
+        RandomEffects randomEffects,
         ContestId contestId)
     {
         ArgumentNullException.ThrowIfNull(randomEffects);
@@ -166,9 +166,9 @@ internal sealed class QrmStation
                 return true;
             }
 
-            float meanBlocks = LegacyRandomEffects.SecondsToBlocks(
+            float meanBlocks = RandomEffects.SecondsToBlocks(
                 MeanRetrySeconds);
-            float limitBlocks = LegacyRandomEffects.SecondsToBlocks(
+            float limitBlocks = RandomEffects.SecondsToBlocks(
                 RetryLimitSeconds);
             TimeoutBlocks = (int)MathF.Round(
                 randomEffects.GaussianLimited(
@@ -223,7 +223,7 @@ internal sealed class QrmStation
     }
 
     internal static int CalculateMaximumConcurrentStations(
-        LegacyMorseKeyingProfile keyingProfile,
+        MorseKeyingProfile keyingProfile,
         StationReferenceCatalog stationCatalog,
         ContestId contestId,
         string stationCall)
@@ -231,7 +231,7 @@ internal sealed class QrmStation
         ArgumentNullException.ThrowIfNull(stationCatalog);
         ArgumentException.ThrowIfNullOrWhiteSpace(stationCall);
 
-        var cursor = new LegacyMorseEnvelopeCursor(keyingProfile);
+        var cursor = new MorseEnvelopeCursor(keyingProfile);
         int maximumLongCqBlocks = 0;
         for (int index = 0;
              index < stationCatalog.QrmEnvelopeBoundCallsignCount;
@@ -284,7 +284,7 @@ internal sealed class QrmStation
     }
 
     private static int MeasureBlocks(
-        LegacyMorseEnvelopeCursor cursor,
+        MorseEnvelopeCursor cursor,
         ContestQrmMessageDescriptor message)
     {
         cursor.Reset(
@@ -310,7 +310,7 @@ internal sealed class QrmStation
         IsSending = true;
     }
 
-    private static LegacyMorseText ToMorseText(
+    private static MorseText ToMorseText(
         ContestQrmMessageDescriptor message)
     {
         return message.SegmentCount switch

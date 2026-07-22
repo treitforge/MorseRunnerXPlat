@@ -1,10 +1,10 @@
 namespace MorseRunner.Dsp;
 
-public sealed class LegacyRandomEffects
+public sealed class RandomEffects
 {
-    private readonly LegacyRandom _random;
+    private readonly DeterministicRandom _random;
 
-    public LegacyRandomEffects(LegacyRandom random)
+    public RandomEffects(DeterministicRandom random)
     {
         _random = random ?? throw new ArgumentNullException(nameof(random));
     }
