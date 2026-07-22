@@ -262,6 +262,13 @@ public static class LegacySettingsImporter
                 TranslateValue(targetKey, value!));
         }
 
+        if (source.TryGet("Station", "NRDigits", out string? legacyDigits))
+        {
+            values.Remove("Station.NRDigits");
+            values["Station.SerialNR"] = TranslateLegacyNRDigits(
+                legacyDigits!);
+        }
+
         foreach ((string section, IReadOnlyDictionary<string, string> entries)
                  in source.Sections)
         {
@@ -379,6 +386,20 @@ public static class LegacySettingsImporter
 
         int effectiveExponent = Math.Clamp(exponent == 0 ? 3 : exponent, 1, 5);
         return (64 << effectiveExponent).ToString(CultureInfo.InvariantCulture);
+    }
+
+    private static string TranslateLegacyNRDigits(string value)
+    {
+        int serialMode = TryParseInteger(value, out int legacyDigits)
+            ? legacyDigits switch
+            {
+                2 => 3,
+                3 => 1,
+                4 => 2,
+                _ => 0,
+            }
+            : 0;
+        return serialMode.ToString(CultureInfo.InvariantCulture);
     }
 
     private static string TranslateClampedInteger(

@@ -2302,6 +2302,10 @@ The path service distinguishes:
   project-owned namespace. Atomic saves merge the existing document before
   applying newly consumed values, so unknown and currently read-only settings
   survive client updates and restart while new values win.
+- Pre-1.84 `Station.NRDigits` values migrate to CE's `Station.SerialNR`
+  ordinals. The obsolete key is removed, values 1 through 4 select start,
+  custom, mid-contest, and end-contest respectively, and other numeric values
+  fall back to start-of-contest.
 - Unknown future fields should be preserved when practical.
 
 ### 17.3 Reference data

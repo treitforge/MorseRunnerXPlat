@@ -110,6 +110,31 @@ public sealed class SettingsPersistenceTests
         Assert.Equal("False", imported.Values["System.ShowCallsignInfo"]);
     }
 
+    [Theory]
+    [InlineData("0", "0")]
+    [InlineData("1", "0")]
+    [InlineData("2", "3")]
+    [InlineData("3", "1")]
+    [InlineData("4", "2")]
+    [InlineData("5", "0")]
+    public void LegacyImportMigratesNRDigitsAndRemovesObsoleteKey(
+        string legacyDigits,
+        string expectedSerialMode)
+    {
+        SettingsDocument imported = LegacySettingsImporter.Import(
+            LegacyIniDocument.Parse(
+                $"""
+                [Station]
+                SerialNR=2
+                NRDigits={legacyDigits}
+                """));
+
+        Assert.DoesNotContain("Station.NRDigits", imported.Values.Keys);
+        Assert.Equal(
+            expectedSerialMode,
+            imported.Values["Station.SerialNR"]);
+    }
+
     [Fact]
     public async Task SettingsWriteIsAtomicAndMalformedInputRecovers()
     {
