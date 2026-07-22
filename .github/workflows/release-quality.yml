@@ -13,5 +13,7 @@ jobs:
           dotnet-version: 10.0.x
       - run: dotnet restore MorseRunnerXPlat.slnx
       - run: dotnet build MorseRunnerXPlat.slnx --no-restore --configuration Release -warnaserror
-      - run: dotnet test --solution MorseRunnerXPlat.slnx --no-build --configuration Release
+      - run: dotnet test --solution MorseRunnerXPlat.slnx --no-build --configuration Release -- --fail-warns on
+        env:
+          DOTNET_TieredCompilation: 0
       - run: .\tools\release\Publish-Release.ps1
