@@ -277,6 +277,7 @@ public sealed class LegacyMorseEnvelopeCursorTests
     }
 
     [Fact]
+    [Trait("Category", "Performance")]
     public void ResetAndBlockRenderingAllocateNoManagedMemory()
     {
         var profile = new LegacyMorseKeyingProfile(

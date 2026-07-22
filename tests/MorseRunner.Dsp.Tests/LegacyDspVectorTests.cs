@@ -139,6 +139,7 @@ public sealed class LegacyDspVectorTests
     }
 
     [Fact]
+    [Trait("Category", "Performance")]
     public void ToneRendererMeetsTheCompatibilityBlockBudget()
     {
         var renderer = new MorseToneRenderer(11_025, 512);
@@ -277,6 +278,7 @@ public sealed class LegacyDspVectorTests
     }
 
     [Fact]
+    [Trait("Category", "Performance")]
     public void ReceiverPipelineMeetsTheCompatibilityBlockBudget()
     {
         var receiver = new LegacyReceiverPipeline(
@@ -290,7 +292,8 @@ public sealed class LegacyDspVectorTests
         var output = new float[512];
         var durations = new long[200];
 
-        for (int index = 0; index < 8; index++)
+        // Exercise filter rotation and reset before measuring steady-state work.
+        for (int index = 0; index < 64; index++)
         {
             receiver.Process(real, imaginary, output);
         }

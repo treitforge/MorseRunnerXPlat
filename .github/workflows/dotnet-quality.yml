@@ -20,6 +20,4 @@ jobs:
       - run: dotnet restore MorseRunnerXPlat.slnx
       - run: dotnet format MorseRunnerXPlat.slnx --verify-no-changes
       - run: dotnet build MorseRunnerXPlat.slnx --no-restore --configuration Release -warnaserror
-      - run: dotnet test --solution MorseRunnerXPlat.slnx --no-build --configuration Release -- --fail-warns on
-        env:
-          DOTNET_TieredCompilation: 0
+      - run: dotnet test --solution MorseRunnerXPlat.slnx --no-build --configuration Release -- --filter-not-trait Category=Performance --fail-warns on

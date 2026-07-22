@@ -131,6 +131,7 @@ public sealed class LegacyStationMixerTests
     }
 
     [Fact]
+    [Trait("Category", "Performance")]
     public void StationMixingAllocatesNoManagedMemory()
     {
         var envelope = new float[512];

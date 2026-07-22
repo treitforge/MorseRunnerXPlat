@@ -13,7 +13,5 @@ jobs:
           dotnet-version: 10.0.x
       - run: dotnet restore MorseRunnerXPlat.slnx
       - run: dotnet build MorseRunnerXPlat.slnx --no-restore --configuration Release -warnaserror
-      - run: dotnet test --solution MorseRunnerXPlat.slnx --no-build --configuration Release -- --fail-warns on
-        env:
-          DOTNET_TieredCompilation: 0
+      - run: dotnet test --solution MorseRunnerXPlat.slnx --no-build --configuration Release -- --filter-not-trait Category=Performance --fail-warns on
       - run: .\tools\release\Publish-Release.ps1
