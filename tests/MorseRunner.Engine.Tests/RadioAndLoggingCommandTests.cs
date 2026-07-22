@@ -164,8 +164,11 @@ public sealed class RadioAndLoggingCommandTests
         Assert.Equal(50, snapshot.RitOffsetHz);
         Assert.Equal(-60d, snapshot.CurrentMonitorLevelDb);
         Assert.Equal(1, snapshot.QsoCount);
-        Assert.Equal(1, snapshot.Score);
+        Assert.Equal(0, snapshot.Score);
         Assert.Equal("K1ABC", snapshot.LastLoggedCall);
+        Qso qso = Assert.Single(engine.GetCompletedQsos(handle.SessionId));
+        Assert.Equal(LogError.Nil, qso.ExchangeError);
+        Assert.Empty(qso.TrueCall);
     }
 
     [Fact]

@@ -113,7 +113,52 @@ public sealed class StationLifecycleTests
 
         Assert.True(logged.Accepted);
         Assert.Equal(LogError.Nil, qso.ExchangeError);
+        Assert.Empty(qso.TrueCall);
+        Assert.Equal(0, qso.TrueRst);
+        Assert.Equal(0, qso.TrueNumber);
+        Assert.Empty(qso.TrueExchange1);
+        Assert.Empty(qso.TrueExchange2);
         Assert.Equal(0, qso.Points);
+        Assert.Equal(0, engine.GetSnapshot(handle.SessionId).Score);
+    }
+
+    [Fact]
+    public async Task LoggingBeforeAnyStationExistsProducesNilTruth()
+    {
+        await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 12_345) with
+            {
+                RunModeId = new("rmSingle"),
+            },
+            TestContext.Current.CancellationToken);
+        await engine.ExecuteAsync(
+            new StartSessionCommand(
+                RequestId.New(),
+                handle.SessionId,
+                TestClient),
+            TestContext.Current.CancellationToken);
+
+        CommandResult logged = await engine.ExecuteAsync(
+            new LogQsoCommand(
+                RequestId.New(),
+                handle.SessionId,
+                TestClient,
+                "K1ABC",
+                "599",
+                "1",
+                string.Empty),
+            TestContext.Current.CancellationToken);
+        Qso qso = Assert.Single(engine.GetCompletedQsos(handle.SessionId));
+
+        Assert.True(logged.Accepted);
+        Assert.Equal(LogError.Nil, qso.ExchangeError);
+        Assert.Empty(qso.TrueCall);
+        Assert.Equal(0, qso.TrueRst);
+        Assert.Equal(0, qso.TrueNumber);
+        Assert.Empty(qso.TrueExchange1);
+        Assert.Empty(qso.TrueExchange2);
+        Assert.Equal("NIL", qso.ErrorText);
         Assert.Equal(0, engine.GetSnapshot(handle.SessionId).Score);
     }
 

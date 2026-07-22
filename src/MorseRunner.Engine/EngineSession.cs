@@ -2448,38 +2448,28 @@ internal sealed class EngineSession : IAsyncDisposable
         _lastLoggedCall = evaluation.Call;
         _lastCaller = _lastLoggedCall;
         StationIdentity? truth = completedStation?.Identity;
-        bool directLogScenario = !_hasCreatedStation;
         Qso qso = new()
         {
             Timestamp = DateTimeOffset.UnixEpoch
                 + TimeSpan.FromSeconds(
                     (double)_renderedSamples / CompatibilityProfile.SampleRate),
             Call = _lastLoggedCall,
-            TrueCall = truth?.Callsign
-                ?? (directLogScenario ? evaluation.Call : string.Empty),
+            TrueCall = truth?.Callsign ?? string.Empty,
             RawCallsign = command.Call,
             Rst = evaluation.Rst,
-            TrueRst = truth is null
-                ? (directLogScenario ? evaluation.Rst : 0)
-                : ParseRst(truth.Rst),
+            TrueRst = truth is null ? 0 : ParseRst(truth.Rst),
             Number = evaluation.Number,
-            TrueNumber = truth?.Number
-                ?? (directLogScenario ? evaluation.Number : 0),
+            TrueNumber = truth?.Number ?? 0,
             Precedence = evaluation.Precedence,
-            TruePrecedence = truth?.Precedence
-                ?? (directLogScenario ? evaluation.Precedence : string.Empty),
+            TruePrecedence = truth?.Precedence ?? string.Empty,
             Check = evaluation.Check,
-            TrueCheck = truth?.Check
-                ?? (directLogScenario ? evaluation.Check : 0),
+            TrueCheck = truth?.Check ?? 0,
             Section = evaluation.Section,
-            TrueSection = truth?.Section
-                ?? (directLogScenario ? evaluation.Section : string.Empty),
+            TrueSection = truth?.Section ?? string.Empty,
             Exchange1 = command.Exchange1,
-            TrueExchange1 = truth?.Exchange1
-                ?? (directLogScenario ? command.Exchange1 : string.Empty),
+            TrueExchange1 = truth?.Exchange1 ?? string.Empty,
             Exchange2 = command.Exchange2,
-            TrueExchange2 = truth?.Exchange2
-                ?? (directLogScenario ? command.Exchange2 : string.Empty),
+            TrueExchange2 = truth?.Exchange2 ?? string.Empty,
             Prefix = evaluation.Prefix,
             Multiplier = evaluation.Multiplier,
             Points = exchangeError is LogError.None or LogError.Duplicate
@@ -2515,7 +2505,7 @@ internal sealed class EngineSession : IAsyncDisposable
     {
         if (station is null)
         {
-            return _hasCreatedStation ? LogError.Nil : LogError.None;
+            return LogError.Nil;
         }
 
         StationIdentity truth = station.Identity;

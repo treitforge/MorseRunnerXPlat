@@ -3975,6 +3975,10 @@ Current Phase 5 implementation inventory, not parity certification:
   live callsign context. These values remain immutable after session creation.
 - Mid-contest and end-of-contest serial selection uses the pinned legacy WPX
   weighted bins. Custom ranges retain the legacy exclusive upper bound.
+- Logging a valid entry without a completed matching live station retains
+  empty or zero true fields and classifies the QSO as `NIL`, including when no
+  station has yet been created in the session. Entered fields are never copied
+  into authoritative truth merely to support direct logging.
 - Avalonia enumerates playback devices through `IMorseRunnerClient`, selects a
   preferred device before start, and can pause, recover to another device, and
   resume without mutating the audio adapter from the UI thread.
