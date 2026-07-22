@@ -3111,6 +3111,11 @@ operator command. For CQ WPX, both `OperatorIntent.Cq` and an empty
 exact semantic message, and load the same text into the production tone
 renderer.
 
+`OperatorIntent.Exchange` is likewise session-owned. F2 and equivalent
+semantic commands ignore received-QSO entry values and compose the active
+contest's operator exchange with its current serial number. This prevents the
+operator from transmitting a copied received exchange through either UX.
+
 The authored `engine.contest-specific-cq-tu-station-id-seed-12345` case fixes
 the remaining contest operator-message boundary. Its pinned CE v21 adapter
 creates one handleless runtime for each of the 12 contests at station `W7SST`,

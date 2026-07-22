@@ -346,7 +346,7 @@ public sealed class MainWindowViewModelTests
 
         await viewModel.SendExchangeCommand.ExecuteAsync(null);
 
-        Assert.Equal("5NN 123 OR", viewModel.LastSent);
+        Assert.Equal("5NN 001", viewModel.LastSent);
 
         await viewModel.CompleteQsoCommand.ExecuteAsync(null);
 

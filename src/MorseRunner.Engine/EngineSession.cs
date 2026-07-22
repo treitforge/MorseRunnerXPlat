@@ -1739,10 +1739,10 @@ internal sealed class EngineSession : IAsyncDisposable
         string message = command.Intent switch
         {
             OperatorIntent.Cq => ComposeCqMessage(),
-            OperatorIntent.Exchange => JoinMessage(
-                command.Rst,
-                command.Exchange1,
-                command.Exchange2),
+            OperatorIntent.Exchange => ContestQsoRules.ComposeOwnExchange(
+                _settings.ContestId,
+                _settings.StationCall,
+                _qsoCount + 1),
             OperatorIntent.ThankYou => ComposeThankYouMessage(),
             OperatorIntent.MyCall => _settings.StationCall,
             OperatorIntent.HisCall => command.Call,
