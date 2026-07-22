@@ -146,7 +146,8 @@ public sealed class LegacyDspVectorTests
         var block = new float[512];
         var durations = new long[1_000];
 
-        for (int index = 0; index < 8; index++)
+        // Complete tiered compilation before measuring the callback's steady state.
+        for (int index = 0; index < 64; index++)
         {
             renderer.Render(block);
         }
