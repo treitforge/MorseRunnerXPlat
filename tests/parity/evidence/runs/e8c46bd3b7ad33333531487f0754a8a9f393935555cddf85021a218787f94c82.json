@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "target": "xplat",
+  "runContext": {
+    "platform": "windows",
+    "processArchitecture": "x64",
+    "runtimeIdentifier": "win-x64",
+    "framework": ".NET 10.0.8",
+    "xplat": {
+      "revision": "6ce5d7678304bd946090acb9fa7db38dc47825c7",
+      "tree": "1ac68da42f9bbe804eaa02b6eabc88d40944839b",
+      "clean": true
+    },
+    "legacy": null
+  },
+  "expectedParityIds": [
+    "logging.nil-without-live-station-truth-seed-12345"
+  ],
+  "results": [
+    {
+      "parityId": "logging.nil-without-live-station-truth-seed-12345",
+      "acceptanceTestName": "parity:logging.nil-without-live-station-truth-seed-12345()",
+      "target": "xplat",
+      "adapter": "XPlatNilWithoutLiveStationTruthTarget",
+      "caseDefinitionSha256": "c93e727b3de70b3c63cbddf6602224eb3f85cc77fe4c629cef7376bcc68c0096",
+      "fixtureSha256": "78511ba0137a8a786cf438cea26548d26d7d38840ff3077d15999a6263411ed6",
+      "outcome": "functional-divergence",
+      "failureCode": "logging-nil-without-live-station-truth-mismatch",
+      "evidenceSource": "MorseRunner.Engine.MorseRunnerEngine.ExecuteAsync\u002BMorseRunner.Engine.EngineSession.ApplyLogQsoCore",
+      "observedValues": [
+        "configuration|scenario=logging.nil-without-live-station-truth-seed-12345|seed=12345|contest=scWpx|call=K1ABC",
+        "qso|call=K1ABC|true-call=K1ABC|rst=599|true-rst=599|number=1|true-number=1|exchange-error=leNONE|error-text=   "
+      ],
+      "observedValueCount": 2,
+      "observedValuesSha256": "04102c988ec69d6dcc821a89b1bff42794c5da9dcbdffc0a4eb68ba8de231bbd",
+      "firstDivergence": {
+        "index": 1,
+        "expected": "qso|call=K1ABC|true-call=|rst=599|true-rst=0|number=1|true-number=0|exchange-error=leNIL|error-text=NIL",
+        "actual": "qso|call=K1ABC|true-call=K1ABC|rst=599|true-rst=599|number=1|true-number=1|exchange-error=leNONE|error-text=   "
+      },
+      "legacyOracle": null,
+      "executionCount": 1
+    }
+  ]
+}

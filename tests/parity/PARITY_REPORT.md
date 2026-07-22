@@ -107,18 +107,18 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 
 - Manifest capabilities: 24
 - Complete capabilities: 0
-- Partially authored capabilities: 9
-- Not-authored capabilities: 15
+- Partially authored capabilities: 10
+- Not-authored capabilities: 14
 - Behavioral obligations: 123
-- Source-bound obligations: 36
-- Pending source bindings: 87
+- Source-bound obligations: 37
+- Pending source bindings: 86
 - Complete obligations: 0
-- Partially authored obligations: 36
-- Not-authored obligations: 87
+- Partially authored obligations: 37
+- Not-authored obligations: 86
 - Rich-artifact evidence blockers: 0
-- Active acceptance cases: 74
+- Active acceptance cases: 75
 - Evidence-certified both-green cases: 0
-- Legacy-green/XPlat-red cases: 74
+- Legacy-green/XPlat-red cases: 75
 - Skipped, waived, quarantined, disabled, or expected-failure: 0
 
 | Capability ID | Feature | Acceptance status | Cases | Mapped surfaces | Overlap assignments | Legacy source |
@@ -131,7 +131,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `ux.main-menu-commands` | Legacy main-menu commands | `not-authored` | 0 | 129 | 0 | `Main.dfm:964-1579` |
 | `ux.main-form-events` | Legacy main-form event bindings and handlers | `not-authored` | 0 | 229 | 60 | `Main.dfm:1-1988`<br>`Main.pas:452-2867` |
 | `ux.keyboard-workflows` | Legacy shortcuts and keyboard branches | `partial` | 20 | 53 | 0 | `Main.dfm:1000-1579`<br>`Main.pas:629-947` |
-| `logging.qso-model` | Legacy QSO record and error model | `not-authored` | 0 | 47 | 0 | `Log.pas:48-82` |
+| `logging.qso-model` | Legacy QSO record and error model | `partial` | 1 | 47 | 0 | `Log.pas:48-82` |
 | `logging.scoring-rate-and-results` | Legacy logging, scoring, rate, correction, and result paths | `not-authored` | 0 | 55 | 0 | `Log.pas:147-1137` |
 | `simulation.state-models` | Legacy simulation state models and transitions | `not-authored` | 0 | 66 | 0 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
 | `simulation.runtime-routines` | Legacy contest, station, and operator routines | `partial` | 1 | 93 | 249 | `Contest.pas`<br>`Station.pas`<br>`DxOper.pas`<br>`DxStn.pas`<br>`StnColl.pas`<br>`MyStn.pas`<br>`QrmStn.pas`<br>`QrnStn.pas` |
@@ -208,7 +208,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `engine.confidence-lid-repeat-and-f12-branches` | `simulation.runtime-routines` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Confidence, LID, Sweepstakes correction, call-and-number repeat, and F12 probability branches match CE. |
 | `engine.reset-and-restart-state` | `simulation.state-models` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Reset and restart clear and recreate the same authoritative state at the same ordered boundaries as CE. |
 | `contest.exchange-shapes-and-constructor-metadata` | `contest.legacy-implementations` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | All 12 contest constructors expose the same exchange enum pair, default own exchange acceptance, and Farnsworth flag as CE. |
-| `logging.nil-without-live-station-truth` | `logging.qso-model` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Logging without a completed matching live station produces CE-compatible NIL truth rather than fabricated truth. |
+| `logging.nil-without-live-station-truth` | `logging.qso-model` | `bound` | `partial` | 1 | `windows`, `linux`, `macos` | Logging without a completed matching live station produces CE-compatible NIL truth rather than fabricated truth. |
 | `logging.worked-call-after-verified-success` | `logging.qso-model` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | A call enters worked-call state only when CE would accept verified truth, so an initial error does not poison correction. |
 | `logging.duplicate-requires-prior-correct-qso` | `logging.qso-model` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | Duplicate classification requires the same prior verified-correct QSO conditions as CE. |
 | `logging.complete-copied-true-error-model` | `logging.qso-model` | `pending` | `not-authored` | 0 | `windows`, `linux`, `macos` | QSO records preserve true WPM, copied and true fields, per-field errors, corrections, and contest column flags. |
@@ -357,6 +357,7 @@ Generated from validated manifest, fixture, and evidence records. Do not edit by
 | `settings.preserve-legacy-values` | `configuration.persisted-settings` | `settings.preserve-unknown-and-unconsumed-values` | `legacy-green-xplat-red` | `settings-preserve-legacy-values-mismatch` | `pass` | `fail` |
 | `settings.legacy-nrdigits-migration` | `configuration.persisted-settings` | `settings.all-supported-ce-keys-consumed-or-preserved` | `legacy-green-xplat-red` | `settings-legacy-nrdigits-migration-mismatch` | `pass` | `fail` |
 | `settings.legacy-malformed-obsolete` | `configuration.persisted-settings` | `settings.all-supported-ce-keys-consumed-or-preserved` | `legacy-green-xplat-red` | `settings-legacy-malformed-obsolete-mismatch` | `pass` | `fail` |
+| `logging.nil-without-live-station-truth-seed-12345` | `logging.qso-model` | `logging.nil-without-live-station-truth` | `legacy-green-xplat-red` | `logging-nil-without-live-station-truth-mismatch` | `pass` | `fail` |
 | `settings.legacy-serial-range-errors` | `configuration.persisted-settings` | `settings.all-supported-ce-keys-consumed-or-preserved` | `legacy-green-xplat-red` | `settings-legacy-serial-range-errors-mismatch` | `pass` | `fail` |
 
 ## Retained noncertifying observations
