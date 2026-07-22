@@ -183,11 +183,7 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        if (args.KeyModifiers == KeyModifiers.None
-            && args.Key is Key.OemPeriod
-                or Key.OemComma
-                or Key.OemPlus
-                or Key.OemOpenBrackets)
+        if (IsQsoCompletionShortcut(args.Key, args.KeyModifiers))
         {
             _ = ViewModel.CompleteQsoCommand.ExecuteAsync(null);
             args.Handled = true;
@@ -216,6 +212,13 @@ public sealed partial class MainWindow : Window
             }
         }
     }
+
+    internal static bool IsQsoCompletionShortcut(
+        Key key,
+        KeyModifiers modifiers) =>
+        modifiers == KeyModifiers.None
+            && key is Key.OemPeriod or Key.OemComma or Key.OemOpenBrackets
+        || modifiers == KeyModifiers.Shift && key is Key.OemPlus;
 
     private static void EntryGotFocus(
         object? sender,

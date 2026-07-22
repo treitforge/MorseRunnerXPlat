@@ -15,6 +15,27 @@ public sealed class HeadlessUiTests
     private static bool _platformReady;
 
     [Fact]
+    public void CompletionShortcutsRecognizeShiftedPlusOnly()
+    {
+        Assert.True(
+            MainWindow.IsQsoCompletionShortcut(
+                Avalonia.Input.Key.OemPlus,
+                Avalonia.Input.KeyModifiers.Shift));
+        Assert.False(
+            MainWindow.IsQsoCompletionShortcut(
+                Avalonia.Input.Key.OemPlus,
+                Avalonia.Input.KeyModifiers.None));
+        Assert.True(
+            MainWindow.IsQsoCompletionShortcut(
+                Avalonia.Input.Key.OemPeriod,
+                Avalonia.Input.KeyModifiers.None));
+        Assert.False(
+            MainWindow.IsQsoCompletionShortcut(
+                Avalonia.Input.Key.OemPeriod,
+                Avalonia.Input.KeyModifiers.Shift));
+    }
+
+    [Fact]
     public void MainWindowOpensAndFocusesTheCallEntry()
     {
         EnsurePlatform();
