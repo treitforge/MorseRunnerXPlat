@@ -498,6 +498,46 @@ public sealed class TuiInteractionTests
     }
 
     [Fact]
+    public void RendererShowsQsoErrorInsteadOfZeroPoints()
+    {
+        var state = new TuiState
+        {
+            Snapshot = new SessionSnapshot(
+                Guid.Empty,
+                SessionId.New(),
+                SessionState.Running,
+                1,
+                12,
+                6144,
+                TimeSpan.FromMilliseconds(557),
+                12345,
+                ContestCatalog.All[0].Id,
+                new("rmPileup"),
+                "K1ABC",
+                0,
+                0,
+                null),
+            Qsos =
+            [
+                new Qso
+                {
+                    Timestamp = DateTimeOffset.UnixEpoch,
+                    Call = "K1ABC",
+                    Rst = 599,
+                    Exchange1 = "123",
+                    Points = 0,
+                    ExchangeError = LogError.Nil,
+                    ErrorText = "NIL",
+                },
+            ],
+        };
+
+        string rendered = TuiRenderer.Render(state, 140, 40);
+
+        Assert.Contains("NIL", rendered, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RendererAddsAnsiStylingOnlyWhenRequested()
     {
         var state = new TuiState();

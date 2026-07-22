@@ -496,7 +496,11 @@ public static class TuiRenderer
                 row,
                 2,
                 QsoResult(qso),
-                qso.IsDuplicate ? CellStyle.Warning : CellStyle.Good);
+                qso.IsDuplicate
+                    ? CellStyle.Warning
+                    : qso.ErrorText.Length > 0
+                        ? CellStyle.Error
+                        : CellStyle.Good);
             row++;
         }
     }
@@ -738,6 +742,8 @@ public static class TuiRenderer
     private static string QsoResult(Qso qso) =>
         qso.IsDuplicate
             ? "DUP"
+            : qso.ErrorText.Length > 0
+                ? qso.ErrorText
             : qso.Points.ToString(CultureInfo.InvariantCulture);
 
     private static string Fit(string value, int width)
