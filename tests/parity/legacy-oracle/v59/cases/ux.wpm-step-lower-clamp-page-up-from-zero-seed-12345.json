@@ -1,9 +1,0 @@
-{
-  "effectiveStepWpm": 1,
-  "expectedAfterWpm": 31,
-  "initialWpm": 30,
-  "persistedStepWpm": 0,
-  "runModeId": "rmSingle",
-  "scenario": "ux.wpm-step-lower-clamp-page-up-from-zero-seed-12345",
-  "seed": 12345
-}

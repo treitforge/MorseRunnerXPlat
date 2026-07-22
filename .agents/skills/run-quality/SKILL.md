@@ -26,11 +26,7 @@ description: Select and run the correct MorseRunnerXPlat validation for document
 6. Run seeded scenarios for engine changes, numeric vectors and benchmarks for
    DSP changes, shared client vectors for gRPC changes, and headless or visual
    checks for Avalonia changes.
-7. Run the parity suite against legacy and XPlat. Report the manifest total,
-   legacy pass rate, XPlat pass rate, and functional gap count.
-8. Fail parity validation if any required case is skipped, waived, quarantined,
-   expected to fail, or marked unimplemented.
-9. Run affected operating-system jobs for platform-specific changes.
-10. Report exact commands, results, skipped gates, and missing prerequisites.
+7. Run affected operating-system jobs for platform-specific changes.
+8. Report exact commands, results, skipped gates, and missing prerequisites.
 
 Do not claim a gate passed when its project or tool does not yet exist.

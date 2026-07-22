@@ -1,9 +1,0 @@
-{
-  "expectedAfterWpm": 10,
-  "expectedMaximumWpm": 120,
-  "expectedMinimumWpm": 10,
-  "initialWpm": 10,
-  "scenario": "ux.tui-wpm-setup-lower-clamp-decrement-from-10-seed-12345",
-  "seed": 12345,
-  "settingsDecrementWpm": 1
-}

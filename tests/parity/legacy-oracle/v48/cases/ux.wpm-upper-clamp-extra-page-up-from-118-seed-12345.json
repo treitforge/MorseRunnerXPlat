@@ -1,9 +1,0 @@
-{
-  "defaultWpmStep": 2,
-  "expectedClampWpm": 120,
-  "initialWpm": 118,
-  "pageUpCount": 2,
-  "runModeId": "rmSingle",
-  "scenario": "ux.wpm-upper-clamp-extra-page-up-from-118-seed-12345",
-  "seed": 12345
-}

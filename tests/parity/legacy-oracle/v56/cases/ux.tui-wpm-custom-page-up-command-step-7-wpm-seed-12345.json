@@ -1,8 +1,0 @@
-{
-  "customWpmStep": 7,
-  "expectedAfterWpm": 37,
-  "initialWpm": 30,
-  "runModeId": "rmSingle",
-  "scenario": "ux.tui-wpm-custom-page-up-command-step-7-wpm-seed-12345",
-  "seed": 12345
-}

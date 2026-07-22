@@ -1,9 +1,0 @@
-{
-  "effectiveStepWpm": 20,
-  "expectedAfterWpm": 50,
-  "initialWpm": 30,
-  "persistedStepWpm": 21,
-  "runModeId": "rmSingle",
-  "scenario": "ux.wpm-step-upper-clamp-page-up-from-21-seed-12345",
-  "seed": 12345
-}

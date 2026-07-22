@@ -35,7 +35,7 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task CleanProfileMatchesCeDefaults()
+    public async Task CleanProfileUsesApplicationDefaults()
     {
         await using var viewModel = new MainWindowViewModel(
             InProcessMorseRunnerClient.CreateDefault());

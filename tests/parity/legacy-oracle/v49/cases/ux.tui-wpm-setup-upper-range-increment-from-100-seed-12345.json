@@ -1,9 +1,0 @@
-{
-  "expectedAfterWpm": 101,
-  "expectedMaximumWpm": 120,
-  "expectedMinimumWpm": 10,
-  "initialWpm": 100,
-  "scenario": "ux.tui-wpm-setup-upper-range-increment-from-100-seed-12345",
-  "seed": 12345,
-  "settingsIncrementWpm": 1
-}

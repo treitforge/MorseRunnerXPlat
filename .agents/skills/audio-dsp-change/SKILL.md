@@ -15,7 +15,7 @@ description: Implement or review MorseRunnerXPlat audio rendering, Morse envelop
 6. Test start, steady state, stop, restart, device loss, underrun, and disposal
    where applicable.
 7. Measure render duration and allocation with representative station counts.
-8. Document intentional numeric or fidelity differences from legacy MorseRunner.
+8. Document intentional numeric or fidelity tradeoffs.
 
 Never stream PCM through gRPC. The process hosting the engine owns the renderer
 and audio device.
