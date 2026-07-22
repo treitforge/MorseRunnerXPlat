@@ -1,6 +1,6 @@
 namespace MorseRunner.Domain;
 
-public static class CompatibilityProfile
+public static class SimulationAudioProfile
 {
     public const int SampleRate = 11_025;
     public const int BlockSize = 512;
@@ -91,8 +91,8 @@ public sealed record SessionSettings(
             DurationBlocks: checked((long)Math.Ceiling(
                 30
                 * 60d
-                * CompatibilityProfile.SampleRate
-                / CompatibilityProfile.BlockSize)));
+                * SimulationAudioProfile.SampleRate
+                / SimulationAudioProfile.BlockSize)));
     }
 }
 

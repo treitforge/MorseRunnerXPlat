@@ -1,6 +1,6 @@
 namespace MorseRunner.Dsp;
 
-internal sealed class LegacyMovingAverageFilter
+internal sealed class MovingAverageFilter
 {
     private readonly int _blockSize;
     private readonly int _points;
@@ -9,7 +9,7 @@ internal sealed class LegacyMovingAverageFilter
     private readonly float[][] _imaginaryBuffers;
     private readonly float _normalization;
 
-    public LegacyMovingAverageFilter(
+    public MovingAverageFilter(
         int blockSize,
         int points,
         int passes,

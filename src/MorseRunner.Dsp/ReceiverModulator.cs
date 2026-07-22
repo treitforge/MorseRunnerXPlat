@@ -1,12 +1,12 @@
 namespace MorseRunner.Dsp;
 
-internal sealed class LegacyModulator
+internal sealed class ReceiverModulator
 {
     private readonly float[] _sine;
     private readonly float[] _cosine;
     private int _sampleIndex;
 
-    public LegacyModulator(
+    public ReceiverModulator(
         int sampleRate,
         float requestedCarrierHz,
         float gain = 1f)

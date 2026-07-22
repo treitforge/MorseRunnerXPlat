@@ -5,7 +5,7 @@ namespace MorseRunner.Engine.Tests;
 public sealed class SessionSettingsDefaultsTests
 {
     [Fact]
-    public void CleanProfileMatchesCeDefaults()
+    public void CleanProfileMatchesIniDefaults()
     {
         SessionSettings settings = SessionSettings.CreateDefault(12_345);
 

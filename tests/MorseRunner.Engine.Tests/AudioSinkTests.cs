@@ -12,7 +12,7 @@ public sealed class AudioSinkTests
     private static readonly ClientId TestClient = new("audio-test");
 
     [Fact]
-    public void DefaultMonitorLevelMatchesLegacyFullVolume()
+    public void DefaultMonitorLevelMatchesDefaultFullVolume()
     {
         SessionSettings settings = SessionSettings.CreateDefault(seed: 12_345);
 

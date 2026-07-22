@@ -3,24 +3,24 @@ namespace MorseRunner.Infrastructure.Tests;
 public sealed class SettingsPersistenceTests
 {
     [Fact]
-    public void LegacySchemaAccountsForEveryPinnedSetting()
+    public void IniSchemaAccountsForEveryPinnedSetting()
     {
-        Assert.Equal(60, LegacySettingSchema.All.Count);
+        Assert.Equal(60, IniSettingSchema.All.Count);
         Assert.True(
-            LegacySettingSchema.TryGet(
+            IniSettingSchema.TryGet(
                 "Station",
                 "NRDigits",
-                out LegacySettingDescriptor? migrated));
+                out IniSettingDescriptor? migrated));
         Assert.True(
-            migrated!.Operations.HasFlag(LegacySettingOperation.Delete));
+            migrated!.Operations.HasFlag(IniSettingOperation.Delete));
         Assert.True(
-            migrated.Operations.HasFlag(LegacySettingOperation.Exists));
+            migrated.Operations.HasFlag(IniSettingOperation.Exists));
     }
 
     [Fact]
-    public void LegacyImportIsOneWayAndIdempotent()
+    public void IniImportIsOneWayAndIdempotent()
     {
-        LegacyIniDocument source = LegacyIniDocument.Parse(
+        IniDocument source = IniDocument.Parse(
             """
             [Station]
             Call=W7SST
@@ -30,8 +30,8 @@ public sealed class SettingsPersistenceTests
             Qrn=0.25
             """);
 
-        SettingsDocument first = LegacySettingsImporter.Import(source);
-        SettingsDocument second = LegacySettingsImporter.Import(source, first);
+        SettingsDocument first = IniSettingsImporter.Import(source);
+        SettingsDocument second = IniSettingsImporter.Import(source, first);
 
         Assert.Equal("W7SST", first.Values["Station.Call"]);
         Assert.Equal("32", first.Values["Station.Wpm"]);
@@ -43,15 +43,15 @@ public sealed class SettingsPersistenceTests
         Assert.DoesNotContain("Station.Unknown", first.Values.Keys);
         Assert.Equal(
             "preserve-in-source",
-            first.Values[LegacySettingsImporter.PreservedValueKey(
+            first.Values[IniSettingsImporter.PreservedValueKey(
                 "Station",
                 "Unknown")]);
     }
 
     [Fact]
-    public void LegacyImportTranslatesCeEncodingSemantics()
+    public void IniImportTranslatesIniEncodingSemantics()
     {
-        LegacyIniDocument source = LegacyIniDocument.Parse(
+        IniDocument source = IniDocument.Parse(
             """
             [Station]
             Pitch=6
@@ -81,7 +81,7 @@ public sealed class SettingsPersistenceTests
             Lids=1
             """);
 
-        SettingsDocument imported = LegacySettingsImporter.Import(source);
+        SettingsDocument imported = IniSettingsImporter.Import(source);
 
         Assert.Equal("600", imported.Values["Station.Pitch"]);
         Assert.Equal("300", imported.Values["Station.BandWidth"]);
@@ -117,16 +117,16 @@ public sealed class SettingsPersistenceTests
     [InlineData("3", "1")]
     [InlineData("4", "2")]
     [InlineData("5", "0")]
-    public void LegacyImportMigratesNRDigitsAndRemovesObsoleteKey(
-        string legacyDigits,
+    public void IniImportMigratesNRDigitsAndRemovesObsoleteKey(
+        string importedDigits,
         string expectedSerialMode)
     {
-        SettingsDocument imported = LegacySettingsImporter.Import(
-            LegacyIniDocument.Parse(
+        SettingsDocument imported = IniSettingsImporter.Import(
+            IniDocument.Parse(
                 $"""
                 [Station]
                 SerialNR=2
-                NRDigits={legacyDigits}
+                NRDigits={importedDigits}
                 """));
 
         Assert.DoesNotContain("Station.NRDigits", imported.Values.Keys);
@@ -136,10 +136,10 @@ public sealed class SettingsPersistenceTests
     }
 
     [Fact]
-    public void LegacyImportUsesCeDefaultsForMalformedPrimitiveSettings()
+    public void IniImportUsesIniDefaultsForMalformedPrimitiveSettings()
     {
-        SettingsDocument imported = LegacySettingsImporter.Import(
-            LegacyIniDocument.Parse(
+        SettingsDocument imported = IniSettingsImporter.Import(
+            IniDocument.Parse(
                 """
                 [Station]
                 cwopsnum=9999
@@ -206,11 +206,11 @@ public sealed class SettingsPersistenceTests
     }
 
     [Fact]
-    public void LegacyImportReportsCeSerialRangeErrorsInReadOrder()
+    public void IniImportReportsIniSerialRangeErrorsInReadOrder()
     {
-        LegacySettingsImportResult imported =
-            LegacySettingsImporter.ImportWithDiagnostics(
-                LegacyIniDocument.Parse(
+        IniSettingsImportResult imported =
+            IniSettingsImporter.ImportWithDiagnostics(
+                IniDocument.Parse(
                     """
                     [Station]
                     SerialNrMidContest=bad
@@ -338,11 +338,11 @@ public sealed class SettingsPersistenceTests
     }
 
     [Fact]
-    public async Task MissingProjectSettingsImportsLegacyIniOnlyOnce()
+    public async Task MissingProjectSettingsImportsIniOnlyOnce()
     {
         string root = Path.Combine(
             Path.GetTempPath(),
-            "MorseRunnerXPlat.LegacyImport",
+            "MorseRunnerXPlat.IniImport",
             Guid.NewGuid().ToString("N"));
         var paths = new ApplicationPaths(root);
         string settingsPath = Path.Combine(paths.Settings, "settings.json");
@@ -350,26 +350,26 @@ public sealed class SettingsPersistenceTests
         {
             Directory.CreateDirectory(root);
             await File.WriteAllTextAsync(
-                paths.LegacySettingsImport,
+                paths.IniSettingsImport,
                 "[Station]" + Environment.NewLine
                     + "Call=K7ABC" + Environment.NewLine
                     + "Pitch=6" + Environment.NewLine,
                 TestContext.Current.CancellationToken);
             var store = new SettingsStore(
                 settingsPath,
-                paths.LegacySettingsImport);
+                paths.IniSettingsImport);
 
             SettingsLoadResult imported = await store.LoadAsync(
                 TestContext.Current.CancellationToken);
 
             Assert.False(imported.Recovered);
-            Assert.Contains("Imported legacy", imported.Diagnostic);
+            Assert.Contains("Imported MorseRunner.ini", imported.Diagnostic);
             Assert.Equal("K7ABC", imported.Document.Values["Station.Call"]);
             Assert.Equal("600", imported.Document.Values["Station.Pitch"]);
             Assert.True(File.Exists(settingsPath));
 
             await File.WriteAllTextAsync(
-                paths.LegacySettingsImport,
+                paths.IniSettingsImport,
                 "[Station]" + Environment.NewLine
                     + "Call=N0NEW" + Environment.NewLine
                     + "Pitch=2" + Environment.NewLine,
@@ -392,7 +392,7 @@ public sealed class SettingsPersistenceTests
     }
 
     [Fact]
-    public async Task SettingsSavePreservesUnknownAndUnconsumedLegacyValues()
+    public async Task SettingsSavePreservesUnknownAndUnconsumedIniValues()
     {
         string root = Path.Combine(
             Path.GetTempPath(),
@@ -401,8 +401,8 @@ public sealed class SettingsPersistenceTests
         string path = Path.Combine(root, "settings.json");
         try
         {
-            SettingsDocument imported = LegacySettingsImporter.Import(
-                LegacyIniDocument.Parse(
+            SettingsDocument imported = IniSettingsImporter.Import(
+                IniDocument.Parse(
                     """
                     [Future]
                     Mystery=keep-me
@@ -433,7 +433,7 @@ public sealed class SettingsPersistenceTests
             Assert.Equal(
                 "keep-me",
                 restarted.Document.Values[
-                    LegacySettingsImporter.PreservedValueKey(
+                    IniSettingsImporter.PreservedValueKey(
                         "Future",
                         "Mystery")]);
         }
@@ -459,7 +459,7 @@ public sealed class SettingsPersistenceTests
             new[]
             {
                 paths.Settings,
-                paths.LegacySettingsImport,
+                paths.IniSettingsImport,
                 paths.Results,
                 paths.Recordings,
                 paths.Cache,

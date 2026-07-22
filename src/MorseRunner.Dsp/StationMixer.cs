@@ -1,6 +1,6 @@
 namespace MorseRunner.Dsp;
 
-public sealed class LegacyStationMixer
+public sealed class StationMixer
 {
     private const double TwoPi = 2d * Math.PI;
 
@@ -8,7 +8,7 @@ public sealed class LegacyStationMixer
     private float _bfoPhase;
     private float _bfoPhaseIncrement;
 
-    public LegacyStationMixer(int sampleRate)
+    public StationMixer(int sampleRate)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sampleRate);
         _sampleRate = sampleRate;

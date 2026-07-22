@@ -85,7 +85,7 @@ public sealed class GrpcTransportTests
     }
 
     [Fact]
-    public void OmittedCustomSerialNumberDigitsUseCeDefaults()
+    public void OmittedCustomSerialNumberDigitsUseIniDefaults()
     {
         SessionSettingsMessage transport = TransportMapper.ToTransport(
             SessionSettings.CreateDefault(42));

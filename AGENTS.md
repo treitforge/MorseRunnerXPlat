@@ -45,8 +45,8 @@ uv run --locked python tools\agent_scaffolding\validate_yaml.py
 .\.github\hooks\scripts\validate-agent-scaffolding.ps1
 dotnet restore MorseRunnerXPlat.slnx
 dotnet format MorseRunnerXPlat.slnx --verify-no-changes
-dotnet build MorseRunnerXPlat.slnx --no-restore --configuration Release
-dotnet test --solution MorseRunnerXPlat.slnx --no-build --configuration Release
+dotnet build MorseRunnerXPlat.slnx --no-restore --configuration Release -warnaserror
+dotnet test --solution MorseRunnerXPlat.slnx --no-build --configuration Release -- --filter-not-trait Category=Performance --fail-warns on
 ```
 
 When Protobuf changes, also run `buf lint` and `buf breaking --against '.git#branch=main'`.

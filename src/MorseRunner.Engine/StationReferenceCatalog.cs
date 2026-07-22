@@ -133,7 +133,7 @@ internal sealed class StationReferenceCatalog
     }
 
     public string PickCallsignForQrm(
-        LegacyRandom random,
+        DeterministicRandom random,
         RunModeId runModeId)
     {
         ArgumentNullException.ThrowIfNull(random);
@@ -165,7 +165,7 @@ internal sealed class StationReferenceCatalog
     }
 
     public StationIdentity Pick(
-        LegacyRandom random,
+        DeterministicRandom random,
         ContestId contestId,
         int serialNumber)
     {

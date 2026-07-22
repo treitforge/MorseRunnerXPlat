@@ -5,7 +5,7 @@ using MorseRunner.Dsp;
 
 namespace MorseRunner.Dsp.Tests;
 
-public sealed class LegacyMorseEnvelopeCursorTests
+public sealed class MorseEnvelopeCursorTests
 {
     private const int SampleRate = 11_025;
     private const int BlockSize = 512;
@@ -15,12 +15,12 @@ public sealed class LegacyMorseEnvelopeCursorTests
     [Fact]
     public void StandardSegmentedQrmEnvelopeMatchesEagerCeEnvelope()
     {
-        var profile = new LegacyMorseKeyingProfile(
+        var profile = new MorseKeyingProfile(
             SampleRate,
             BlockSize,
-            LegacyMorseKeyingMode.Standard);
-        var cursor = new LegacyMorseEnvelopeCursor(profile);
-        var text = new LegacyMorseText(
+            MorseKeyingMode.Standard);
+        var cursor = new MorseEnvelopeCursor(profile);
+        var text = new MorseText(
             "QRL?",
             " ",
             " ",
@@ -48,12 +48,12 @@ public sealed class LegacyMorseEnvelopeCursorTests
     [Fact]
     public void SstSegmentedEncodingTransformsAcrossBoundaries()
     {
-        var profile = new LegacyMorseKeyingProfile(
+        var profile = new MorseKeyingProfile(
             SampleRate,
             BlockSize,
-            LegacyMorseKeyingMode.SstFarnsworth);
-        var cursor = new LegacyMorseEnvelopeCursor(profile);
-        var text = new LegacyMorseText(
+            MorseKeyingMode.SstFarnsworth);
+        var cursor = new MorseEnvelopeCursor(profile);
+        var text = new MorseText(
             "QRL?",
             " ",
             " ",
@@ -80,16 +80,16 @@ public sealed class LegacyMorseEnvelopeCursorTests
     [Theory]
     [InlineData(30)]
     [InlineData(49)]
-    public void CeQrmSpeedBoundsAreInclusive(int wordsPerMinute)
+    public void QrmSpeedBoundsAreInclusive(int wordsPerMinute)
     {
-        var profile = new LegacyMorseKeyingProfile(
+        var profile = new MorseKeyingProfile(
             SampleRate,
             BlockSize,
-            LegacyMorseKeyingMode.Standard);
-        var cursor = new LegacyMorseEnvelopeCursor(profile);
+            MorseKeyingMode.Standard);
+        var cursor = new MorseEnvelopeCursor(profile);
 
         cursor.Reset(
-            new LegacyMorseText("QRL?"),
+            new MorseText("QRL?"),
             wordsPerMinute,
             QrmAmplitude);
 
@@ -101,14 +101,14 @@ public sealed class LegacyMorseEnvelopeCursorTests
     [Fact]
     public void BlockCursorExposesCeSendPositionAndPaddedLifecycle()
     {
-        var profile = new LegacyMorseKeyingProfile(
+        var profile = new MorseKeyingProfile(
             SampleRate,
             BlockSize,
-            LegacyMorseKeyingMode.Standard);
-        var cursor = new LegacyMorseEnvelopeCursor(profile);
+            MorseKeyingMode.Standard);
+        var cursor = new MorseEnvelopeCursor(profile);
         var block = new float[BlockSize];
         cursor.Reset(
-            new LegacyMorseText("QRL?   QRL?"),
+            new MorseText("QRL?   QRL?"),
             WordsPerMinute,
             QrmAmplitude);
 
@@ -133,18 +133,18 @@ public sealed class LegacyMorseEnvelopeCursorTests
     [Theory]
     [InlineData(29)]
     [InlineData(50)]
-    public void CeQrmSpeedBoundsRejectValuesOutsideConstructorRange(
+    public void QrmSpeedBoundsRejectValuesOutsideConstructorRange(
         int wordsPerMinute)
     {
-        var profile = new LegacyMorseKeyingProfile(
+        var profile = new MorseKeyingProfile(
             SampleRate,
             BlockSize,
-            LegacyMorseKeyingMode.Standard);
-        var cursor = new LegacyMorseEnvelopeCursor(profile);
+            MorseKeyingMode.Standard);
+        var cursor = new MorseEnvelopeCursor(profile);
 
         Assert.Throws<ArgumentOutOfRangeException>(
             () => cursor.Reset(
-                new LegacyMorseText("QRL?"),
+                new MorseText("QRL?"),
                 wordsPerMinute,
                 QrmAmplitude));
     }
@@ -152,15 +152,15 @@ public sealed class LegacyMorseEnvelopeCursorTests
     [Fact]
     public void FixedTextSupportsEightSegmentsWithoutImplicitSpacing()
     {
-        var profile = new LegacyMorseKeyingProfile(
+        var profile = new MorseKeyingProfile(
             SampleRate,
             BlockSize,
-            LegacyMorseKeyingMode.Standard);
+            MorseKeyingMode.Standard);
         var segmentedCursor =
-            new LegacyMorseEnvelopeCursor(profile);
+            new MorseEnvelopeCursor(profile);
         var contiguousCursor =
-            new LegacyMorseEnvelopeCursor(profile);
-        var segmentedText = new LegacyMorseText(
+            new MorseEnvelopeCursor(profile);
+        var segmentedText = new MorseText(
             "C",
             "Q",
             " ",
@@ -175,12 +175,12 @@ public sealed class LegacyMorseEnvelopeCursorTests
             WordsPerMinute,
             amplitude: 1f);
         contiguousCursor.Reset(
-            new LegacyMorseText("CQ TEST?"),
+            new MorseText("CQ TEST?"),
             WordsPerMinute,
             amplitude: 1f);
 
         Assert.Equal(
-            LegacyMorseText.MaximumSegmentCount,
+            MorseText.MaximumSegmentCount,
             segmentedText.SegmentCount);
         Assert.Equal(
             RenderAll(contiguousCursor),
@@ -190,12 +190,12 @@ public sealed class LegacyMorseEnvelopeCursorTests
     [Fact]
     public void SharedProfileOwnsOneRampPairForPooledCursors()
     {
-        var profile = new LegacyMorseKeyingProfile(
+        var profile = new MorseKeyingProfile(
             SampleRate,
             BlockSize,
-            LegacyMorseKeyingMode.Standard);
-        var first = new LegacyMorseEnvelopeCursor(profile);
-        var second = new LegacyMorseEnvelopeCursor(profile);
+            MorseKeyingMode.Standard);
+        var first = new MorseEnvelopeCursor(profile);
+        var second = new MorseEnvelopeCursor(profile);
 
         Assert.Same(profile, first.Profile);
         Assert.Same(profile, second.Profile);
@@ -205,7 +205,7 @@ public sealed class LegacyMorseEnvelopeCursorTests
     [Fact]
     public void EveryQrmSpeedAndMessageShapeMatchesEagerCeKeying()
     {
-        (LegacyMorseText Segments, string Materialized)[] messages =
+        (MorseText Segments, string Materialized)[] messages =
         [
             (new("QRL?"), "QRL?"),
             (new("W7SST", "  QSY QSY"), "W7SST  QSY QSY"),
@@ -219,23 +219,23 @@ public sealed class LegacyMorseEnvelopeCursorTests
                 "CQ CQ TEST LU5MT LU5MT TEST"),
         ];
 
-        foreach (LegacyMorseKeyingMode mode in
-                 Enum.GetValues<LegacyMorseKeyingMode>())
+        foreach (MorseKeyingMode mode in
+                 Enum.GetValues<MorseKeyingMode>())
         {
-            var profile = new LegacyMorseKeyingProfile(
+            var profile = new MorseKeyingProfile(
                 SampleRate,
                 BlockSize,
                 mode);
-            var cursor = new LegacyMorseEnvelopeCursor(profile);
+            var cursor = new MorseEnvelopeCursor(profile);
             for (int wordsPerMinute =
-                     LegacyMorseKeyingProfile
+                     MorseKeyingProfile
                          .MinimumQrmWordsPerMinute;
                  wordsPerMinute
-                     <= LegacyMorseKeyingProfile
+                     <= MorseKeyingProfile
                          .MaximumQrmWordsPerMinute;
                  wordsPerMinute++)
             {
-                foreach ((LegacyMorseText segments, string materialized)
+                foreach ((MorseText segments, string materialized)
                          in messages)
                 {
                     cursor.Reset(
@@ -247,7 +247,7 @@ public sealed class LegacyMorseEnvelopeCursorTests
                         CreateEagerEnvelope(
                             materialized,
                             mode
-                                == LegacyMorseKeyingMode
+                                == MorseKeyingMode
                                     .SstFarnsworth,
                             QrmAmplitude,
                             wordsPerMinute),
@@ -266,10 +266,10 @@ public sealed class LegacyMorseEnvelopeCursorTests
             2.7f * riseTimeSeconds * SampleRate,
             MidpointRounding.ToEven);
 
-        var profile = new LegacyMorseKeyingProfile(
+        var profile = new MorseKeyingProfile(
             SampleRate,
             BlockSize,
-            LegacyMorseKeyingMode.Standard,
+            MorseKeyingMode.Standard,
             riseTimeSeconds);
 
         Assert.Equal(102, floatIntermediateLength);
@@ -280,12 +280,12 @@ public sealed class LegacyMorseEnvelopeCursorTests
     [Trait("Category", "Performance")]
     public void ResetAndBlockRenderingAllocateNoManagedMemory()
     {
-        var profile = new LegacyMorseKeyingProfile(
+        var profile = new MorseKeyingProfile(
             SampleRate,
             BlockSize,
-            LegacyMorseKeyingMode.Standard);
-        var cursor = new LegacyMorseEnvelopeCursor(profile);
-        var text = new LegacyMorseText(
+            MorseKeyingMode.Standard);
+        var cursor = new MorseEnvelopeCursor(profile);
+        var text = new MorseText(
             "CQ CQ TEST ",
             "LU5MT",
             " ",
@@ -306,7 +306,7 @@ public sealed class LegacyMorseEnvelopeCursorTests
     }
 
     private static float[] RenderAll(
-        LegacyMorseEnvelopeCursor cursor)
+        MorseEnvelopeCursor cursor)
     {
         var result = new float[cursor.PaddedEnvelopeSampleCount];
         int position = 0;
@@ -346,8 +346,8 @@ public sealed class LegacyMorseEnvelopeCursorTests
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void RenderScenario(
-        LegacyMorseEnvelopeCursor cursor,
-        LegacyMorseText text,
+        MorseEnvelopeCursor cursor,
+        MorseText text,
         float[] block)
     {
         cursor.Reset(text, WordsPerMinute, QrmAmplitude);

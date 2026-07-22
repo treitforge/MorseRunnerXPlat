@@ -162,8 +162,8 @@ public sealed class QrmStationPerformanceTests
             },
             scenario = new
             {
-                sampleRate = CompatibilityProfile.SampleRate,
-                blockSize = CompatibilityProfile.BlockSize,
+                sampleRate = SimulationAudioProfile.SampleRate,
+                blockSize = SimulationAudioProfile.BlockSize,
                 seed = QrmSteadyStateHarness.Seed,
                 contestId = "scWpx",
                 runModeId = "rmStop",
@@ -233,16 +233,16 @@ public sealed class QrmStationPerformanceTests
         private readonly ContestId _contestId = new("scWpx");
         private readonly RunModeId _runModeId = new("rmStop");
         private readonly StationReferenceCatalog _catalog;
-        private readonly LegacyRandom _random = new(Seed);
-        private readonly LegacyRandomEffects _randomEffects;
+        private readonly DeterministicRandom _random = new(Seed);
+        private readonly RandomEffects _randomEffects;
         private readonly QrmStation[] _pool;
         private readonly List<QrmStation> _active;
         private readonly float[] _envelope =
-            new float[CompatibilityProfile.BlockSize];
+            new float[SimulationAudioProfile.BlockSize];
         private readonly float[] _receiverReal =
-            new float[CompatibilityProfile.BlockSize];
+            new float[SimulationAudioProfile.BlockSize];
         private readonly float[] _receiverImaginary =
-            new float[CompatibilityProfile.BlockSize];
+            new float[SimulationAudioProfile.BlockSize];
         private float _ritPhase;
 
         public QrmSteadyStateHarness(int stationCount)
@@ -251,10 +251,10 @@ public sealed class QrmStationPerformanceTests
                 _contestId,
                 "W7SST");
             _randomEffects = new(_random);
-            var profile = new LegacyMorseKeyingProfile(
-                CompatibilityProfile.SampleRate,
-                CompatibilityProfile.BlockSize,
-                LegacyMorseKeyingMode.Standard);
+            var profile = new MorseKeyingProfile(
+                SimulationAudioProfile.SampleRate,
+                SimulationAudioProfile.BlockSize,
+                MorseKeyingMode.Standard);
             StructuralPoolBound =
                 QrmStation.CalculateMaximumConcurrentStations(
                     profile,
@@ -312,11 +312,11 @@ public sealed class QrmStationPerformanceTests
                     _ritPhase);
             }
 
-            _ritPhase = LegacyStationMixer.AdvanceRitPhase(
+            _ritPhase = StationMixer.AdvanceRitPhase(
                 _ritPhase,
-                CompatibilityProfile.BlockSize,
+                SimulationAudioProfile.BlockSize,
                 ritHz: 0,
-                CompatibilityProfile.SampleRate);
+                SimulationAudioProfile.SampleRate);
             for (int index = _active.Count - 1; index >= 0; index--)
             {
                 QrmStation station = _active[index];

@@ -3,12 +3,12 @@ using MorseRunner.Dsp;
 
 namespace MorseRunner.Dsp.Tests;
 
-public sealed class LegacyStationMixerTests
+public sealed class StationMixerTests
 {
     private const int SampleRate = 11_025;
 
     [Fact]
-    public void NegativePitchAndRitMatchFpcSingleVector()
+    public void NegativePitchAndRitMatchPinnedSingleVector()
     {
         float[] envelope =
         [
@@ -66,8 +66,8 @@ public sealed class LegacyStationMixerTests
             0x3983126f,
         ];
         // These bits come from the same expressions compiled by
-        // FPC 3.2.2 for x86_64-win64.
-        var mixer = new LegacyStationMixer(SampleRate);
+        // Pinned single-precision output for this deterministic vector.
+        var mixer = new StationMixer(SampleRate);
 
         mixer.BeginTransmission(pitchOffsetHz: -124);
         mixer.MixBlock(
@@ -84,12 +84,12 @@ public sealed class LegacyStationMixerTests
     }
 
     [Fact]
-    public void PositiveBfoWrapAndRitAdvanceMatchFpcSingleVector()
+    public void PositiveBfoWrapAndRitAdvanceMatchPinnedSingleVector()
     {
         var envelope = new float[512];
         var real = new float[512];
         var imaginary = new float[512];
-        var mixer = new LegacyStationMixer(SampleRate);
+        var mixer = new StationMixer(SampleRate);
 
         mixer.BeginTransmission(pitchOffsetHz: 600);
         mixer.MixBlock(
@@ -98,7 +98,7 @@ public sealed class LegacyStationMixerTests
             imaginary,
             ritHz: 0,
             ritPhase: 0f);
-        float ritPhase = LegacyStationMixer.AdvanceRitPhase(
+        float ritPhase = StationMixer.AdvanceRitPhase(
             ritPhase: 0.75f,
             blockSize: 512,
             ritHz: 73,
@@ -115,7 +115,7 @@ public sealed class LegacyStationMixerTests
         var envelope = new float[8];
         var real = new float[8];
         var imaginary = new float[8];
-        var mixer = new LegacyStationMixer(SampleRate);
+        var mixer = new StationMixer(SampleRate);
         mixer.BeginTransmission(pitchOffsetHz: 600);
         mixer.MixBlock(
             envelope,
@@ -137,7 +137,7 @@ public sealed class LegacyStationMixerTests
         var envelope = new float[512];
         var real = new float[512];
         var imaginary = new float[512];
-        var mixer = new LegacyStationMixer(SampleRate);
+        var mixer = new StationMixer(SampleRate);
         mixer.BeginTransmission(pitchOffsetHz: -124);
 
         MixRepeatedly(mixer, envelope, real, imaginary);
@@ -151,7 +151,7 @@ public sealed class LegacyStationMixerTests
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void MixRepeatedly(
-        LegacyStationMixer mixer,
+        StationMixer mixer,
         float[] envelope,
         float[] real,
         float[] imaginary)

@@ -50,7 +50,7 @@ public sealed class CwtScoringTests
     [InlineData("AB", "DAVID", "123", "Invalid callsign")]
     [InlineData("K1ABC", "D", "123", "Missing/Invalid Name")]
     [InlineData("K1ABC", "DAVID", "", "Missing/Invalid QTH")]
-    public void ReceivedExchangeValidationMatchesLegacyFieldRules(
+    public void ReceivedExchangeValidationMatchesPinnedFieldRules(
         string call,
         string name,
         string exchange,

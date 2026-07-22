@@ -1,13 +1,13 @@
 namespace MorseRunner.Dsp;
 
-public sealed class LegacyRandom
+public sealed class DeterministicRandom
 {
     private const int StateLength = 624;
     private const int Period = 397;
     private readonly uint[] _state = new uint[StateLength];
     private int _index = StateLength;
 
-    public LegacyRandom(int seed)
+    public DeterministicRandom(int seed)
     {
         _state[0] = unchecked((uint)seed);
         for (int index = 1; index < StateLength; index++)

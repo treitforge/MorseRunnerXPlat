@@ -6,8 +6,8 @@ namespace MorseRunner.Engine;
 public sealed class SimulatedOperator
 {
     private const int FullPatience = 5;
-    private readonly LegacyRandom _random;
-    private readonly LegacyRandomEffects _effects;
+    private readonly DeterministicRandom _random;
+    private readonly RandomEffects _effects;
     private readonly double _responseChoice;
     private readonly bool _lids;
     private readonly bool _sweepstakes;
@@ -20,14 +20,14 @@ public sealed class SimulatedOperator
     public SimulatedOperator(
         string callsign,
         OperatorState initialState,
-        LegacyRandom random,
+        DeterministicRandom random,
         OperatorRunMode runMode,
         bool lids = false,
         bool sweepstakes = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(callsign);
         _random = random ?? throw new ArgumentNullException(nameof(random));
-        _effects = new LegacyRandomEffects(random);
+        _effects = new RandomEffects(random);
         Callsign = callsign;
         RunMode = runMode;
         _lids = lids;
@@ -58,7 +58,7 @@ public sealed class SimulatedOperator
     {
         State = state;
         Patience = state == OperatorState.NeedQso
-            ? 3 + RoundLegacy(_effects.Rayleigh(3f))
+            ? 3 + RoundToEven(_effects.Rayleigh(3f))
             : FullPatience;
         RepeatCount = state == OperatorState.NeedQso
             && RunMode is not (OperatorRunMode.SingleCall or OperatorRunMode.Hst)
@@ -86,15 +86,15 @@ public sealed class SimulatedOperator
         float seconds = RunMode == OperatorRunMode.Hst
             ? (float)(0.05d + (0.5d * _random.NextDouble() * 10d / wordsPerMinute))
             : (float)(0.1d + (0.5d * _random.NextDouble()));
-        return LegacyRandomEffects.SecondsToBlocks(seconds);
+        return RandomEffects.SecondsToBlocks(seconds);
     }
 
     public int GetReplyTimeout(int wordsPerMinute = 30)
     {
         int blocks = RunMode == OperatorRunMode.Hst
-            ? LegacyRandomEffects.SecondsToBlocks(60f / wordsPerMinute)
-            : LegacyRandomEffects.SecondsToBlocks(6f - Skills);
-        return RoundLegacy(_effects.GaussianLimited(blocks, blocks / 2f));
+            ? RandomEffects.SecondsToBlocks(60f / wordsPerMinute)
+            : RandomEffects.SecondsToBlocks(6f - Skills);
+        return RoundToEven(_effects.GaussianLimited(blocks, blocks / 2f));
     }
 
     public void Receive(
@@ -566,6 +566,6 @@ public sealed class SimulatedOperator
         return previous[right.Length];
     }
 
-    private static int RoundLegacy(float value) =>
+    private static int RoundToEven(float value) =>
         (int)MathF.Round(value, MidpointRounding.ToEven);
 }

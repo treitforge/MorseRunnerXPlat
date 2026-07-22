@@ -1,6 +1,6 @@
 namespace MorseRunner.Dsp;
 
-public sealed class LegacyReceiverPipeline
+public sealed class ReceiverPipeline
 {
     private const float Pcm16Scale = 32_768f;
     private readonly int _sampleRate;
@@ -11,13 +11,13 @@ public sealed class LegacyReceiverPipeline
     private readonly float[] _filteredImaginary;
     private readonly float[] _modulated;
     private readonly float[] _agcOutput;
-    private LegacyMovingAverageFilter _activeFilter;
-    private LegacyMovingAverageFilter _standbyFilter;
-    private readonly LegacyModulator _modulator;
-    private readonly LegacyAutomaticGainControl _agc = new();
+    private MovingAverageFilter _activeFilter;
+    private MovingAverageFilter _standbyFilter;
+    private readonly ReceiverModulator _modulator;
+    private readonly AutomaticGainControl _agc = new();
     private int _absoluteRequestCount;
 
-    public LegacyReceiverPipeline(
+    public ReceiverPipeline(
         int sampleRate,
         int blockSize,
         int bandwidthHz,
@@ -73,7 +73,7 @@ public sealed class LegacyReceiverPipeline
         _agcOutput.AsSpan().CopyTo(output);
     }
 
-    private LegacyMovingAverageFilter CreateFilter(int bandwidthHz)
+    private MovingAverageFilter CreateFilter(int bandwidthHz)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(bandwidthHz);
         int points = checked((int)Math.Round(

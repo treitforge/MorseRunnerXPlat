@@ -1,6 +1,6 @@
 namespace MorseRunner.Dsp;
 
-internal static class LegacyMorseRamp
+internal static class MorseRamp
 {
     public static float[] CreateOn(int length)
     {

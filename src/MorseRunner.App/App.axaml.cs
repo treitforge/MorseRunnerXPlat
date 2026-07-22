@@ -25,7 +25,7 @@ public sealed class App : Application
             var recording = new RecordingPreference(paths);
             var settings = new SettingsStore(
                 Path.Combine(paths.Settings, "settings.json"),
-                paths.LegacySettingsImport);
+                paths.IniSettingsImport);
             var highScores = new HighScoreStore(
                 Path.Combine(paths.Results, "high-scores.json"));
             InProcessMorseRunnerClient client =

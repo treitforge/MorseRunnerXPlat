@@ -1,21 +1,21 @@
 namespace MorseRunner.Dsp;
 
-public enum LegacyMorseKeyingMode
+public enum MorseKeyingMode
 {
     Standard = 0,
     SstFarnsworth = 1,
 }
 
-public sealed class LegacyMorseKeyingProfile
+public sealed class MorseKeyingProfile
 {
     public const int MinimumQrmWordsPerMinute = 30;
     public const int MaximumQrmWordsPerMinute = 49;
     public const float DefaultRiseTimeSeconds = 0.005f;
 
-    public LegacyMorseKeyingProfile(
+    public MorseKeyingProfile(
         int sampleRate,
         int blockSize,
-        LegacyMorseKeyingMode mode,
+        MorseKeyingMode mode,
         float riseTimeSeconds = DefaultRiseTimeSeconds)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sampleRate);
@@ -32,8 +32,8 @@ public sealed class LegacyMorseKeyingProfile
         Mode = mode;
         RiseTimeSeconds = riseTimeSeconds;
         int rampLength = CalculateRampLength();
-        _rampOn = LegacyMorseRamp.CreateOn(rampLength);
-        _rampOff = LegacyMorseRamp.CreateOff(_rampOn);
+        _rampOn = MorseRamp.CreateOn(rampLength);
+        _rampOff = MorseRamp.CreateOff(_rampOn);
     }
 
     private readonly float[] _rampOn;
@@ -43,7 +43,7 @@ public sealed class LegacyMorseKeyingProfile
 
     public int BlockSize { get; }
 
-    public LegacyMorseKeyingMode Mode { get; }
+    public MorseKeyingMode Mode { get; }
 
     public float RiseTimeSeconds { get; }
 
@@ -68,7 +68,7 @@ public sealed class LegacyMorseKeyingProfile
             throw new ArgumentOutOfRangeException(
                 nameof(wordsPerMinute),
                 wordsPerMinute,
-                $"CE QRM speed must be between "
+                $"QRM speed must be between "
                 + $"{MinimumQrmWordsPerMinute} and "
                 + $"{MaximumQrmWordsPerMinute} WPM.");
         }

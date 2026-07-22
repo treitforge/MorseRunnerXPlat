@@ -6,12 +6,12 @@ namespace MorseRunner.Engine.Tests;
 
 public sealed class QrmStationTests
 {
-    private const int BlockSize = CompatibilityProfile.BlockSize;
+    private const int BlockSize = SimulationAudioProfile.BlockSize;
 
     [Fact]
     public void Seed1843MatchesTheCeEagerConstructorAndFirstBlock()
     {
-        var random = new LegacyRandom(1_843);
+        var random = new DeterministicRandom(1_843);
         for (int ordinal = 0; ordinal < 1_024; ordinal++)
         {
             _ = random.NextDouble();
@@ -31,7 +31,7 @@ public sealed class QrmStationTests
             CreateProfile(new ContestId("scWpx")));
         station.Activate(
             random,
-            new LegacyRandomEffects(random),
+            new RandomEffects(random),
             catalog,
             new ContestId("scWpx"),
             new RunModeId("rmStop"),
@@ -72,7 +72,7 @@ public sealed class QrmStationTests
         Assert.Equal(103, station.RemainingBlockCount);
         Assert.True(station.IsSending);
         Assert.False(station.Tick(
-            new LegacyRandomEffects(random),
+            new RandomEffects(random),
             new ContestId("scWpx")));
         Assert.Equal(
             0x3F51_9E01U,
@@ -82,7 +82,7 @@ public sealed class QrmStationTests
     [Fact]
     public void RetryUsesExactSilentBlockCountAndThenReleases()
     {
-        var random = new LegacyRandom(1_843);
+        var random = new DeterministicRandom(1_843);
         for (int ordinal = 0; ordinal <= 1_024; ordinal++)
         {
             _ = random.NextDouble();
@@ -92,7 +92,7 @@ public sealed class QrmStationTests
             StationReferenceCatalog.Load(
                 new ContestId("scWpx"),
                 "W7SST");
-        var effects = new LegacyRandomEffects(random);
+        var effects = new RandomEffects(random);
         var station = new QrmStation(
             CreateProfile(new ContestId("scWpx")));
         station.Activate(
@@ -186,12 +186,12 @@ public sealed class QrmStationTests
         Assert.Equal(46_039, catalog.QrmCallsignCount);
     }
 
-    private static LegacyMorseKeyingProfile CreateProfile(
+    private static MorseKeyingProfile CreateProfile(
         ContestId contestId) =>
         new(
-            CompatibilityProfile.SampleRate,
-            CompatibilityProfile.BlockSize,
+            SimulationAudioProfile.SampleRate,
+            SimulationAudioProfile.BlockSize,
             contestId.Value == "scSst"
-                ? LegacyMorseKeyingMode.SstFarnsworth
-                : LegacyMorseKeyingMode.Standard);
+                ? MorseKeyingMode.SstFarnsworth
+                : MorseKeyingMode.Standard);
 }

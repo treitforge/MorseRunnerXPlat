@@ -1,13 +1,13 @@
 namespace MorseRunner.Dsp;
 
-public sealed class LegacyReceiverNoiseGenerator
+public sealed class ReceiverNoiseGenerator
 {
     private const double HissAmplitude = 18_000d;
     private const double QrnImpulseAmplitude = 360_000d;
     private const double QrnTriggerProbability = 0.01d;
-    private readonly LegacyRandom _random;
+    private readonly DeterministicRandom _random;
 
-    public LegacyReceiverNoiseGenerator(LegacyRandom random)
+    public ReceiverNoiseGenerator(DeterministicRandom random)
     {
         _random = random ?? throw new ArgumentNullException(nameof(random));
     }

@@ -40,9 +40,9 @@ public readonly record struct AudioStreamFormat(
     int Channels,
     int BlockSize)
 {
-    public static AudioStreamFormat Compatibility =>
+    public static AudioStreamFormat Default =>
         new(
-            CompatibilityProfile.SampleRate,
+            SimulationAudioProfile.SampleRate,
             Channels: 1,
-            CompatibilityProfile.BlockSize);
+            SimulationAudioProfile.BlockSize);
 }

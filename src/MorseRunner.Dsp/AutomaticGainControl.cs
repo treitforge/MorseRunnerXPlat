@@ -1,6 +1,6 @@
 namespace MorseRunner.Dsp;
 
-internal sealed class LegacyAutomaticGainControl
+internal sealed class AutomaticGainControl
 {
     private readonly float[] _realBuffer;
     private readonly float[] _magnitudeBuffer;
@@ -9,7 +9,7 @@ internal sealed class LegacyAutomaticGainControl
     private readonly float _maxOutput;
     private int _bufferIndex;
 
-    public LegacyAutomaticGainControl(
+    public AutomaticGainControl(
         int attackSamples = 155,
         int holdSamples = 155,
         float maxOutput = 20_000f,

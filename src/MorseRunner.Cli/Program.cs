@@ -280,7 +280,7 @@ static async Task<int> RunRecordingProbeAsync(string[] arguments)
         ? BinaryPrimitives.ReadInt32LittleEndian(content.AsSpan(40, 4))
         : 0;
     bool valid = riff
-        && sampleRate == CompatibilityProfile.SampleRate
+        && sampleRate == SimulationAudioProfile.SampleRate
         && channels == 1
         && bitsPerSample == 16
         && dataLength > 0

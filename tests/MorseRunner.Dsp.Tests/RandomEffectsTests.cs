@@ -1,11 +1,11 @@
 namespace MorseRunner.Dsp.Tests;
 
-public sealed class LegacyRandomEffectsTests
+public sealed class RandomEffectsTests
 {
     [Fact]
-    public void FreePascalSeedProducesThePinnedUniformSequence()
+    public void SeedOneProducesThePinnedUniformSequence()
     {
-        var effects = new LegacyRandomEffects(new LegacyRandom(12_345));
+        var effects = new RandomEffects(new DeterministicRandom(12_345));
         float[] expected =
         [
             0.859232187f,
@@ -27,7 +27,7 @@ public sealed class LegacyRandomEffectsTests
     [Fact]
     public void ReceiverNoiseUsesCeFinalSingleRounding()
     {
-        var random = new LegacyRandom(12_345);
+        var random = new DeterministicRandom(12_345);
 
         float firstReal =
             (float)(18_000d * (random.NextDouble() - 0.5d));
@@ -43,17 +43,17 @@ public sealed class LegacyRandomEffectsTests
     }
 
     [Fact]
-    public void TimeConversionUsesLegacyBlockSemantics()
+    public void TimeConversionUsesPinnedBlockSemantics()
     {
-        Assert.Equal(27, LegacyRandomEffects.SecondsToBlocks(1.25f));
-        Assert.Equal(0.557278931f, LegacyRandomEffects.BlocksToSeconds(12f));
+        Assert.Equal(27, RandomEffects.SecondsToBlocks(1.25f));
+        Assert.Equal(0.557278931f, RandomEffects.BlocksToSeconds(12f));
     }
 
     [Fact]
-    public void QsbEnvelopeMatchesPinnedLegacySamples()
+    public void QsbEnvelopeMatchesPinnedSamples()
     {
         var processor = new QsbProcessor(
-            new LegacyRandomEffects(new LegacyRandom(12_345)));
+            new RandomEffects(new DeterministicRandom(12_345)));
         processor.Level = 0.75f;
         processor.Bandwidth = 0.5f;
         var samples = new float[512];

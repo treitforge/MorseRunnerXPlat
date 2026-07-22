@@ -55,7 +55,7 @@ public sealed class TuiApplication : IDisposable
             ? null
             : new SettingsStore(
                 Path.Combine(paths.Settings, "settings.json"),
-                paths.LegacySettingsImport);
+                paths.IniSettingsImport);
         _highScoreStore = paths is null
             ? null
             : new HighScoreStore(
@@ -1740,8 +1740,8 @@ public sealed class TuiApplication : IDisposable
             (long)Math.Ceiling(
                 minutes
                 * 60d
-                * CompatibilityProfile.SampleRate
-                / CompatibilityProfile.BlockSize));
+                * SimulationAudioProfile.SampleRate
+                / SimulationAudioProfile.BlockSize));
     }
 
     private static string RunModeName(RunModeId runMode) =>

@@ -25,9 +25,9 @@ public sealed class BufferedWavAudioSinkTests
                 writerStart.Task);
             await sink.InitializeAsync(
                 SessionId.New(),
-                AudioStreamFormat.Compatibility,
+                AudioStreamFormat.Default,
                 cancellationToken);
-            float[] samples = new float[CompatibilityProfile.BlockSize];
+            float[] samples = new float[SimulationAudioProfile.BlockSize];
 
             await sink.WriteAsync(samples, 0, cancellationToken);
             await sink.WriteAsync(samples, 1, cancellationToken);
@@ -59,10 +59,10 @@ public sealed class BufferedWavAudioSinkTests
             await using var sink = new BufferedWavAudioSink(path);
             await sink.InitializeAsync(
                 SessionId.New(),
-                AudioStreamFormat.Compatibility,
+                AudioStreamFormat.Default,
                 cancellationToken);
             float[] samples = Enumerable
-                .Range(0, CompatibilityProfile.BlockSize)
+                .Range(0, SimulationAudioProfile.BlockSize)
                 .Select(index => index % 2 == 0 ? 0.5F : -0.5F)
                 .ToArray();
 

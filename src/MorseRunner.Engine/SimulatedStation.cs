@@ -7,15 +7,15 @@ namespace MorseRunner.Engine;
 public sealed class SimulatedStation
 {
     private readonly MorseToneRenderer _renderer;
-    private readonly LegacyRandom _random;
+    private readonly DeterministicRandom _random;
     private readonly ContestId _contestId;
     private readonly SerialNumberRangeMode _serialNumberRange;
     private readonly int _customSerialNumberMinimum;
     private readonly int _customSerialNumberMinimumDigits;
     private readonly QsbProcessor? _qsb;
-    private readonly LegacyStationMixer _mixer;
+    private readonly StationMixer _mixer;
     private readonly float[] _scratch =
-        new float[CompatibilityProfile.BlockSize];
+        new float[SimulationAudioProfile.BlockSize];
     private int _timeoutBlocks = int.MaxValue;
     private bool _numberWithError;
     private bool _transmissionCompletedInRenderedBlock;
@@ -24,7 +24,7 @@ public sealed class SimulatedStation
         StationIdentity identity,
         int wordsPerMinute,
         int pitchOffsetHz,
-        LegacyRandom random,
+        DeterministicRandom random,
         OperatorRunMode runMode,
         bool lids = false,
         bool sweepstakes = false,
@@ -55,12 +55,12 @@ public sealed class SimulatedStation
         Amplitude = 36_000f;
         CharacterWordsPerMinute = wordsPerMinute;
         _renderer = new(
-            CompatibilityProfile.SampleRate,
-            CompatibilityProfile.BlockSize,
+            SimulationAudioProfile.SampleRate,
+            SimulationAudioProfile.BlockSize,
             wordsPerMinute,
             carrierFrequency: 600f,
             gain: 1f);
-        _mixer = new(CompatibilityProfile.SampleRate);
+        _mixer = new(SimulationAudioProfile.SampleRate);
     }
 
     public StationIdentity Identity { get; }
@@ -91,7 +91,7 @@ public sealed class SimulatedStation
         int wordsPerMinute,
         int characterWordsPerMinute,
         int pitchOffsetHz,
-        LegacyRandom random,
+        DeterministicRandom random,
         SimulatedOperator simulatedOperator,
         QsbProcessor qsb,
         float r1,
@@ -118,19 +118,19 @@ public sealed class SimulatedStation
         Amplitude = amplitude;
         _numberWithError = numberWithError;
         _renderer = new(
-            CompatibilityProfile.SampleRate,
-            CompatibilityProfile.BlockSize,
+            SimulationAudioProfile.SampleRate,
+            SimulationAudioProfile.BlockSize,
             wordsPerMinute,
             carrierFrequency: 600f,
             gain: 1f);
-        _mixer = new(CompatibilityProfile.SampleRate);
+        _mixer = new(SimulationAudioProfile.SampleRate);
     }
 
     internal static SimulatedStation CreateCandidate(
         Func<StationIdentity> identityFactory,
         Func<int> wordsPerMinuteFactory,
-        LegacyRandom random,
-        LegacyRandomEffects randomEffects,
+        DeterministicRandom random,
+        RandomEffects randomEffects,
         OperatorRunMode runMode,
         bool lids,
         bool sweepstakes,
@@ -200,7 +200,7 @@ public sealed class SimulatedStation
             customSerialNumberMinimumDigits);
     }
 
-    internal static SimulatedStation CreateScriptedForParity(
+    internal static SimulatedStation CreateScripted(
         StationIdentity identity,
         int wordsPerMinute,
         int pitchOffsetHz,
@@ -219,10 +219,10 @@ public sealed class SimulatedStation
             identity,
             wordsPerMinute,
             pitchOffsetHz,
-            new LegacyRandom(1),
+            new DeterministicRandom(1),
             runMode);
         station.Amplitude = amplitude;
-        station.StartScriptedTransmissionForParity(message);
+        station.StartScriptedTransmission(message);
         return station;
     }
 
@@ -230,7 +230,7 @@ public sealed class SimulatedStation
         StationIdentity identity,
         int wordsPerMinute,
         int pitchOffsetHz,
-        LegacyRandom random,
+        DeterministicRandom random,
         OperatorRunMode runMode,
         bool lids,
         bool sweepstakes,
@@ -355,7 +355,7 @@ public sealed class SimulatedStation
             {
                 throw new ArgumentException(
                     "The station envelope observation must match the "
-                    + "compatibility block size.",
+                    + "simulation block size.",
                     nameof(envelopeObservation));
             }
 
@@ -381,7 +381,7 @@ public sealed class SimulatedStation
             hadAudio && !_renderer.HasPendingAudio;
     }
 
-    internal void StartScriptedTransmissionForParity(string message)
+    internal void StartScriptedTransmission(string message)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(message);
         if (State == StationState.Sending || _renderer.HasPendingAudio)
@@ -764,7 +764,7 @@ public sealed class SimulatedStation
             .Replace("000", "TTT", StringComparison.Ordinal)
             .Replace("00", "TT", StringComparison.Ordinal);
 
-        // CE evaluates both random operands before the CQ-zone exclusions.
+        // Consume both random operands before applying CQ-zone exclusions.
         _ = _random.NextDouble();
         _ = _random.NextDouble();
 
@@ -789,7 +789,7 @@ public sealed class SimulatedStation
         return result.Replace("599", "5NN", StringComparison.Ordinal);
     }
 
-    internal string ObserveExchangeForParity()
+    internal string CreateExchangeText()
     {
         return FormatExchange();
     }

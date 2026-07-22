@@ -16,9 +16,9 @@ public sealed class SimulatedStationAudioTests
         SimulatedStation station = CreateStation(
             PitchOffsetHz,
             Amplitude);
-        var actualReal = new float[CompatibilityProfile.BlockSize];
-        var actualImaginary = new float[CompatibilityProfile.BlockSize];
-        var envelope = new float[CompatibilityProfile.BlockSize];
+        var actualReal = new float[SimulationAudioProfile.BlockSize];
+        var actualImaginary = new float[SimulationAudioProfile.BlockSize];
+        var envelope = new float[SimulationAudioProfile.BlockSize];
 
         station.RenderBlock(
             actualReal,
@@ -34,9 +34,9 @@ public sealed class SimulatedStationAudioTests
             expectedEnvelope[index] = envelope[index] * Amplitude;
         }
 
-        var expectedReal = new float[CompatibilityProfile.BlockSize];
-        var expectedImaginary = new float[CompatibilityProfile.BlockSize];
-        var mixer = new LegacyStationMixer(CompatibilityProfile.SampleRate);
+        var expectedReal = new float[SimulationAudioProfile.BlockSize];
+        var expectedImaginary = new float[SimulationAudioProfile.BlockSize];
+        var mixer = new StationMixer(SimulationAudioProfile.SampleRate);
         mixer.BeginTransmission(PitchOffsetHz);
         mixer.MixBlock(
             expectedEnvelope,
@@ -54,10 +54,10 @@ public sealed class SimulatedStationAudioTests
     {
         SimulatedStation fixedRit = CreateStation(360, 18_000f);
         SimulatedStation changedRit = CreateStation(360, 18_000f);
-        var fixedReal = new float[CompatibilityProfile.BlockSize];
-        var fixedImaginary = new float[CompatibilityProfile.BlockSize];
-        var changedReal = new float[CompatibilityProfile.BlockSize];
-        var changedImaginary = new float[CompatibilityProfile.BlockSize];
+        var fixedReal = new float[SimulationAudioProfile.BlockSize];
+        var fixedImaginary = new float[SimulationAudioProfile.BlockSize];
+        var changedReal = new float[SimulationAudioProfile.BlockSize];
+        var changedImaginary = new float[SimulationAudioProfile.BlockSize];
 
         fixedRit.RenderBlock(
             fixedReal,
@@ -98,7 +98,7 @@ public sealed class SimulatedStationAudioTests
     private static SimulatedStation CreateStation(
         int pitchOffsetHz,
         float amplitude) =>
-        SimulatedStation.CreateScriptedForParity(
+        SimulatedStation.CreateScripted(
             new("N0CALL", "599", 1, string.Empty, string.Empty),
             wordsPerMinute: 30,
             pitchOffsetHz,

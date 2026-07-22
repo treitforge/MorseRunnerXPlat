@@ -7,7 +7,7 @@ using MorseRunner.Dsp;
 
 namespace MorseRunner.Dsp.Tests;
 
-public sealed class LegacyDspVectorTests
+public sealed class DspVectorTests
 {
     private static readonly float[] ExpectedEnvelope =
     [
@@ -50,7 +50,7 @@ public sealed class LegacyDspVectorTests
     ];
 
     [Fact]
-    public void MorseEnvelopeMatchesLegacyVector()
+    public void MorseEnvelopeMatchesPinnedVector()
     {
         var keyer = new MorseKeyer(sampleRate: 11_025, blockSize: 512);
         keyer.SetWordsPerMinute(30);
@@ -71,7 +71,7 @@ public sealed class LegacyDspVectorTests
     }
 
     [Fact]
-    public void DownMixerMatchesLegacyVector()
+    public void DownMixerMatchesPinnedVector()
     {
         float[] input = [1f, 2f, 3f, 4f, 5f, 6f, 7f, 8f];
         var output = new ComplexSample[input.Length];
@@ -97,7 +97,7 @@ public sealed class LegacyDspVectorTests
     }
 
     [Fact]
-    public void QuickAverageMatchesLegacyVector()
+    public void QuickAverageMatchesPinnedVector()
     {
         var average = new QuickAverage
         {
@@ -140,7 +140,7 @@ public sealed class LegacyDspVectorTests
 
     [Fact]
     [Trait("Category", "Performance")]
-    public void ToneRendererMeetsTheCompatibilityBlockBudget()
+    public void ToneRendererMeetsTheRealtimeBlockBudget()
     {
         var renderer = new MorseToneRenderer(11_025, 512);
         renderer.LoadMessage(String.Concat(Enumerable.Repeat("CQ TEST ", 100)));
@@ -176,9 +176,9 @@ public sealed class LegacyDspVectorTests
     }
 
     [Fact]
-    public void ReceiverPipelineUsesLegacyCarrierQuantization()
+    public void ReceiverPipelineUsesPinnedCarrierQuantization()
     {
-        var receiver = new LegacyReceiverPipeline(
+        var receiver = new ReceiverPipeline(
             sampleRate: 11_025,
             blockSize: 512,
             bandwidthHz: 500,
@@ -265,9 +265,9 @@ public sealed class LegacyDspVectorTests
     public void ReceiverPipelineProductionStartupVectorIsDeterministic()
     {
         float[] first = RenderReceiverVector(
-            CompatibilityProfile.AudioStartupRequestCount);
+            SimulationAudioProfile.AudioStartupRequestCount);
         float[] second = RenderReceiverVector(
-            CompatibilityProfile.AudioStartupRequestCount);
+            SimulationAudioProfile.AudioStartupRequestCount);
 
         Assert.Equal(first, second);
         string actualHash = Convert.ToHexString(
@@ -279,9 +279,9 @@ public sealed class LegacyDspVectorTests
 
     [Fact]
     [Trait("Category", "Performance")]
-    public void ReceiverPipelineMeetsTheCompatibilityBlockBudget()
+    public void ReceiverPipelineMeetsTheRealtimeBlockBudget()
     {
-        var receiver = new LegacyReceiverPipeline(
+        var receiver = new ReceiverPipeline(
             sampleRate: 11_025,
             blockSize: 512,
             bandwidthHz: 500,
@@ -326,22 +326,22 @@ public sealed class LegacyDspVectorTests
             $"p95 receiver duration was {p95Milliseconds:F3} ms.");
     }
 
-    private static LegacyReceiverPipeline CreateReceiver(
+    private static ReceiverPipeline CreateReceiver(
         int initialAbsoluteRequestCount)
     {
         return new(
-            sampleRate: CompatibilityProfile.SampleRate,
-            blockSize: CompatibilityProfile.BlockSize,
+            sampleRate: SimulationAudioProfile.SampleRate,
+            blockSize: SimulationAudioProfile.BlockSize,
             bandwidthHz: 500,
             requestedCarrierHz: 600,
             initialAbsoluteRequestCount);
     }
 
     private static object GetFilter(
-        LegacyReceiverPipeline receiver,
+        ReceiverPipeline receiver,
         string fieldName)
     {
-        FieldInfo? field = typeof(LegacyReceiverPipeline).GetField(
+        FieldInfo? field = typeof(ReceiverPipeline).GetField(
             fieldName,
             BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(field);
@@ -351,12 +351,12 @@ public sealed class LegacyDspVectorTests
     }
 
     private static void ProcessBlocks(
-        LegacyReceiverPipeline receiver,
+        ReceiverPipeline receiver,
         int count)
     {
-        var real = new float[CompatibilityProfile.BlockSize];
-        var imaginary = new float[CompatibilityProfile.BlockSize];
-        var output = new float[CompatibilityProfile.BlockSize];
+        var real = new float[SimulationAudioProfile.BlockSize];
+        var imaginary = new float[SimulationAudioProfile.BlockSize];
+        var output = new float[SimulationAudioProfile.BlockSize];
         for (int index = 0; index < count; index++)
         {
             receiver.Process(real, imaginary, output);
@@ -368,16 +368,16 @@ public sealed class LegacyDspVectorTests
     {
         const int BlockCount = 20;
         var receiver = CreateReceiver(initialAbsoluteRequestCount);
-        var random = new LegacyRandom(seed: 12_345);
-        var real = new float[CompatibilityProfile.BlockSize];
-        var imaginary = new float[CompatibilityProfile.BlockSize];
+        var random = new DeterministicRandom(seed: 12_345);
+        var real = new float[SimulationAudioProfile.BlockSize];
+        var imaginary = new float[SimulationAudioProfile.BlockSize];
         var output = new float[
-            BlockCount * CompatibilityProfile.BlockSize];
+            BlockCount * SimulationAudioProfile.BlockSize];
 
         for (int block = 0; block < BlockCount; block++)
         {
             for (int index = 0;
-                 index < CompatibilityProfile.BlockSize;
+                 index < SimulationAudioProfile.BlockSize;
                  index++)
             {
                 real[index] = (float)(
@@ -390,8 +390,8 @@ public sealed class LegacyDspVectorTests
                 real,
                 imaginary,
                 output.AsSpan(
-                    block * CompatibilityProfile.BlockSize,
-                    CompatibilityProfile.BlockSize));
+                    block * SimulationAudioProfile.BlockSize,
+                    SimulationAudioProfile.BlockSize));
         }
 
         return output;

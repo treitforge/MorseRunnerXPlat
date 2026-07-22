@@ -3,7 +3,7 @@ using System.Text;
 
 namespace MorseRunner.Infrastructure;
 
-public sealed class LegacyIniDocument
+public sealed class IniDocument
 {
     private readonly Dictionary<string, Dictionary<string, string>> _sections =
         new(StringComparer.OrdinalIgnoreCase);
@@ -16,10 +16,10 @@ public sealed class LegacyIniDocument
                     new ReadOnlyDictionary<string, string>(pair.Value),
                 StringComparer.OrdinalIgnoreCase));
 
-    public static LegacyIniDocument Parse(string text)
+    public static IniDocument Parse(string text)
     {
         ArgumentNullException.ThrowIfNull(text);
-        var document = new LegacyIniDocument();
+        var document = new IniDocument();
         string? section = null;
         using var reader = new StringReader(text);
         while (reader.ReadLine() is { } line)
@@ -43,7 +43,7 @@ public sealed class LegacyIniDocument
             if (section is null || separator < 1)
             {
                 throw new FormatException(
-                    $"Invalid legacy INI line: '{line}'.");
+                    $"Invalid INI line: '{line}'.");
             }
 
             document.GetOrCreateSection(section)[trimmed[..separator].Trim()] =
