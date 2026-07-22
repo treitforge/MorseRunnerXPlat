@@ -1437,6 +1437,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         }
 
         ClearEntryFields();
+        EntryFocusRequested?.Invoke(
+            this,
+            new(EntryFocusTarget.Call, selectQuestionMark: false));
         Status = "Entry fields cleared.";
     }
 

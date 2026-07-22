@@ -45,6 +45,8 @@ public sealed class MainWindowViewModelTests
         viewModel.RstEntry = "579";
         viewModel.Exchange1Entry = "123";
         viewModel.Exchange2Entry = "OR";
+        EntryFocusRequestedEventArgs? focus = null;
+        viewModel.EntryFocusRequested += (_, args) => focus = args;
 
         await viewModel.WipeCommand.ExecuteAsync(null);
 
@@ -52,6 +54,8 @@ public sealed class MainWindowViewModelTests
         Assert.Empty(viewModel.RstEntry);
         Assert.Empty(viewModel.Exchange1Entry);
         Assert.Empty(viewModel.Exchange2Entry);
+        Assert.Equal(EntryFocusTarget.Call, focus?.Target);
+        Assert.False(focus?.SelectQuestionMark);
     }
 
     [Fact]
