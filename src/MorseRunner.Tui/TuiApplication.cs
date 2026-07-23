@@ -177,6 +177,7 @@ public sealed class TuiApplication : IDisposable
             try
             {
                 await CloseSessionAsync(CancellationToken.None);
+                await SavePreferencesAsync(CancellationToken.None);
             }
             finally
             {

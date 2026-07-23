@@ -46,6 +46,7 @@ The Domain, DSP, and Engine projects must not reference Avalonia, gRPC, generate
 - Once station confirmation provides truth data, a QSO preserves every callsign and exchange-field mismatch. The QSO log displays the CE-style ordered correction values, including every incorrect received field, rather than a single summary error category. Normal desktop status does not automatically select or identify an active caller as operator-entered station information.
 - Desktop and terminal QSO logs use contest-specific headings and a dedicated Corrections column. In particular, Field Day presents Class, Sect, and Corrections, without an empty RST column.
 - Each normal interactive desktop or terminal session receives a fresh random seed, matching CE's varied normal runs. The selected seed remains in the session snapshot, results, and available diagnostics so a scenario can be replayed with an explicit seed through automated clients.
+- Desktop and terminal clients persist changed operator and contest preferences before a normal application shutdown completes. The main desktop window defers closing until that write finishes.
 - A successfully started session clears the prior QSO entry and focuses the callsign field.
 - Debug desktop builds provide a keyboard-only session trace. It reports caller and reply events, exact operator messages, pending QSO confirmation, and final QSO truth-data comparisons without changing release behavior. The trace is copied as JSON on demand and persisted atomically under the results directory while the Debug session runs.
 
