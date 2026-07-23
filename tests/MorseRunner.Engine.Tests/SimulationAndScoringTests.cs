@@ -59,6 +59,31 @@ public sealed class SimulationAndScoringTests
     }
 
     [Fact]
+    public void OperatorTreatsLowercaseCallsignAsAnExactMatch()
+    {
+        var station = new SimulatedOperator(
+            "KB0RIF",
+            OperatorState.NeedQso,
+            new DeterministicRandom(24_680),
+            OperatorRunMode.Pileup);
+
+        station.Receive(
+            StationMessage.HisCall | StationMessage.Number,
+            "kb0rif");
+
+        Assert.Equal(100, station.CallConfidence);
+        Assert.Equal(OperatorState.NeedEnd, station.State);
+        Assert.Contains(
+            station.GetReply(),
+            new[]
+            {
+                StationReply.Number,
+                StationReply.RogerNumber,
+                StationReply.RogerNumberTwice,
+            });
+    }
+
+    [Fact]
     public void CwtRemoteExchangeIncludesNameAndMemberNumber()
     {
         var station = new SimulatedStation(

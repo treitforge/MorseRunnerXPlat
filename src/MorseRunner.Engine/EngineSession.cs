@@ -126,6 +126,8 @@ internal sealed class EngineSession : IAsyncDisposable
     private long _eventSequence;
     private string? _lastCaller;
     private string? _lastOperatorMessage;
+    private PendingOperatorReception? _pendingOperatorReception;
+    private PendingQsoConfirmation? _pendingQsoConfirmation;
     private string? _esmSentCall;
     private bool _esmExchangeSent;
     private bool _operatorMessageHasCq;
@@ -1011,6 +1013,7 @@ internal sealed class EngineSession : IAsyncDisposable
             return InvalidState("send an operator message");
         }
 
+        string normalizedCall = NormalizeOperatorCall(command.Call);
         string message = command.Intent switch
         {
             OperatorIntent.Cq => ComposeCqMessage(),
@@ -1021,7 +1024,7 @@ internal sealed class EngineSession : IAsyncDisposable
                 _settings.OperatorExchange),
             OperatorIntent.ThankYou => ComposeThankYouMessage(),
             OperatorIntent.MyCall => _settings.StationCall,
-            OperatorIntent.HisCall => command.Call,
+            OperatorIntent.HisCall => normalizedCall,
             OperatorIntent.Before => "QSO B4",
             OperatorIntent.Question => "?",
             OperatorIntent.Nil => "NIL",
@@ -1031,10 +1034,10 @@ internal sealed class EngineSession : IAsyncDisposable
                 $"Unknown operator intent '{command.Intent}'."),
         };
         LoadOperatorMessage(message, [command.Intent]);
-        ApplyIntentToStations(command);
+        BeginOperatorTransmission(command.Intent, normalizedCall);
         if (command.Intent == OperatorIntent.HisCall)
         {
-            _esmSentCall = command.Call;
+            _esmSentCall = normalizedCall;
         }
         else if (command.Intent == OperatorIntent.Exchange)
         {
@@ -1071,14 +1074,21 @@ internal sealed class EngineSession : IAsyncDisposable
             return InvalidState("trigger Enter Sends Message");
         }
 
-        QsoEntrySnapshot entry = command.Entry;
+        QsoEntrySnapshot entry = command.Entry with
+        {
+            Call = NormalizeOperatorCall(command.Entry.Call),
+        };
+        TriggerEnterSendMessageCommand normalizedCommand = command with
+        {
+            Entry = entry,
+        };
         if (entry.Call.Length == 0)
         {
             string cqMessage = ComposeCqMessage();
             _esmSentCall = null;
             _esmExchangeSent = false;
             SendEsmMessages(
-                command,
+                normalizedCommand,
                 [(OperatorIntent.Cq, cqMessage)]);
             _revision++;
             return AcceptedResult(
@@ -1157,7 +1167,7 @@ internal sealed class EngineSession : IAsyncDisposable
 
             messages.Add(
                 (OperatorIntent.ThankYou, ComposeThankYouMessage()));
-            SendEsmMessages(command, messages);
+            SendEsmMessages(normalizedCommand, messages);
             CommandResult logged = ApplyLogQsoCore(logCommand, evaluation);
             return logged with
             {
@@ -1169,7 +1179,7 @@ internal sealed class EngineSession : IAsyncDisposable
             };
         }
 
-        SendEsmMessages(command, messages);
+        SendEsmMessages(normalizedCommand, messages);
         _revision++;
         EnterSendMessageOutcome outcome = messages.Any(
             item => item.Intent == OperatorIntent.Question)
@@ -1209,19 +1219,13 @@ internal sealed class EngineSession : IAsyncDisposable
         LoadOperatorMessage(
             combined,
             messages.Select(item => item.Intent));
+        BeginOperatorTransmission(
+            messages.Aggregate(
+                StationMessage.None,
+                static (current, message) => current | ToStationMessage(message.Intent)),
+            command.Entry.Call);
         foreach ((OperatorIntent intent, _) in messages)
         {
-            var intentCommand = new SendOperatorIntentCommand(
-                command.RequestId,
-                command.SessionId,
-                command.ClientId,
-                intent,
-                command.Entry.Call,
-                command.Entry.Rst,
-                command.Entry.Exchange1,
-                command.Entry.Exchange2,
-                command.ExpectedRevision);
-            ApplyIntentToStations(intentCommand);
             if (intent == OperatorIntent.HisCall)
             {
                 _esmSentCall = command.Entry.Call;
@@ -1263,14 +1267,65 @@ internal sealed class EngineSession : IAsyncDisposable
             selectQuestionMark,
             clearEntry);
 
-    private void ApplyIntentToStations(SendOperatorIntentCommand command)
+    private void BeginOperatorTransmission(
+        OperatorIntent intent,
+        string copiedCall)
     {
-        if (_stations.Count == 0)
+        BeginOperatorTransmission(ToStationMessage(intent), copiedCall);
+    }
+
+    private void BeginOperatorTransmission(
+        StationMessage message,
+        string copiedCall)
+    {
+        if (message == StationMessage.None)
+        {
+            _pendingOperatorReception = null;
+            return;
+        }
+
+        _pendingOperatorReception = new(message, copiedCall);
+        foreach (SimulatedStation station in _stations)
+        {
+            station.ReceiveOperatorStarted();
+        }
+    }
+
+    private void CompleteStationReception()
+    {
+        PendingOperatorReception? reception = _pendingOperatorReception;
+        _pendingOperatorReception = null;
+        if (reception is null)
         {
             return;
         }
 
-        StationMessage stationMessage = command.Intent switch
+        int bestConfidence = 1;
+        if ((reception.Message & StationMessage.HisCall) != 0)
+        {
+            foreach (SimulatedStation station in _stations)
+            {
+                station.Operator.MatchCall(reception.CopiedCall);
+                bestConfidence = Math.Max(
+                    bestConfidence,
+                    station.Operator.CallConfidence);
+            }
+        }
+
+        foreach (SimulatedStation station in _stations.ToArray())
+        {
+            station.ReceiveOperatorFinished(
+                reception.Message,
+                reception.CopiedCall,
+                bestConfidence,
+                allowLidErrors: true);
+        }
+
+        ConfirmPendingQso();
+    }
+
+    private static StationMessage ToStationMessage(OperatorIntent intent) =>
+        intent switch
         {
             OperatorIntent.Cq => StationMessage.Cq,
             OperatorIntent.Exchange => StationMessage.Number,
@@ -1283,33 +1338,11 @@ internal sealed class EngineSession : IAsyncDisposable
             OperatorIntent.NumberQuestion => StationMessage.Question,
             OperatorIntent.Abort => StationMessage.None,
             _ => throw new InvalidOperationException(
-                $"Unknown operator intent '{command.Intent}'."),
+                $"Unknown operator intent '{intent}'."),
         };
-        if (stationMessage != StationMessage.None)
-        {
-            int bestConfidence = 1;
-            if (stationMessage == StationMessage.HisCall)
-            {
-                foreach (SimulatedStation station in _stations)
-                {
-                    station.Operator.MatchCall(command.Call);
-                    bestConfidence = Math.Max(
-                        bestConfidence,
-                        station.Operator.CallConfidence);
-                }
-            }
 
-            foreach (SimulatedStation station in _stations.ToArray())
-            {
-                station.ReceiveOperatorStarted();
-                station.ReceiveOperatorFinished(
-                    stationMessage,
-                    command.Call,
-                    bestConfidence,
-                    allowLidErrors: true);
-            }
-        }
-    }
+    private static string NormalizeOperatorCall(string call) =>
+        call.ToUpperInvariant();
 
     private string ComposeCqMessage()
     {
@@ -1358,6 +1391,8 @@ internal sealed class EngineSession : IAsyncDisposable
 
     private void CompleteOperatorTransmission()
     {
+        CompleteStationReception();
+
         if (_operatorMessageHasCq
             || (_operatorMessageHasThankYou
                 && _qsoCountSinceStationId
@@ -1698,44 +1733,20 @@ internal sealed class EngineSession : IAsyncDisposable
         LogQsoCommand command,
         ContestQsoEvaluation evaluation)
     {
-        SimulatedStation? completedStation = _stations
-            .Where(
-                station => station.Operator.State == OperatorState.Done)
-            .OrderByDescending(
-                station =>
-                {
-                    station.Operator.MatchCall(evaluation.Call);
-                    return station.Operator.CallConfidence;
-                })
-            .FirstOrDefault();
-        LogError exchangeError = DetermineLogError(
+        _pendingQsoConfirmation = null;
+        SimulatedStation? completedStation = FindCompletedStation(
+            evaluation.Call);
+        bool duplicate = _workedCalls.Contains(evaluation.Call);
+        QsoErrorEvaluation errors = DetermineLogErrors(
             evaluation,
             command,
-            completedStation);
-        bool duplicate = _workedCalls.Contains(evaluation.Call);
-        if (duplicate && exchangeError == LogError.None)
-        {
-            exchangeError = LogError.Duplicate;
-        }
+            completedStation,
+            duplicate);
+        LogError exchangeError = errors.Overall;
 
         if (!duplicate && exchangeError == LogError.None)
         {
-            _workedCalls.Add(evaluation.Call);
-            _verifiedPoints += evaluation.Points;
-            if (evaluation.UsesAdditiveScore)
-            {
-                _score = _verifiedPoints;
-            }
-            else
-            {
-                foreach (string multiplier in
-                         evaluation.Multiplier.Split(';'))
-                {
-                    _verifiedMultipliers.Add(multiplier);
-                }
-
-                _score = _verifiedPoints * _verifiedMultipliers.Count;
-            }
+            RegisterVerifiedQso(evaluation);
         }
 
         _qsoCount++;
@@ -1771,14 +1782,34 @@ internal sealed class EngineSession : IAsyncDisposable
                 ? evaluation.Points
                 : 0,
             IsDuplicate = duplicate,
+            AwaitingStationConfirmation = false,
             ExchangeError = exchangeError,
-            ErrorText = ErrorText(exchangeError),
+            Exchange1Error = errors.Exchange1,
+            Exchange1SecondaryError = errors.Exchange1Secondary,
+            Exchange2Error = errors.Exchange2,
+            Exchange2SecondaryError = errors.Exchange2Secondary,
+            ErrorText = errors.ErrorText,
         };
+        bool awaitingStationConfirmation = completedStation is null
+            && HasEligibleLiveStation(evaluation.Call);
+        if (awaitingStationConfirmation)
+        {
+            qso = qso with { AwaitingStationConfirmation = true };
+        }
+
         Qso[] current = _completedQsos;
         Qso[] next = new Qso[current.Length + 1];
         Array.Copy(current, next, current.Length);
         next[^1] = qso;
         Volatile.Write(ref _completedQsos, next);
+        if (awaitingStationConfirmation)
+        {
+            _pendingQsoConfirmation = new(
+                next.Length - 1,
+                command,
+                evaluation);
+        }
+
         if (completedStation is not null)
         {
             RemoveReceiverSource(completedStation);
@@ -1789,66 +1820,300 @@ internal sealed class EngineSession : IAsyncDisposable
         _revision++;
         PublishEvent(
             SessionEventKind.QsoLogged,
-            qso.Call + "|" + qso.ErrorText.Trim());
+            qso.Call + "|" + (
+                awaitingStationConfirmation
+                    ? "PENDING"
+                    : qso.ErrorText.Trim()));
         return AcceptedResult();
     }
 
-    private LogError DetermineLogError(
+    private SimulatedStation? FindCompletedStation(string call)
+    {
+        CompletedStationMatch[] stationMatches = _stations
+            .Select(
+                (station, index) =>
+                {
+                    CallMatch match = station.Operator.MatchCall(call);
+                    return new CompletedStationMatch(
+                        station,
+                        index,
+                        match,
+                        station.Operator.CallConfidence);
+                })
+            .ToArray();
+        int bestCallConfidence = stationMatches.Length == 0
+            ? 1
+            : Math.Max(
+                1,
+                stationMatches.Max(candidate => candidate.CallConfidence));
+        return stationMatches
+            .Where(
+                candidate => candidate.Station.Operator.State == OperatorState.Done
+                    && (candidate.Match == CallMatch.Yes
+                        || (candidate.Match == CallMatch.Almost
+                            && candidate.CallConfidence >= bestCallConfidence)))
+            .OrderByDescending(candidate => candidate.CallConfidence)
+            .ThenByDescending(candidate => candidate.Index)
+            .Select(candidate => candidate.Station)
+            .FirstOrDefault();
+    }
+
+    private bool HasEligibleLiveStation(string call) =>
+        _stations.Any(
+            station => station.Operator.MatchCall(call)
+                is CallMatch.Yes or CallMatch.Almost);
+
+    private void ConfirmPendingQso()
+    {
+        PendingQsoConfirmation? pending = _pendingQsoConfirmation;
+        if (pending is null)
+        {
+            return;
+        }
+
+        SimulatedStation? completedStation = FindCompletedStation(
+            pending.Evaluation.Call);
+        if (completedStation is null)
+        {
+            return;
+        }
+
+        Qso[] current = _completedQsos;
+        if (pending.QsoIndex >= current.Length)
+        {
+            _pendingQsoConfirmation = null;
+            return;
+        }
+
+        Qso provisional = current[pending.QsoIndex];
+        bool duplicate = provisional.IsDuplicate;
+        QsoErrorEvaluation errors = DetermineLogErrors(
+            pending.Evaluation,
+            pending.Command,
+            completedStation,
+            duplicate);
+        LogError exchangeError = errors.Overall;
+
+        StationIdentity truth = completedStation.Identity;
+        Qso confirmed = provisional with
+        {
+            TrueCall = truth.Callsign,
+            TrueRst = ParseRst(truth.Rst),
+            TrueNumber = truth.Number,
+            TruePrecedence = truth.Precedence,
+            TrueCheck = truth.Check,
+            TrueSection = truth.Section,
+            TrueExchange1 = truth.Exchange1,
+            TrueExchange2 = truth.Exchange2,
+            Points = exchangeError is LogError.None or LogError.Duplicate
+                ? pending.Evaluation.Points
+                : 0,
+            AwaitingStationConfirmation = false,
+            ExchangeError = exchangeError,
+            Exchange1Error = errors.Exchange1,
+            Exchange1SecondaryError = errors.Exchange1Secondary,
+            Exchange2Error = errors.Exchange2,
+            Exchange2SecondaryError = errors.Exchange2Secondary,
+            ErrorText = errors.ErrorText,
+        };
+        Qso[] next = (Qso[])current.Clone();
+        next[pending.QsoIndex] = confirmed;
+        Volatile.Write(ref _completedQsos, next);
+        if (!duplicate && exchangeError == LogError.None)
+        {
+            RegisterVerifiedQso(pending.Evaluation);
+        }
+
+        RemoveReceiverSource(completedStation);
+        _stations.Remove(completedStation);
+        _pendingQsoConfirmation = null;
+        _revision++;
+        PublishEvent(
+            SessionEventKind.QsoLogged,
+            confirmed.Call + "|CONFIRMED|" + confirmed.ErrorText.Trim());
+    }
+
+    private void RegisterVerifiedQso(ContestQsoEvaluation evaluation)
+    {
+        _workedCalls.Add(evaluation.Call);
+        _verifiedPoints += evaluation.Points;
+        if (evaluation.UsesAdditiveScore)
+        {
+            _score = _verifiedPoints;
+            return;
+        }
+
+        foreach (string multiplier in evaluation.Multiplier.Split(';'))
+        {
+            _verifiedMultipliers.Add(multiplier);
+        }
+
+        _score = _verifiedPoints * _verifiedMultipliers.Count;
+    }
+
+    private QsoErrorEvaluation DetermineLogErrors(
         ContestQsoEvaluation evaluation,
         LogQsoCommand command,
-        SimulatedStation? station)
+        SimulatedStation? station,
+        bool duplicate)
     {
         if (station is null)
         {
-            return LogError.Nil;
+            return new(LogError.Nil, LogError.None, LogError.None, LogError.None,
+                LogError.None, "NIL");
         }
 
         StationIdentity truth = station.Identity;
-        if (!evaluation.Call.Equals(
-                truth.Callsign,
-                StringComparison.Ordinal))
+        var corrections = new List<string>();
+        if (duplicate)
         {
-            return LogError.Call;
+            corrections.Add("DUP");
         }
 
-        if (evaluation.Rst != ParseRst(truth.Rst))
+        bool callMismatch = !evaluation.Call.Equals(
+            truth.Callsign,
+            StringComparison.Ordinal);
+        if (callMismatch)
         {
-            return LogError.Rst;
+            corrections.Add(truth.Callsign);
         }
 
-        return _settings.ContestId.Value switch
+        LogError exchange1 = LogError.None;
+        LogError exchange1Secondary = LogError.None;
+        LogError exchange2 = LogError.None;
+        LogError exchange2Secondary = LogError.None;
+        bool usesRst = ContestRulesCatalog.Get(_settings.ContestId)
+            .BaselineReceivedExchangeTypes.First == ExchangeType1.Rst;
+        if (usesRst && evaluation.Rst != ParseRst(truth.Rst))
         {
-            "scWpx" or "scHst"
-                when evaluation.Number != truth.Number => LogError.Number,
-            "scCwt" or "scSst"
-                when !Equivalent(command.Exchange1, truth.Exchange1) =>
-                    LogError.Name,
-            "scCwt" or "scSst"
-                when !Equivalent(command.Exchange2, truth.Exchange2) =>
-                    LogError.Number,
-            "scFieldDay"
-                when !Equivalent(command.Exchange1, truth.Exchange1) =>
-                    LogError.Class,
-            "scFieldDay" or "scArrlSS"
-                when !Equivalent(command.Exchange2, truth.Exchange2) =>
-                    LogError.Section,
-            "scCQWW"
-                when !Equivalent(command.Exchange2, truth.Exchange2) =>
-                    LogError.Zone,
-            "scArrlDx"
-                when !Equivalent(command.Exchange2, truth.Exchange2) =>
-                    LogError.Power,
-            "scNaQp"
-                when !Equivalent(command.Exchange1, truth.Exchange1) =>
-                    LogError.Name,
-            "scNaQp"
-                when !Equivalent(command.Exchange2, truth.Exchange2) =>
-                    LogError.State,
-            "scAllJa" or "scAcag" or "scIaruHf"
-                when !Equivalent(command.Exchange2, truth.Exchange2) =>
-                    LogError.Error,
-            _ => LogError.None,
-        };
+            exchange1 = LogError.Rst;
+            corrections.Add(truth.Rst);
+        }
+
+        switch (_settings.ContestId.Value)
+        {
+            case "scWpx" or "scHst":
+                if (evaluation.Number != truth.Number)
+                {
+                    exchange2 = LogError.Number;
+                    corrections.Add(truth.Number.ToString(CultureInfo.InvariantCulture));
+                }
+
+                break;
+            case "scCwt" or "scSst":
+                if (!Equivalent(command.Exchange1, truth.Exchange1))
+                {
+                    exchange1 = LogError.Name;
+                    corrections.Add(truth.Exchange1);
+                }
+
+                if (!Equivalent(command.Exchange2, truth.Exchange2))
+                {
+                    exchange2 = LogError.Number;
+                    corrections.Add(truth.Exchange2);
+                }
+
+                break;
+            case "scFieldDay":
+                if (!Equivalent(command.Exchange1, truth.Exchange1))
+                {
+                    exchange1 = LogError.Class;
+                    corrections.Add(truth.Exchange1);
+                }
+
+                if (!Equivalent(command.Exchange2, truth.Exchange2))
+                {
+                    exchange2 = LogError.Section;
+                    corrections.Add(truth.Exchange2);
+                }
+
+                break;
+            case "scCQWW":
+                if (!Equivalent(command.Exchange2, truth.Exchange2))
+                {
+                    exchange2 = LogError.Zone;
+                    corrections.Add(truth.Exchange2);
+                }
+
+                break;
+            case "scArrlDx":
+                if (!Equivalent(command.Exchange2, truth.Exchange2))
+                {
+                    exchange2 = LogError.Power;
+                    corrections.Add(truth.Exchange2);
+                }
+
+                break;
+            case "scNaQp":
+                if (!Equivalent(command.Exchange1, truth.Exchange1))
+                {
+                    exchange1 = LogError.Name;
+                    corrections.Add(truth.Exchange1);
+                }
+
+                if (!Equivalent(command.Exchange2, truth.Exchange2))
+                {
+                    exchange2 = LogError.State;
+                    corrections.Add(truth.Exchange2);
+                }
+
+                break;
+            case "scAllJa" or "scAcag" or "scIaruHf":
+                if (!Equivalent(command.Exchange2, truth.Exchange2))
+                {
+                    exchange2 = LogError.Error;
+                    corrections.Add(truth.Exchange2);
+                }
+
+                break;
+            case "scArrlSS":
+                if (evaluation.Number != truth.Number)
+                {
+                    exchange1 = LogError.Number;
+                    corrections.Add(truth.Number.ToString(CultureInfo.InvariantCulture));
+                }
+
+                if (!Equivalent(evaluation.Precedence, truth.Precedence))
+                {
+                    exchange1Secondary = LogError.Precedence;
+                    corrections.Add(truth.Precedence);
+                }
+
+                if (evaluation.Check != truth.Check)
+                {
+                    exchange2 = LogError.Check;
+                    corrections.Add(truth.Check.ToString("D2", CultureInfo.InvariantCulture));
+                }
+
+                if (!Equivalent(evaluation.Section, truth.Section))
+                {
+                    exchange2Secondary = LogError.Section;
+                    corrections.Add(truth.Section);
+                }
+
+                break;
+        }
+
+        LogError overall = callMismatch
+            ? LogError.Call
+            : exchange1 != LogError.None
+                ? exchange1
+                : exchange1Secondary != LogError.None
+                    ? exchange1Secondary
+                    : exchange2 != LogError.None
+                        ? exchange2
+                        : exchange2Secondary != LogError.None
+                            ? exchange2Secondary
+                            : duplicate
+                                ? LogError.Duplicate
+                                : LogError.None;
+        return new(
+            overall,
+            exchange1,
+            exchange1Secondary,
+            exchange2,
+            exchange2Secondary,
+            corrections.Count == 0 ? "   " : string.Join(' ', corrections));
     }
 
     private static bool Equivalent(string left, string right)
@@ -1878,24 +2143,6 @@ internal sealed class EngineSession : IAsyncDisposable
         string normalized = NormalizeExchange(value ?? string.Empty);
         return int.TryParse(normalized, out int rst) ? rst : 0;
     }
-
-    private static string ErrorText(LogError error) =>
-        error switch
-        {
-            LogError.None => "   ",
-            LogError.Nil => "NIL",
-            LogError.Duplicate => "DUP",
-            LogError.Call => "CALL",
-            LogError.Rst => "RST",
-            LogError.Number => "NR",
-            LogError.Name => "NAME",
-            LogError.Class => "CLASS",
-            LogError.Section => "SECT",
-            LogError.Zone => "ZONE",
-            LogError.State => "STATE",
-            LogError.Power => "PWR",
-            _ => "ERROR",
-        };
 
     private CommandResult ApplyControlExpired(
         ExpireControlLeaseCommand command)
@@ -2155,6 +2402,29 @@ internal sealed class EngineSession : IAsyncDisposable
 
     private sealed record CloseWorkItem(
         TaskCompletionSource<bool> Completion) : WorkItem;
+
+    private sealed record PendingOperatorReception(
+        StationMessage Message,
+        string CopiedCall);
+
+    private sealed record QsoErrorEvaluation(
+        LogError Overall,
+        LogError Exchange1,
+        LogError Exchange1Secondary,
+        LogError Exchange2,
+        LogError Exchange2Secondary,
+        string ErrorText);
+
+    private sealed record PendingQsoConfirmation(
+        int QsoIndex,
+        LogQsoCommand Command,
+        ContestQsoEvaluation Evaluation);
+
+    private sealed record CompletedStationMatch(
+        SimulatedStation Station,
+        int Index,
+        CallMatch Match,
+        int CallConfidence);
 
     private sealed record RequestRecord(
         SessionCommand Command,

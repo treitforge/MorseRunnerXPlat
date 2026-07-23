@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MorseRunner.Domain\MorseRunner.Domain.csproj" />
+    <ProjectReference Include="..\..\src\MorseRunner.Dsp\MorseRunner.Dsp.csproj" />
+    <ProjectReference Include="..\..\src\MorseRunner.Engine\MorseRunner.Engine.csproj" />
+  </ItemGroup>
+</Project>

@@ -694,6 +694,7 @@ public static class TransportMapper
             Points = value.Points,
             Multiplier = value.Multiplier,
             IsDuplicate = value.IsDuplicate,
+            AwaitingStationConfirmation = value.AwaitingStationConfirmation,
             ErrorText = value.ErrorText,
             Number = value.Number,
             Prefix = value.Prefix,
@@ -746,6 +747,7 @@ public static class TransportMapper
             Points = value.Points,
             Multiplier = value.Multiplier,
             IsDuplicate = value.IsDuplicate,
+            AwaitingStationConfirmation = value.AwaitingStationConfirmation,
             ExchangeError = ToDomain(value.ExchangeError),
             Exchange1Error = ToDomain(value.Exchange1Error),
             Exchange1SecondaryError =

@@ -535,6 +535,7 @@ message QsoMessage {
   QsoLogErrorMessage exchange_2_error = 28;
   QsoLogErrorMessage exchange_2_secondary_error = 29;
   uint32 column_error_flags = 30;
+  bool awaiting_station_confirmation = 31;
 }
 
 message ListCompletedQsosResponse {

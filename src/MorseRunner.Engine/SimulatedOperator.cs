@@ -275,17 +275,18 @@ public sealed class SimulatedOperator
     public CallMatch MatchCall(string pattern)
     {
         ArgumentNullException.ThrowIfNull(pattern);
-        if (pattern == _lastCheckedCall)
+        string normalizedPattern = pattern.ToUpperInvariant();
+        if (normalizedPattern == _lastCheckedCall)
         {
             return _lastCallMatch;
         }
 
-        _lastCheckedCall = pattern;
-        if (pattern.Contains('?'))
+        _lastCheckedCall = normalizedPattern;
+        if (normalizedPattern.Contains('?'))
         {
-            string regexPattern = pattern.EndsWith('?')
-                ? pattern.Replace("?", ".", StringComparison.Ordinal) + "*"
-                : pattern.Replace("?", ".", StringComparison.Ordinal);
+            string regexPattern = normalizedPattern.EndsWith('?')
+                ? normalizedPattern.Replace("?", ".", StringComparison.Ordinal) + "*"
+                : normalizedPattern.Replace("?", ".", StringComparison.Ordinal);
             bool matches = System.Text.RegularExpressions.Regex.IsMatch(
                 Callsign,
                 regexPattern,
@@ -296,22 +297,22 @@ public sealed class SimulatedOperator
             }
 
             int penalty = Callsign.Length
-                - pattern.Replace("?", string.Empty, StringComparison.Ordinal).Length;
+                - normalizedPattern.Replace("?", string.Empty, StringComparison.Ordinal).Length;
             int confidence = 100 * (Callsign.Length - penalty) / Callsign.Length;
             return SetMatch(CallMatch.Almost, confidence == 0 ? 10 : confidence);
         }
 
-        int penaltyValue = EditDistance(pattern, Callsign);
+        int penaltyValue = EditDistance(normalizedPattern, Callsign);
         CallMatch result = penaltyValue == 0
             ? CallMatch.Yes
             : penaltyValue <= (Callsign.Length - 1) / 2
                 ? CallMatch.Almost
                 : CallMatch.No;
         if (result == CallMatch.No
-            && Callsign.Contains(pattern, StringComparison.Ordinal))
+            && Callsign.Contains(normalizedPattern, StringComparison.Ordinal))
         {
             result = CallMatch.Almost;
-            penaltyValue = Callsign.Length - pattern.Length;
+            penaltyValue = Callsign.Length - normalizedPattern.Length;
         }
 
         int callConfidence = result switch

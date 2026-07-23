@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Text;
 using MorseRunner.Client;
 using MorseRunner.Domain;
 using MorseRunner.Infrastructure;
@@ -33,12 +34,13 @@ public sealed record QsoLogEntryViewModel(
     string Exchange,
     int Points,
     bool IsDuplicate,
+    bool AwaitingStationConfirmation,
     string ErrorText)
 {
     public string Result =>
-        IsDuplicate
-            ? "DUP"
-            : ErrorText.Length > 0
+        AwaitingStationConfirmation
+            ? string.Empty
+            : !string.IsNullOrWhiteSpace(ErrorText)
                 ? ErrorText
                 : Points.ToString(CultureInfo.InvariantCulture);
 }
@@ -108,6 +110,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private readonly object _snapshotApplicationGate = new();
     private readonly SemaphoreSlim _monitorLevelUpdateGate = new(1, 1);
     private readonly CancellationTokenSource _lifetime = new();
+#if DEBUG
+    private readonly DebugSessionTrace _debugTrace = new();
+#endif
     private SessionId? _sessionId;
     private SessionId? _recordedResultSessionId;
     private Task? _subscriptionTask;
@@ -150,7 +155,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private int _customSerialNumberMaximumDigits = 2;
     private string _hstOperatorName = string.Empty;
     private bool _showCallsignInformation = true;
-    private string _callsignInformation = "No caller selected";
+    private string _callsignInformation = string.Empty;
+    private IReadOnlyList<ActiveStationSnapshot> _activeStations = [];
     private AudioOutputDevice? _selectedAudioOutputDevice;
     private string _audioDeviceStatus = "Audio devices have not been loaded.";
     private bool _qsk;
@@ -296,8 +302,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         {
             if (value is not null && SetField(ref _selectedContest, value))
             {
+                if (!UsesRstEntry)
+                {
+                    RstEntry = string.Empty;
+                }
+
                 OnPropertyChanged(nameof(ContestName));
                 OnPropertyChanged(nameof(OperatorExchange));
+                OnPropertyChanged(nameof(UsesRstEntry));
+                OnPropertyChanged(nameof(CallEntryColumnSpan));
             }
         }
     }
@@ -353,6 +366,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         SelectedSerialNumberRange.Mode == SerialNumberRangeMode.Custom;
 
     public string ContestName => SelectedContest.DisplayName;
+
+    public bool UsesRstEntry => String.Equals(
+        ContestCatalog.Get(SelectedContest.Id).ExchangeType1,
+        "etRST",
+        StringComparison.Ordinal);
+
+    public int CallEntryColumnSpan => UsesRstEntry ? 1 : 2;
 
     public string RunMode => SelectedRunMode.DisplayName;
 
@@ -412,7 +432,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     public string CallEntry
     {
         get => _callEntry;
-        set => SetField(ref _callEntry, value);
+        set => SetField(ref _callEntry, value.ToUpperInvariant());
     }
 
     public string RstEntry
@@ -645,12 +665,26 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             if (SetField(ref _showCallsignInformation, value))
             {
                 OnPropertyChanged(nameof(CallsignInformation));
+                OnPropertyChanged(nameof(HasCallsignInformation));
             }
         }
     }
 
-    public string CallsignInformation =>
-        ShowCallsignInformation ? _callsignInformation : "Callsign information hidden";
+    public string CallsignInformation => _callsignInformation;
+
+    public bool HasCallsignInformation =>
+        ShowCallsignInformation && !string.IsNullOrWhiteSpace(CallsignInformation);
+
+    public void UpdateCallsignInformationForEnteredCall()
+    {
+        ActiveStationSnapshot? station = _activeStations.FirstOrDefault(
+            candidate => candidate.Callsign.Equals(
+                CallEntry,
+                StringComparison.Ordinal));
+        _callsignInformation = FormatCallsignInformation(station);
+        OnPropertyChanged(nameof(CallsignInformation));
+        OnPropertyChanged(nameof(HasCallsignInformation));
+    }
 
     public AudioOutputDevice? SelectedAudioOutputDevice
     {
@@ -1062,6 +1096,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             _recordedResultSessionId = null;
             _lastAppliedSnapshotRevision = -1;
             _sessionState = handle.State;
+#if DEBUG
+            _debugTrace.Reset(
+                $"Created {SelectedContest.DisplayName} / {RunMode}; seed {Seed}; station {StationCall}.",
+                Path.Combine(
+                    _resultsDirectory
+                    ?? Path.Combine(Path.GetTempPath(), "MorseRunnerXPlat"),
+                    "debug-traces"),
+                handle.SessionId.ToString());
+#endif
             BeginSubscription(handle.SessionId);
 
             if (SelectedAudioOutputDevice is not null)
@@ -1087,6 +1130,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                     RequestId.New(),
                     handle.SessionId,
                     DesktopClientId));
+            if (result.Accepted)
+            {
+                ClearEntryFields();
+                EntryFocusRequested?.Invoke(
+                    this,
+                    new(EntryFocusTarget.Call, selectQuestionMark: false));
+            }
             Status = result.Accepted
                 ? $"{RunMode} running. F1 through F8 send, Enter uses ESM."
                 : result.Message ?? "Start was rejected.";
@@ -1214,6 +1264,26 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                 new SessionSubscription(sessionId),
                 cancellationToken))
             {
+                if (update.Event is SessionEvent sessionEvent
+                    && sessionEvent.Kind == SessionEventKind.QsoLogged
+                    && IsQsoConfirmation(sessionEvent.Detail))
+                {
+                    Qso? loggedQso = await RefreshQsoLogAsync();
+#if DEBUG
+                    if (loggedQso is not null)
+                    {
+                        RecordDebugQsoEvaluation(
+                            sessionEvent.SimulationBlock,
+                            loggedQso);
+                    }
+#endif
+                }
+#if DEBUG
+                if (update.Event is SessionEvent debugSessionEvent)
+                {
+                    RecordDebugSessionEvent(debugSessionEvent);
+                }
+#endif
                 if (update.Snapshot is SessionSnapshot snapshot)
                 {
                     QueueSnapshot(snapshot);
@@ -1251,6 +1321,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             ? $"Sent {intent} at block {result.AppliedBlock}."
             : result.Message ?? "Message was rejected.";
         await RefreshAsync();
+#if DEBUG
+        if (result.Accepted)
+        {
+            _debugTrace.Add(
+                result.AppliedBlock,
+                "Operator transmission",
+                $"Intent: {intent}\nExact message: {LastSent}");
+        }
+#endif
     }
 
     private async Task AdvanceAsync()
@@ -1306,6 +1385,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
 
     private async Task EnterSendMessageAsync()
     {
+        UpdateCallsignInformationForEnteredCall();
         CommandResult result = await ExecuteAsync(
             new TriggerEnterSendMessageCommand(
                 RequestId.New(),
@@ -1358,6 +1438,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         {
             ClearEntryFields();
             Qso? loggedQso = await RefreshQsoLogAsync();
+#if DEBUG
+            if (loggedQso is not null)
+            {
+                RecordDebugQsoEvaluation(result.AppliedBlock, loggedQso);
+            }
+#endif
             if (loggedQso?.IsDuplicate == true)
             {
                 Status = $"Logged {loggedCall} as a duplicate.";
@@ -1368,6 +1454,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             this,
             new(enter.FocusTarget, enter.SelectQuestionMark));
         await RefreshAsync();
+#if DEBUG
+        if (result.Accepted && enter.SentMessages.Count > 0)
+        {
+            _debugTrace.Add(
+                result.AppliedBlock,
+                "Operator transmission",
+                $"ESM outcome: {enter.Outcome}\nExact message: {string.Join(" ", enter.SentMessages)}");
+        }
+#endif
     }
 
     private async Task CompleteQsoAsync()
@@ -1410,6 +1505,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         {
             ClearEntryFields();
             Qso? loggedQso = await RefreshQsoLogAsync();
+#if DEBUG
+            if (loggedQso is not null)
+            {
+                RecordDebugQsoEvaluation(result.AppliedBlock, loggedQso);
+            }
+#endif
             if (loggedQso?.IsDuplicate == true)
             {
                 Status = $"Logged {loggedCall} as a duplicate.";
@@ -1449,6 +1550,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         RstEntry = string.Empty;
         Exchange1Entry = string.Empty;
         Exchange2Entry = string.Empty;
+        _callsignInformation = string.Empty;
+        OnPropertyChanged(nameof(CallsignInformation));
+        OnPropertyChanged(nameof(HasCallsignInformation));
     }
 
     private async Task PauseAsync()
@@ -1620,6 +1724,125 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     private Task<CommandResult> ExecuteAsync(SessionCommand command) =>
         _client.ExecuteAsync(command, _lifetime.Token);
 
+    private static bool IsQsoConfirmation(string? detail) =>
+        detail?.Contains("|CONFIRMED|", StringComparison.Ordinal) == true;
+
+#if DEBUG
+    public string GetDebugTraceReport() => _debugTrace.Format();
+
+    public string GetDebugTraceJson() => _debugTrace.FormatJson();
+
+    private void RecordDebugSessionEvent(SessionEvent sessionEvent)
+    {
+        string? detail = sessionEvent.Kind switch
+        {
+            SessionEventKind.CallerJoined =>
+                $"Caller joined pile-up: {sessionEvent.Detail}",
+            SessionEventKind.StationReplyStarted =>
+                FormatStationReply(sessionEvent.Detail),
+            SessionEventKind.StationReplyCompleted =>
+                $"Station completed reply: {sessionEvent.Detail}",
+            SessionEventKind.CallerLeft =>
+                $"Caller left: {sessionEvent.Detail}",
+            SessionEventKind.QsoLogged =>
+                FormatQsoLogged(sessionEvent.Detail),
+            SessionEventKind.Started => "Session started.",
+            SessionEventKind.Paused => "Session paused.",
+            SessionEventKind.Resumed => "Session resumed.",
+            SessionEventKind.Completed => "Session completed.",
+            SessionEventKind.CommandRejected =>
+                $"Engine rejected command: {sessionEvent.Detail}",
+            _ => null,
+        };
+        if (detail is not null)
+        {
+            _debugTrace.Add(
+                sessionEvent.SimulationBlock,
+                "Engine event",
+                detail);
+        }
+    }
+
+    private static string FormatStationReply(string? detail)
+    {
+        string[] parts = (detail ?? string.Empty).Split('|', 2);
+        return parts.Length == 2
+            ? $"Station: {parts[0]}\nExact reply: {parts[1]}"
+            : $"Station reply: {detail}";
+    }
+
+    private static string FormatQsoLogged(string? detail)
+    {
+        string[] parts = (detail ?? string.Empty).Split('|', 2);
+        return parts.Length == 2 && parts[1] == "PENDING"
+            ? $"Engine saved QSO provisionally: {parts[0]}\nAwaiting the station to finish copying TU."
+            : IsQsoConfirmation(detail)
+                ? $"Engine confirmed QSO: {parts[0]}|{parts[1]["CONFIRMED|".Length..]}"
+            : $"Engine logged QSO: {detail}";
+    }
+
+    private void RecordDebugQsoEvaluation(long simulationBlock, Qso qso)
+    {
+        var builder = new StringBuilder();
+        builder.Append("Entered call: ").AppendLine(qso.Call);
+        if (qso.AwaitingStationConfirmation)
+        {
+            builder.AppendLine("Station confirmation: pending.");
+            builder.AppendLine(
+                "TU is still transmitting, so no station truth or mismatch comparison exists yet.");
+            builder.AppendLine("Displayed result: awaiting confirmation.");
+            _debugTrace.Add(simulationBlock, "QSO evaluation", builder.ToString());
+            return;
+        }
+
+        builder.Append("Station true call: ").AppendLine(
+            string.IsNullOrEmpty(qso.TrueCall) ? "(no completed station)" : qso.TrueCall);
+        builder.Append("Call comparison: ").AppendLine(
+            string.Equals(qso.Call, qso.TrueCall, StringComparison.Ordinal)
+                ? "exact"
+                : "MISMATCH");
+        if (UsesRstEntry)
+        {
+            AppendDebugField(builder, "RST", qso.Rst.ToString(CultureInfo.InvariantCulture), qso.TrueRst == 0 ? string.Empty : qso.TrueRst.ToString(CultureInfo.InvariantCulture));
+        }
+
+        AppendDebugField(builder, "Exchange 1", qso.Exchange1, qso.TrueExchange1);
+        AppendDebugField(builder, "Exchange 2", qso.Exchange2, qso.TrueExchange2);
+        builder.Append("Engine result: ").Append(qso.ExchangeError);
+        if (!string.IsNullOrWhiteSpace(qso.ErrorText))
+        {
+            builder.Append(" (").Append(qso.ErrorText.Trim()).Append(')');
+        }
+
+        builder.AppendLine();
+        builder.Append("Points awarded: ").Append(qso.Points.ToString(CultureInfo.InvariantCulture));
+        _debugTrace.Add(simulationBlock, "QSO evaluation", builder.ToString());
+    }
+
+    private static void AppendDebugField(
+        StringBuilder builder,
+        string name,
+        string entered,
+        string actual)
+    {
+        if (entered.Length == 0 && actual.Length == 0)
+        {
+            return;
+        }
+
+        builder.Append(name)
+            .Append(": entered '")
+            .Append(entered)
+            .Append("'; station '")
+            .Append(actual)
+            .Append("' ")
+            .AppendLine(
+                string.Equals(entered, actual, StringComparison.Ordinal)
+                    ? "exact"
+                    : "MISMATCH");
+    }
+#endif
+
     private async Task RefreshAsync()
     {
         if (_sessionId is not SessionId sessionId)
@@ -1655,18 +1878,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
             @"mm\:ss\.fff",
             CultureInfo.InvariantCulture);
         LastCaller = snapshot.LastCaller ?? "Waiting";
-        IReadOnlyList<ActiveStationSnapshot>? activeStations =
-            snapshot.ActiveStations;
-        ActiveStationSnapshot? selectedStation = activeStations?
-            .FirstOrDefault(
-                station => station.Callsign.Equals(
-                    snapshot.LastCaller,
-                    StringComparison.Ordinal))
-            ?? (activeStations is null || activeStations.Count == 0
-                ? null
-                : activeStations[activeStations.Count - 1]);
-        _callsignInformation = FormatCallsignInformation(selectedStation);
-        OnPropertyChanged(nameof(CallsignInformation));
+        _activeStations = snapshot.ActiveStations ?? [];
         CallerState = FormatOperatorState(snapshot.ActiveOperatorState);
         ActiveCallerCount = snapshot.ActiveStations?.Count ?? 0;
         LastSent = snapshot.LastOperatorMessage ?? "None";
@@ -1715,7 +1927,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
     {
         if (station is null)
         {
-            return "No caller selected";
+            return string.Empty;
         }
 
         string radio = string.Create(
@@ -1828,13 +2040,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                                 "HH:mm:ss",
                                 CultureInfo.InvariantCulture),
                             qso.Call,
-                            qso.Rst.ToString(CultureInfo.InvariantCulture),
+                            UsesRstEntry
+                                ? qso.Rst.ToString(CultureInfo.InvariantCulture)
+                                : string.Empty,
                             string.Join(
                                 ' ',
                                 new[] { qso.Exchange1, qso.Exchange2 }
                                     .Where(value => value.Length > 0)),
                             qso.Points,
                             qso.IsDuplicate,
+                            qso.AwaitingStationConfirmation,
                             qso.ErrorText));
                 }
             });
