@@ -31,18 +31,23 @@ public sealed record QsoLogEntryViewModel(
     string Time,
     string Call,
     string Rst,
-    string Exchange,
+    string Exchange1,
+    string Exchange2,
     int Points,
     bool IsDuplicate,
     bool AwaitingStationConfirmation,
     string ErrorText)
 {
+    public string Exchange => String.Join(
+        ' ',
+        new[] { Exchange1, Exchange2 }.Where(value => value.Length > 0));
+
     public string Result =>
         AwaitingStationConfirmation
             ? string.Empty
             : !string.IsNullOrWhiteSpace(ErrorText)
                 ? ErrorText
-                : Points.ToString(CultureInfo.InvariantCulture);
+                : string.Empty;
 }
 
 public sealed class ScoreSummaryEventArgs(
@@ -311,6 +316,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                 OnPropertyChanged(nameof(OperatorExchange));
                 OnPropertyChanged(nameof(UsesRstEntry));
                 OnPropertyChanged(nameof(CallEntryColumnSpan));
+                OnPropertyChanged(nameof(QsoRstLabel));
+                OnPropertyChanged(nameof(QsoExchange1Label));
+                OnPropertyChanged(nameof(QsoExchange2Label));
             }
         }
     }
@@ -373,6 +381,24 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
         StringComparison.Ordinal);
 
     public int CallEntryColumnSpan => UsesRstEntry ? 1 : 2;
+
+    public string QsoRstLabel => UsesRstEntry ? "RST" : string.Empty;
+
+    public string QsoExchange1Label => QsoFieldLabel(
+        UsesRstEntry
+            ? ContestCatalog.Get(SelectedContest.Id).ExchangeType2
+            : ContestCatalog.Get(SelectedContest.Id).ExchangeType1,
+        UsesRstEntry
+            ? ContestCatalog.Get(SelectedContest.Id).ExchangeCaption2
+            : ContestCatalog.Get(SelectedContest.Id).ExchangeCaption1,
+        "EXCHANGE 1");
+
+    public string QsoExchange2Label => UsesRstEntry
+        ? "EXCHANGE 2"
+        : QsoFieldLabel(
+            ContestCatalog.Get(SelectedContest.Id).ExchangeType2,
+            ContestCatalog.Get(SelectedContest.Id).ExchangeCaption2,
+            "EXCHANGE 2");
 
     public string RunMode => SelectedRunMode.DisplayName;
 
@@ -1056,6 +1082,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                 await CloseCurrentSessionAsync();
             }
 
+            Seed = SessionSeedGenerator.Create();
             var settings = new SessionSettings(
                 Seed,
                 SelectedContest.Id,
@@ -2043,10 +2070,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                             UsesRstEntry
                                 ? qso.Rst.ToString(CultureInfo.InvariantCulture)
                                 : string.Empty,
-                            string.Join(
-                                ' ',
-                                new[] { qso.Exchange1, qso.Exchange2 }
-                                    .Where(value => value.Length > 0)),
+                            qso.Exchange1,
+                            qso.Exchange2,
                             qso.Points,
                             qso.IsDuplicate,
                             qso.AwaitingStationConfirmation,
@@ -2054,6 +2079,34 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IAsyncDisposab
                 }
             });
         return qsos.Count == 0 ? null : qsos[qsos.Count - 1];
+    }
+
+    private static string QsoFieldLabel(
+        string exchangeType,
+        string caption,
+        string fallback)
+    {
+        if (!String.IsNullOrWhiteSpace(caption))
+        {
+            return caption.ToUpperInvariant();
+        }
+
+        return exchangeType switch
+        {
+            "etFdClass" => "CLASS",
+            "etArrlSection" => "SECT",
+            "etOpName" => "NAME",
+            "etNaQpExch2" => "STATE/PROV",
+            "etSSNrPrecedence" => "NR/PREC",
+            "etSSCheckSection" => "CHECK/SECT",
+            "etSerialNr" => "SERIAL",
+            "etCqZone" => "CQ ZONE",
+            "etStateProv" => "STATE/PROV",
+            "etJaPref" => "PREF/POWER",
+            "etJaCity" => "CITY/POWER",
+            "etGenericField" => "EXCHANGE",
+            _ => fallback,
+        };
     }
 
     private async Task CloseCurrentSessionAsync()

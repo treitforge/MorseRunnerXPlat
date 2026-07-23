@@ -177,6 +177,7 @@ public sealed class TuiApplication : IDisposable
             try
             {
                 await CloseSessionAsync(CancellationToken.None);
+                await SavePreferencesAsync(CancellationToken.None);
             }
             finally
             {
@@ -252,10 +253,10 @@ public sealed class TuiApplication : IDisposable
                 Backspace();
                 break;
             case TuiActionKind.NextField:
-                State.ActiveField = (State.ActiveField + 1) % 4;
+                State.MoveActiveField(1);
                 break;
             case TuiActionKind.PreviousField:
-                State.ActiveField = (State.ActiveField + 3) % 4;
+                State.MoveActiveField(-1);
                 break;
             case TuiActionKind.StartPileup:
                 await StartAsync(0, cancellationToken);
@@ -493,6 +494,7 @@ public sealed class TuiApplication : IDisposable
         await CloseSessionAsync(cancellationToken);
         State.RunModeIndex = runModeIndex;
         State.Qsos = [];
+        State.Seed = SessionSeedGenerator.Create();
         var settings = new SessionSettings(
             State.Seed,
             State.Contest.Id,
@@ -549,7 +551,7 @@ public sealed class TuiApplication : IDisposable
                 TuiClientId),
             cancellationToken);
         State.Status = result.Accepted
-            ? $"{RunModeName(State.RunMode)} running."
+            ? $"{RunModeName(State.RunMode)} running (seed {State.Seed})."
             : result.Message ?? "Start rejected.";
         State.ConnectionStatus = State.IsHosted
             ? "Connected to authenticated local host."
@@ -1269,6 +1271,7 @@ public sealed class TuiApplication : IDisposable
         }
 
         change();
+        State.NormalizeActiveField();
         State.Status =
             $"{State.Contest.DisplayName}, {RunModeName(State.RunMode)}, "
             + (State.DurationMinutes == 0

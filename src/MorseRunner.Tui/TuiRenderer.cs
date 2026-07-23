@@ -227,6 +227,7 @@ public static class TuiRenderer
             $"CONNECTION  {state.ConnectionStatus}",
             $"ENGINE      {state.EngineDiagnostic}",
             $"SESSION     {snapshot?.State.ToString() ?? "not started"}",
+            $"SEED        {StateSeed(state, snapshot)}",
             $"REVISION    {snapshot?.Revision ?? 0}",
             $"BLOCK       {snapshot?.SimulationBlock ?? 0}",
             $"AUDIO       {AudioState(snapshot)}",
@@ -363,25 +364,26 @@ public static class TuiRenderer
     {
         canvas.DrawBox(0, 7, canvas.Width - 1, 11, " QSO ENTRY ");
         int innerWidth = canvas.Width - 2;
-        string[] labels = ["CALLSIGN", "RST", "EXCHANGE 1", "EXCHANGE 2"];
         string[] values = state.Fields;
-        for (int index = 0; index < labels.Length; index++)
+        IReadOnlyList<int> fields = state.VisibleEntryFields;
+        for (int visibleIndex = 0; visibleIndex < fields.Count; visibleIndex++)
         {
-            int left = 1 + (index * innerWidth / labels.Length);
-            int right = 1 + ((index + 1) * innerWidth / labels.Length);
+            int field = fields[visibleIndex];
+            int left = 1 + (visibleIndex * innerWidth / fields.Count);
+            int right = 1 + ((visibleIndex + 1) * innerWidth / fields.Count);
             int valueWidth = Math.Max(1, right - left - 2);
-            bool active = state.ActiveField == index;
+            bool active = state.ActiveField == field;
             canvas.Write(
                 8,
                 left + 1,
-                labels[index],
+                EntryFieldLabel(state, field),
                 active ? CellStyle.Accent : CellStyle.Border);
             canvas.Write(
                 9,
                 left + 1,
-                Fit(values[index], valueWidth),
+                Fit(values[field], valueWidth),
                 active ? CellStyle.Active : CellStyle.Value);
-            if (index > 0)
+            if (visibleIndex > 0)
             {
                 canvas.Write(8, left, "│", CellStyle.Border);
                 canvas.Write(9, left, "│", CellStyle.Border);
@@ -466,9 +468,30 @@ public static class TuiRenderer
         int headerRow = top + 1;
         canvas.Write(headerRow, 2, "TIME", CellStyle.Border);
         canvas.Write(headerRow, 13, "CALL", CellStyle.Border);
-        canvas.Write(headerRow, 28, "RST", CellStyle.Border);
-        canvas.Write(headerRow, 35, "EXCHANGE", CellStyle.Border);
-        canvas.WriteRight(headerRow, 2, "RESULT", CellStyle.Border);
+        if (state.UsesRstEntry)
+        {
+            canvas.Write(headerRow, 28, "RST", CellStyle.Border);
+            canvas.Write(
+                headerRow,
+                35,
+                EntryFieldLabel(state, 2),
+                CellStyle.Border);
+        }
+        else
+        {
+            canvas.Write(
+                headerRow,
+                28,
+                EntryFieldLabel(state, 2),
+                CellStyle.Border);
+            canvas.Write(
+                headerRow,
+                39,
+                EntryFieldLabel(state, 3),
+                CellStyle.Border);
+        }
+
+        canvas.WriteRight(headerRow, 2, "CORRECTIONS", CellStyle.Border);
 
         int availableRows = Math.Max(0, bottom - top - 2);
         IReadOnlyList<Qso> qsos = state.Qsos;
@@ -483,25 +506,30 @@ public static class TuiRenderer
                 qso.Timestamp.ToString("HH:mm:ss", CultureInfo.InvariantCulture),
                 CellStyle.Muted);
             canvas.Write(row, 13, Fit(qso.Call, 13), CellStyle.Call);
-            canvas.Write(
-                row,
-                28,
-                qso.Rst.ToString(CultureInfo.InvariantCulture),
-                CellStyle.Value);
-            canvas.Write(
-                row,
-                35,
-                Fit(JoinExchange(qso), Math.Max(1, canvas.Width - 51)),
-                CellStyle.Value);
+            if (state.UsesRstEntry)
+            {
+                canvas.Write(
+                    row,
+                    28,
+                    qso.Rst.ToString(CultureInfo.InvariantCulture),
+                    CellStyle.Value);
+                canvas.Write(
+                    row,
+                    35,
+                    Fit(JoinExchange(qso), Math.Max(1, canvas.Width - 51)),
+                    CellStyle.Value);
+            }
+            else
+            {
+                canvas.Write(row, 28, Fit(qso.Exchange1, 9), CellStyle.Value);
+                canvas.Write(row, 39, Fit(qso.Exchange2, 9), CellStyle.Value);
+            }
+
             canvas.WriteRight(
                 row,
                 2,
-                QsoResult(qso),
-                qso.IsDuplicate
-                    ? CellStyle.Warning
-                    : qso.ErrorText.Length > 0
-                        ? CellStyle.Error
-                        : CellStyle.Good);
+                QsoCorrections(qso),
+                qso.ErrorText.Length > 0 ? CellStyle.Error : CellStyle.Value);
             row++;
         }
     }
@@ -587,6 +615,12 @@ public static class TuiRenderer
             _ => "AUDIO OK",
         };
 
+    private static string StateSeed(TuiState state, SessionSnapshot? snapshot) =>
+        snapshot?.Seed.ToString(CultureInfo.InvariantCulture)
+        ?? (state.Seed == 0
+            ? "not started"
+            : state.Seed.ToString(CultureInfo.InvariantCulture));
+
     private static void RenderCompact(TuiState state, TerminalCanvas canvas)
     {
         SessionSnapshot? snapshot = state.Snapshot;
@@ -605,11 +639,7 @@ public static class TuiRenderer
 
         canvas.Write(3, 1, "CALL", CellStyle.Border);
         canvas.Write(4, 1, Fit(state.Call, canvas.Width - 2), CellStyle.Active);
-        canvas.Write(
-            5,
-            1,
-            $"RST {state.Rst}  EXCH {state.Exchange1} {state.Exchange2}",
-            CellStyle.Value);
+        canvas.Write(5, 1, CompactEntrySummary(state), CellStyle.Value);
         canvas.Write(
             7,
             1,
@@ -740,12 +770,65 @@ public static class TuiRenderer
             : qso.Exchange1 + " " + qso.Exchange2;
     }
 
-    private static string QsoResult(Qso qso) =>
-        qso.IsDuplicate
-            ? "DUP"
-            : qso.ErrorText.Length > 0
-                ? qso.ErrorText
-            : qso.Points.ToString(CultureInfo.InvariantCulture);
+    private static string QsoCorrections(Qso qso) =>
+        qso.AwaitingStationConfirmation ? string.Empty : qso.ErrorText;
+
+    private static string CompactEntrySummary(TuiState state) =>
+        state.UsesRstEntry
+            ? $"RST {state.Rst}  {EntryFieldLabel(state, 2)} {state.Exchange1} {state.Exchange2}"
+            : $"{EntryFieldLabel(state, 2)} {state.Exchange1}  {EntryFieldLabel(state, 3)} {state.Exchange2}";
+
+    private static string EntryFieldLabel(TuiState state, int field) =>
+        field switch
+        {
+            0 => "CALLSIGN",
+            1 => "RST",
+            2 => ExchangeFieldLabel(
+                state.UsesRstEntry
+                    ? state.Contest.ExchangeType2
+                    : state.Contest.ExchangeType1,
+                state.UsesRstEntry
+                    ? state.Contest.ExchangeCaption2
+                    : state.Contest.ExchangeCaption1,
+                "EXCHANGE 1"),
+            3 => ExchangeFieldLabel(
+                state.UsesRstEntry
+                    ? ""
+                    : state.Contest.ExchangeType2,
+                state.UsesRstEntry
+                    ? ""
+                    : state.Contest.ExchangeCaption2,
+                "EXCHANGE 2"),
+            _ => throw new ArgumentOutOfRangeException(nameof(field), field, null),
+        };
+
+    private static string ExchangeFieldLabel(
+        string exchangeType,
+        string caption,
+        string fallback)
+    {
+        if (!String.IsNullOrWhiteSpace(caption))
+        {
+            return caption.ToUpperInvariant();
+        }
+
+        return exchangeType switch
+        {
+            "etFdClass" => "CLASS",
+            "etArrlSection" => "SECT",
+            "etOpName" => "NAME",
+            "etNaQpExch2" => "STATE/PROV",
+            "etSSNrPrecedence" => "NR/PREC",
+            "etSSCheckSection" => "CHECK/SECT",
+            "etSerialNr" => "SERIAL",
+            "etCqZone" => "CQ ZONE",
+            "etStateProv" => "STATE/PROV",
+            "etJaPref" => "PREF/POWER",
+            "etJaCity" => "CITY/POWER",
+            "etGenericField" => "EXCHANGE",
+            _ => fallback,
+        };
+    }
 
     private static string Fit(string value, int width)
     {

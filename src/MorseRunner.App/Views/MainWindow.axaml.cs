@@ -12,6 +12,8 @@ namespace MorseRunner.App.Views;
 
 public sealed partial class MainWindow : Window
 {
+    private bool _closingAfterPersistingSettings;
+
     public MainWindow()
         : this(
             new MainWindowViewModel(
@@ -36,7 +38,7 @@ public sealed partial class MainWindow : Window
         };
         viewModel.ShowScoreRequested += ShowScore;
         viewModel.EntryFocusRequested += FocusEntry;
-        Closed += async (_, _) => await viewModel.DisposeAsync();
+        Closing += PersistSettingsBeforeClosingAsync;
     }
 
     private MainWindowViewModel ViewModel =>
@@ -86,6 +88,27 @@ public sealed partial class MainWindow : Window
     private void ExitClick(object? sender, RoutedEventArgs args)
     {
         Close();
+    }
+
+    private async void PersistSettingsBeforeClosingAsync(
+        object? sender,
+        WindowClosingEventArgs args)
+    {
+        if (_closingAfterPersistingSettings)
+        {
+            return;
+        }
+
+        args.Cancel = true;
+        _closingAfterPersistingSettings = true;
+        try
+        {
+            await ViewModel.DisposeAsync();
+        }
+        finally
+        {
+            Close();
+        }
     }
 
     private void FocusSetupClick(object? sender, RoutedEventArgs args)
