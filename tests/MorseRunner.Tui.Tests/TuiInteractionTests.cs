@@ -605,6 +605,38 @@ public sealed class TuiInteractionTests
     }
 
     [Fact]
+    public void FieldDayRendererUsesCorrectionsColumnAndOmitsRst()
+    {
+        int fieldDayIndex = ContestCatalog.All
+            .Select((contest, index) => (contest, index))
+            .Single(item => item.contest.Id.Value == "scFieldDay")
+            .index;
+        var state = new TuiState
+        {
+            ContestIndex = fieldDayIndex,
+            Qsos =
+            [
+                new Qso
+                {
+                    Timestamp = DateTimeOffset.UnixEpoch,
+                    Call = "WA5FRF",
+                    Exchange1 = "1D",
+                    Exchange2 = "WWA",
+                    ErrorText = "2C STX",
+                },
+            ],
+        };
+
+        string rendered = TuiRenderer.Render(state, 140, 40);
+
+        Assert.Contains("CLASS", rendered, StringComparison.Ordinal);
+        Assert.Contains("SECT", rendered, StringComparison.Ordinal);
+        Assert.Contains("CORRECTIONS", rendered, StringComparison.Ordinal);
+        Assert.Contains("2C STX", rendered, StringComparison.Ordinal);
+        Assert.DoesNotContain("RST", rendered, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RendererAddsAnsiStylingOnlyWhenRequested()
     {
         var state = new TuiState();

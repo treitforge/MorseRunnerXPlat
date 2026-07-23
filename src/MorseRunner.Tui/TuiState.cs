@@ -16,7 +16,7 @@ public sealed class TuiState
 {
     private readonly Dictionary<ContestId, string> _operatorExchanges = [];
 
-    public int Seed { get; init; } = 12_345;
+    public int Seed { get; set; }
 
     public int ContestIndex { get; set; }
 
@@ -124,6 +124,15 @@ public sealed class TuiState
     public string[] Fields =>
         [Call, Rst, Exchange1, Exchange2];
 
+    public bool UsesRstEntry => String.Equals(
+        Contest.ExchangeType1,
+        "etRST",
+        StringComparison.Ordinal);
+
+    public IReadOnlyList<int> VisibleEntryFields => UsesRstEntry
+        ? [0, 1, 2, 3]
+        : [0, 2, 3];
+
     public ContestDefinition Contest => ContestCatalog.All[ContestIndex];
 
     public RunModeId RunMode => RunModes[RunModeIndex];
@@ -148,5 +157,34 @@ public sealed class TuiState
         Exchange1 = string.Empty;
         Exchange2 = string.Empty;
         ActiveField = 0;
+    }
+
+    public void MoveActiveField(int direction)
+    {
+        IReadOnlyList<int> fields = VisibleEntryFields;
+        int currentIndex = -1;
+        for (int index = 0; index < fields.Count; index++)
+        {
+            if (fields[index] == ActiveField)
+            {
+                currentIndex = index;
+                break;
+            }
+        }
+        if (currentIndex < 0)
+        {
+            ActiveField = fields[0];
+            return;
+        }
+
+        ActiveField = fields[(currentIndex + direction + fields.Count) % fields.Count];
+    }
+
+    public void NormalizeActiveField()
+    {
+        if (!VisibleEntryFields.Contains(ActiveField))
+        {
+            ActiveField = VisibleEntryFields[0];
+        }
     }
 }

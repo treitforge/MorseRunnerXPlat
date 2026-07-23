@@ -65,6 +65,7 @@ public sealed class MainWindowViewModelTests
             "K1ABC",
             "599",
             "001",
+            string.Empty,
             0,
             IsDuplicate: false,
             AwaitingStationConfirmation: true,
@@ -80,13 +81,28 @@ public sealed class MainWindowViewModelTests
             "00:00:00",
             "WA5FRF",
             string.Empty,
-            "1D WWA",
+            "1D",
+            "WWA",
             0,
             IsDuplicate: false,
             AwaitingStationConfirmation: false,
             ErrorText: "2C STX");
 
         Assert.Equal("2C STX", entry.Result);
+    }
+
+    [Fact]
+    public async Task FieldDayQsoLogUsesClassSectionAndCorrectionsHeadings()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+        viewModel.SelectedContest = Assert.Single(
+            viewModel.Contests,
+            contest => contest.Id.Value == "scFieldDay");
+
+        Assert.Empty(viewModel.QsoRstLabel);
+        Assert.Equal("CLASS", viewModel.QsoExchange1Label);
+        Assert.Equal("SECT", viewModel.QsoExchange2Label);
     }
 
 #if DEBUG
