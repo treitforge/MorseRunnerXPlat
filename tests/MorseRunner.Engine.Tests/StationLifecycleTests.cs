@@ -9,6 +9,40 @@ public sealed class StationLifecycleTests
     private static readonly ClientId TestClient = new("station-tests");
 
     [Fact]
+    public async Task StationProcessesOperatorMessageOnlyAfterTransmissionCompletes()
+    {
+        await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 12_345) with
+            {
+                RunModeId = new("rmSingle"),
+                Activity = 9,
+            },
+            TestContext.Current.CancellationToken);
+        await StartAndAdvanceAsync(engine, handle.SessionId, blocks: 4);
+        ActiveStationSnapshot station = Assert.Single(
+            engine.GetSnapshot(handle.SessionId).ActiveStations ?? []);
+
+        await SendAsync(
+            engine,
+            handle.SessionId,
+            OperatorIntent.HisCall,
+            station.Callsign);
+
+        ActiveStationSnapshot copying = Assert.Single(
+            engine.GetSnapshot(handle.SessionId).ActiveStations ?? []);
+        Assert.Equal(StationState.Copying, copying.StationState);
+        Assert.Equal(OperatorState.NeedQso, copying.OperatorState);
+
+        await AdvanceAsync(engine, handle.SessionId, blocks: 512);
+
+        ActiveStationSnapshot processed = Assert.Single(
+            engine.GetSnapshot(handle.SessionId).ActiveStations ?? []);
+        Assert.Equal(OperatorState.NeedNumber, processed.OperatorState);
+        Assert.NotEqual(StationState.Copying, processed.StationState);
+    }
+
+    [Fact]
     public async Task PartialCallCorrectionCompletesAgainstStationTruth()
     {
         await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
@@ -30,18 +64,26 @@ public sealed class StationLifecycleTests
             handle.SessionId,
             OperatorIntent.HisCall,
             partialCall);
-        Assert.Equal(
-            OperatorState.NeedCallAndNumber,
-            engine.GetSnapshot(handle.SessionId).ActiveOperatorState);
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            snapshot => snapshot.ActiveOperatorState == OperatorState.NeedCallAndNumber
+                && Assert.Single(snapshot.ActiveStations ?? []).StationState
+                    == StationState.Listening,
+            "partial-call correction reply completed");
 
         await SendAsync(
             engine,
             handle.SessionId,
             OperatorIntent.HisCall,
             station.Callsign);
-        Assert.Equal(
-            OperatorState.NeedNumber,
-            engine.GetSnapshot(handle.SessionId).ActiveOperatorState);
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            snapshot => snapshot.ActiveOperatorState == OperatorState.NeedNumber
+                && Assert.Single(snapshot.ActiveStations ?? []).StationState
+                    == StationState.Listening,
+            "corrected-call exchange reply completed");
 
         await SendAsync(
             engine,
@@ -50,14 +92,23 @@ public sealed class StationLifecycleTests
             station.Callsign,
             station.TrueRst,
             station.TrueExchange2);
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            snapshot => snapshot.ActiveOperatorState == OperatorState.NeedEnd
+                && Assert.Single(snapshot.ActiveStations ?? []).StationState
+                    == StationState.Listening,
+            "exchange acknowledgement completed");
         await SendAsync(
             engine,
             handle.SessionId,
             OperatorIntent.ThankYou,
             station.Callsign);
-        Assert.Equal(
-            OperatorState.Done,
-            engine.GetSnapshot(handle.SessionId).ActiveOperatorState);
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            snapshot => snapshot.ActiveOperatorState == OperatorState.Done,
+            "final acknowledgement processed");
 
         CommandResult logged = await engine.ExecuteAsync(
             new LogQsoCommand(
@@ -76,14 +127,292 @@ public sealed class StationLifecycleTests
         Assert.Equal(station.Callsign, qso.TrueCall);
         Assert.Equal(station.TrueExchange2, qso.TrueExchange2);
         Assert.Empty(engine.GetSnapshot(handle.SessionId).ActiveStations ?? []);
-        SessionEvent loggedEvent = await FindEventAsync(
+    }
+
+    [Fact]
+    public async Task LoggingWithTuDefersTruthUntilStationFinishesCopying()
+    {
+        await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 12_345) with
+            {
+                RunModeId = new("rmSingle"),
+                Activity = 9,
+            },
+            TestContext.Current.CancellationToken);
+        await StartAndAdvanceAsync(engine, handle.SessionId, blocks: 4);
+        ActiveStationSnapshot station = Assert.Single(
+            engine.GetSnapshot(handle.SessionId).ActiveStations ?? []);
+
+        await SendAsync(
             engine,
             handle.SessionId,
-            SessionEventKind.QsoLogged);
-        Assert.StartsWith(
-            station.Callsign + "|",
-            loggedEvent.Detail,
-            StringComparison.Ordinal);
+            OperatorIntent.HisCall,
+            station.Callsign);
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            snapshot => snapshot.ActiveOperatorState == OperatorState.NeedNumber,
+            "station accepted its callsign");
+        await SendAsync(
+            engine,
+            handle.SessionId,
+            OperatorIntent.Exchange,
+            station.Callsign,
+            station.TrueRst,
+            station.TrueExchange2);
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            snapshot => snapshot.ActiveOperatorState == OperatorState.NeedEnd,
+            "station accepted the exchange");
+
+        await SendAsync(
+            engine,
+            handle.SessionId,
+            OperatorIntent.ThankYou,
+            station.Callsign);
+        CommandResult logged = await engine.ExecuteAsync(
+            new LogQsoCommand(
+                RequestId.New(),
+                handle.SessionId,
+                TestClient,
+                station.Callsign,
+                station.TrueRst,
+                station.TrueExchange2,
+                string.Empty),
+            TestContext.Current.CancellationToken);
+
+        Qso provisional = Assert.Single(engine.GetCompletedQsos(handle.SessionId));
+        Assert.True(logged.Accepted, logged.Message);
+        Assert.Equal(LogError.Nil, provisional.ExchangeError);
+        Assert.True(provisional.AwaitingStationConfirmation);
+        Assert.Equal("NIL", provisional.ErrorText);
+        Assert.Empty(provisional.TrueCall);
+
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            _ => Assert.Single(engine.GetCompletedQsos(handle.SessionId)).TrueCall
+                == station.Callsign,
+            "station completed the queued TU and confirmed the QSO");
+
+        Qso confirmed = Assert.Single(engine.GetCompletedQsos(handle.SessionId));
+        Assert.Equal(LogError.None, confirmed.ExchangeError);
+        Assert.False(confirmed.AwaitingStationConfirmation);
+        Assert.Equal(station.Callsign, confirmed.TrueCall);
+        Assert.Equal(station.TrueExchange2, confirmed.TrueExchange2);
+        Assert.Empty(engine.GetSnapshot(handle.SessionId).ActiveStations ?? []);
+    }
+
+    [Fact]
+    public async Task LogOnlyQsoIsConfirmedAfterTheLaterThankYou()
+    {
+        await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 12_345) with
+            {
+                RunModeId = new("rmSingle"),
+                Activity = 9,
+            },
+            TestContext.Current.CancellationToken);
+        await StartAndAdvanceAsync(engine, handle.SessionId, blocks: 4);
+        ActiveStationSnapshot station = Assert.Single(
+            engine.GetSnapshot(handle.SessionId).ActiveStations ?? []);
+
+        await SendAsync(
+            engine,
+            handle.SessionId,
+            OperatorIntent.HisCall,
+            station.Callsign);
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            snapshot => snapshot.ActiveOperatorState == OperatorState.NeedNumber,
+            "station accepted its callsign");
+        await SendAsync(
+            engine,
+            handle.SessionId,
+            OperatorIntent.Exchange,
+            station.Callsign,
+            station.TrueRst,
+            station.TrueExchange2);
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            snapshot => snapshot.ActiveOperatorState == OperatorState.NeedEnd,
+            "station accepted the exchange");
+
+        CommandResult logged = await engine.ExecuteAsync(
+            new LogQsoCommand(
+                RequestId.New(),
+                handle.SessionId,
+                TestClient,
+                station.Callsign,
+                station.TrueRst,
+                station.TrueExchange2,
+                string.Empty),
+            TestContext.Current.CancellationToken);
+        Assert.True(logged.Accepted, logged.Message);
+        Assert.Empty(Assert.Single(engine.GetCompletedQsos(handle.SessionId)).TrueCall);
+
+        await SendAsync(
+            engine,
+            handle.SessionId,
+            OperatorIntent.ThankYou,
+            station.Callsign);
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            _ => Assert.Single(engine.GetCompletedQsos(handle.SessionId)).TrueCall
+                == station.Callsign,
+            "later TU confirmed the last QSO");
+
+        Qso confirmed = Assert.Single(engine.GetCompletedQsos(handle.SessionId));
+        Assert.Equal(LogError.None, confirmed.ExchangeError);
+        Assert.Equal(station.Callsign, confirmed.TrueCall);
+    }
+
+    [Fact]
+    public async Task FieldDayConfirmationDoesNotRequireOrCompareAnRst()
+    {
+        await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 12_345) with
+            {
+                ContestId = new("scFieldDay"),
+                RunModeId = new("rmSingle"),
+                Activity = 9,
+            },
+            TestContext.Current.CancellationToken);
+        await StartAndAdvanceAsync(engine, handle.SessionId, blocks: 4);
+        ActiveStationSnapshot station = Assert.Single(
+            engine.GetSnapshot(handle.SessionId).ActiveStations ?? []);
+
+        await SendAsync(
+            engine,
+            handle.SessionId,
+            OperatorIntent.HisCall,
+            station.Callsign);
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            snapshot => snapshot.ActiveOperatorState == OperatorState.NeedNumber,
+            "Field Day station accepted its callsign");
+        await SendAsync(
+            engine,
+            handle.SessionId,
+            OperatorIntent.Exchange,
+            station.Callsign,
+            string.Empty,
+            station.TrueExchange1);
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            snapshot => snapshot.ActiveOperatorState == OperatorState.NeedEnd,
+            "Field Day station accepted the exchange");
+
+        await SendAsync(
+            engine,
+            handle.SessionId,
+            OperatorIntent.ThankYou,
+            station.Callsign);
+        CommandResult logged = await engine.ExecuteAsync(
+            new LogQsoCommand(
+                RequestId.New(),
+                handle.SessionId,
+                TestClient,
+                station.Callsign,
+                string.Empty,
+                station.TrueExchange1,
+                station.TrueExchange2),
+            TestContext.Current.CancellationToken);
+        Assert.True(logged.Accepted, logged.Message);
+
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            _ => Assert.Single(engine.GetCompletedQsos(handle.SessionId)).TrueCall
+                == station.Callsign,
+            "Field Day station confirmed the QSO");
+
+        Qso confirmed = Assert.Single(engine.GetCompletedQsos(handle.SessionId));
+        Assert.Equal(LogError.None, confirmed.ExchangeError);
+        Assert.Equal(0, confirmed.Rst);
+    }
+
+    [Fact]
+    public async Task FieldDayConfirmationRecordsEveryExchangeCorrectionLikeCe()
+    {
+        await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 12_345) with
+            {
+                ContestId = new("scFieldDay"),
+                RunModeId = new("rmSingle"),
+                Activity = 9,
+            },
+            TestContext.Current.CancellationToken);
+        await StartAndAdvanceAsync(engine, handle.SessionId, blocks: 4);
+        ActiveStationSnapshot station = Assert.Single(
+            engine.GetSnapshot(handle.SessionId).ActiveStations ?? []);
+
+        await SendAsync(
+            engine,
+            handle.SessionId,
+            OperatorIntent.HisCall,
+            station.Callsign);
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            snapshot => snapshot.ActiveOperatorState == OperatorState.NeedNumber,
+            "Field Day station accepted its callsign");
+        await SendAsync(
+            engine,
+            handle.SessionId,
+            OperatorIntent.Exchange,
+            station.Callsign,
+            string.Empty,
+            station.TrueExchange1);
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            snapshot => snapshot.ActiveOperatorState == OperatorState.NeedEnd,
+            "Field Day station accepted its exchange");
+
+        await SendAsync(
+            engine,
+            handle.SessionId,
+            OperatorIntent.ThankYou,
+            station.Callsign);
+        string wrongClass = station.TrueExchange1 == "1A" ? "2A" : "1A";
+        string wrongSection = station.TrueExchange2 == "STX" ? "WWA" : "STX";
+        CommandResult logged = await engine.ExecuteAsync(
+            new LogQsoCommand(
+                RequestId.New(),
+                handle.SessionId,
+                TestClient,
+                station.Callsign,
+                string.Empty,
+                wrongClass,
+                wrongSection),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(logged.Accepted, logged.Message);
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            _ => !Assert.Single(engine.GetCompletedQsos(handle.SessionId))
+                .AwaitingStationConfirmation,
+            "Field Day station confirmed the QSO");
+
+        Qso confirmed = Assert.Single(engine.GetCompletedQsos(handle.SessionId));
+        Assert.Equal(LogError.Class, confirmed.ExchangeError);
+        Assert.Equal(LogError.Class, confirmed.Exchange1Error);
+        Assert.Equal(LogError.Section, confirmed.Exchange2Error);
+        Assert.Equal(
+            $"{station.TrueExchange1} {station.TrueExchange2}",
+            confirmed.ErrorText);
     }
 
     [Fact]
@@ -120,6 +449,77 @@ public sealed class StationLifecycleTests
         Assert.Empty(qso.TrueExchange2);
         Assert.Equal(0, qso.Points);
         Assert.Equal(0, engine.GetSnapshot(handle.SessionId).Score);
+    }
+
+    [Fact]
+    public async Task LoggingAnUnrelatedCallDoesNotClaimAnOlderCompletedStation()
+    {
+        await using MorseRunnerEngine engine = new(_ => new NullAudioSink());
+        SessionHandle handle = await engine.CreateSessionAsync(
+            SessionSettings.CreateDefault(seed: 12_345) with
+            {
+                RunModeId = new("rmSingle"),
+                Activity = 9,
+            },
+            TestContext.Current.CancellationToken);
+        await StartAndAdvanceAsync(engine, handle.SessionId, blocks: 4);
+        ActiveStationSnapshot station = Assert.Single(
+            engine.GetSnapshot(handle.SessionId).ActiveStations ?? []);
+        const string unrelatedCall = "K1ABC";
+        Assert.NotEqual(unrelatedCall, station.Callsign);
+
+        await SendAsync(
+            engine,
+            handle.SessionId,
+            OperatorIntent.HisCall,
+            station.Callsign);
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            snapshot => snapshot.ActiveOperatorState == OperatorState.NeedNumber,
+            "station accepted its own call");
+        await SendAsync(
+            engine,
+            handle.SessionId,
+            OperatorIntent.Exchange,
+            station.Callsign,
+            station.TrueRst,
+            station.TrueExchange2);
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            snapshot => snapshot.ActiveOperatorState == OperatorState.NeedEnd,
+            "station accepted its exchange");
+        await SendAsync(
+            engine,
+            handle.SessionId,
+            OperatorIntent.ThankYou,
+            station.Callsign);
+        await AdvanceUntilAsync(
+            engine,
+            handle.SessionId,
+            snapshot => snapshot.ActiveOperatorState == OperatorState.Done,
+            "older station completed");
+
+        CommandResult logged = await engine.ExecuteAsync(
+            new LogQsoCommand(
+                RequestId.New(),
+                handle.SessionId,
+                TestClient,
+                unrelatedCall,
+                "599",
+                "1",
+                string.Empty),
+            TestContext.Current.CancellationToken);
+        Qso qso = Assert.Single(engine.GetCompletedQsos(handle.SessionId));
+
+        Assert.True(logged.Accepted);
+        Assert.Equal(LogError.Nil, qso.ExchangeError);
+        Assert.Empty(qso.TrueCall);
+        Assert.Contains(
+            engine.GetSnapshot(handle.SessionId).ActiveStations ?? [],
+            active => active.Callsign == station.Callsign
+                && active.OperatorState == OperatorState.Done);
     }
 
     [Fact]
@@ -343,6 +743,28 @@ public sealed class StationLifecycleTests
                     TestClient,
                     blocks),
                 TestContext.Current.CancellationToken)).Accepted);
+    }
+
+    private static async Task AdvanceUntilAsync(
+        MorseRunnerEngine engine,
+        SessionId sessionId,
+        Func<SessionSnapshot, bool> condition,
+        string expectedState)
+    {
+        const int MaximumBlocks = 2_000;
+        for (int block = 0; block < MaximumBlocks; block++)
+        {
+            SessionSnapshot snapshot = engine.GetSnapshot(sessionId);
+            if (condition(snapshot))
+            {
+                return;
+            }
+
+            await AdvanceAsync(engine, sessionId, blocks: 1);
+        }
+
+        throw new Xunit.Sdk.XunitException(
+            $"Seed 12345 did not reach {expectedState} within {MaximumBlocks} blocks.");
     }
 
     private static async Task SendAsync(

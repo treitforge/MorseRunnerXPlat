@@ -1,0 +1,42 @@
+[
+  {
+    "name": "partial-call-with-exchange",
+    "call": "WA2WDT",
+    "initial": "need-qso",
+    "copiedCall": "WA2W",
+    "messages": "his-call,number",
+    "seed": 24680
+  },
+  {
+    "name": "exact-call-requests-exchange",
+    "call": "K1ABC",
+    "initial": "need-qso",
+    "copiedCall": "K1ABC",
+    "messages": "his-call",
+    "seed": 24680
+  },
+  {
+    "name": "exchange-completes-contact",
+    "call": "K1ABC",
+    "initial": "need-number",
+    "copiedCall": "K1ABC",
+    "messages": "number",
+    "seed": 24680
+  },
+  {
+    "name": "wrong-call-does-not-start-qso",
+    "call": "K1ABC",
+    "initial": "need-qso",
+    "copiedCall": "N0XYZ",
+    "messages": "his-call",
+    "seed": 24680
+  },
+  {
+    "name": "thank-you-completes-contact",
+    "call": "K1ABC",
+    "initial": "need-end",
+    "copiedCall": "K1ABC",
+    "messages": "thank-you",
+    "seed": 24680
+  }
+]

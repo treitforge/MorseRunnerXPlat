@@ -125,6 +125,7 @@ public sealed class GrpcTransportTests
             Prefix = "K1",
             Multiplier = "K1",
             Points = 0,
+            AwaitingStationConfirmation = true,
             ExchangeError = LogError.Call,
             Exchange1Error = LogError.Name,
             Exchange1SecondaryError = LogError.Number,

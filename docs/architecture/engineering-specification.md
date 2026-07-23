@@ -24,6 +24,9 @@ The Domain, DSP, and Engine projects must not reference Avalonia, gRPC, generate
 - Events and snapshots are immutable. Subscriber queues are bounded, and slow observers cannot delay simulation.
 - A session owns its seeded random source. Simulation behavior uses simulation time; wall-clock time is diagnostic only.
 - UI and gRPC handlers send semantic commands and never mutate engine state directly.
+- A station starts copying when an operator transmission begins, then evaluates the complete operator message only after that transmission finishes. Its reply delay begins at the completion boundary.
+- QSO logging associates truth data only with a completed station that is an exact match or the highest-confidence acceptable near-match for the entered callsign. Ties choose the newest caller. An unrelated completed station remains active and cannot turn a new log entry into a callsign error.
+- A newly logged QSO with an eligible live station is provisionally awaiting station confirmation, including when the operator logs before sending `TU`. The desktop log leaves its error result blank during this state. After the matching station finishes copying a later `TU` and reaches `Done`, the engine updates that same QSO with its truth data, final error, score, and station removal. A QSO with no eligible station remains `NIL`.
 
 ## Real-time audio
 
@@ -38,6 +41,11 @@ The Domain, DSP, and Engine projects must not reference Avalonia, gRPC, generate
 - Focus movement, shortcuts, accessibility, and transient editing belong to the UX.
 - View models depend only on `IMorseRunnerClient` and marshal observable changes onto the UI thread.
 - Avalonia uses compiled bindings and declares `x:DataType`.
+- Callsign input and engine matching are case-insensitive. Clients display canonical uppercase callsigns.
+- The QSO entry presents only contest-applicable received fields. ARRL Field Day records class and section, without a signal report; its QSO log and validation never render or compare RST.
+- Once station confirmation provides truth data, a QSO preserves every callsign and exchange-field mismatch. The QSO log displays the CE-style ordered correction values, including every incorrect received field, rather than a single summary error category. Normal desktop status does not automatically select or identify an active caller as operator-entered station information.
+- A successfully started session clears the prior QSO entry and focuses the callsign field.
+- Debug desktop builds provide a keyboard-only session trace. It reports caller and reply events, exact operator messages, pending QSO confirmation, and final QSO truth-data comparisons without changing release behavior. The trace is copied as JSON on demand and persisted atomically under the results directory while the Debug session runs.
 
 ## Transport
 

@@ -1,4 +1,7 @@
+using System.Text.Json;
+using Avalonia.Input;
 using MorseRunner.App.ViewModels;
+using MorseRunner.App.Views;
 using MorseRunner.Client;
 using MorseRunner.Domain;
 using MorseRunner.Infrastructure;
@@ -7,6 +10,150 @@ namespace MorseRunner.App.Tests;
 
 public sealed class MainWindowViewModelTests
 {
+    [Theory]
+    [InlineData("scWpx", true)]
+    [InlineData("scCwt", false)]
+    [InlineData("scFieldDay", false)]
+    [InlineData("scNaQp", false)]
+    [InlineData("scHst", true)]
+    [InlineData("scCQWW", true)]
+    [InlineData("scArrlDx", true)]
+    [InlineData("scSst", false)]
+    [InlineData("scAllJa", true)]
+    [InlineData("scAcag", true)]
+    [InlineData("scIaruHf", true)]
+    [InlineData("scArrlSS", false)]
+    public async Task RstVisibilityMatchesTheLegacyReceivedExchange(
+        string contestId,
+        bool expectsRst)
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+        viewModel.SelectedContest = Assert.Single(
+            viewModel.Contests,
+            contest => contest.Id.Value == contestId);
+
+        Assert.Equal(expectsRst, viewModel.UsesRstEntry);
+    }
+
+    [Fact]
+    public async Task FieldDayDoesNotExposeAnRstEntry()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+        viewModel.SelectedContest = Assert.Single(
+            viewModel.Contests,
+            contest => contest.Id.Value == "scFieldDay");
+        viewModel.RstEntry = "599";
+        viewModel.SelectedContest = Assert.Single(
+            viewModel.Contests,
+            contest => contest.Id.Value == "scCwt");
+        viewModel.SelectedContest = Assert.Single(
+            viewModel.Contests,
+            contest => contest.Id.Value == "scFieldDay");
+
+        Assert.False(viewModel.UsesRstEntry);
+        Assert.Equal(2, viewModel.CallEntryColumnSpan);
+        Assert.Empty(viewModel.RstEntry);
+    }
+
+    [Fact]
+    public void ProvisionalQsoHidesItsErrorUntilStationConfirmation()
+    {
+        var entry = new QsoLogEntryViewModel(
+            "00:00:00",
+            "K1ABC",
+            "599",
+            "001",
+            0,
+            IsDuplicate: false,
+            AwaitingStationConfirmation: true,
+            ErrorText: "NIL");
+
+        Assert.Empty(entry.Result);
+    }
+
+    [Fact]
+    public void ConfirmedQsoShowsEveryCorrectionProvidedByTheEngine()
+    {
+        var entry = new QsoLogEntryViewModel(
+            "00:00:00",
+            "WA5FRF",
+            string.Empty,
+            "1D WWA",
+            0,
+            IsDuplicate: false,
+            AwaitingStationConfirmation: false,
+            ErrorText: "2C STX");
+
+        Assert.Equal("2C STX", entry.Result);
+    }
+
+#if DEBUG
+    [Fact]
+    public void DebugTraceShortcutIsReservedBeforeMenuTypeAhead()
+    {
+        Assert.True(
+            MainWindow.IsDebugTraceShortcut(
+                Key.D,
+                KeyModifiers.Control | KeyModifiers.Shift));
+        Assert.False(MainWindow.IsDebugTraceShortcut(Key.D, KeyModifiers.None));
+    }
+
+    [Fact]
+    public async Task DebugTraceReportsTheExactOperatorTransmission()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+        await viewModel.StartCommand.ExecuteAsync(null);
+
+        await viewModel.SendCqCommand.ExecuteAsync(null);
+
+        string trace = viewModel.GetDebugTraceReport();
+        Assert.Contains("Session started", trace, StringComparison.Ordinal);
+        Assert.Contains("Operator transmission", trace, StringComparison.Ordinal);
+        Assert.Contains("Exact message:", trace, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task DebugTraceIsPersistedAsStructuredJson()
+    {
+        string directory = Path.Combine(
+            Path.GetTempPath(),
+            $"MorseRunnerXPlat-debug-trace-{Guid.NewGuid():N}");
+        try
+        {
+            await using var viewModel = new MainWindowViewModel(
+                InProcessMorseRunnerClient.CreateDefault(),
+                resultsDirectory: directory);
+            await viewModel.StartCommand.ExecuteAsync(null);
+            await viewModel.SendCqCommand.ExecuteAsync(null);
+
+            string path = Assert.Single(
+                Directory.GetFiles(
+                    Path.Combine(directory, "debug-traces"),
+                    "*.json"));
+            using JsonDocument document = JsonDocument.Parse(
+                await File.ReadAllTextAsync(
+                    path,
+                    TestContext.Current.CancellationToken));
+
+            Assert.Equal(1, document.RootElement.GetProperty("schemaVersion").GetInt32());
+            Assert.Equal(
+                JsonValueKind.Array,
+                document.RootElement.GetProperty("entries").ValueKind);
+            Assert.Contains("operator transmission", viewModel.GetDebugTraceJson(), StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+    }
+#endif
+
     [Fact]
     public void AudioDropIsReportedAsDegradedHealth()
     {
@@ -86,6 +233,31 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task StartingANewSessionClearsThePriorQsoEntry()
+    {
+        await using var viewModel = new MainWindowViewModel(
+            InProcessMorseRunnerClient.CreateDefault());
+        await viewModel.StartCommand.ExecuteAsync(null);
+        viewModel.CallEntry = "kb0rif";
+        viewModel.RstEntry = "579";
+        viewModel.Exchange1Entry = "123";
+        viewModel.Exchange2Entry = "or";
+        Assert.Equal("KB0RIF", viewModel.CallEntry);
+
+        await viewModel.StopCommand.ExecuteAsync(null);
+        EntryFocusRequestedEventArgs? focus = null;
+        viewModel.EntryFocusRequested += (_, args) => focus = args;
+        await viewModel.StartCommand.ExecuteAsync(null);
+
+        Assert.Empty(viewModel.CallEntry);
+        Assert.Empty(viewModel.RstEntry);
+        Assert.Empty(viewModel.Exchange1Entry);
+        Assert.Empty(viewModel.Exchange2Entry);
+        Assert.Equal(EntryFocusTarget.Call, focus?.Target);
+        Assert.False(focus?.SelectQuestionMark);
+    }
+
+    [Fact]
     public async Task WipeResetsRunningSessionEsmState()
     {
         await using var viewModel = new MainWindowViewModel(
@@ -130,6 +302,9 @@ public sealed class MainWindowViewModelTests
         Assert.Equal(8, viewModel.SimulationBlock);
         Assert.Equal(1, viewModel.ActiveCallerCount);
         Assert.Equal("Calling", viewModel.CallerState);
+        Assert.False(viewModel.HasCallsignInformation);
+        viewModel.CallEntry = viewModel.LastCaller;
+        viewModel.UpdateCallsignInformationForEnteredCall();
         Assert.Contains("WPM", viewModel.CallsignInformation);
 
         await viewModel.PauseCommand.ExecuteAsync(null);
@@ -406,6 +581,12 @@ public sealed class MainWindowViewModelTests
         Assert.Equal(0, viewModel.Score);
         Assert.Equal("NIL", Assert.Single(viewModel.QsoLog).Result);
         Assert.Empty(viewModel.CallEntry);
+#if DEBUG
+        string trace = viewModel.GetDebugTraceReport();
+        Assert.Contains("QSO evaluation", trace, StringComparison.Ordinal);
+        Assert.Contains("Station true call", trace, StringComparison.Ordinal);
+        Assert.Contains("Engine result: Nil", trace, StringComparison.Ordinal);
+#endif
     }
 
     [Fact]

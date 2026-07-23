@@ -69,6 +69,8 @@ public sealed record Qso
 
     public bool IsDuplicate { get; init; }
 
+    public bool AwaitingStationConfirmation { get; init; }
+
     public LogError ExchangeError { get; init; }
 
     public LogError Exchange1Error { get; init; }

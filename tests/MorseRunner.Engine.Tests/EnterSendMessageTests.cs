@@ -146,6 +146,20 @@ public sealed class EnterSendMessageTests
     }
 
     [Fact]
+    public async Task LowercaseCallIsNormalizedBeforeTransmission()
+    {
+        await using var session = await StartedSession.CreateAsync();
+
+        CommandResult result = await session.EnterAsync("kc7ava", "5NN", "", "");
+
+        Assert.True(result.Accepted);
+        Assert.Equal(
+            ["KC7AVA", "5NN 001"],
+            result.EnterSendMessage?.SentMessages);
+        Assert.Equal("KC7AVA 5NN 001", session.Snapshot.LastOperatorMessage);
+    }
+
+    [Fact]
     public async Task WipeResetsEsmStateWithoutSendingAnAbortMessage()
     {
         await using var session = await StartedSession.CreateAsync();

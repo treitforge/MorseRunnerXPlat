@@ -23,6 +23,12 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = viewModel;
+#if DEBUG
+        AddHandler(
+            KeyDownEvent,
+            DebugShortcutKeyDown,
+            RoutingStrategies.Tunnel);
+#endif
         Opened += async (_, _) =>
         {
             await viewModel.InitializeAsync();
@@ -96,6 +102,11 @@ public sealed partial class MainWindow : Window
 
     private void KeyboardHelpClick(object? sender, RoutedEventArgs args)
     {
+#if DEBUG
+        const string debugShortcut = "\n            Ctrl+Shift+D opens the debug session trace.\n";
+#else
+        const string debugShortcut = "";
+#endif
         _ = new HelpWindow(
             "Keyboard reference",
             """
@@ -115,7 +126,7 @@ public sealed partial class MainWindow : Window
             Up/Down adjusts RIT. Ctrl+Up/Down adjusts bandwidth.
             Page Up/Page Down adjusts CW speed. Escape aborts sending.
             Ctrl+W clears the entry fields. Ctrl+P pauses and Ctrl+R resumes.
-            """).ShowDialog(this);
+            """ + debugShortcut).ShowDialog(this);
     }
 
     private void FirstTimeSetupClick(object? sender, RoutedEventArgs args)
@@ -173,6 +184,25 @@ public sealed partial class MainWindow : Window
             """).ShowDialog(this);
     }
 
+#if DEBUG
+    private void DebugShortcutKeyDown(object? sender, KeyEventArgs args)
+    {
+        if (IsDebugTraceShortcut(args.Key, args.KeyModifiers))
+        {
+            _ = new HelpWindow(
+                "Debug session trace",
+                ViewModel.GetDebugTraceReport(),
+                ViewModel.GetDebugTraceJson()).ShowDialog(this);
+            args.Handled = true;
+        }
+    }
+
+    internal static bool IsDebugTraceShortcut(
+        Key key,
+        KeyModifiers modifiers) =>
+        modifiers == (KeyModifiers.Control | KeyModifiers.Shift)
+        && key == Key.D;
+#endif
     private void WindowKeyDown(object? sender, KeyEventArgs args)
     {
         if (args.KeyModifiers == KeyModifiers.None
@@ -193,9 +223,16 @@ public sealed partial class MainWindow : Window
         if (args.KeyModifiers == KeyModifiers.None && args.Key == Key.Space)
         {
             Control? focused = FocusManager?.GetFocusedElement() as Control;
+            if (focused?.Name == "CallEntryBox")
+            {
+                ViewModel.UpdateCallsignInformationForEnteredCall();
+            }
+
+            TextBox? rstEntryBox = this.FindControl<TextBox>("RstEntryBox");
             Control? next = focused?.Name switch
             {
-                "CallEntryBox" => this.FindControl<TextBox>("RstEntryBox"),
+                "CallEntryBox" when rstEntryBox?.IsVisible == true => rstEntryBox,
+                "CallEntryBox" => this.FindControl<TextBox>("Exchange1EntryBox"),
                 "RstEntryBox" => this.FindControl<TextBox>("Exchange1EntryBox"),
                 "Exchange1EntryBox" => this.FindControl<TextBox>("Exchange2EntryBox"),
                 "Exchange2EntryBox" => this.FindControl<TextBox>("CallEntryBox"),

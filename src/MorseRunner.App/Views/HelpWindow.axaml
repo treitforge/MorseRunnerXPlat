@@ -24,13 +24,23 @@
           LineHeight="23"
           TextWrapping="Wrap" />
     </ScrollViewer>
-    <Button
-        x:Name="CloseButton"
+    <StackPanel
         Grid.Row="2"
         HorizontalAlignment="Right"
-        AutomationProperties.Name="Close help"
-        Click="CloseClick"
-        Content="Close"
-        IsDefault="True" />
+        Orientation="Horizontal"
+        Spacing="10">
+      <Button
+          x:Name="CopyButton"
+          AutomationProperties.Name="Copy structured debug trace"
+          Click="CopyClick"
+          Content="Copy JSON"
+          IsVisible="False" />
+      <Button
+          x:Name="CloseButton"
+          AutomationProperties.Name="Close help"
+          Click="CloseClick"
+          Content="Close"
+          IsDefault="True" />
+    </StackPanel>
   </Grid>
 </Window>

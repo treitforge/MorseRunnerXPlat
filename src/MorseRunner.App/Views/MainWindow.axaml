@@ -111,7 +111,7 @@
         <MenuItem Header="HST Competition" HotKey="Ctrl+F9" Command="{Binding StartHstCommand}" />
         <MenuItem Header="Stop" HotKey="F10" Command="{Binding StopCommand}" />
       </MenuItem>
-      <MenuItem Header="_Send">
+      <MenuItem Header="Sen_d">
         <MenuItem Header="CQ" HotKey="F1" Command="{Binding SendCqCommand}" />
         <MenuItem Header="Exchange" HotKey="F2" Command="{Binding SendExchangeCommand}" />
         <MenuItem Header="TU" HotKey="F3" Command="{Binding SendThankYouCommand}" />
@@ -392,11 +392,11 @@
         <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="14">
           <Border Classes="card">
             <Grid ColumnDefinitions="*,*,*,*,*" ColumnSpacing="12">
-              <StackPanel>
+              <StackPanel Grid.ColumnSpan="{Binding CallEntryColumnSpan}">
                 <TextBlock Classes="eyebrow" Text="CONTEST" />
                 <TextBlock Classes="metric" Margin="0,5,0,0" Text="{Binding ContestName}" />
               </StackPanel>
-              <StackPanel Grid.Column="1">
+              <StackPanel Grid.Column="1" IsVisible="{Binding UsesRstEntry}">
                 <TextBlock Classes="eyebrow" Text="SESSION" />
                 <TextBlock Classes="metric" Margin="0,5,0,0" Text="{Binding SessionStateLabel}" />
               </StackPanel>
@@ -477,6 +477,7 @@
                   Margin="0,8,0,0"
                   AutomationProperties.Name="Callsign information"
                   Foreground="#91A6B8"
+                  IsVisible="{Binding HasCallsignInformation}"
                   Text="{Binding CallsignInformation}"
                   TextWrapping="Wrap" />
               <TextBlock
@@ -508,30 +509,19 @@
                   </DataTemplate>
                 </ListBox.ItemTemplate>
               </ListBox>
-              <Grid Grid.Row="4" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="12">
+              <Grid Grid.Row="4" ColumnDefinitions="*,*,*" ColumnSpacing="12">
                 <StackPanel>
                   <TextBlock Classes="eyebrow" Text="BLOCK" />
                   <TextBlock Foreground="#DCE7EF" Text="{Binding SimulationBlock}" />
                 </StackPanel>
                 <StackPanel Grid.Column="1">
-                  <TextBlock Classes="eyebrow" Text="LAST CALLER" />
-                  <TextBlock Foreground="#DCE7EF" Text="{Binding LastCaller}" />
-                </StackPanel>
-                <StackPanel Grid.Column="2">
-                  <TextBlock Classes="eyebrow" Text="CALLER STATE" />
-                  <TextBlock
-                      AutomationProperties.Name="Active caller state"
-                      Foreground="#DCE7EF"
-                      Text="{Binding CallerState}" />
-                </StackPanel>
-                <StackPanel Grid.Column="3">
                   <TextBlock Classes="eyebrow" Text="PILEUP" />
                   <TextBlock
                       AutomationProperties.Name="Active caller count"
                       Foreground="#DCE7EF"
                       Text="{Binding ActiveCallerCount, StringFormat='{}{0} active'}" />
                 </StackPanel>
-                <StackPanel Grid.Column="4">
+                <StackPanel Grid.Column="2">
                   <TextBlock Classes="eyebrow" Text="LAST SENT" />
                   <TextBlock Foreground="#DCE7EF" Text="{Binding LastSent}" />
                 </StackPanel>
